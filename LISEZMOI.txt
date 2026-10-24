@@ -1,0 +1,13 @@
+Carnet de Fonte - version autonome (aucune IA, aucun compte, aucun serveur)
+
+Installation sur iPhone :
+1. Allez sur https://app.netlify.com/drop (gratuit) et glissez ce dossier "carnet-fonte".
+   Alternative : GitHub Pages ou tout hébergement de fichiers statiques.
+2. Ouvrez l'adresse obtenue dans Safari sur l'iPhone.
+3. Partager > "Sur l'écran d'accueil".
+Ensuite l'app s'ouvre en plein écran et fonctionne hors ligne.
+
+Données : enregistrées uniquement dans l'iPhone. Pensez à "Exporter mes données"
+(onglet Exercices) de temps en temps pour garder une sauvegarde.
+
+Assisté par IA - la responsabilité finale reste celle de l'utilisateur.
