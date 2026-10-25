@@ -206,6 +206,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 84px + env(safe-area-inset-bottom,0px));z-index:30;
   background:var(--bar);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);color:var(--fg);padding:11px 18px;border-radius:999px;
   font-weight:600;font-size:15px;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.16),0 0 0 .5px var(--line)}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 .foot{font-size:13px;color:var(--muted);text-align:center;padding-top:8px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
@@ -346,6 +347,98 @@ function exHistory(exId){
 }
 function weekStart(ts){ const d = new Date(ts); d.setHours(0,0,0,0); const k = (d.getDay()+6)%7; d.setDate(d.getDate()-k); return d.getTime(); }
 
+/* ---------- Import Gravl (CSV) ---------- */
+// Nom d'exercice Gravl -> exercice de la bibliothèque, ou [groupe musculaire, matériel] pour créer un exercice perso
+const GRAVL = {
+  "Face-Pull à la Poulie":"face-pull", "Développé épaules avec haltères":"dm-halteres", "Développé Couché à la Barre":"dc-barre",
+  "Développé Couché Incliné aux Haltères":"di-halteres", "Développé Couché Incliné à la Barre":"di-barre", "Curl barre debout":"curl-barre",
+  "Curl Marteau":"curl-marteau", "Pull Up":"tractions", "Curl Ischio-jambiers Allongé":"leg-curl", "Extension des Jambes":"leg-ext",
+  "Presse à Cuisses":"presse", "Fente aux Haltères":"fentes", "Hip thrust à disques":"hip-thrust", "Rowing à la Barre":"rowing-barre",
+  "Rowing avec Haltères":"rowing-haltere", "Rowing assis à la poulie":"tirage-horizontal", "Tirage vertical à la poulie":"tirage-vertical",
+  "Tirage avec Bras Tendus":"pullover", "Écarté Croisé à la Poulie":"ecarte-poulie", "Écartés couché avec haltères":"ecarte-halteres",
+  "Élévation Latérale aux Haltères":"elev-lat", "Extensions des triceps poulie haute corde":"ext-poulie",
+  "Extensions barre au front à la barre EZ":"barre-front", "Extension Triceps Haltères":"ext-nuque", "Dips pour Pectoraux":"dips",
+  "Abducteurs des Hanches à la Machine":["Jambes","Machine"], "Adduction à la Machine":["Jambes","Machine"],
+  "Bicep curl à la poulie basse":["Biceps","Poulie"], "Chin Up":["Dos","Poids du corps"], "Curl Marteau Incliné":["Biceps","Haltères"],
+  "Curl aux Jambes Assis":["Jambes","Machine"], "Curl avec Haltères Assis":["Biceps","Haltères"], "Curl avec câble croisé d'un bras":["Biceps","Poulie"],
+  "Curl marteau poulie basse":["Biceps","Poulie"], "Curl poignet sur banc paumes vers le bas à la barre":["Biceps","Barre"],
+  "Curl poignet sur banc paumes vers le haut à la barre":["Biceps","Barre"], "Curl à la Barre EZ":["Biceps","Barre"],
+  "Dips Triceps à la Machine":["Triceps","Machine"], "Dips pour Triceps":["Triceps","Poids du corps"], "Dips à la machine à disques":["Pectoraux","Machine"],
+  "Ecarté inversé à la machine":["Épaules","Machine"], "Ecarté à la poulie vis à vis basse":["Pectoraux","Poulie"], "Elévation frontale disque":["Épaules","Autre"],
+  "Extension des mollets à la presse inclinée à disques":["Jambes","Machine"], "Extension des triceps à la poulie en supination":["Triceps","Poulie"],
+  "Extension du dos au banc à lombaires":["Dos","Poids du corps"], "Extension lombaire à la machine":["Dos","Machine"],
+  "Extension verticale d'un bras avec haltère":["Triceps","Haltères"], "Extensions de hanches au GHD":["Jambes","Poids du corps"],
+  "Haussement d'Épaules aux Haltères":["Dos","Haltères"], "Presse pectorale à disques":["Pectoraux","Machine"], "Presse à mollets":["Jambes","Machine"],
+  "Pushdown Triceps en Prise en V":["Triceps","Poulie"], "Rowing vertical avec haltères":["Épaules","Haltères"], "Rowing vertical à la poulie":["Épaules","Poulie"],
+  "Squat Hack":["Jambes","Machine"], "Tirage Vertical Unilateral":["Dos","Poulie"], "Tirage bras tendu à la corde":["Dos","Poulie"],
+  "Tirage horizontal à la poulie à un bras":["Dos","Poulie"], "Trapèze haussement épaules à la poulie":["Dos","Poulie"], "Écarté Incliné avec Haltères":["Pectoraux","Haltères"],
+  "Écarté inversé à la poulie pour deltoïdes postérieurs":["Épaules","Poulie"], "Écartés à la poulie":["Pectoraux","Poulie"],
+  "Élévation Latérale à la Machine":["Épaules","Machine"], "Élévation Latérale à la Poulie":["Épaules","Poulie"],
+  "Élévation Y sur banc incliné avec haltères":["Épaules","Haltères"], "Élévation frontale avec corde":["Épaules","Poulie"],
+  "Élévation frontale avec haltères":["Épaules","Haltères"], "Élévation latérale assise":["Épaules","Haltères"]
+};
+const CARDIO = /^(course|natation|stepper|v[ée]lo|rameur|corde de bataille|elliptique|marche|tapis|cardio)(\s|$)/i;
+const JOURS = {Monday:"Lundi",Tuesday:"Mardi",Wednesday:"Mercredi",Thursday:"Jeudi",Friday:"Vendredi",Saturday:"Samedi",Sunday:"Dimanche"};
+
+function parseCSV(txt){
+  const rows = []; let row = [], cell = "", q = false;
+  txt = txt.replace(/^﻿/, "");
+  for(let i=0;i<txt.length;i++){
+    const c = txt[i];
+    if(q){ if(c==='"'){ if(txt[i+1]==='"'){ cell+='"'; i++; } else q = false; } else cell += c; }
+    else if(c==='"') q = true;
+    else if(c===","){ row.push(cell); cell = ""; }
+    else if(c==="\n" || c==="\r"){ if(c==="\r" && txt[i+1]==="\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if(cell || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+function guessEx(name){
+  const n = name.toLowerCase();
+  const muscle = /pector|couch|écart|ecart|pec/.test(n) ? "Pectoraux" : /triceps/.test(n) ? "Triceps" : /curl.*(ischio|jambe)/.test(n) ? "Jambes"
+    : /curl|biceps/.test(n) ? "Biceps" : /épaule|epaule|élévation|elevation|delto/.test(n) ? "Épaules"
+    : /squat|jambe|cuisse|fente|mollet|hip|fess|presse/.test(n) ? "Jambes" : /abdo|crunch|gainage/.test(n) ? "Abdos" : "Dos";
+  const equip = /barre|ez/.test(n) ? "Barre" : /haltère|haltere/.test(n) ? "Haltères" : /poulie|câble|cable|corde/.test(n) ? "Poulie"
+    : /machine|disque|presse|hack/.test(n) ? "Machine" : "Poids du corps";
+  return [muscle, equip];
+}
+// Convertit le CSV Gravl en séances du Carnet ; ne modifie rien
+function gravlToWorkouts(txt){
+  const rows = parseCSV(txt); if(rows.length<2) throw new Error("vide");
+  const H = rows[0].map(h => h.trim()), col = k => H.indexOf(k);
+  const iD=col("Date"), iT=col("Start Date"), iW=col("Workout"), iDur=col("Workout Duration (min)"), iE=col("Exercise"),
+        iTy=col("Set Type"), iR=col("Reps"), iKg=col("Weight (kg)");
+  if([iD,iE,iR,iKg].some(i => i<0)) throw new Error("format");
+  const custom = new Map(), byKey = new Map(); let sets = 0, skipped = 0;
+  const findCustom = name => S.profile.custom.find(e => e.name.toLowerCase()===name.toLowerCase());
+  for(const r of rows.slice(1)){
+    const name = (r[iE]||"").trim(), reps = num(r[iR]), kg = num(r[iKg]);
+    if(!name || CARDIO.test(name) || reps<=0){ skipped++; continue; }
+    let exId = GRAVL[name];
+    if(typeof exId !== "string"){
+      const ex = findCustom(name) || custom.get(name);
+      if(ex) exId = ex.id;
+      else { const [muscle, equip] = Array.isArray(exId) ? exId : guessEx(name);
+        const e = {id:"gx-" + name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), name, muscle, equip};
+        custom.set(name, e); exId = e.id; }
+    }
+    const [y,m,d] = (r[iD]||"").split(/[\/-]/).map(Number), [hh,mm] = (r[iT]||"12:00").split(":").map(Number);
+    const start = new Date(y, m-1, d, hh||0, mm||0).getTime(); if(!isFinite(start)){ skipped++; continue; }
+    const key = r[iD] + " " + (r[iT]||"");
+    if(!byKey.has(key)){ const jour = JOURS[(r[iW]||"").trim()];
+      byKey.set(key, {id:"gravl-" + key.replace(/[^0-9]/g,""), name: jour || (r[iW]||"").trim() || "Séance", start,
+        end: start + Math.max(1, num(r[iDur]))*60000, routineId:null, exercises:[], prs:[], source:"Gravl"}); }
+    const w = byKey.get(key);
+    let ex = w.exercises[w.exercises.length-1];
+    if(!ex || ex.exId!==exId){ ex = w.exercises.find(x => x.exId===exId) || (w.exercises.push({exId, sets:[]}), w.exercises[w.exercises.length-1]); }
+    ex.sets.push({w: kg ? String(kg) : "", r: String(reps), done:true, warm: /chauffement/i.test(r[iTy]||"")});
+    sets++;
+  }
+  const workouts = [...byKey.values()].filter(w => w.exercises.length).sort((a,b) => a.start-b.start);
+  return {workouts, custom:[...custom.values()], sets, skipped};
+}
+
 /* ---------- Format ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtN = (n,d=1) => Number(n).toLocaleString("fr-FR",{maximumFractionDigits:d});
@@ -465,7 +558,9 @@ function viewProgress(){
     <span class="muted">Après deux ou trois séances, vous verrez ici votre volume par semaine et l'évolution de votre 1RM estimé sur chaque exercice.</span>
     <button class="btn primary" data-act="goto" data-tab="seance">Démarrer une séance</button></div>`;
   // Volume par semaine, 8 dernières semaines
-  const ws0 = weekStart(Date.now()), weeks = [];
+  // 8 semaines jusqu'à aujourd'hui, ou jusqu'à la dernière séance si elle est plus ancienne
+  const lastW = Math.max(...S.workouts.map(w=>w.start));
+  const ws0 = weekStart(lastW < weekStart(Date.now()) - 7*7*86400000 ? lastW : Date.now()), weeks = [];
   for(let k=7;k>=0;k--){ const s = ws0 - k*7*86400000; const e = s + 7*86400000;
     weeks.push({s, v:S.workouts.filter(w => w.start>=s && w.start<e).reduce((a,w)=>a+wVolume(w),0)}); }
   // Exercices pratiqués, du plus fréquent au moins fréquent
@@ -564,7 +659,8 @@ function viewExercises(){
     <section class="card" style="display:flex;flex-direction:column;gap:12px">
       <label class="field">Repos par défaut après une série
         <select id="rest-default">${[0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
-      <div class="row wrap"><button class="btn sm" data-act="export">Exporter mes données</button><button class="btn sm" data-act="import">Importer</button></div>
+      <div class="row wrap"><button class="btn sm" data-act="export">Exporter mes données</button><button class="btn sm" data-act="import">Importer</button>
+        <label class="btn sm" for="gravl-file">Importer depuis Gravl (CSV)</label><input id="gravl-file" class="vh" type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain"></div>
       <p class="small muted" style="margin:0">Vos séances restent uniquement dans ce téléphone, sans compte ni serveur. Exportez-les de temps en temps pour garder une sauvegarde.</p>
     </section>
     <p class="foot">Carnet de Fonte · aucune IA dans l'application · Assisté par IA<br>Photos d'exercices : Free Exercise DB (domaine public)</p>`;
@@ -817,6 +913,31 @@ document.addEventListener("input", e => {
   else if(t.id==="pick-q" && picker){ exFilter.q = t.value; refreshPicker(); }
 });
 document.addEventListener("change", e => {
+  if(e.target.id==="gravl-file"){ const f = e.target.files && e.target.files[0]; e.target.value = ""; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      let res; try{ res = gravlToWorkouts(String(rd.result)); }catch(err){ toast("Ce fichier n'est pas un export CSV de Gravl"); return; }
+      const known = new Set(S.workouts.map(w=>w.id)), fresh = res.workouts.filter(w => !known.has(w.id));
+      const newEx = res.custom.filter(e => !S.profile.custom.some(x => x.id===e.id));
+      if(!fresh.length){ toast("Ces séances Gravl sont déjà importées"); return; }
+      const first = fresh[0].start, last = fresh[fresh.length-1].start;
+      openSheet(`<h3>Importer depuis Gravl</h3>
+        <div class="tiles">
+          <div class="tile"><span>Séances</span><strong>${fresh.length}</strong><small>${esc(fmtDate(first,{day:"numeric",month:"short",year:"numeric"}))} → ${esc(fmtDate(last,{day:"numeric",month:"short",year:"numeric"}))}</small></div>
+          <div class="tile"><span>Séries</span><strong>${fresh.reduce((n,w)=>n+w.exercises.reduce((m,x)=>m+x.sets.length,0),0)}</strong><small>dont échauffements</small></div>
+        </div>
+        <p class="small muted" style="margin:0">${newEx.length} exercice${newEx.length>1?"s":""} Gravl sans équivalent seront ajoutés à votre bibliothèque. ${res.skipped?`${res.skipped} ligne${res.skipped>1?"s":""} de cardio ou sans répétitions ser${res.skipped>1?"ont":"a"} ignorée${res.skipped>1?"s":""}.`:""} ${known.size&&res.workouts.length>fresh.length?"Les séances déjà importées sont ignorées.":""}</p>
+        <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Annuler</button><button class="btn primary" style="flex:1" data-act="gravl-go">Importer</button></div>`);
+      ACT["gravl-go"] = () => {
+        newEx.forEach(e => S.profile.custom.push(e));
+        S.workouts.push(...fresh); touchProfile(); closeSheet(); render();
+        toast(`${fresh.length} séance${fresh.length>1?"s":""} Gravl importée${fresh.length>1?"s":""}`);
+      };
+    };
+    rd.onerror = () => toast("Lecture du fichier impossible");
+    rd.readAsText(f);
+    return;
+  }
   if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
 });
 
