@@ -495,7 +495,7 @@ function viewProgress(){
     <h2>Volume par semaine</h2>
     <section class="card">${barChart(weeks)}</section>
     <h2>Par exercice</h2>
-    <select id="prog-ex" class="search" aria-label="Choisir un exercice">${ids.map(id => `<option value="${id}" ${id===progEx?"selected":""}>${esc(exById(id).name)} (${freq[id]})</option>`).join("")}</select>
+    <div class="list"><button class="item" data-act="prog-choose">${thumb(exById(progEx))}<span class="t"><b>${esc(exById(progEx).name)}</b><span>${freq[progEx]} séance${freq[progEx]>1?"s":""} · toucher pour changer</span></span><span class="chev">›</span></button></div>
     ${detail}
     <p class="foot">1RM estimé avec la formule d'Epley : charge × (1 + reps / 30). Les séries d'échauffement ne comptent pas.</p>`;
 }
@@ -539,10 +539,12 @@ function lineChart(h){
 let exFilter = {q:"", m:"Tous"};
 function exListHTML(sel, mode){
   const q = exFilter.q.trim().toLowerCase();
-  const list = allEx().filter(e => (exFilter.m==="Tous" || e.muscle===exFilter.m) && (!q || e.name.toLowerCase().includes(q)))
+  const only = mode==="pick" && picker && picker.only;
+  const list = allEx().filter(e => (exFilter.m==="Tous" || e.muscle===exFilter.m) && (!q || e.name.toLowerCase().includes(q)) && (!only || only[e.id]))
     .sort((a,b) => a.name.localeCompare(b.name,"fr"));
-  if(!list.length) return `<div class="item"><span class="t muted">Aucun exercice ne correspond. Créez-le avec le bouton ci-dessous.</span></div>`;
+  if(!list.length) return `<div class="item"><span class="t muted">${only ? "Aucun exercice pratiqué ne correspond à ce filtre." : "Aucun exercice ne correspond. Créez-le avec le bouton ci-dessous."}</span></div>`;
   return list.map(e => {
+    if(only) return `<button class="item ${e.id===progEx?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(e.muscle)} · ${only[e.id]} séance${only[e.id]>1?"s":""}</span></span>${e.id===progEx?'<span class="tick">✓</span>':'<span class="chev">›</span>'}</button>`;
     if(mode==="pick"){ const on = sel.has(e.id);
       return `<button class="item ${on?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(e.muscle)} · ${esc(e.equip)}</span></span><span class="tick">${on?"✓":""}</span></button>`; }
     const h = exHistory(e.id), best = h.length ? Math.max(...h.map(x=>x.best)) : 0;
@@ -582,17 +584,17 @@ function confirmSheet(title, text, okLabel, onOk){
 
 /* Sélecteur d'exercices (multi) */
 let picker = null;
-function openPicker(onDone){
-  picker = {sel:new Set(), onDone};
-  openSheet(`<h3>Ajouter des exercices</h3>
+function openPicker(onDone, only){
+  picker = {sel:new Set(), onDone, only:only||null};
+  openSheet(`<h3>${only ? "Choisir un exercice" : "Ajouter des exercices"}</h3>
     <input id="pick-q" class="search" type="search" placeholder="Rechercher" value="${esc(exFilter.q)}" aria-label="Rechercher un exercice">
     ${chipsHTML()}
     <div class="list" id="pick-list">${exListHTML(picker.sel,"pick")}</div>
-    <button class="btn ghost" data-act="new-ex">+ Créer un exercice</button>
-    <button class="btn primary" id="pick-go" data-act="pick-done">Ajouter</button>`);
+    ${only ? `<button class="btn" data-act="close">Fermer</button>` : `<button class="btn ghost" data-act="new-ex">+ Créer un exercice</button>
+    <button class="btn primary" id="pick-go" data-act="pick-done">Ajouter</button>`}`);
 }
 function refreshPicker(){ document.getElementById("pick-list").innerHTML = exListHTML(picker.sel,"pick");
-  const n = picker.sel.size; document.getElementById("pick-go").textContent = n ? `Ajouter ${n} exercice${n>1?"s":""}` : "Ajouter"; }
+  const n = picker.sel.size, go = document.getElementById("pick-go"); if(go) go.textContent = n ? `Ajouter ${n} exercice${n>1?"s":""}` : "Ajouter"; }
 
 /* Éditeur de programme */
 let draft = null;
@@ -691,10 +693,13 @@ const ACT = {
     S.profile.routines = S.profile.routines.filter(r=>r.id!==d.id); touchProfile(); render(); toast("Programme supprimé"); }); },
 
   "pick-ex": () => openPicker(ids => { ids.forEach(id => A().exercises.push({exId:id, sets:[blankSet(),blankSet(),blankSet()]})); touchProfile(); render(); }),
-  "pick-toggle": b => { const id = b.dataset.id; picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
+  "pick-toggle": b => { const id = b.dataset.id;
+    if(picker.only){ const f = picker.onDone; picker = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
+  "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
+    openPicker(ids => { progEx = ids[0]; render(); window.scrollTo(0,0); }, freq); },
   "pick-done": () => { const ids = [...picker.sel], f = picker.onDone; picker = null; closeSheet(); if(ids.length) f(ids); },
   "filter-m": b => { exFilter.m = b.dataset.m; document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.m===exFilter.m));
-    if(picker) refreshPicker(); else document.getElementById("ex-list").innerHTML = exListHTML(null,"browse"); },
+    if(picker) refreshPicker(); else { const l = document.getElementById("ex-list"); if(l) l.innerHTML = exListHTML(null,"browse"); } },
   "new-ex": () => {
     const back = picker;
     openSheet(`<h3>Nouvel exercice</h3>
@@ -812,8 +817,7 @@ document.addEventListener("input", e => {
   else if(t.id==="pick-q" && picker){ exFilter.q = t.value; refreshPicker(); }
 });
 document.addEventListener("change", e => {
-  if(e.target.id==="prog-ex"){ progEx = e.target.value; render(); }
-  else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
+  if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
 });
 
 /* ---------- Démarrage ---------- */
