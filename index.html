@@ -142,7 +142,7 @@ table.sets{width:100%;border-collapse:separate;border-spacing:0 4px;font-variant
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:7;background:var(--bar);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
   border-top:.5px solid var(--line);
   padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px);
-  display:grid;grid-template-columns:repeat(4,1fr)}
+  display:grid;grid-template-columns:repeat(5,1fr)}
 .tabs button{height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:500;color:var(--muted)}
 .tabs button[aria-current="page"]{color:var(--accent)}
 .tabs svg{width:26px;height:26px}
@@ -238,6 +238,36 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .vol-bar{position:relative;height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
 .vol-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--mc)}
 .vol-bar em{position:absolute;left:50%;top:0;bottom:0;right:0;border-left:1.5px dashed var(--muted);opacity:.5}
+.dows{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dows button{height:40px;border-radius:10px;background:var(--fill);font-size:14px;font-weight:600}
+.dows button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.dows button.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.tpls{display:flex;flex-direction:column;gap:8px}
+.tpl{display:flex;flex-direction:column;gap:4px;text-align:left;width:100%}
+.tpl[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.pday{display:flex;flex-direction:column;gap:10px}
+.pdow{font-size:20px}
+.chips.wrapc{flex-wrap:wrap;overflow:visible}
+.chip .mdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mc);margin-right:6px;vertical-align:1px}
+.chip[aria-pressed="true"] .mdot{background:#fff}
+.alert{border-radius:10px;padding:9px 12px;font-size:14px;line-height:1.35}
+.alert.danger{background:color-mix(in srgb,var(--danger) 13%,transparent);color:var(--fg)}
+.alert.warn{background:color-mix(in srgb,var(--warm) 15%,transparent);color:var(--fg)}
+.duos summary{color:var(--accent);font-size:15px;cursor:pointer;list-style:none}
+.duos summary::-webkit-details-marker{display:none}
+.duo-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.duo{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--fill);border-radius:10px;padding:8px 12px}
+.duo span{font-size:13px;color:var(--muted)}
+.plist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;counter-reset:pl}
+.plist li{display:flex;align-items:center;gap:10px;counter-increment:pl;position:relative}
+.plist li::before{content:counter(pl);width:18px;font-size:13px;color:var(--muted);text-align:right;flex:none;font-variant-numeric:tabular-nums}
+.plist .t{flex:1;min-width:0}
+.plist .t b{display:block;font-weight:500;font-size:16px}
+.plist .t span{font-size:13px;color:var(--muted)}
+.plist .thumb{width:42px;height:42px}
+.new{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--m-bic);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:2px}
+.ctag.ok{background:var(--ok)} .ctag.soft{background:var(--muted)}
+.todaycard{box-shadow:0 0 0 2px var(--accent)}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 .foot{font-size:13px;color:var(--muted);text-align:center;padding-top:8px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -254,7 +284,8 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <div class="rest" id="rest" hidden></div>
 <nav class="tabs" id="tabs">
   <button data-tab="seance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Séance</button>
-  <button data-tab="historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Historique</button>
+  <button data-tab="routine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l2 2 4-4"/></svg>Routine</button>
+  <button data-tab="historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>Historique</button>
   <button data-tab="progres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M5 15l4-4 4 3 6-7"/></svg>Progrès</button>
   <button data-tab="exercices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>Exercices</button>
 </nav>
@@ -262,7 +293,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-26 b";
+const APP_VERSION = "2026-10-26 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -426,16 +457,16 @@ function muscleSetsThisWeek(muscle, untilTs){
   return n;
 }
 // Proposition pour la prochaine séance de cet exercice
-function coach(exId, beforeTs){
+function coach(exId, beforeTs, planned){
   const e = exById(exId), [lo,hi] = repRange(e), rest = REST_BY_RANGE[lo] || 120;
   const hist = sessionsFor(exId, beforeTs);
-  if(!hist.length) return {lo, hi, rest, w:"", r:"", sets:3, tag:"Nouveau",
+  if(!hist.length) return {lo, hi, rest, w:"", r:"", sets:planned||3, tag:"Nouveau",
     why:`Première fois : prenez une charge qui permet ${lo} à ${hi} reps en gardant 1 à 2 reps en réserve.`};
   const last = hist[0], feel = last.feel || inferFeel(last, lo), f = FEEL[feel-1];
   const W = Math.max(...last.sets.map(s => num(s.w))), top = last.sets.filter(s => num(s.w)===W);
   const minR = Math.min(...top.map(s => num(s.r))), lastR = num(top[top.length-1].r);
   const nSets = last.sets.filter(s => num(s.w) >= W*0.75).length;   // les séries dégressives légères ne comptent pas
-  let sets = Math.min(5, Math.max(2, nSets));
+  let sets = planned || Math.min(5, Math.max(2, nSets));
   const gapDays = Math.round(((beforeTs || Date.now()) - last.ts) / 86400000);
   // Poids du corps (charge = poids de corps éventuel) : progression en répétitions
   if(!W || e.equip==="Poids du corps"){
@@ -488,10 +519,191 @@ function coach(exId, beforeTs){
   }
   // Volume hebdo du muscle : en dessous de 10 séries, une série de plus si la récupération suit
   const wk = muscleSetsThisWeek(e.muscle, last.ts + 1);
-  if(feel<=3 && wk < 10 && sets < 4){ sets++; why += ` ${e.muscle} : ${wk} séries sur les 7 jours précédant la dernière séance, sous les 10 conseillées, on ajoute une série.`; }
+  if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; why += ` ${e.muscle} : ${wk} séries sur les 7 jours précédant la dernière séance, sous les 10 conseillées, on ajoute une série.`; }
   if(feel===5 && hist[1] && (hist[1].feel||0)===5 && sets > 2){ sets--; why += " Une série de moins pour récupérer."; }
   const dW = w - W, tag = dW>0 ? `+${fmtN(dW)} kg` : dW<0 ? `${fmtN(dW)} kg` : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider";
   return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, from:{W, minR, feel}};
+}
+
+/* ---------- Routine de la semaine ----------
+   Répartition des muscles (chaque muscle ~2 fois/semaine), 48 h entre deux séances d'un même muscle,
+   exercices pris dans l'historique (les plus pratiqués d'abord), polyarticulaires en premier,
+   une nouveauté par mois au plus. */
+const DOWS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+const PRIO = ["Jambes","Pectoraux","Dos","Épaules","Triceps","Biceps","Abdos"];
+const WEIGHT = {Jambes:2, Pectoraux:2, Dos:2, "Épaules":1.5, Triceps:1, Biceps:1, Abdos:0.8};
+const SYN = {Pectoraux:["Triceps","Épaules"], Dos:["Biceps"], "Épaules":["Triceps"], Jambes:[], Triceps:[], Biceps:[], Abdos:[]};
+const G = {
+  push:["Pectoraux","Épaules","Triceps"], pull:["Dos","Biceps"], legs:["Jambes","Abdos"],
+  upper:["Pectoraux","Dos","Épaules","Biceps","Triceps"], lower:["Jambes","Abdos"],
+  full:["Jambes","Pectoraux","Dos","Épaules","Biceps","Triceps"],
+  pt:["Pectoraux","Triceps"], db:["Dos","Biceps"], sa:["Épaules","Biceps","Triceps","Abdos"], ja:["Jambes","Abdos"], pd:["Pectoraux","Dos"]
+};
+const DAY_NAMES = [[G.push,"Push"],[G.pull,"Pull"],[G.legs,"Jambes"],[G.upper,"Haut du corps"],[G.full,"Full body"],[G.pt,"Pecs + Triceps"],[G.db,"Dos + Biceps"],[G.sa,"Épaules + Bras"],[G.pd,"Pecs + Dos"]];
+const DUOS = [
+  {m:G.pt, label:"Pecs + Triceps", why:"Les triceps travaillent déjà dans les développés : on les finit dans la foulée."},
+  {m:G.db, label:"Dos + Biceps", why:"Les biceps participent aux tirages : même logique de muscles synergiques."},
+  {m:G.pd, label:"Pecs + Dos", why:"Muscles antagonistes : on peut alterner les séries et gagner du temps."},
+  {m:G.ja, label:"Jambes + Abdos", why:"Une séance bas du corps, les abdos récupèrent vite."},
+  {m:G.sa, label:"Épaules + Bras", why:"Petits muscles ensemble, à placer loin des jours pecs et dos."},
+  {m:G.push, label:"Push", why:"Tous les muscles de poussée."}, {m:G.pull, label:"Pull", why:"Tous les muscles de tirage."},
+  {m:G.upper, label:"Haut du corps", why:"Tout le haut, à alterner avec un jour bas du corps."}, {m:G.full, label:"Full body", why:"Tout le corps, idéal à 2–3 séances par semaine."}
+];
+const TEMPLATES = {
+  1:[{id:"f1", name:"Full body", rec:true, desc:"Une séance complète. Chaque muscle n'est vu qu'une fois : visez au moins 2 séances si possible.", days:[G.full]}],
+  2:[{id:"f2", name:"Full body ×2", rec:true, desc:"Chaque muscle 2 fois par semaine, la fréquence conseillée.", days:[G.full,G.full]},
+     {id:"ul1", name:"Haut / Bas", desc:"Séances plus ciblées, mais chaque muscle 1 seule fois par semaine.", days:[G.upper,G.lower]}],
+  3:[{id:"f3", name:"Full body ×3", rec:true, desc:"Chaque muscle 3 fois, volume réparti sur la semaine.", days:[G.full,G.full,G.full]},
+     {id:"ppl", name:"Push / Pull / Jambes", desc:"Séances par fonction, chaque muscle 1 fois par semaine.", days:[G.push,G.pull,G.legs]},
+     {id:"ulf", name:"Haut / Bas / Full body", desc:"Bon compromis : chaque muscle 2 fois.", days:[G.upper,G.lower,G.full]}],
+  4:[{id:"ul2", name:"Haut / Bas ×2", rec:true, desc:"Le grand classique : chaque muscle 2 fois, 48 h de récupération faciles à tenir.", days:[G.upper,G.lower,G.upper,G.lower]},
+     {id:"duo4", name:"Duos : Pecs-Triceps / Dos-Biceps / Jambes / Épaules-Bras", desc:"Séances par duos de muscles synergiques, chaque muscle 1 à 2 fois.", days:[G.pt,G.db,G.ja,G.sa]}],
+  5:[{id:"ulppl", name:"Haut / Bas + Push / Pull / Jambes", rec:true, desc:"Chaque muscle 2 fois avec plus de volume.", days:[G.upper,G.lower,G.push,G.pull,G.legs]},
+     {id:"duo5", name:"Duos sur 5 jours", desc:"Pecs-Triceps, Dos-Biceps, Jambes, Épaules-Bras, Pecs-Dos.", days:[G.pt,G.db,G.ja,G.sa,G.pd]}],
+  6:[{id:"ppl2", name:"Push / Pull / Jambes ×2", rec:true, desc:"Chaque muscle 2 fois, volume élevé : pour bien récupérer, dormez et mangez en conséquence.", days:[G.push,G.pull,G.legs,G.push,G.pull,G.legs]},
+     {id:"ul3", name:"Haut / Bas ×3", desc:"Chaque muscle 3 fois par semaine.", days:[G.upper,G.lower,G.upper,G.lower,G.upper,G.lower]}]
+};
+const DEFAULT_DAYS = {1:[0],2:[0,3],3:[0,2,4],4:[0,1,3,4],5:[0,1,2,4,5],6:[0,1,2,3,4,5]};
+const sameSet = (a,b) => a.length===b.length && a.every(x => b.includes(x));
+const dayName = m => (DAY_NAMES.find(([g]) => sameSet(g,m)) || [0, m.slice().sort((a,b)=>PRIO.indexOf(a)-PRIO.indexOf(b)).join(" + ") || "Repos"])[1];
+const todayDow = () => (new Date().getDay()+6)%7;
+
+let planDraft = null;
+function newDraft(n){
+  const tpl = TEMPLATES[n][0];
+  return {n, tpl:tpl.id, days: DEFAULT_DAYS[n].map((dow,i) => ({dow, muscles:tpl.days[i].slice(), off:{}})), novOff:0};
+}
+function initDraft(){
+  const p = S.profile.plan;
+  if(p && p.days && p.days.length) return {n:p.days.length, tpl:p.tpl||"", days:p.days.map(d => ({dow:d.dow, muscles:d.muscles.slice(), off:{...(d.off||{})}})), novOff:0};
+  return newDraft(3);
+}
+function exStats(){
+  const st = {};
+  S.workouts.forEach(w => w.exercises.forEach(ex => { if(!workSets(ex).length) return;
+    const s = st[ex.exId] || (st[ex.exId] = {n:0, last:0}); s.n++; s.last = Math.max(s.last, w.start); }));
+  return st;
+}
+const isCompound = e => repRange(e)[0] <= 8;
+function candidatesFor(m, st){
+  return allEx().filter(e => e.muscle===m).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
+    .sort((a,b) => b.n-a.n || b.comp-a.comp || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
+}
+function generatePlan(d){
+  const st = exStats(), seen = {}, days = d.days.slice().sort((a,b)=>a.dow-b.dow);
+  const out = days.map(day => {
+    const ms = day.muscles.slice().sort((a,b) => PRIO.indexOf(a)-PRIO.indexOf(b));
+    const sumW = ms.reduce((t,m) => t+WEIGHT[m], 0), slots = ms.length===1 ? 4 : 6;
+    const items = [], used = new Set();
+    ms.forEach(m => {
+      const k = seen[m] = (seen[m]||0) + 1;           // k-ième séance de la semaine pour ce muscle
+      const cnt = m==="Abdos" ? 1 : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
+      const all = candidatesFor(m, st), done = all.filter(c => c.n>0);
+      const pool = done.length >= cnt ? done : all;
+      for(let j=0;j<cnt;j++){
+        const off = day.off[m+":"+j] || 0;
+        let list = pool;
+        if(j===0 && WEIGHT[m]>=1.5){ const comp = pool.filter(c => c.comp); if(comp.length) list = comp; }   // gros muscle : un polyarticulaire d'abord
+        let c = null; const base = list===pool ? (k-1)*cnt + j : (k-1);   // d'une séance à l'autre on alterne les exercices
+        for(let t=0;t<list.length && !c;t++){ const x = list[(base + off + t) % list.length]; if(!used.has(x.e.id)) c = x; }
+        if(!c) for(const x of all) if(!used.has(x.e.id)){ c = x; break; }
+        if(!c) continue;
+        used.add(c.e.id); items.push({exId:c.e.id, muscle:m, slot:m+":"+j, comp:c.comp, n:c.n, sets:3});
+      }
+    });
+    return {dow:day.dow, muscles:ms, name:dayName(ms), items};
+  });
+  // Nouveauté : une par mois au plus, sur un exercice d'isolation de la plus grosse séance
+  const nov = S.profile.novelty, due = !nov || Date.now() - nov.date > 30*86400000;
+  let novelty = null;
+  if(due && out.length){
+    const day = out.slice().sort((a,b) => b.items.length-a.items.length)[0];
+    const slotIdx = [...day.items.keys()].reverse().find(i => !day.items[i].comp && day.items[i].muscle!=="Abdos") ?? day.items.length-1;
+    const it = day.items[slotIdx];
+    if(it){
+      const usedAll = new Set(out.flatMap(x => x.items.map(y => y.exId)));
+      const fresh = candidatesFor(it.muscle, st).filter(c => c.n===0 && !usedAll.has(c.e.id)).sort((a,b) => (b.e.img?1:0)-(a.e.img?1:0));
+      if(fresh.length){ const c = fresh[d.novOff % fresh.length]; day.items[slotIdx] = {...it, exId:c.e.id, comp:c.comp, n:0, novel:true}; novelty = {exId:c.e.id, dow:day.dow}; }
+    }
+  }
+  // Volume : viser au moins 10 séries par muscle et par semaine (4 séries max par exercice), au plus 20
+  const weekly = {}; MUSCLES.forEach(m => weekly[m] = 0);
+  out.forEach(day => day.items.forEach(it => weekly[it.muscle] += it.sets));
+  MUSCLES.forEach(m => {
+    const its = out.flatMap(day => day.items.filter(it => it.muscle===m));
+    while(weekly[m] < 10 && its.some(it => it.sets < 4)){ const it = its.filter(x => x.sets<4).sort((a,b) => a.sets-b.sets || b.comp-a.comp)[0]; it.sets++; weekly[m]++; }
+    while(weekly[m] > 20 && its.some(it => it.sets > 2)){ const it = its.filter(x => x.sets>2).sort((a,b) => b.sets-a.sets || a.comp-b.comp)[0]; it.sets--; weekly[m]--; }
+  });
+  // Ordre : polyarticulaires d'abord, gros muscles avant petits, abdos en dernier
+  out.forEach(day => day.items.sort((a,b) => (a.muscle==="Abdos")-(b.muscle==="Abdos") || b.comp-a.comp || PRIO.indexOf(a.muscle)-PRIO.indexOf(b.muscle)));
+  // Alertes de récupération entre jours consécutifs
+  const alerts = [], dset = new Set(out.map(x => x.dow));
+  out.forEach(a => {
+    const nd = (a.dow+1)%7; if(!dset.has(nd)) return;
+    const b = out.find(x => x.dow===nd);
+    const shared = a.muscles.filter(m => b.muscles.includes(m) && m!=="Abdos");
+    if(shared.length) alerts.push({dow:nd, level:"danger", text:`${shared.join(", ")} travaillé${shared.length>1?"s":""} ${DOWS[a.dow].toLowerCase()} et ${DOWS[nd].toLowerCase()} : laissez au moins 48 h avant de solliciter à nouveau un muscle.`});
+    const syn = new Set();
+    a.muscles.forEach(m => SYN[m].forEach(y => { if(b.muscles.includes(y) && !shared.includes(y)) syn.add(`${y} (déjà sollicités ${DOWS[a.dow].toLowerCase()} par ${m.toLowerCase()})`); }));
+    b.muscles.forEach(m => SYN[m].forEach(y => { if(a.muscles.includes(y) && !shared.includes(y)) syn.add(`${y} (travaillés ${DOWS[a.dow].toLowerCase()}, resollicités par ${m.toLowerCase()})`); }));
+    if(syn.size) alerts.push({dow:nd, level:"warn", text:`Récupération partielle : ${[...syn].join(" ; ")}.`});
+  });
+  const freq = {}; MUSCLES.forEach(m => freq[m] = out.filter(x => x.muscles.includes(m)).length);
+  const notes = [];
+  const missing = MUSCLES.filter(m => !freq[m] && m!=="Abdos"); if(missing.length) notes.push(`Non travaillés cette semaine : ${missing.join(", ")}.`);
+  const once = MUSCLES.filter(m => freq[m]===1 && m!=="Abdos"); if(once.length && out.length>=2) notes.push(`Une seule fois par semaine : ${once.join(", ")}. Deux fois est conseillé pour la prise de muscle.`);
+  return {days:out, weekly, alerts, notes, novelty, freq};
+}
+
+function viewPlan(){
+  const d = planDraft || (planDraft = initDraft()), g = generatePlan(d), tpls = TEMPLATES[d.n] || [];
+  const dayCards = g.days.map(day => {
+    const k = d.days.findIndex(x => x.dow===day.dow), al = g.alerts.filter(a => a.dow===day.dow);
+    return `<section class="card pday">
+      <div class="row"><b class="pdow">${DOWS[day.dow]}</b><span class="spacer"></span><span class="small muted">${esc(day.name)}</span></div>
+      ${al.map(a => `<div class="alert ${a.level}">${a.level==="danger"?"⚠︎":"ⓘ"} ${esc(a.text)}</div>`).join("")}
+      <div class="chips wrapc">${MUSCLES.map(m => `<button class="chip" data-act="plan-muscle" data-k="${k}" data-m="${m}" aria-pressed="${day.muscles.includes(m)}" style="${mc(m)}"><span class="mdot"></span>${m}</button>`).join("")}</div>
+      <details class="duos"><summary>Duos conseillés</summary><div class="duo-list">${DUOS.map((u,ui) => `<button class="duo" data-act="plan-duo" data-k="${k}" data-u="${ui}"><b>${esc(u.label)}</b><span>${esc(u.why)}</span></button>`).join("")}</div></details>
+      ${day.items.length ? `<ol class="plist">${day.items.map(it => { const e = exById(it.exId);
+        return `<li>${thumb(e)}<span class="t"><b>${esc(e.name)}${it.novel?'<span class="new">Nouveau</span>':""}</b><span>${it.sets} séries · ${esc(e.muscle)}${it.comp?" · polyarticulaire":""}${it.n?` · fait ${it.n} fois`:""}</span></span>
+          <button class="icon-btn" data-act="${it.novel?"plan-nov":"plan-swap"}" data-k="${k}" data-s="${it.slot}" aria-label="Proposer un autre exercice">↻</button></li>`; }).join("")}</ol>`
+        : `<p class="small muted" style="margin:0">Choisissez les muscles de cette séance.</p>`}
+    </section>`;
+  }).join("");
+  return `
+    <section class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row"><b style="flex:1">Séances par semaine</b>
+        <span class="stepper"><button data-act="plan-n" data-d="-1" aria-label="Une séance de moins">−</button><span>${d.n}</span><button data-act="plan-n" data-d="1" aria-label="Une séance de plus">+</button></span></div>
+      <div class="dows">${DOWS.map((l,i) => `<button data-act="plan-dow" data-i="${i}" aria-pressed="${d.days.some(x=>x.dow===i)}" class="${i===todayDow()?"today":""}">${l.slice(0,3)}</button>`).join("")}</div>
+    </section>
+    <h2>Organisation proposée</h2>
+    <div class="tpls">${tpls.map(t => `<button class="card tpl" data-act="plan-tpl" data-t="${t.id}" aria-pressed="${d.tpl===t.id}">
+      <span class="row"><b style="flex:1">${esc(t.name)}</b>${t.rec?'<span class="ctag">Conseillé</span>':""}</span><span class="small muted">${esc(t.desc)}</span></button>`).join("")}</div>
+    ${g.notes.map(n => `<div class="alert warn">ⓘ ${esc(n)}</div>`).join("")}
+    <h2>Vos séances</h2>
+    ${dayCards}
+    <h2>Volume par muscle et par semaine</h2>
+    <section class="card"><div class="vol">${MUSCLES.map(m => { const n = g.weekly[m], pct = Math.min(100, n/20*100);
+      return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${pct}%;${mc(m)}"></i><em></em></div><b class="num">${n}</b></div>`; }).join("")}</div>
+      <p class="small muted" style="margin:8px 0 0">Séries par semaine, cible 10 à 20 (trait pointillé : 10). ${g.days.length ? "Fréquence : " + MUSCLES.filter(m=>g.freq[m]).map(m => `${m} ${g.freq[m]}×`).join(", ") + "." : ""}</p></section>
+    <button class="btn primary wide" data-act="plan-save" ${g.days.some(x=>x.items.length)?"":"disabled"}>Valider la routine</button>
+    <p class="foot">Les exercices les plus pratiqués passent en premier, polyarticulaires en tête de séance.
+      Une nouveauté au plus par mois. Touchez ↻ pour changer un exercice.<br>Assisté par IA · aide à la décision, à adapter à vos sensations.</p>`;
+}
+function planSave(){
+  const g = generatePlan(planDraft);
+  S.profile.routines = S.profile.routines.filter(r => !r.plan).concat(g.days.filter(x => x.items.length).map(day => ({
+    id:"plan-"+day.dow, plan:true, dow:day.dow, name:`${DOWS[day.dow]} · ${day.name}`, items:day.items.map(it => ({exId:it.exId, sets:it.sets}))})));
+  S.profile.plan = {tpl:planDraft.tpl, created:Date.now(), days:planDraft.days.map(x => ({dow:x.dow, muscles:x.muscles.slice(), off:{...x.off}}))};
+  if(g.novelty) S.profile.novelty = {exId:g.novelty.exId, date:Date.now()};
+  touchProfile();
+}
+// Séances de la routine dans l'ordre : aujourd'hui d'abord, puis les prochains jours
+function planOrder(){
+  const t = todayDow(), d0 = new Date(); d0.setHours(0,0,0,0);
+  const doneToday = new Set(S.workouts.filter(w => w.start >= d0.getTime()).map(w => w.routineId));
+  return S.profile.routines.filter(r => r.plan).map(r => ({r, delta:(r.dow - t + 7) % 7, done: r.dow===t && doneToday.has(r.id)}))
+    .sort((a,b) => (a.done - b.done) || a.delta - b.delta);
 }
 
 /* ---------- Import Gravl (CSV) ---------- */
@@ -599,13 +811,13 @@ function fmtClock(ms){ const s = Math.max(0, Math.floor(ms/1000)); const h=Math.
 const setTxt = s => (num(s.w) ? fmtN(num(s.w))+" kg × " : "") + (num(s.r)||"–") + (num(s.w) ? "" : " reps");
 
 /* ---------- Rendu ---------- */
-const TITLES = {seance:"Séance", historique:"Historique", progres:"Progrès", exercices:"Exercices"};
+const TITLES = {seance:"Séance", routine:"Routine", historique:"Historique", progres:"Progrès", exercices:"Exercices"};
 function render(){
   document.getElementById("title").textContent = TITLES[tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===tab ? "page" : "false"));
   const v = document.getElementById("view");
   v.innerHTML = tab==="seance" ? (S.profile.active ? viewActive() : viewHome())
-    : tab==="historique" ? viewHistory() : tab==="progres" ? viewProgress() : viewExercises();
+    : tab==="routine" ? viewPlan() : tab==="historique" ? viewHistory() : tab==="progres" ? viewProgress() : viewExercises();
   tickClock(); wakeLock();
 }
 
@@ -617,14 +829,21 @@ function viewHome(){
     const today = weekStart(now)+((new Date(now).getDay()+6)%7)*86400000 === d0;
     return `<div class="${on?"on":""} ${today?"today":""}">${l}<b>${new Date(d0).getDate()}</b></div>`;
   }).join("");
-  const routines = S.profile.routines.map(r => `
-    <div class="card routine">
+  const ord = planOrder(), t = todayDow();
+  const badge = r => { const o = ord.find(x => x.r===r); if(!o) return "";
+    return o.done ? '<span class="ctag ok">Faite aujourd\'hui</span>' : o.delta===0 ? '<span class="ctag">Aujourd\'hui</span>' : o.delta===1 ? '<span class="ctag soft">Demain</span>' : ""; };
+  const restBanner = ord.length && !ord.some(o => o.delta===0) ? `<div class="alert warn">Jour de repos aujourd'hui. Prochaine séance : <b>${esc(ord[0].r.name)}</b>.</div>` : "";
+  const card = r => `
+    <div class="card routine ${ord[0] && ord[0].r===r && ord[0].delta===0 && !ord[0].done ? "todaycard" : ""}">
+      ${badge(r) ? `<div>${badge(r)}</div>` : ""}
       <div class="row"><h3>${esc(r.name)}</h3><span class="spacer"></span>
         <button class="btn sm ghost" data-act="edit-routine" data-id="${r.id}">Modifier</button></div>
       ${r.items.length?`<div class="strip">${r.items.slice(0,6).map(it => thumb(exById(it.exId))).join("")}</div>`:""}
       <ul>${r.items.map(it => `<li><b>${it.sets} ×</b> ${esc(exById(it.exId).name)}</li>`).join("") || "<li>Aucun exercice</li>"}</ul>
       <button class="btn primary" data-act="start-routine" data-id="${r.id}">Démarrer ${esc(r.name)}</button>
-    </div>`).join("");
+    </div>`;
+  const others = S.profile.routines.filter(r => !r.plan);
+  const routines = restBanner + ord.map(o => card(o.r)).join("") + (ord.length && others.length ? `<h2 class="big">Autres programmes</h2>` : "") + others.map(card).join("");
   return `
     <section class="card">
       <div class="week">${days}</div>
@@ -640,7 +859,8 @@ function viewHome(){
         return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${pct}%;${mc(m)}"></i><em></em></div><b class="num">${n}</b></div>`; }).join("")}</div>
     </section>
     <button class="btn primary wide" data-act="start-empty">Démarrer une séance libre</button>
-    <h2 class="big">Mes programmes</h2>
+    <h2 class="big">${ord.length ? "Ma semaine" : "Mes programmes"}</h2>
+    ${ord.length ? "" : `<button class="btn ghost wide" data-act="goto" data-tab="routine">Créer ma routine de la semaine</button>`}
     ${routines}
     <button class="btn ghost wide" data-act="new-routine">+ Créer un programme</button>`;
 }
@@ -648,7 +868,7 @@ function viewHome(){
 function viewActive(){
   const a = S.profile.active;
   const exs = a.exercises.map((ex,i) => {
-    const e = exById(ex.exId), prev = lastSetsFor(ex.exId, a.start), c = coach(ex.exId, a.start);
+    const e = exById(ex.exId), prev = lastSetsFor(ex.exId, a.start), c = coach(ex.exId, a.start, ex.plan);
     const prevWork = (sessionsFor(ex.exId, a.start)[0] || {sets:[]}).sets, prevWarm = prev.filter(x => x.warm);
     let nw = 0;
     let n = 0;
@@ -948,7 +1168,7 @@ const ACT = {
   goto: b => { tab = b.dataset.tab; render(); },
   "start-empty": () => startWorkout("Séance libre", []),
   "start-routine": b => { const r = S.profile.routines.find(x=>x.id===b.dataset.id); if(!r) return;
-    startWorkout(r.name, r.items.map(it => ({exId:it.exId, sets:Array.from({length:sessionsFor(it.exId).length ? coach(it.exId).sets : it.sets}, blankSet)})), r.id); },
+    startWorkout(r.name, r.items.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), r.id); },
   "new-routine": () => { draft = {id:uidGen("r"), name:"", items:[]}; openRoutineEditor(); },
   "edit-routine": b => { const r = S.profile.routines.find(x=>x.id===b.dataset.id); if(!r) return; draft = clone(r); openRoutineEditor(); },
   "r-inc": b => { draft.items[+b.dataset.k].sets = Math.min(10, draft.items[+b.dataset.k].sets+1); openRoutineEditor(); },
@@ -970,6 +1190,21 @@ const ACT = {
     if(picker.only){ const f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
   "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
     openPicker(ids => { progEx = ids[0]; render(); window.scrollTo(0,0); }, freq); },
+  "plan-n": b => { const n = Math.min(6, Math.max(1, planDraft.n + +b.dataset.d)); if(n!==planDraft.n){ planDraft = newDraft(n); render(); } },
+  // sections de l'accueil
+  "plan-dow": b => { const i = +b.dataset.i, d = planDraft, k = d.days.findIndex(x => x.dow===i);
+    if(k>=0){ if(d.days.length===1) return; d.days.splice(k,1); } else { if(d.days.length>=6){ toast("6 séances par semaine au maximum"); return; } d.days.push({dow:i, muscles:[], off:{}}); }
+    d.days.sort((a,b)=>a.dow-b.dow); d.n = d.days.length;
+    const tp = (TEMPLATES[d.n]||[])[0]; if(tp && k<0){ d.tpl = tp.id; d.days.forEach((x,i2) => { x.muscles = tp.days[i2].slice(); x.off = {}; }); } else d.tpl = "";
+    render(); },
+  "plan-tpl": b => { const tp = (TEMPLATES[planDraft.n]||[]).find(t => t.id===b.dataset.t); if(!tp) return;
+    planDraft.tpl = tp.id; planDraft.days.sort((a,c)=>a.dow-c.dow).forEach((x,i) => { x.muscles = tp.days[i].slice(); x.off = {}; }); render(); },
+  "plan-muscle": b => { const day = planDraft.days[+b.dataset.k], m = b.dataset.m, i = day.muscles.indexOf(m);
+    if(i>=0) day.muscles.splice(i,1); else day.muscles.push(m); day.off = {}; planDraft.tpl = ""; render(); },
+  "plan-duo": b => { const day = planDraft.days[+b.dataset.k]; day.muscles = DUOS[+b.dataset.u].m.slice(); day.off = {}; planDraft.tpl = ""; render(); },
+  "plan-swap": b => { const day = planDraft.days[+b.dataset.k], s = b.dataset.s; day.off[s] = (day.off[s]||0) + 1; render(); },
+  "plan-nov": () => { planDraft.novOff++; render(); },
+  "plan-save": () => { planSave(); const n = S.profile.routines.filter(r=>r.plan).length; tab = "seance"; render(); window.scrollTo(0,0); toast(`Routine enregistrée : ${n} séance${n>1?"s":""} par semaine`); },
   "pick-done": () => { const ids = [...picker.sel], f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); if(ids.length) f(ids); },
   "filter-m": b => { exFilter.m = b.dataset.m; document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.m===exFilter.m));
     if(picker){ refreshPicker(); const sc = document.getElementById("pick-scroll"); if(sc) sc.scrollTop = 0; } else { const l = document.getElementById("ex-list"); if(l) l.innerHTML = exListHTML(null,"browse"); } },
@@ -991,7 +1226,7 @@ const ACT = {
     };
   },
   feel: b => { const ex = A().exercises[+b.dataset.i], v = +b.dataset.v; ex.feel = ex.feel===v ? 0 : v; touchProfile(); render(); },
-  "coach-why": b => { const ex = A().exercises[+b.dataset.i], e = exById(ex.exId), c = coach(ex.exId, A().start);
+  "coach-why": b => { const ex = A().exercises[+b.dataset.i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan);
     openSheet(`<h3>${esc(e.name)}</h3>
       <div class="tiles"><div class="tile"><span>Objectif</span><strong>${c.w||c.r ? `${c.sets} × ${c.r||c.lo}` : `${c.lo}–${c.hi}`}</strong><small>${c.w?fmtN(c.w)+" kg":"reps"}</small></div>
         <div class="tile"><span>Fourchette</span><strong>${c.lo}–${c.hi}</strong><small>reps, à 1–2 en réserve</small></div></div>
@@ -1030,7 +1265,7 @@ const ACT = {
       if(s.w==="" && wi.placeholder && wi.placeholder!=="kg") s.w = wi.placeholder;
       if(s.r==="" && ri.placeholder && ri.placeholder!=="reps") s.r = ri.placeholder;
       if(!num(s.r)){ toast("Indiquez le nombre de répétitions"); ri.focus(); return; }
-      s.done = true; if(!s.warm) startRest(S.profile.rest<0 ? coach(ex.exId, A().start).rest : S.profile.rest);
+      s.done = true; if(!s.warm) startRest(S.profile.rest<0 ? coach(ex.exId, A().start, ex.plan).rest : S.profile.rest);
       // Pré-remplit la série suivante si elle est vide
       const nx = ex.sets[j+1]; if(nx && !nx.done && !nx.warm && nx.w==="" && s.w!=="" && !s.warm) nx.w = s.w;
     } else s.done = false;

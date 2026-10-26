@@ -39,6 +39,21 @@ Sans ressenti noté : « Idéal », ou « Dur » si une série est sous la fourc
 6. Reprise : plus de 3 semaines sans l'exercice → -10 % de charge, 3 séries max.
 7. Repos automatique : 3 min (6–10 reps), 2 min 30 (8–12), 1 min 45 (10–15), 1 min 30 (12–20).
 
+## Routine de la semaine (onglet Routine)
+| Principe | Règle dans l'app | Source |
+|---|---|---|
+| Entraîner un muscle 2 fois/semaine fait mieux qu'1 fois | Organisations proposées pour 1 à 6 séances, la « conseillée » vise 2 passages par muscle ; note si un muscle n'est vu qu'une fois | Schoenfeld et al. 2016, *Sports Medicine* 46(11) |
+| À volume égal, full body et haut/bas donnent une hypertrophie similaire | Plusieurs organisations au choix, aucune imposée | Études full body vs split à volume égal (ex. BMC Sports Sci Med Rehabil 2022) |
+| ≥ 48 h entre deux séances d'un même muscle | Alerte rouge si un même muscle est travaillé deux jours d'affilée (abdos exclus), orange s'il a été sollicité indirectement la veille (ex. triceps après les pecs) | Recommandation ACSM (position stand 2009) |
+| L'ordre des exercices ne change pas l'hypertrophie, mais la force progresse surtout sur les premiers | Polyarticulaires en tête, gros muscles avant petits, abdos à la fin : la progression en charge se fait là où on est le plus frais | Nunes et al. 2021, *Eur J Sport Sci* 21(2) |
+| 10–20 séries par muscle et par semaine | Séries ajustées (2 à 4 par exercice) pour viser au moins 10 et au plus 20 | Pelland et al. 2025 |
+
+Choix des exercices : pour chaque muscle, les exercices les plus pratiqués dans l'historique d'abord (un polyarticulaire en premier pour pecs, dos, jambes, épaules), en alternant d'une séance à l'autre. Une nouveauté au plus tous les 30 jours, à la place d'un exercice d'isolation. ↻ propose un autre exercice.
+
+Duos proposés : Pecs + Triceps et Dos + Biceps (muscles synergiques), Pecs + Dos (antagonistes, séries alternées), Jambes + Abdos, Épaules + Bras, Push, Pull, Haut du corps, Full body.
+
+Le jour J, la séance prévue apparaît en premier sur l'onglet Séance (« Aujourd'hui »), puis les suivantes dans l'ordre ; un jour sans séance affiche la prochaine.
+
 Les propositions sont une aide : la décision finale reste celle de l'utilisateur.
 
 *Assisté par IA*
