@@ -149,11 +149,24 @@ table.sets{width:100%;border-collapse:separate;border-spacing:0 4px;font-variant
 
 /* Feuille modale */
 .sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center}
-.sheet-in{background:var(--bg);width:100%;max-width:672px;max-height:90%;overflow:auto;border-radius:14px 14px 0 0;
+.sheet-in{background:var(--bg);width:100%;max-width:672px;max-height:calc(100vh - 48px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border-radius:14px 14px 0 0;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:22px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;position:relative}
 .sheet-in::before{content:"";position:absolute;top:7px;left:50%;width:36px;height:5px;margin-left:-18px;border-radius:3px;background:var(--line)}
 .sheet h3{margin:0;font-size:22px;font-weight:700}
+.sheet-in.tall{height:calc(100vh - 48px);height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:hidden;padding-bottom:0;gap:10px}
+.pick-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;min-height:36px}
+.pick-top b{font-size:17px;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tbtn{color:var(--accent);font-size:17px;justify-self:start;padding:6px 0;white-space:nowrap}
+.tbtn.strong{font-weight:600;justify-self:end}
+.tbtn:disabled{color:var(--muted);opacity:.6}
+.sheet-in.tall .chips{flex:none}
+.pick-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:flex;flex-direction:column;gap:12px;
+  margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+body.locked{overflow:hidden}
+.sheet-in > *, .pick-scroll > *{flex-shrink:0}
+.sheet-in.tall > .pick-scroll{flex:1 1 auto}
 .field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
 .field input,.field select,.field textarea,.search{border:0;background:var(--surface);border-radius:10px;padding:11px 12px;font-size:17px;color:var(--fg);width:100%}
 .search{background:var(--fill)}
@@ -817,8 +830,11 @@ function viewExercises(){
 }
 
 /* ---------- Feuilles, toasts ---------- */
-function openSheet(html, onClose){ sheetOnClose = onClose||null; document.getElementById("sheet-in").innerHTML = html; document.getElementById("sheet").hidden = false; }
-function closeSheet(){ document.getElementById("sheet").hidden = true; const f = sheetOnClose; sheetOnClose = null; if(f) f(); }
+function openSheet(html, onClose, cls){ sheetOnClose = onClose||null; const el = document.getElementById("sheet-in");
+  el.className = "sheet-in" + (cls ? " "+cls : ""); el.innerHTML = html; el.scrollTop = 0;
+  document.getElementById("sheet").hidden = false; document.body.classList.add("locked"); }
+function closeSheet(){ document.getElementById("sheet").hidden = true; document.body.classList.remove("locked");
+  picker = null; const f = sheetOnClose; sheetOnClose = null; if(f) f(); }
 document.getElementById("sheet").addEventListener("click", e => { if(e.target.id==="sheet") closeSheet(); });
 let toastT;
 function toast(msg){ const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(()=>t.hidden=true, 2600); }
@@ -830,17 +846,22 @@ function confirmSheet(title, text, okLabel, onOk){
 
 /* Sélecteur d'exercices (multi) */
 let picker = null;
-function openPicker(onDone, only){
+function openPicker(onDone, only, onCancel){
   picker = {sel:new Set(), onDone, only:only||null};
-  openSheet(`<h3>${only ? "Choisir un exercice" : "Ajouter des exercices"}</h3>
-    <input id="pick-q" class="search" type="search" placeholder="Rechercher" value="${esc(exFilter.q)}" aria-label="Rechercher un exercice">
+  const p = picker;
+  openSheet(`<div class="pick-top"><button class="tbtn" data-act="close">Annuler</button>
+      <b>${only ? "Choisir" : "Exercices"}</b>
+      ${only ? `<span class="tbtn"></span>` : `<button class="tbtn strong" id="pick-go" data-act="pick-done" disabled>Ajouter</button>`}</div>
+    <input id="pick-q" class="search" type="search" placeholder="Rechercher" value="${esc(exFilter.q)}" aria-label="Rechercher un exercice" autocomplete="off">
     ${chipsHTML()}
-    <div class="list" id="pick-list">${exListHTML(picker.sel,"pick")}</div>
-    ${only ? `<button class="btn" data-act="close">Fermer</button>` : `<button class="btn ghost" data-act="new-ex">+ Créer un exercice</button>
-    <button class="btn primary" id="pick-go" data-act="pick-done">Ajouter</button>`}`);
+    <div class="pick-scroll" id="pick-scroll">
+      <div class="list" id="pick-list">${exListHTML(p.sel,"pick")}</div>
+      ${only ? "" : `<button class="btn ghost wide" data-act="new-ex">+ Créer un exercice</button>`}
+    </div>`, onCancel, "tall");
+  picker = p;
 }
-function refreshPicker(){ document.getElementById("pick-list").innerHTML = exListHTML(picker.sel,"pick");
-  const n = picker.sel.size, go = document.getElementById("pick-go"); if(go) go.textContent = n ? `Ajouter ${n} exercice${n>1?"s":""}` : "Ajouter"; }
+function refreshPicker(){ const l = document.getElementById("pick-list"); if(!picker || !l) return; l.innerHTML = exListHTML(picker.sel,"pick");
+  const n = picker.sel.size, go = document.getElementById("pick-go"); if(go) go.disabled = !n; if(go) go.textContent = n ? `Ajouter (${n})` : "Ajouter"; }
 
 /* Éditeur de programme */
 let draft = null;
@@ -927,7 +948,7 @@ const ACT = {
   "r-inc": b => { draft.items[+b.dataset.k].sets = Math.min(10, draft.items[+b.dataset.k].sets+1); openRoutineEditor(); },
   "r-dec": b => { draft.items[+b.dataset.k].sets = Math.max(1, draft.items[+b.dataset.k].sets-1); openRoutineEditor(); },
   "r-del": b => { draft.items.splice(+b.dataset.k,1); openRoutineEditor(); },
-  "r-add": () => openPicker(ids => { ids.forEach(id => draft.items.push({exId:id, sets:3})); openRoutineEditor(); }),
+  "r-add": () => openPicker(ids => { ids.forEach(id => draft.items.push({exId:id, sets:3})); openRoutineEditor(); }, null, () => openRoutineEditor()),
   "r-save": () => {
     draft.name = draft.name.trim();
     if(!draft.name){ toast("Donnez un nom au programme"); return; }
@@ -940,12 +961,12 @@ const ACT = {
 
   "pick-ex": () => openPicker(ids => { ids.forEach(id => A().exercises.push({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})); touchProfile(); render(); }),
   "pick-toggle": b => { const id = b.dataset.id;
-    if(picker.only){ const f = picker.onDone; picker = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
+    if(picker.only){ const f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
   "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
     openPicker(ids => { progEx = ids[0]; render(); window.scrollTo(0,0); }, freq); },
-  "pick-done": () => { const ids = [...picker.sel], f = picker.onDone; picker = null; closeSheet(); if(ids.length) f(ids); },
+  "pick-done": () => { const ids = [...picker.sel], f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); if(ids.length) f(ids); },
   "filter-m": b => { exFilter.m = b.dataset.m; document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.m===exFilter.m));
-    if(picker) refreshPicker(); else { const l = document.getElementById("ex-list"); if(l) l.innerHTML = exListHTML(null,"browse"); } },
+    if(picker){ refreshPicker(); const sc = document.getElementById("pick-scroll"); if(sc) sc.scrollTop = 0; } else { const l = document.getElementById("ex-list"); if(l) l.innerHTML = exListHTML(null,"browse"); } },
   "new-ex": () => {
     const back = picker;
     openSheet(`<h3>Nouvel exercice</h3>
@@ -958,7 +979,7 @@ const ACT = {
       if(!name){ toast("Indiquez le nom de l'exercice"); return; }
       const e = {id:uidGen("x"), name, muscle:document.getElementById("nx-m").value, equip:document.getElementById("nx-e").value};
       S.profile.custom.push(e); touchProfile();
-      if(back){ picker = back; picker.sel.add(e.id); openPicker(back.onDone); picker.sel = back.sel; refreshPicker(); }
+      if(back){ back.sel.add(e.id); openPicker(back.onDone, back.only); picker.sel = back.sel; refreshPicker(); }
       else { closeSheet(); render(); }
       toast("Exercice créé");
     };
