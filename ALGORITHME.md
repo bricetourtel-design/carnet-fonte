@@ -66,14 +66,12 @@ Durée estimée = 5 min d'échauffement + par exercice : séries × (40 s d'effo
 ## Note de fin de séance
 Comparaison avec votre historique : 1RM estimé de chaque exercice vs la dernière fois (progrès > +1 %, recul < −2 %), volume vs la moyenne de vos 5 dernières séances, records battus. 😄 Excellente, 🙂 Bonne, 😐 Correcte, 😕 En dessous de vos habitudes ; 💪 Reprise réussie après plus de 3 semaines sans les exercices.
 
-## Séance du jour adaptée (onglet Séance, jour J)
-Base : la séance prévue par la Routine. Puis, d'après la récupération estimée et les points forts / faibles :
-- muscle à moins de 50 % de récupération → ses exercices sont retirés ;
-- muscle entre 50 et 90 % → une série de moins (2 minimum), charge prudente ;
-- point faible récupéré présent dans la séance → une série de plus et placé en tête (principe de priorité : ce qui est fait en début de séance progresse le plus, Nunes et al. 2021) ;
-- exercices retirés remplacés, dans la limite de leur nombre, par des exercices de muscles récupérés : points faibles d'abord, puis muscles prévus ce jour ;
-- moins de 2 exercices restants → séance courte et légère, ou séance à décaler.
-Les changements sont listés sur la carte « Aujourd'hui » et appliqués quand on démarre la séance. Les autres jours, la séance prévue reste inchangée.
+## Séance du jour (onglet Séance, jour J)
+1. **Choix de la séance** : l'app compare la séance prévue, les autres séances de la semaine encore à faire et des séances par duo de muscles (Pecs + Triceps, Dos + Biceps, Jambes + Abdos…).
+   Score = récupération moyenne des muscles de la séance (pondérée par leur taille) − 40 par muscle sous 50 % − 12 par muscle entre 50 et 90 % + 8 par point faible récupéré + bonus routine (15 pour la séance prévue, 6 pour une autre séance de la semaine).
+   La séance prévue est gardée sauf si une autre fait au moins 10 points de mieux. Si c'est une autre séance de la semaine, les deux sont **échangées** (la séance prévue passe à son jour).
+2. **Ajustements** sur la séance choisie : muscle sous 50 % → exercice retiré ; 50–90 % → allégé ; point faible récupéré → une série de plus, en tête ; exercices retirés remplacés par des muscles récupérés.
+3. **Vous gardez la main** : « Autres options du jour » permet de garder la séance prévue, de choisir une autre option, ou de revenir au choix automatique.
 
 Les propositions sont une aide : la décision finale reste celle de l'utilisateur.
 
