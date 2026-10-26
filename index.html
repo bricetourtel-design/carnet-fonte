@@ -268,6 +268,14 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .new{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--m-bic);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:2px}
 .ctag.ok{background:var(--ok)} .ctag.soft{background:var(--muted)}
 .todaycard{box-shadow:0 0 0 2px var(--accent)}
+.rec{display:flex;flex-direction:column;gap:9px}
+.rec-row{display:grid;grid-template-columns:96px 1fr;grid-template-areas:"m b" "m s";column-gap:12px;row-gap:2px;align-items:center}
+.rec-row .rm{grid-area:m;font-size:15px}
+.rec-bar{grid-area:b;height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
+.rec-bar i{display:block;height:100%;border-radius:4px;background:var(--ok)}
+.rec-row.mid .rec-bar i{background:var(--warm)} .rec-row.low .rec-bar i{background:var(--danger)}
+.rec-row .rs{grid-area:s;font-size:12px;color:var(--muted)}
+.rec-row.mid .rs{color:var(--warm)} .rec-row.low .rs{color:var(--danger)}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 .foot{font-size:13px;color:var(--muted);text-align:center;padding-top:8px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -293,7 +301,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-26 c";
+const APP_VERSION = "2026-10-26 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -821,6 +829,29 @@ function render(){
   tickClock(); wakeLock();
 }
 
+/* Récupération estimée par muscle : temps de base (48–72 h) modulé par le nombre de séries,
+   le ressenti et le travail indirect (ex. triceps dans les développés) */
+const REC_BASE = {Jambes:66, Dos:56, Pectoraux:56, "Épaules":44, Biceps:44, Triceps:44, Abdos:30};
+function recovery(m, now){
+  now = now || Date.now();
+  let pct = 1, readyIn = 0, last = 0;
+  S.workouts.forEach(w => {
+    const end = w.end || w.start; if(now - end > 7*86400000 || end > now) return;
+    let load = 0, hard = 1;
+    w.exercises.forEach(ex => { const e = exById(ex.exId), n = workSets(ex).length; if(!n) return;
+      const f = ex.feel>=5 ? 1.15 : ex.feel===4 ? 1.08 : ex.feel && ex.feel<=2 ? 0.9 : 1;
+      if(e.muscle===m){ load += n; hard = Math.max(hard, f); }
+      else if((SYN[e.muscle]||[]).includes(m) && isCompound(e)){ load += n*0.5; hard = Math.max(hard, f); } });
+    if(!load) return;
+    const need = Math.min(84, REC_BASE[m] * Math.min(1.2, 0.6 + load/14) * hard);   // heures, 84 h max
+    const h = (now - end)/3600000;
+    pct = Math.min(pct, h/need); readyIn = Math.max(readyIn, need - h); last = Math.max(last, end);
+  });
+  return {pct:Math.max(0, Math.min(1, pct)), readyIn:Math.max(0, readyIn), last};
+}
+function recState(r){ return r.pct>=0.9 ? {k:"ok", label:"Récupéré"} : r.pct>=0.5 ? {k:"mid", label:"En récupération"} : {k:"low", label:"Fatigué"}; }
+const fmtHours = h => h < 1 ? "moins d'1 h" : h < 36 ? `${Math.round(h)} h` : `${Math.round(h/24)} j`;
+
 function viewHome(){
   const now = Date.now(), ws = weekStart(now);
   const thisWeek = S.workouts.filter(w => w.start >= ws);
@@ -836,6 +867,10 @@ function viewHome(){
   const card = r => `
     <div class="card routine ${ord[0] && ord[0].r===r && ord[0].delta===0 && !ord[0].done ? "todaycard" : ""}">
       ${badge(r) ? `<div>${badge(r)}</div>` : ""}
+      ${(() => { const o = ord.find(x => x.r===r); if(!o || o.delta>1 || o.done) return "";
+        const ms = [...new Set(r.items.map(it => exById(it.exId).muscle))], at = Date.now() + o.delta*86400000;
+        const tired = ms.map(m => [m, recovery(m, o.delta ? new Date(new Date().setHours(18,0,0,0)).getTime() + 86400000 : at)]).filter(([,x]) => x.pct < 0.9);
+        return tired.length ? `<div class="alert ${tired.some(([,x])=>x.pct<0.5)?"danger":"warn"}">${o.delta?"Demain : ":""}${tired.map(([m,x]) => `${m} à ${Math.round(x.pct*100)} %`).join(", ")} de récupération. Allégez ces exercices ou décalez la séance.</div>` : ""; })()}
       <div class="row"><h3>${esc(r.name)}</h3><span class="spacer"></span>
         <button class="btn sm ghost" data-act="edit-routine" data-id="${r.id}">Modifier</button></div>
       ${r.items.length?`<div class="strip">${r.items.slice(0,6).map(it => thumb(exById(it.exId))).join("")}</div>`:""}
@@ -854,9 +889,12 @@ function viewHome(){
       </div>
     </section>
     <section class="card">
-      <div class="row" style="margin-bottom:8px"><b style="flex:1">Séries par muscle cette semaine</b><span class="small muted">cible 10–20</span></div>
-      <div class="vol">${MUSCLES.map(m => { const n = muscleSetsThisWeek(m), pct = Math.min(100, n/20*100);
-        return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${pct}%;${mc(m)}"></i><em></em></div><b class="num">${n}</b></div>`; }).join("")}</div>
+      <div class="row" style="margin-bottom:10px"><b style="flex:1">Récupération des muscles</b><span class="small muted">estimation</span></div>
+      <div class="rec">${MUSCLES.map(m => { const r = recovery(m), st = recState(r);
+        return `<div class="rec-row ${st.k}"><span class="rm"><span class="mdot" style="${mc(m)}"></span>${m}</span>
+          <div class="rec-bar"><i style="width:${Math.round(r.pct*100)}%"></i></div>
+          <span class="rs">${st.k==="ok" ? (r.last ? "Récupéré" : "Reposé") : `${st.label} · prêt dans ${fmtHours(r.readyIn)}`}</span></div>`; }).join("")}</div>
+      <p class="small muted" style="margin:10px 0 0">Calculé sur 48 à 72 h selon le muscle, ajusté au nombre de séries, au ressenti et au travail indirect.</p>
     </section>
     <button class="btn primary wide" data-act="start-empty">Démarrer une séance libre</button>
     <h2 class="big">${ord.length ? "Ma semaine" : "Mes programmes"}</h2>
