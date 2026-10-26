@@ -303,6 +303,9 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .rating ul{margin:4px 0 0;padding-left:18px;font-size:14px;color:var(--muted)}
 .chip.sm{padding:5px 10px;font-size:13px}
 .tsel{gap:6px}
+.adapt{background:var(--fill);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.adapt .ch.up{color:var(--ok)} .adapt .ch.down{color:var(--warm)}
+.tagx.warnx{background:var(--warm)}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 .foot{font-size:13px;color:var(--muted);text-align:center;padding-top:8px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -329,7 +332,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <div class="flash" id="flash" data-act="flash-close" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-27 a";
+const APP_VERSION = "2026-10-27 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -854,6 +857,59 @@ function viewStrength(){
   </section>`;
 }
 
+/* ---------- Séance du jour adaptée ----------
+   Base : la séance prévue dans la routine. Muscles à moins de 50 % de récupération : exercices retirés ;
+   entre 50 et 90 % : une série de moins. Points faibles récupérés : une série de plus et placés en tête
+   (principe de priorité), ou un exercice ajouté à la place d'un exercice retiré. */
+function adaptToday(r){
+  const {res} = strengthByMuscle(), rec = {}, changes = [];
+  MUSCLES.forEach(m => rec[m] = recovery(m).pct);
+  const weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible" && rec[m] >= 0.9);
+  let items = r.items.map(it => { const e = exById(it.exId); return {exId:it.exId, sets:it.sets, muscle:e.muscle, comp:isCompound(e)}; });
+  const removed = [];
+  items = items.filter(it => {
+    const pc = rec[it.muscle];
+    if(pc < 0.5){ removed.push(it); return false; }
+    if(pc < 0.9){ if(it.sets > 2) it.sets--; it.flag = "rec"; }
+    return true;
+  });
+  const lowMs = [...new Set(removed.map(x => x.muscle))];
+  if(lowMs.length) changes.push({k:"down", t:`Retiré : ${removed.map(x => exById(x.exId).name).join(", ")} (${lowMs.map(m => m.toLowerCase()+" à "+Math.round(rec[m]*100)+" %").join(", ")} de récupération)`});
+  const lighter = items.filter(x => x.flag==="rec");
+  if(lighter.length) changes.push({k:"down", t:`En récupération, à alléger (séries réduites jusqu’à 2 minimum) : ${[...new Set(lighter.map(x=>x.muscle))].map(m => m.toLowerCase()+" à "+Math.round(rec[m]*100)+" %").join(", ")}`});
+  // Points faibles : renforcer ceux de la séance, ajouter les autres à la place des exercices retirés
+  const st = exStats(); let budget = removed.length;
+  weak.forEach(m => {
+    const mine = items.filter(it => it.muscle===m);
+    if(mine.length){ const it = mine[0]; if(it.sets < 5){ it.sets++; } mine.forEach(x => x.weak = true);
+      changes.push({k:"up", t:`Point faible ${m.toLowerCase()} : placé en tête, une série de plus`}); }
+    else if(budget > 0){
+      const c = candidatesFor(m, st).find(c => c.n > 0 && !items.some(x => x.exId===c.e.id)) || candidatesFor(m, st)[0];
+      if(c){ items.push({exId:c.e.id, sets:3, muscle:m, comp:c.comp, weak:true, added:true}); budget--;
+        changes.push({k:"up", t:`Ajouté pour le point faible ${m.toLowerCase()} : ${c.e.name}`}); }
+    }
+  });
+  // Exercices retirés remplacés par des muscles récupérés : points faibles, puis muscles prévus ce jour, puis abdos
+  if(budget > 0){
+    const dayMs = [...new Set(r.items.map(it => exById(it.exId).muscle))];
+    const pool = [...new Set([...weak, ...dayMs, ...PRIO])].filter(m => rec[m] >= 0.9);
+    for(const m of pool){ if(budget <= 0) break;
+      const c = candidatesFor(m, st).find(c => c.n > 0 && !items.some(x => x.exId===c.e.id));
+      if(!c) continue;
+      items.push({exId:c.e.id, sets:3, muscle:m, comp:c.comp, added:true, weak:weak.includes(m)}); budget--;
+      changes.push({k:"up", t:`Ajouté (${m.toLowerCase()} récupéré${weak.includes(m)?", point faible":""}) : ${c.e.name}`});
+    }
+  }
+  // Séance vidée : on garde au moins 2 exercices des muscles les mieux récupérés
+  if(items.length < 2 && removed.length){
+    removed.sort((a,b) => rec[b.muscle]-rec[a.muscle]).slice(0, 2-items.length).forEach(it => { items.push({...it, sets:2, flag:"rec"}); });
+    changes.push({k:"down", t:"Peu de muscles récupérés : séance courte et légère. Décaler la séance est aussi une bonne option."});
+  }
+  items.sort((a,b) => (a.muscle==="Abdos")-(b.muscle==="Abdos") || (b.weak?1:0)-(a.weak?1:0) || b.comp-a.comp || PRIO.indexOf(a.muscle)-PRIO.indexOf(b.muscle));
+  return {items, changes};
+}
+const isTodayPlan = r => r.plan && r.dow===todayDow() && !S.workouts.some(w => w.routineId===r.id && w.start >= new Date().setHours(0,0,0,0));
+
 /* ---------- Note de la séance ---------- */
 function rateWorkout(w){
   const before = S.workouts.filter(x => x.start < w.start && x.id!==w.id);
@@ -1043,19 +1099,20 @@ function viewHome(){
   const badge = r => { const o = ord.find(x => x.r===r); if(!o) return "";
     return o.done ? '<span class="ctag ok">Faite aujourd\'hui</span>' : o.delta===0 ? '<span class="ctag">Aujourd\'hui</span>' : o.delta===1 ? '<span class="ctag soft">Demain</span>' : ""; };
   const restBanner = ord.length && !ord.some(o => o.delta===0) ? `<div class="alert warn">Jour de repos aujourd'hui. Prochaine séance : <b>${esc(ord[0].r.name)}</b>.</div>` : "";
-  const card = r => `
+  const card = r => { const ad = isTodayPlan(r) ? adaptToday(r) : null, its = ad ? ad.items : r.items; return `
     <div class="card routine ${ord[0] && ord[0].r===r && ord[0].delta===0 && !ord[0].done ? "todaycard" : ""}">
       ${badge(r) ? `<div>${badge(r)}</div>` : ""}
-      ${(() => { const o = ord.find(x => x.r===r); if(!o || o.delta>1 || o.done) return "";
+      ${(() => { const o = ord.find(x => x.r===r); if(!o || o.delta>1 || o.done || ad) return "";
         const ms = [...new Set(r.items.map(it => exById(it.exId).muscle))], at = Date.now() + o.delta*86400000;
         const tired = ms.map(m => [m, recovery(m, o.delta ? new Date(new Date().setHours(18,0,0,0)).getTime() + 86400000 : at)]).filter(([,x]) => x.pct < 0.9);
         return tired.length ? `<div class="alert ${tired.some(([,x])=>x.pct<0.5)?"danger":"warn"}">${o.delta?"Demain : ":""}${tired.map(([m,x]) => `${m} à ${Math.round(x.pct*100)} %`).join(", ")} de récupération. Allégez ces exercices ou décalez la séance.</div>` : ""; })()}
       <div class="row"><h3>${esc(r.name)}</h3><span class="spacer"></span>
         <button class="btn sm ghost" data-act="edit-routine" data-id="${r.id}">Modifier</button></div>
-      ${r.items.length?`<div class="strip">${r.items.slice(0,6).map(it => thumb(exById(it.exId))).join("")}</div>`:""}
-      <ul>${r.items.map(it => `<li><b>${it.sets} ×</b> ${esc(exById(it.exId).name)}</li>`).join("") || "<li>Aucun exercice</li>"}</ul>
+      ${ad && ad.changes.length ? `<div class="adapt"><b>Séance adaptée à votre récupération et à vos points faibles</b>${ad.changes.map(c => `<div class="ch ${c.k}">${c.k==="up"?"▲":"▼"} ${esc(c.t)}</div>`).join("")}</div>` : ""}
+      ${its.length?`<div class="strip">${its.slice(0,6).map(it => thumb(exById(it.exId))).join("")}</div>`:""}
+      <ul>${its.map(it => `<li><b>${it.sets} ×</b> ${esc(exById(it.exId).name)}${it.added?' <span class="tagx ok">ajouté</span>':it.weak?' <span class="tagx ok">point faible</span>':it.flag==="rec"?' <span class="tagx warnx">allégé</span>':""}</li>`).join("") || "<li>Aucun exercice</li>"}</ul>
       <button class="btn primary" data-act="start-routine" data-id="${r.id}">Démarrer ${esc(r.name)}</button>
-    </div>`;
+    </div>`; };
   const others = S.profile.routines.filter(r => !r.plan);
   const routines = restBanner + ord.map(o => card(o.r)).join("") + (ord.length && others.length ? `<h2 class="big">Autres programmes</h2>` : "") + others.map(card).join("");
   return `
@@ -1395,7 +1452,8 @@ const ACT = {
   goto: b => { tab = b.dataset.tab; render(); },
   "start-empty": () => startWorkout("Séance libre", []),
   "start-routine": b => { const r = S.profile.routines.find(x=>x.id===b.dataset.id); if(!r) return;
-    startWorkout(r.name, r.items.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), r.id); },
+    const its = isTodayPlan(r) ? adaptToday(r).items : r.items;
+    startWorkout(r.name, its.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), r.id); },
   "new-routine": () => { draft = {id:uidGen("r"), name:"", items:[]}; openRoutineEditor(); },
   "edit-routine": b => { const r = S.profile.routines.find(x=>x.id===b.dataset.id); if(!r) return; draft = clone(r); openRoutineEditor(); },
   "r-inc": b => { draft.items[+b.dataset.k].sets = Math.min(10, draft.items[+b.dataset.k].sets+1); openRoutineEditor(); },
