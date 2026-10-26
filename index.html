@@ -276,6 +276,33 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .rec-row.mid .rec-bar i{background:var(--warm)} .rec-row.low .rec-bar i{background:var(--danger)}
 .rec-row .rs{grid-area:s;font-size:12px;color:var(--muted)}
 .rec-row.mid .rs{color:var(--warm)} .rec-row.low .rs{color:var(--danger)}
+.flash{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;
+  color:#fff;background:radial-gradient(circle at 50% 40%,#3d9bff,#0a63d8 60%,#0646a8);padding:24px max(24px,env(safe-area-inset-left,0px));animation:flin .25s ease-out}
+.flash b{font-size:32px;font-weight:800;letter-spacing:-.01em}
+.flash span{font-size:15px;opacity:.85}
+.fl-ring{width:190px;height:190px;border-radius:50%;display:grid;place-items:center;border:6px solid rgba(255,255,255,.9);animation:pulse 1s ease-in-out infinite}
+.fl-ring span{font-size:96px;font-weight:800;opacity:1;font-variant-numeric:tabular-nums}
+.fl-ring.go{animation:pulse .32s ease-in-out 3}
+.fl-ring.go span{font-size:64px}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.5)}50%{transform:scale(1.07);box-shadow:0 0 0 22px rgba(255,255,255,0)}}
+@keyframes flin{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){.fl-ring,.flash{animation:none!important}}
+.body{width:100%;max-width:340px;margin:0 auto;display:block}
+.body text{fill:var(--muted);font-size:10px;font-family:var(--body)}
+.body .bm{cursor:pointer}
+.body .bm.sel{stroke:var(--fg);stroke-width:1.5}
+.tagx{display:inline-block;font-size:11px;font-weight:700;color:#fff!important;border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.tagx.ok{background:var(--ok)} .tagx.bad{background:var(--danger)}
+.lvl{font-size:11px;letter-spacing:1px;color:var(--accent);white-space:nowrap}
+.lvl .muted{color:var(--line)}
+.bdetail{display:flex;flex-direction:column;gap:8px;padding:4px 16px 12px 16px;font-size:14px}
+.bdetail div{display:flex;flex-direction:column}
+.bdetail span{color:var(--muted);font-size:13px}
+.rating{display:flex;gap:14px;align-items:center}
+.remo{font-size:56px;line-height:1}
+.rating ul{margin:4px 0 0;padding-left:18px;font-size:14px;color:var(--muted)}
+.chip.sm{padding:5px 10px;font-size:13px}
+.tsel{gap:6px}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 .foot{font-size:13px;color:var(--muted);text-align:center;padding-top:8px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -299,9 +326,10 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 </nav>
 <div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheet-in" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
+<div class="flash" id="flash" data-act="flash-close" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-26 d";
+const APP_VERSION = "2026-10-27 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -579,11 +607,11 @@ const todayDow = () => (new Date().getDay()+6)%7;
 let planDraft = null;
 function newDraft(n){
   const tpl = TEMPLATES[n][0];
-  return {n, tpl:tpl.id, days: DEFAULT_DAYS[n].map((dow,i) => ({dow, muscles:tpl.days[i].slice(), off:{}})), novOff:0};
+  return {n, tpl:tpl.id, days: DEFAULT_DAYS[n].map((dow,i) => ({dow, muscles:tpl.days[i].slice(), off:{}, min:60})), novOff:0};
 }
 function initDraft(){
   const p = S.profile.plan;
-  if(p && p.days && p.days.length) return {n:p.days.length, tpl:p.tpl||"", days:p.days.map(d => ({dow:d.dow, muscles:d.muscles.slice(), off:{...(d.off||{})}})), novOff:0};
+  if(p && p.days && p.days.length) return {n:p.days.length, tpl:p.tpl||"", days:p.days.map(d => ({dow:d.dow, muscles:d.muscles.slice(), off:{...(d.off||{})}, min:d.min||60})), novOff:0};
   return newDraft(3);
 }
 function exStats(){
@@ -597,15 +625,20 @@ function candidatesFor(m, st){
   return allEx().filter(e => e.muscle===m).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
     .sort((a,b) => b.n-a.n || b.comp-a.comp || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
 }
+function estMinutes(items){
+  return 5 + items.reduce((t,it) => { const e = exById(it.exId), rest = S.profile.rest<0 ? (REST_BY_RANGE[repRange(e)[0]]||120) : (S.profile.rest||90);
+    return t + (it.sets*(40 + rest) + 90)/60; }, 0);
+}
 function generatePlan(d){
   const st = exStats(), seen = {}, days = d.days.slice().sort((a,b)=>a.dow-b.dow);
   const out = days.map(day => {
     const ms = day.muscles.slice().sort((a,b) => PRIO.indexOf(a)-PRIO.indexOf(b));
-    const sumW = ms.reduce((t,m) => t+WEIGHT[m], 0), slots = ms.length===1 ? 4 : 6;
+    const mins = day.min || 60, sumW = ms.reduce((t,m) => t+WEIGHT[m], 0);
+    const slots = Math.max(2, Math.min(9, Math.floor((mins - 5)/9.5 + 0.3)));   // ~9,5 min par exercice de 3 séries, 5 min d'échauffement
     const items = [], used = new Set();
     ms.forEach(m => {
       const k = seen[m] = (seen[m]||0) + 1;           // k-ième séance de la semaine pour ce muscle
-      const cnt = m==="Abdos" ? 1 : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
+      const cnt = m==="Abdos" ? (slots>=5 ? 1 : 0) : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
       const all = candidatesFor(m, st), done = all.filter(c => c.n>0);
       const pool = done.length >= cnt ? done : all;
       for(let j=0;j<cnt;j++){
@@ -619,7 +652,7 @@ function generatePlan(d){
         used.add(c.e.id); items.push({exId:c.e.id, muscle:m, slot:m+":"+j, comp:c.comp, n:c.n, sets:3});
       }
     });
-    return {dow:day.dow, muscles:ms, name:dayName(ms), items};
+    return {dow:day.dow, muscles:ms, name:dayName(ms), items, min:mins};
   });
   // Nouveauté : une par mois au plus, sur un exercice d'isolation de la plus grosse séance
   const nov = S.profile.novelty, due = !nov || Date.now() - nov.date > 30*86400000;
@@ -641,6 +674,17 @@ function generatePlan(d){
     const its = out.flatMap(day => day.items.filter(it => it.muscle===m));
     while(weekly[m] < 10 && its.some(it => it.sets < 4)){ const it = its.filter(x => x.sets<4).sort((a,b) => a.sets-b.sets || b.comp-a.comp)[0]; it.sets++; weekly[m]++; }
     while(weekly[m] > 20 && its.some(it => it.sets > 2)){ const it = its.filter(x => x.sets>2).sort((a,b) => b.sets-a.sets || a.comp-b.comp)[0]; it.sets--; weekly[m]--; }
+  });
+  // Temps disponible : on retire des séries d'isolation, puis des exercices, si la séance déborde
+  out.forEach(day => {
+    while(estMinutes(day.items) > day.min*1.05){
+      const iso = day.items.filter(it => it.sets>2).sort((a,b) => a.comp-b.comp || b.sets-a.sets)[0];
+      if(iso){ iso.sets--; weekly[iso.muscle]--; continue; }
+      if(day.items.length <= 2) break;
+      const drop = day.items.slice().reverse().find(it => !it.comp) || day.items[day.items.length-1];
+      day.items.splice(day.items.indexOf(drop),1); weekly[drop.muscle] -= drop.sets;
+    }
+    day.est = Math.round(estMinutes(day.items));
   });
   // Ordre : polyarticulaires d'abord, gros muscles avant petits, abdos en dernier
   out.forEach(day => day.items.sort((a,b) => (a.muscle==="Abdos")-(b.muscle==="Abdos") || b.comp-a.comp || PRIO.indexOf(a.muscle)-PRIO.indexOf(b.muscle)));
@@ -668,7 +712,8 @@ function viewPlan(){
   const dayCards = g.days.map(day => {
     const k = d.days.findIndex(x => x.dow===day.dow), al = g.alerts.filter(a => a.dow===day.dow);
     return `<section class="card pday">
-      <div class="row"><b class="pdow">${DOWS[day.dow]}</b><span class="spacer"></span><span class="small muted">${esc(day.name)}</span></div>
+      <div class="row"><b class="pdow">${DOWS[day.dow]}</b><span class="spacer"></span><span class="small muted">${esc(day.name)}${day.items.length?` · ≈ ${day.est} min`:""}</span></div>
+      <div class="row wrap tsel"><span class="small muted">Temps dispo</span>${[30,45,60,75,90,120].map(t => `<button class="chip sm" data-act="plan-min" data-k="${k}" data-t="${t}" aria-pressed="${(d.days[k].min||60)===t}">${t<60?t+" min":t===60?"1 h":Math.floor(t/60)+" h"+(t%60?" "+(t%60):"")}</button>`).join("")}</div>
       ${al.map(a => `<div class="alert ${a.level}">${a.level==="danger"?"⚠︎":"ⓘ"} ${esc(a.text)}</div>`).join("")}
       <div class="chips wrapc">${MUSCLES.map(m => `<button class="chip" data-act="plan-muscle" data-k="${k}" data-m="${m}" aria-pressed="${day.muscles.includes(m)}" style="${mc(m)}"><span class="mdot"></span>${m}</button>`).join("")}</div>
       <details class="duos"><summary>Duos conseillés</summary><div class="duo-list">${DUOS.map((u,ui) => `<button class="duo" data-act="plan-duo" data-k="${k}" data-u="${ui}"><b>${esc(u.label)}</b><span>${esc(u.why)}</span></button>`).join("")}</div></details>
@@ -702,7 +747,7 @@ function planSave(){
   const g = generatePlan(planDraft);
   S.profile.routines = S.profile.routines.filter(r => !r.plan).concat(g.days.filter(x => x.items.length).map(day => ({
     id:"plan-"+day.dow, plan:true, dow:day.dow, name:`${DOWS[day.dow]} · ${day.name}`, items:day.items.map(it => ({exId:it.exId, sets:it.sets}))})));
-  S.profile.plan = {tpl:planDraft.tpl, created:Date.now(), days:planDraft.days.map(x => ({dow:x.dow, muscles:x.muscles.slice(), off:{...x.off}}))};
+  S.profile.plan = {tpl:planDraft.tpl, created:Date.now(), days:planDraft.days.map(x => ({dow:x.dow, muscles:x.muscles.slice(), off:{...x.off}, min:x.min||60}))};
   if(g.novelty) S.profile.novelty = {exId:g.novelty.exId, date:Date.now()};
   touchProfile();
 }
@@ -712,6 +757,140 @@ function planOrder(){
   const doneToday = new Set(S.workouts.filter(w => w.start >= d0.getTime()).map(w => w.routineId));
   return S.profile.routines.filter(r => r.plan).map(r => ({r, delta:(r.dow - t + 7) % 7, done: r.dow===t && doneToday.has(r.id)}))
     .sort((a,b) => (a.done - b.done) || a.delta - b.delta);
+}
+
+/* ---------- Points forts / points faibles ----------
+   Base de référence : niveaux de force relatifs au poids de corps (1RM estimé / poids de corps),
+   valeurs « intermédiaire » usuelles chez l'homme, ×0,6 (haut) et ×0,75 (bas) pour la référence femmes.
+   Pour les haltères, la charge est celle d'un haltère. Exercices au poids du corps : en répétitions. */
+const STD = {"dc-barre":1.0,"di-barre":0.85,"dc-halteres":0.36,"di-halteres":0.32,"ecarte-halteres":0.18,"ecarte-poulie":0.35,
+  "dm-barre":0.65,"dm-halteres":0.28,"elev-lat":0.17,"oiseau":0.14,"face-pull":0.6,
+  "squat":1.4,"front-squat":1.1,"souleve-terre":1.7,"sdt-roumain":1.2,"hip-thrust":1.4,"fentes":0.3,"bulgare":0.3,"leg-ext":0.9,"leg-curl":0.7,
+  "rowing-barre":0.85,"rowing-haltere":0.45,"tirage-vertical":0.8,"tirage-horizontal":0.8,"pullover":0.4,
+  "curl-barre":0.5,"curl-halteres":0.2,"curl-marteau":0.22,"curl-pupitre":0.4,"ext-poulie":0.45,"barre-front":0.45,"ext-nuque":0.2,
+  // Exercices Gravl comparables (poids libres) ; les machines à disques ou à charge guidée sont exclues : leur résistance varie trop d'un modèle à l'autre
+  "gx-curl-a-la-barre-ez":0.45,"gx-curl-avec-halteres-assis":0.19,"gx-curl-marteau-incline":0.18,"gx-elevation-laterale-assise":0.15,
+  "gx-rowing-vertical-avec-halteres":0.25,"gx-extension-verticale-d-un-bras-avec-haltere":0.12,"gx-haussement-d-epaules-aux-halteres":0.5,"gx-ecarte-incline-avec-halteres":0.16};
+const STD_REPS = {"tractions":9,"gx-chin-up":10,"dips":15,"pompes":30,"gx-dips-pour-triceps":15};
+const LEVELS = ["Débutant","Novice","Intermédiaire","Avancé","Élite"], LMULT = [0.5,0.75,1,1.35,1.75];
+function detectBodyweight(){
+  let bw = 0;   // charge notée sur les tractions dans Gravl = poids de corps
+  S.workouts.forEach(w => w.exercises.forEach(ex => { if(/tractions|chin-up/.test(ex.exId)) workSets(ex).forEach(s => { const x = num(s.w); if(x>40 && x<200) bw = x; }); }));
+  return bw;
+}
+const bodyweight = () => num(S.profile.bw) || detectBodyweight() || 0;
+function levelScore(v, ref){   // 0..5, continu entre les seuils
+  const t = LMULT.map(m => m*ref);
+  if(v <= t[0]) return Math.max(0, v/t[0]);
+  for(let i=1;i<t.length;i++) if(v <= t[i]) return i + (v-t[i-1])/(t[i]-t[i-1]);
+  return 5;
+}
+function strengthByMuscle(){
+  const bw = bodyweight(), female = S.profile.sex==="f", now = Date.now(), res = {};
+  MUSCLES.forEach(m => res[m] = {m, ex:[], score:null, trend:null});
+  if(!bw) return {bw, res, avg:null};
+  allEx().forEach(e => {
+    const ref0 = STD[e.id], refR = STD_REPS[e.id]; if(!ref0 && !refR) return;
+    const h = exHistory(e.id); if(!h.length) return;
+    const recent = h.filter(x => now - x.ts < 120*86400000), base = recent.length ? recent : h;
+    const scale = female ? (e.muscle==="Jambes" ? 0.75 : 0.6) : 1;
+    let score, val, txt;
+    if(refR){ val = Math.max(...base.flatMap(x => x.sets.map(s => num(s.r)))); score = levelScore(val, refR*scale); txt = `${val} reps`; }
+    else { val = Math.max(...base.map(x => x.best)) / bw; score = levelScore(val, ref0*scale); txt = `1RM ${fmtN(val*bw)} kg = ${fmtN(val,2)} × poids de corps`; }
+    // Évolution : meilleur 1RM des 6 dernières semaines de pratique vs les 6 semaines précédentes
+    const lastTs = h[h.length-1].ts, cut = lastTs - 42*86400000, cut2 = cut - 42*86400000;
+    const a = h.filter(x => x.ts > cut), b = h.filter(x => x.ts <= cut && x.ts > cut2);
+    const trend = (!refR && a.length && b.length) ? Math.max(...a.map(x=>x.best)) / Math.max(...b.map(x=>x.best)) - 1 : null;
+    res[e.muscle].ex.push({e, score, txt, trend, old:!recent.length, n:h.length});
+  });
+  MUSCLES.forEach(m => { const r = res[m]; if(!r.ex.length) return;
+    r.ex.sort((a,b) => b.n-a.n);
+    const top = r.ex.slice(0,3); r.score = top.reduce((t,x)=>t+x.score,0)/top.length;
+    const tr = top.filter(x => x.trend!==null); r.trend = tr.length ? tr.reduce((t,x)=>t+x.trend,0)/tr.length : null; });
+  const sc = MUSCLES.map(m => res[m].score).filter(x => x!==null), avg = sc.length ? sc.reduce((a,b)=>a+b,0)/sc.length : null;
+  MUSCLES.forEach(m => { const r = res[m]; if(r.score===null) return;
+    r.rel = r.score - avg; r.tag = r.rel >= 0.5 ? "fort" : r.rel <= -0.5 ? "faible" : "moyen"; });
+  return {bw, res, avg};
+}
+function bodySVG(res, sel){
+  const col = m => { const r = res[m]; if(!r || r.score===null) return "var(--surface-2)"; return r.tag==="fort" ? "var(--ok)" : r.tag==="faible" ? "var(--danger)" : "var(--accent)"; };
+  const sh = (m, el) => `<g data-act="body-m" data-m="${m}" class="bm ${sel===m?"sel":""}" fill="${col(m)}">${el}</g>`;
+  const base = `fill="var(--fill)"`;
+  const fig = (x0, front) => `<g transform="translate(${x0},0)">
+    <circle cx="50" cy="16" r="10" ${base}/><rect x="45" y="25" width="10" height="7" ${base}/>
+    <path d="M30 34 Q50 30 70 34 L68 92 Q50 98 32 92 Z" ${base}/>
+    <ellipse cx="22" cy="86" rx="5" ry="12" ${base}/><ellipse cx="78" cy="86" rx="5" ry="12" ${base}/>
+    <path d="M33 92 Q50 100 67 92 L66 104 Q50 110 34 104 Z" ${base}/>
+    ${sh("Épaules", `<circle cx="29" cy="40" r="8"/><circle cx="71" cy="40" r="8"/>`)}
+    ${front ? sh("Pectoraux", `<path d="M35 44 Q42 40 49 44 L49 58 Q41 61 35 56 Z"/><path d="M65 44 Q58 40 51 44 L51 58 Q59 61 65 56 Z"/>`)
+            : sh("Dos", `<path d="M38 34 Q50 31 62 34 L58 46 L42 46 Z"/><path d="M36 48 L49 48 L49 80 Q41 78 38 70 Z"/><path d="M64 48 L51 48 L51 80 Q59 78 62 70 Z"/>`)}
+    ${front ? sh("Biceps", `<ellipse cx="24" cy="60" rx="5" ry="11"/><ellipse cx="76" cy="60" rx="5" ry="11"/>`)
+            : sh("Triceps", `<ellipse cx="24" cy="60" rx="5" ry="11"/><ellipse cx="76" cy="60" rx="5" ry="11"/>`)}
+    ${front ? sh("Abdos", `<rect x="43" y="62" width="14" height="28" rx="4"/>`) : ""}
+    ${sh("Jambes", front ? `<ellipse cx="42" cy="124" rx="8" ry="20"/><ellipse cx="58" cy="124" rx="8" ry="20"/><ellipse cx="42" cy="166" rx="5.5" ry="15"/><ellipse cx="58" cy="166" rx="5.5" ry="15"/>`
+      : `<ellipse cx="42" cy="104" rx="8" ry="8"/><ellipse cx="58" cy="104" rx="8" ry="8"/><ellipse cx="42" cy="132" rx="7.5" ry="16"/><ellipse cx="58" cy="132" rx="7.5" ry="16"/><ellipse cx="42" cy="168" rx="5.5" ry="14"/><ellipse cx="58" cy="168" rx="5.5" ry="14"/>`)}
+    <text x="50" y="198" text-anchor="middle">${front?"Face":"Dos"}</text></g>`;
+  return `<svg class="body" viewBox="0 0 210 205" role="img" aria-label="Points forts et faibles par muscle">${fig(0,true)}${fig(110,false)}</svg>`;
+}
+let bodySel = null;
+function viewStrength(){
+  const {bw, res} = strengthByMuscle();
+  if(!bw) return `<section class="card" style="display:flex;flex-direction:column;gap:10px"><b>Points forts et points faibles</b>
+    <p class="small muted" style="margin:0">Indiquez votre poids de corps pour comparer vos charges aux niveaux de référence.</p>
+    <label class="field">Poids de corps (kg)<input id="bw" inputmode="decimal" placeholder="Ex. 80"></label></section>`;
+  const rows = MUSCLES.filter(m => res[m].score!==null).sort((a,b) => res[b].score-res[a].score);
+  const sel = bodySel && res[bodySel].score!==null ? bodySel : null;
+  return `<section class="card" style="display:flex;flex-direction:column;gap:10px">
+    <div class="row"><b style="flex:1">Points forts et points faibles</b><span class="small muted">${fmtN(bw)} kg</span></div>
+    ${bodySVG(res, sel)}
+    <div class="legend"><span><i style="background:var(--ok)"></i>Point fort</span><span><i style="background:var(--accent)"></i>Dans votre moyenne</span><span><i style="background:var(--danger)"></i>Point faible</span></div>
+    <div class="list">${rows.map(m => { const r = res[m], lv = LEVELS[Math.min(4, Math.floor(r.score))] || LEVELS[0];
+      return `<button class="item" data-act="body-m" data-m="${m}"><span class="t"><b><span class="mdot" style="${mc(m)}"></span>${m}
+        ${r.tag==="fort"?'<span class="tagx ok">Point fort</span>':r.tag==="faible"?'<span class="tagx bad">Point faible</span>':""}</b>
+        <span>${lv}${r.trend!==null?` · ${r.trend>=0?"+":""}${fmtN(r.trend*100,0)} % sur 6 semaines`:""}</span></span>
+        <span class="lvl">${"●".repeat(Math.max(1,Math.min(5,Math.ceil(r.score))))}<span class="muted">${"●".repeat(5-Math.max(1,Math.min(5,Math.ceil(r.score))))}</span></span></button>
+        ${sel===m ? `<div class="bdetail">${r.ex.map(x => `<div><b>${esc(x.e.name)}</b><span>${esc(x.txt)} · ${LEVELS[Math.min(4,Math.floor(x.score))]}${x.trend!==null?` · ${x.trend>=0?"+":""}${fmtN(x.trend*100,0)} %`:""}${x.old?" · ancien":""}</span></div>`).join("")}</div>` : ""}`; }).join("")}</div>
+    <p class="small muted" style="margin:0">Niveau = votre 1RM estimé rapporté au poids de corps, comparé à des niveaux de référence courants (débutant → élite). Point fort ou faible = écart d'au moins un demi-niveau avec votre moyenne. ${MUSCLES.filter(m=>res[m].score===null).length ? "Sans données comparables : " + MUSCLES.filter(m=>res[m].score===null).join(", ") + "." : ""} Repères indicatifs : poids de corps et référence se règlent dans Exercices.</p>
+  </section>`;
+}
+
+/* ---------- Note de la séance ---------- */
+function rateWorkout(w){
+  const before = S.workouts.filter(x => x.start < w.start && x.id!==w.id);
+  if(!before.length) return {e:"🙂", label:"Première référence", why:["Les prochaines séances seront comparées à celle-ci."]};
+  let up = 0, down = 0, cmp = 0, reprise = 0;
+  w.exercises.forEach(ex => {
+    const prev = sessionsFor(ex.exId, w.start)[0]; const cur = workSets(ex).filter(s=>num(s.r)>0); if(!prev || !cur.length) return;
+    if(w.start - prev.ts > 21*86400000) reprise++;
+    const b = s => Math.max(...s.map(x => e1rm(num(x.w)||1, num(x.r))));
+    const d = b(cur)/b(prev.sets) - 1; cmp++; if(d > 0.01) up++; else if(d < -0.02) down++;
+  });
+  const last5 = sortW(before.slice()).slice(0,5), avgV = last5.reduce((t,x)=>t+wVolume(x),0)/last5.length, ratio = avgV ? wVolume(w)/avgV : 1;
+  const prs = (w.prs||[]).length;
+  let pts = (cmp ? (up-down)/cmp*2 : 0) + prs*0.5 + (ratio>=1.1 ? 0.5 : ratio<0.8 ? -0.5 : 0);
+  const why = [];
+  if(cmp) why.push(`${up} exercice${up>1?"s":""} en progrès, ${down} en recul sur ${cmp} comparé${cmp>1?"s":""}`);
+  if(avgV) why.push(`Volume ${ratio>=1?"+":""}${fmtN((ratio-1)*100,0)} % par rapport à vos 5 dernières séances`);
+  if(prs) why.push(`${prs} record${prs>1?"s":""} battu${prs>1?"s":""}`);
+  if(reprise && reprise >= cmp/2) return {e:"💪", label:"Reprise réussie", why:["Retour après plus de 3 semaines : les charges reviennent progressivement.", ...why]};
+  const r = pts>=1.2 ? ["😄","Excellente séance"] : pts>=0.4 ? ["🙂","Bonne séance"] : pts>=-0.3 ? ["😐","Séance correcte"] : ["😕","En dessous de vos habitudes"];
+  return {e:r[0], label:r[1], why};
+}
+
+/* ---------- Alertes du minuteur de repos ---------- */
+function tone(freq, at, dur){ try{ const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.frequency.value = freq; g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.35, at+0.02); g.gain.exponentialRampToValueAtTime(0.0001, at+dur);
+  o.connect(g).connect(audioCtx.destination); o.start(at); o.stop(at+dur+0.05); }catch(e){} }
+function beeps(n){ if(!audioCtx) return; try{ audioCtx.resume(); }catch(e){} const t = audioCtx.currentTime + 0.02;
+  for(let i=0;i<n;i++) tone(n>1 ? 1046 : 880, t + i*0.32, 0.22); }
+let flashT = null;
+function flash(mode, sec){
+  const f = document.getElementById("flash"); clearTimeout(flashT);
+  if(!mode){ f.hidden = true; return; }
+  f.hidden = false; f.className = "flash " + mode;
+  f.innerHTML = mode==="warn" ? `<div class="fl-ring"><span id="fl-n">${sec}</span></div><b>Prépare-toi</b><span>Série suivante dans quelques secondes · toucher pour masquer</span>`
+    : `<div class="fl-ring go"><span>GO</span></div><b>C'est reparti !</b><span>Repos terminé</span>`;
+  if(mode==="go") flashT = setTimeout(() => { f.hidden = true; }, 2600);
 }
 
 /* ---------- Import Gravl (CSV) ---------- */
@@ -968,7 +1147,7 @@ function viewHistory(){
       return `<li><span>${s.length} × ${esc(exById(ex.exId).name)}${(w.prs||[]).includes(ex.exId)?'<span class="pr">PR</span>':""}</span><span>${esc(setTxt(best))}</span></li>`;
     }).join("");
     out += `<button class="card wk" data-act="open-w" data-id="${w.id}">
-      <div class="wk-top"><b>${esc(w.name)}</b><span class="muted small">${esc(fmtDate(w.start))}</span></div>
+      <div class="wk-top"><b>${w.rating ? w.rating.e+" " : ""}${esc(w.name)}</b><span class="muted small">${esc(fmtDate(w.start))}</span></div>
       <div class="wk-meta"><span>${fmtDur((w.end||w.start)-w.start)}</span><span>${fmtVol(wVolume(w))}</span><span>${wSetCount(w)} séries</span></div>
       <ul>${lines}</ul></button>`;
   });
@@ -979,6 +1158,7 @@ function viewProgress(){
   if(!S.workouts.length) return `<div class="card empty"><b>Pas encore de courbe</b>
     <span class="muted">Après deux ou trois séances, vous verrez ici votre volume par semaine et l'évolution de votre 1RM estimé sur chaque exercice.</span>
     <button class="btn primary" data-act="goto" data-tab="seance">Démarrer une séance</button></div>`;
+  const strength = viewStrength();
   // Volume par semaine, 8 dernières semaines
   // 8 semaines jusqu'à aujourd'hui, ou jusqu'à la dernière séance si elle est plus ancienne
   const lastW = Math.max(...S.workouts.map(w=>w.start));
@@ -1009,6 +1189,7 @@ function viewProgress(){
         <tbody>${h.slice().reverse().slice(0,12).map(x => `<tr><td>${esc(fmtDate(x.ts,{day:"numeric",month:"short"}))}</td><td>${x.sets.length}</td><td>${esc(setTxt(x.bestSet))}</td><td>${fmtN(x.best)} kg</td></tr>`).join("")}</tbody></table></section>`;
   }
   return `
+    ${strength}
     <h2>Volume par semaine</h2>
     <section class="card">${barChart(weeks)}</section>
     <h2>Par exercice</h2>
@@ -1081,6 +1262,9 @@ function viewExercises(){
     <section class="card" style="display:flex;flex-direction:column;gap:12px">
       <label class="field">Repos par défaut après une série
         <select id="rest-default">${[-1,0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s<0?"Auto selon l'exercice (1 min 30 à 3 min)":s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
+      <div class="row wrap">
+        <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="bw" inputmode="decimal" value="${esc(S.profile.bw||"")}" placeholder="${detectBodyweight() ? fmtN(detectBodyweight())+" (détecté)" : "Ex. 80"}"></label>
+        <label class="field" style="flex:1;min-width:130px">Référence de force<select id="sex"><option value="h" ${S.profile.sex!=="f"?"selected":""}>Hommes</option><option value="f" ${S.profile.sex==="f"?"selected":""}>Femmes</option></select></label></div>
       <div class="row wrap"><button class="btn sm" data-act="export">Exporter mes données</button><button class="btn sm" data-act="import">Importer</button>
         <label class="btn sm" for="gravl-file">Importer depuis Gravl (CSV)</label><input id="gravl-file" class="vh" type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain"></div>
       <p class="small muted" style="margin:0">Vos séances restent uniquement dans ce téléphone, sans compte ni serveur. Exportez-les de temps en temps pour garder une sauvegarde.</p>
@@ -1159,9 +1343,11 @@ function finishWorkout(){
     const sets = workSets(ex), cb = Math.max(0,...sets.map(s=>e1rm(num(s.w),num(s.r)))), cw = Math.max(0,...sets.map(s=>num(s.w)));
     if(cb > pb+0.01 || cw > pw+0.01) w.prs.push(ex.exId);
   });
-  S.workouts.push(w); S.profile.active = null; stopRest();
+  w.rating = rateWorkout(w);
+  S.workouts.push(w); S.profile.active = null; stopRest(); flash(null);
   touchProfile(); saveWorkout(w); render();
-  openSheet(`<h3>Séance enregistrée</h3>
+  openSheet(`<div class="rating"><span class="remo">${w.rating.e}</span><div><h3>${esc(w.rating.label)}</h3>
+      <ul>${w.rating.why.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
     <div class="tiles">
       <div class="tile"><span>Durée</span><strong>${fmtDur(w.end-w.start)}</strong></div>
       <div class="tile"><span>Volume</span><strong>${fmtVol(wVolume(w))}</strong></div>
@@ -1177,20 +1363,23 @@ let audioCtx = null;
 function beep(){ try{ if(!audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain();
   o.frequency.value = 880; g.gain.setValueAtTime(.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime+.6);
   o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+.6); }catch(e){} }
-function startRest(sec){ if(!sec) return; restState = {end:Date.now()+sec*1000, total:sec*1000}; drawRest(); }
+function startRest(sec){ if(!sec) return; flash(null); restState = {end:Date.now()+sec*1000, total:sec*1000, warned:false}; drawRest(); }
 function stopRest(){ restState = null; document.getElementById("rest").hidden = true; }
 function drawRest(){
   const el = document.getElementById("rest");
   if(!restState){ el.hidden = true; return; }
   const left = restState.end - Date.now();
-  if(left <= 0){ stopRest(); beep(); toast("Repos terminé, série suivante"); return; }
+  if(left <= 0){ stopRest(); beeps(3); flash("go"); return; }
+  if(left <= 10000 && !restState.warned && restState.total > 12000){ restState.warned = true; beeps(1); flash("warn", Math.ceil(left/1000)); }
+  if(restState.warned){ const n = document.getElementById("fl-n"); if(n) n.textContent = Math.ceil(left/1000); }
   el.hidden = false;
   el.innerHTML = `<div class="rest-in"><span class="small" style="opacity:.75">Repos</span><span class="rest-t">${fmtClock(left)}</span><span class="spacer"></span>
     <button class="btn sm" data-act="rest-minus">−15 s</button><button class="btn sm" data-act="rest-plus">+15 s</button><button class="btn sm" data-act="rest-skip">Passer</button>
     <div class="rest-bar" style="width:${(100*left/restState.total).toFixed(1)}%"></div></div>`;
 }
 function tickClock(){ const c = document.getElementById("clock"); if(c && S.profile.active) c.textContent = fmtClock(Date.now()-S.profile.active.start); }
-setInterval(() => { tickClock(); if(restState) drawRest(); }, 1000);
+setInterval(tickClock, 1000);
+setInterval(() => { if(restState) drawRest(); }, 250);
 
 let lock = null;
 async function wakeLock(){
@@ -1228,10 +1417,11 @@ const ACT = {
     if(picker.only){ const f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
   "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
     openPicker(ids => { progEx = ids[0]; render(); window.scrollTo(0,0); }, freq); },
+  "body-m": b => { bodySel = bodySel===b.dataset.m ? null : b.dataset.m; render(); },
   "plan-n": b => { const n = Math.min(6, Math.max(1, planDraft.n + +b.dataset.d)); if(n!==planDraft.n){ planDraft = newDraft(n); render(); } },
   // sections de l'accueil
   "plan-dow": b => { const i = +b.dataset.i, d = planDraft, k = d.days.findIndex(x => x.dow===i);
-    if(k>=0){ if(d.days.length===1) return; d.days.splice(k,1); } else { if(d.days.length>=6){ toast("6 séances par semaine au maximum"); return; } d.days.push({dow:i, muscles:[], off:{}}); }
+    if(k>=0){ if(d.days.length===1) return; d.days.splice(k,1); } else { if(d.days.length>=6){ toast("6 séances par semaine au maximum"); return; } d.days.push({dow:i, muscles:[], off:{}, min:60}); }
     d.days.sort((a,b)=>a.dow-b.dow); d.n = d.days.length;
     const tp = (TEMPLATES[d.n]||[])[0]; if(tp && k<0){ d.tpl = tp.id; d.days.forEach((x,i2) => { x.muscles = tp.days[i2].slice(); x.off = {}; }); } else d.tpl = "";
     render(); },
@@ -1241,6 +1431,7 @@ const ACT = {
     if(i>=0) day.muscles.splice(i,1); else day.muscles.push(m); day.off = {}; planDraft.tpl = ""; render(); },
   "plan-duo": b => { const day = planDraft.days[+b.dataset.k]; day.muscles = DUOS[+b.dataset.u].m.slice(); day.off = {}; planDraft.tpl = ""; render(); },
   "plan-swap": b => { const day = planDraft.days[+b.dataset.k], s = b.dataset.s; day.off[s] = (day.off[s]||0) + 1; render(); },
+  "plan-min": b => { const day = planDraft.days[+b.dataset.k]; day.min = +b.dataset.t; day.off = {}; render(); },
   "plan-nov": () => { planDraft.novOff++; render(); },
   "plan-save": () => { planSave(); const n = S.profile.routines.filter(r=>r.plan).length; tab = "seance"; render(); window.scrollTo(0,0); toast(`Routine enregistrée : ${n} séance${n>1?"s":""} par semaine`); },
   "pick-done": () => { const ids = [...picker.sel], f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); if(ids.length) f(ids); },
@@ -1296,7 +1487,10 @@ const ACT = {
 
   check: b => {
     const tr = b.closest("tr"), i = +tr.dataset.i, j = +tr.dataset.j, ex = A().exercises[i], s = ex.sets[j];
+    // Son : session « transient » pour se mêler à la musique dans les écouteurs (iOS 17+)
+    try{ if(navigator.audioSession) navigator.audioSession.type = "transient"; }catch(e){}
     if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+    try{ audioCtx && audioCtx.resume(); }catch(e){}
     if(!s.done){
       // Reprend la valeur suggérée (placeholder) si le champ est vide
       const wi = tr.querySelector('[data-f="w"]'), ri = tr.querySelector('[data-f="r"]');
@@ -1328,9 +1522,10 @@ const ACT = {
   "finish-w": () => { const a = A(), open = a.exercises.reduce((n,ex)=>n+ex.sets.filter(s=>!s.done).length,0);
     if(open && wSetCount(a)) confirmSheet("Terminer la séance ?", `${open} série${open>1?"s":""} non validée${open>1?"s":""} ne ser${open>1?"ont":"a"} pas enregistrée${open>1?"s":""}.`, "Terminer", finishWorkout);
     else finishWorkout(); },
-  "rest-plus": () => { if(restState){ restState.end += 15000; restState.total += 15000; drawRest(); } },
+  "rest-plus": () => { if(restState){ restState.end += 15000; restState.total += 15000; if(restState.end - Date.now() > 10000){ restState.warned = false; flash(null); } drawRest(); } },
   "rest-minus": () => { if(restState){ restState.end -= 15000; drawRest(); } },
-  "rest-skip": () => stopRest(),
+  "rest-skip": () => { stopRest(); flash(null); },
+  "flash-close": () => flash(null),
 
   "open-w": b => { const w = S.workouts.find(x=>x.id===b.dataset.id); if(!w) return;
     openSheet(`<h3>${esc(w.name)}</h3>
@@ -1407,7 +1602,9 @@ document.addEventListener("change", e => {
     rd.readAsText(f);
     return;
   }
-  if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
+  if(e.target.id==="bw"){ S.profile.bw = num(e.target.value) || ""; touchProfile(); render(); }
+  else if(e.target.id==="sex"){ S.profile.sex = e.target.value; touchProfile(); }
+  else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
 });
 
 /* ---------- Démarrage ---------- */
