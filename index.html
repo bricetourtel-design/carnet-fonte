@@ -332,7 +332,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <div class="flash" id="flash" data-act="flash-close" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-27 b";
+const APP_VERSION = "2026-10-27 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -658,7 +658,7 @@ function generatePlan(d){
     return {dow:day.dow, muscles:ms, name:dayName(ms), items, min:mins};
   });
   // Nouveauté : une par mois au plus, sur un exercice d'isolation de la plus grosse séance
-  const nov = S.profile.novelty, due = !nov || Date.now() - nov.date > 30*86400000;
+  const nov = S.profile.novelty, due = !d.noNovelty && (!nov || Date.now() - nov.date > 30*86400000);
   let novelty = null;
   if(due && out.length){
     const day = out.slice().sort((a,b) => b.items.length-a.items.length)[0];
@@ -757,8 +757,8 @@ function planSave(){
 // Séances de la routine dans l'ordre : aujourd'hui d'abord, puis les prochains jours
 function planOrder(){
   const t = todayDow(), d0 = new Date(); d0.setHours(0,0,0,0);
-  const doneToday = new Set(S.workouts.filter(w => w.start >= d0.getTime()).map(w => w.routineId));
-  return S.profile.routines.filter(r => r.plan).map(r => ({r, delta:(r.dow - t + 7) % 7, done: r.dow===t && doneToday.has(r.id)}))
+  const doneToday = S.workouts.some(w => w.start >= d0.getTime());
+  return S.profile.routines.filter(r => r.plan).map(r => ({r, delta:(r.dow - t + 7) % 7, done: r.dow===t && doneToday}))
     .sort((a,b) => (a.done - b.done) || a.delta - b.delta);
 }
 
@@ -909,6 +909,64 @@ function adaptToday(r){
   return {items, changes};
 }
 const isTodayPlan = r => r.plan && r.dow===todayDow() && !S.workouts.some(w => w.routineId===r.id && w.start >= new Date().setHours(0,0,0,0));
+
+
+/* ---------- Choix de la séance du jour ----------
+   On compare la séance prévue, les autres séances de la semaine encore à faire et des séances par duo de muscles.
+   Score = récupération moyenne des muscles (pondérée par leur taille) − pénalités pour les muscles fatigués
+   + bonus pour les points faibles récupérés + bonus « respecter la routine ». On ne change que si c'est nettement mieux. */
+const dayKey = () => { const d = new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
+const musclesOf = r => [...new Set(r.items.map(it => exById(it.exId).muscle))];
+function planMin(r){ const d = ((S.profile.plan||{}).days||[]).find(x => x.dow===r.dow); return (d && d.min) || 60; }
+function routineForDuo(ui, mins){
+  const g = generatePlan({days:[{dow:todayDow(), muscles:DUOS[ui].m.slice(), off:{}, min:mins}], novOff:0, noNovelty:true});
+  return {id:"today-duo-"+ui, name:DUOS[ui].label, items:g.days[0].items.map(it => ({exId:it.exId, sets:it.sets}))};
+}
+function chooseToday(){
+  const t = todayDow(), r0 = S.profile.routines.find(r => r.plan && r.dow===t); if(!r0) return null;
+  const {res} = strengthByMuscle(), weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible");
+  const rec = {}; MUSCLES.forEach(m => rec[m] = recovery(m).pct);
+  const score = (ms, bonus) => { const main = ms.filter(m => m!=="Abdos"); if(!main.length) return -999;
+    let w = 0, v = 0; main.forEach(m => { w += WEIGHT[m]; v += WEIGHT[m]*rec[m]; });
+    return v/w*100 - 40*main.filter(m => rec[m]<0.5).length - 12*main.filter(m => rec[m]>=0.5 && rec[m]<0.9).length
+      + 8*main.filter(m => weak.includes(m) && rec[m]>=0.9).length + bonus; };
+  const wk = weekStart(Date.now()), doneWeek = new Set(S.workouts.filter(w => w.start >= wk).map(w => w.routineId));
+  const swapped = new Set((S.profile.swaps||[]).filter(s => s.week===wk).flatMap(s => [s.a, s.b]));
+  const cands = [];
+  S.profile.routines.filter(r => r.plan).forEach(r => {
+    if(r!==r0 && (r.dow < t || doneWeek.has(r.id) || swapped.has(r.id))) return;   // seulement les séances encore à venir cette semaine
+    const ms = musclesOf(r); cands.push({key:r.id, kind:"plan", r, ms, name:r.name, score:score(ms, r===r0 ? 15 : 6)});
+  });
+  DUOS.forEach((u,ui) => cands.push({key:"duo:"+ui, kind:"duo", ui, ms:u.m, name:u.label, score:score(u.m, 0)}));
+  cands.sort((a,b) => b.score - a.score);
+  const planned = cands.find(c => c.r===r0), stored = S.profile.todayPick && S.profile.todayPick.date===dayKey() ? S.profile.todayPick.key : null;
+  let pick = stored ? (cands.find(c => c.key===stored) || planned) : (cands[0].score - planned.score >= 10 ? cands[0] : planned);
+  const eff = pick.kind==="plan" ? pick.r : routineForDuo(pick.ui, planMin(r0));
+  return {r0, planned, pick, eff, cands, rec, weak, switched: pick!==planned, manual: !!stored};
+}
+function todayCardHTML(ch){
+  const ad = adaptToday(ch.eff), its = ad.items, pct = m => Math.round(ch.rec[m]*100);
+  const tired = ch.planned.ms.filter(m => ch.rec[m] < 0.9 && m!=="Abdos");
+  const why = ch.switched
+    ? `<div class="alert warn"><b>Séance changée.</b> Prévu : ${esc(ch.r0.name)}${tired.length ? ` — ${tired.map(m => `${m.toLowerCase()} à ${pct(m)} %`).join(", ")}` : ""}. Plus adaptée aujourd'hui : <b>${esc(ch.eff.name)}</b> (${ch.pick.ms.filter(m=>m!=="Abdos").map(m => `${m.toLowerCase()} ${pct(m)} %`).join(", ")}).${ch.pick.kind==="plan" ? ` La séance prévue passe au ${DOWS[ch.pick.r.dow].toLowerCase()}.` : ""}</div>`
+    : tired.length ? `<div class="alert warn">${tired.map(m => `${m} à ${pct(m)} %`).join(", ")} de récupération, mais c'est encore la meilleure option du jour : séance allégée.</div>` : "";
+  const alts = ch.cands.filter(c => c!==ch.pick && c.score > -900).slice(0,3);
+  return `<div class="card routine todaycard">
+      <div><span class="ctag">Aujourd'hui</span>${ch.switched ? ' <span class="ctag soft">Changée</span>' : ""}</div>
+      <div class="row"><h3>${esc(ch.eff.name)}</h3><span class="spacer"></span>
+        ${ch.eff.id.startsWith("today-") ? "" : `<button class="btn sm ghost" data-act="edit-routine" data-id="${ch.eff.id}">Modifier</button>`}</div>
+      ${why}
+      ${ad.changes.length ? `<div class="adapt"><b>Ajustements</b>${ad.changes.map(c => `<div class="ch ${c.k}">${c.k==="up"?"▲":"▼"} ${esc(c.t)}</div>`).join("")}</div>` : ""}
+      ${its.length?`<div class="strip">${its.slice(0,6).map(it => thumb(exById(it.exId))).join("")}</div>`:""}
+      <ul>${its.map(it => `<li><b>${it.sets} ×</b> ${esc(exById(it.exId).name)}${it.added?' <span class="tagx ok">ajouté</span>':it.weak?' <span class="tagx ok">point faible</span>':it.flag==="rec"?' <span class="tagx warnx">allégé</span>':""}</li>`).join("") || "<li>Aucun exercice</li>"}</ul>
+      <button class="btn primary" data-act="start-today">Démarrer ${esc(ch.eff.name)}</button>
+      <details class="duos"><summary>Autres options du jour</summary><div class="duo-list">
+        ${ch.switched || ch.manual ? `<button class="duo" data-act="today-pick" data-k="${ch.r0.id}"><b>Garder la séance prévue : ${esc(ch.r0.name)}</b><span>${ch.planned.ms.filter(m=>m!=="Abdos").map(m => `${m} ${pct(m)} %`).join(", ")}</span></button>` : ""}
+        ${alts.filter(c => c!==ch.planned).map(c => `<button class="duo" data-act="today-pick" data-k="${c.key}"><b>${esc(c.name)}${c.kind==="plan"?" (échange)":""}</b><span>${c.ms.filter(m=>m!=="Abdos").map(m => `${m} ${pct(m)} %`).join(", ")}${ch.weak.some(m=>c.ms.includes(m))?" · point faible":""}</span></button>`).join("")}
+        ${ch.manual ? `<button class="duo" data-act="today-auto"><b>Laisser l'app choisir</b><span>Revenir à la proposition automatique</span></button>` : ""}
+      </div></details>
+    </div>`;
+}
 
 /* ---------- Note de la séance ---------- */
 function rateWorkout(w){
@@ -1099,15 +1157,21 @@ function viewHome(){
   const badge = r => { const o = ord.find(x => x.r===r); if(!o) return "";
     return o.done ? '<span class="ctag ok">Faite aujourd\'hui</span>' : o.delta===0 ? '<span class="ctag">Aujourd\'hui</span>' : o.delta===1 ? '<span class="ctag soft">Demain</span>' : ""; };
   const restBanner = ord.length && !ord.some(o => o.delta===0) ? `<div class="alert warn">Jour de repos aujourd'hui. Prochaine séance : <b>${esc(ord[0].r.name)}</b>.</div>` : "";
-  const card = r => { const ad = isTodayPlan(r) ? adaptToday(r) : null, its = ad ? ad.items : r.items; return `
-    <div class="card routine ${ord[0] && ord[0].r===r && ord[0].delta===0 && !ord[0].done ? "todaycard" : ""}">
-      ${badge(r) ? `<div>${badge(r)}</div>` : ""}
-      ${(() => { const o = ord.find(x => x.r===r); if(!o || o.delta>1 || o.done || ad) return "";
+  const ch = ord.some(o => o.delta===0 && !o.done) ? chooseToday() : null, wk = weekStart(now);
+  // Échanges de la semaine : la séance prévue aujourd'hui passe au jour de la séance choisie
+  const swapMap = {}; (S.profile.swaps||[]).filter(x => x.week===wk).forEach(x => swapMap[x.b] = x.a);
+  if(ch && ch.switched && ch.pick.kind==="plan") swapMap[ch.pick.r.id] = ch.r0.id;
+  const card = r0 => { if(ch && r0===ch.r0) return todayCardHTML(ch);
+    const r = swapMap[r0.id] ? (S.profile.routines.find(x => x.id===swapMap[r0.id]) || r0) : r0, ad = null, its = r.items; return `
+    <div class="card routine">
+      ${badge(r0) ? `<div>${badge(r0)}</div>` : ""}
+      ${(() => { const o = ord.find(x => x.r===r0); if(!o || o.delta>1 || o.done || ad) return "";
         const ms = [...new Set(r.items.map(it => exById(it.exId).muscle))], at = Date.now() + o.delta*86400000;
         const tired = ms.map(m => [m, recovery(m, o.delta ? new Date(new Date().setHours(18,0,0,0)).getTime() + 86400000 : at)]).filter(([,x]) => x.pct < 0.9);
         return tired.length ? `<div class="alert ${tired.some(([,x])=>x.pct<0.5)?"danger":"warn"}">${o.delta?"Demain : ":""}${tired.map(([m,x]) => `${m} à ${Math.round(x.pct*100)} %`).join(", ")} de récupération. Allégez ces exercices ou décalez la séance.</div>` : ""; })()}
-      <div class="row"><h3>${esc(r.name)}</h3><span class="spacer"></span>
+      <div class="row"><h3>${esc(r!==r0 ? DOWS[r0.dow]+" · "+r.name.replace(/^\S+ · /,"") : r.name)}</h3><span class="spacer"></span>
         <button class="btn sm ghost" data-act="edit-routine" data-id="${r.id}">Modifier</button></div>
+      ${r!==r0 ? `<div class="small muted">Échangée avec la séance du jour (prévu : ${esc(r0.name)})</div>` : ""}
       ${ad && ad.changes.length ? `<div class="adapt"><b>Séance adaptée à votre récupération et à vos points faibles</b>${ad.changes.map(c => `<div class="ch ${c.k}">${c.k==="up"?"▲":"▼"} ${esc(c.t)}</div>`).join("")}</div>` : ""}
       ${its.length?`<div class="strip">${its.slice(0,6).map(it => thumb(exById(it.exId))).join("")}</div>`:""}
       <ul>${its.map(it => `<li><b>${it.sets} ×</b> ${esc(exById(it.exId).name)}${it.added?' <span class="tagx ok">ajouté</span>':it.weak?' <span class="tagx ok">point faible</span>':it.flag==="rec"?' <span class="tagx warnx">allégé</span>':""}</li>`).join("") || "<li>Aucun exercice</li>"}</ul>
@@ -1451,6 +1515,12 @@ const ACT = {
   close: () => closeSheet(),
   goto: b => { tab = b.dataset.tab; render(); },
   "start-empty": () => startWorkout("Séance libre", []),
+  "start-today": () => { const ch = chooseToday(); if(!ch) return; const its = adaptToday(ch.eff).items;
+    if(ch.switched && ch.pick.kind==="plan"){ const wk = weekStart(Date.now());
+      S.profile.swaps = (S.profile.swaps||[]).filter(x => x.week===wk).concat({week:wk, a:ch.r0.id, b:ch.pick.r.id}); }
+    startWorkout(ch.eff.name, its.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), ch.pick.kind==="plan" ? ch.pick.r.id : ch.r0.id); },
+  "today-pick": b => { S.profile.todayPick = {date:dayKey(), key:b.dataset.k}; touchProfile(); render(); },
+  "today-auto": () => { delete S.profile.todayPick; touchProfile(); render(); },
   "start-routine": b => { const r = S.profile.routines.find(x=>x.id===b.dataset.id); if(!r) return;
     const its = isTodayPlan(r) ? adaptToday(r).items : r.items;
     startWorkout(r.name, its.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), r.id); },
