@@ -66,6 +66,15 @@ Durée estimée = 5 min d'échauffement + par exercice : séries × (40 s d'effo
 ## Note de fin de séance
 Comparaison avec votre historique : 1RM estimé de chaque exercice vs la dernière fois (progrès > +1 %, recul < −2 %), volume vs la moyenne de vos 5 dernières séances, records battus. 😄 Excellente, 🙂 Bonne, 😐 Correcte, 😕 En dessous de vos habitudes ; 💪 Reprise réussie après plus de 3 semaines sans les exercices.
 
+## Séance du jour adaptée (onglet Séance, jour J)
+Base : la séance prévue par la Routine. Puis, d'après la récupération estimée et les points forts / faibles :
+- muscle à moins de 50 % de récupération → ses exercices sont retirés ;
+- muscle entre 50 et 90 % → une série de moins (2 minimum), charge prudente ;
+- point faible récupéré présent dans la séance → une série de plus et placé en tête (principe de priorité : ce qui est fait en début de séance progresse le plus, Nunes et al. 2021) ;
+- exercices retirés remplacés, dans la limite de leur nombre, par des exercices de muscles récupérés : points faibles d'abord, puis muscles prévus ce jour ;
+- moins de 2 exercices restants → séance courte et légère, ou séance à décaler.
+Les changements sont listés sur la carte « Aujourd'hui » et appliqués quand on démarre la séance. Les autres jours, la séance prévue reste inchangée.
+
 Les propositions sont une aide : la décision finale reste celle de l'utilisateur.
 
 *Assisté par IA*
