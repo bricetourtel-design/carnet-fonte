@@ -1593,6 +1593,7 @@ function viewExercises(){
         <select id="rest-default">${[-1,0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s<0?"Auto selon l'exercice (1 min 30 à 3 min)":s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
       <div class="row wrap">
         <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="bw" inputmode="decimal" value="${esc(S.profile.bw||"")}" placeholder="${detectBodyweight() ? fmtN(detectBodyweight())+" (détecté)" : "Ex. 80"}"></label>
+        <label class="field" style="flex:1;min-width:130px">Taille (cm)<input id="height" inputmode="numeric" value="${esc(S.profile.height||"")}" placeholder="Ex. 178"></label>
         <label class="field" style="flex:1;min-width:130px">Référence de force<select id="sex"><option value="h" ${S.profile.sex!=="f"?"selected":""}>Hommes</option><option value="f" ${S.profile.sex==="f"?"selected":""}>Femmes</option></select></label></div>
       <div class="row wrap"><button class="btn sm" data-act="export">Exporter mes données</button><button class="btn sm" data-act="import">Importer</button>
         <label class="btn sm" for="gravl-file">Importer depuis Gravl (CSV)</label><input id="gravl-file" class="vh" type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain"></div>
@@ -1944,15 +1945,39 @@ document.addEventListener("change", e => {
     return;
   }
   if(e.target.id==="bw"){ S.profile.bw = num(e.target.value) || ""; touchProfile(); render(); }
+  else if(e.target.id==="height"){ S.profile.height = num(e.target.value) || ""; touchProfile(); }
   else if(e.target.id==="sex"){ S.profile.sex = e.target.value; touchProfile(); }
   else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
 });
+
+/* ---------- Premier lancement : poids, taille, référence de force ---------- */
+function onboarding(){
+  openSheet(`<h3>Bienvenue sur Carnet de Fonte</h3>
+    <p class="small muted" style="margin:0">Trois informations pour comparer vos charges aux niveaux de référence. Elles restent uniquement dans ce téléphone et se modifient dans Exercices › Réglages.</p>
+    <div class="row wrap">
+      <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="ob-bw" inputmode="decimal" placeholder="Ex. 80"></label>
+      <label class="field" style="flex:1;min-width:130px">Taille (cm)<input id="ob-height" inputmode="numeric" placeholder="Ex. 178"></label></div>
+    <label class="field">Référence de force<select id="ob-sex"><option value="h">Hommes</option><option value="f">Femmes</option></select></label>
+    <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Plus tard</button><button class="btn primary" style="flex:1" data-act="ob-save">Commencer</button></div>`,
+    () => { S.profile.onboarded = true; touchProfile(); });
+}
+ACT["ob-save"] = () => {
+  const bw = num(document.getElementById("ob-bw").value), ht = num(document.getElementById("ob-height").value);
+  if(bw && (bw < 30 || bw > 250)){ toast("Poids de corps entre 30 et 250 kg"); return; }
+  if(ht && (ht < 120 || ht > 230)){ toast("Taille entre 120 et 230 cm"); return; }
+  if(bw) S.profile.bw = bw;
+  if(ht) S.profile.height = ht;
+  S.profile.sex = document.getElementById("ob-sex").value;
+  closeSheet(); render(); toast("Profil enregistré");
+};
 
 /* ---------- Démarrage ---------- */
 loadLocal();
 const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h; else if(h==="historique"){ tab = "progres"; progSub = "hist"; }
 if(!S.profile.creature){ creatureState(); saveLocal(); } else creatureFixLevels();   // l'œuf naît à la première ouverture : seules les séances suivantes comptent
 render(); setStatus();
+// Uniquement pour un nouvel utilisateur : un carnet déjà rempli n'affiche pas l'accueil
+if(!S.profile.onboarded){ if(S.workouts.length || S.profile.bw){ S.profile.onboarded = true; saveLocal(); } else onboarding(); }
 if("serviceWorker" in navigator){
   // Nouvelle version installée : on recharge une fois pour l'afficher (les données restent dans le téléphone)
   const hadSW = !!navigator.serviceWorker.controller;
