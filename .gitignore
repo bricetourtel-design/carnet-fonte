@@ -1,0 +1,4 @@
+/*.png
+!/icon-*.png
+node_modules/
+tests/out/
