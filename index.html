@@ -9,9 +9,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<title>Carnet de Fonte</title>
+<title>Gymon</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Fonte">
+<meta name="apple-mobile-web-app-title" content="Gymon">
 <style>
 /* Layout : style iOS natif, listes groupées arrondies, grand titre, barre d'onglets translucide */
 :root{
@@ -351,7 +351,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <div class="flash" id="flash" data-act="flash-close" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-29 b";
+const APP_VERSION = "2026-10-29 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1599,7 +1599,7 @@ function viewExercises(){
         <label class="btn sm" for="gravl-file">Importer depuis Gravl (CSV)</label><input id="gravl-file" class="vh" type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain"></div>
       <p class="small muted" style="margin:0">Vos séances restent uniquement dans ce téléphone, sans compte ni serveur. Exportez-les de temps en temps pour garder une sauvegarde.</p>
     </section>
-    <p class="foot">Carnet de Fonte · aucune IA dans l'application · Assisté par IA<br>Photos d'exercices : Free Exercise DB (domaine public)<br>Version ${APP_VERSION}</p>`;
+    <p class="foot">Gymon · aucune IA dans l'application · Assisté par IA<br>Photos d'exercices : Free Exercise DB (domaine public)<br>Version ${APP_VERSION}</p>`;
 }
 
 /* ---------- Feuilles, toasts ---------- */
@@ -1891,12 +1891,12 @@ const ACT = {
       <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Fermer</button><button class="btn primary" style="flex:1" data-act="copy-exp">Copier</button></div>`); },
   "copy-exp": () => { const t = document.getElementById("exp-txt");
     navigator.clipboard?.writeText(t.value).then(() => toast("Copié"), () => { t.select(); toast("Texte sélectionné, copiez-le"); }) ?? (t.select(), toast("Texte sélectionné, copiez-le")); },
-  import: () => openSheet(`<h3>Importer</h3><p class="small muted" style="margin:0">Collez ici un export du Carnet de Fonte. Les séances déjà présentes sont conservées ; les doublons sont ignorés.</p>
+  import: () => openSheet(`<h3>Importer</h3><p class="small muted" style="margin:0">Collez ici un export de Gymon (ou de l'ancien Carnet de Fonte). Les séances déjà présentes sont conservées ; les doublons sont ignorés.</p>
       <textarea id="imp-txt" placeholder='{"app":"carnet-fonte", …}'></textarea>
       <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Annuler</button><button class="btn primary" style="flex:1" data-act="do-import">Importer</button></div>`),
   "do-import": async () => {
     let d; try{ d = JSON.parse(document.getElementById("imp-txt").value); }catch(e){ toast("Texte illisible : collez l'export complet"); return; }
-    if(!d || !Array.isArray(d.workouts)){ toast("Ce texte n'est pas un export du Carnet de Fonte"); return; }
+    if(!d || !Array.isArray(d.workouts)){ toast("Ce texte n'est pas un export de Gymon"); return; }
     const c = cleanImport(d), known = new Set(S.workouts.map(w=>w.id)), fresh = c.workouts.filter(w => !known.has(w.id));
     c.custom.forEach(e => { if(!S.profile.custom.some(x=>x.id===e.id)) S.profile.custom.push(e); });
     c.routines.forEach(r => { if(!S.profile.routines.some(x=>x.id===r.id)) S.profile.routines.push(r); });
@@ -1982,7 +1982,7 @@ ACT["install-off"] = () => { S.profile.installHintOff = true; touchProfile(); re
 
 /* ---------- Premier lancement : poids, taille, référence de force ---------- */
 function onboarding(){
-  openSheet(`<h3>Bienvenue sur Carnet de Fonte</h3>
+  openSheet(`<h3>Bienvenue sur Gymon</h3>
     <p class="small muted" style="margin:0">Trois informations pour comparer vos charges aux niveaux de référence. Elles restent uniquement dans ce téléphone et se modifient dans Exercices › Réglages.</p>
     <div class="row wrap">
       <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="ob-bw" inputmode="decimal" placeholder="Ex. 80"></label>

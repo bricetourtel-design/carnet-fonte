@@ -1,4 +1,4 @@
-# Algorithme de progression – Carnet de Fonte
+# Algorithme de progression – Gymon
 
 Objectif : prise de masse musculaire (hypertrophie). Aucune IA : règles fixes, calculées dans le téléphone.
 

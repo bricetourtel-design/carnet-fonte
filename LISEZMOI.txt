@@ -1,4 +1,4 @@
-Carnet de Fonte - version autonome (aucune IA, aucun compte, aucun serveur)
+Gymon (ex-Carnet de Fonte) - version autonome (aucune IA, aucun compte, aucun serveur)
 
 Installation sur iPhone :
 1. Allez sur https://app.netlify.com/drop (gratuit) et glissez ce dossier "carnet-fonte".
