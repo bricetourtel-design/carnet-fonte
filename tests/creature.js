@@ -13,6 +13,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(await p.evaluate(() => document.querySelector(".tabs button").dataset.tab) === "creature", "Créature en première position de la navigation");
   let c = await p.evaluate(() => creatureState());
   ok(c.stage === 0 && c.fidelity === 0, "départ : œuf, fidélité 0", {stage:c.stage, fid:c.fidelity});
+  // Seuils d'évolution tirés au hasard dans les fourchettes, croissants, jamais affichés
+  const {rolls, ranges} = await p.evaluate(() => ({rolls: Array.from({length:200}, () => rollStages()), ranges: CREATURE_CFG.stageRange}));
+  ok(rolls.every(a => a.every((x,i) => x >= ranges[i][0] && x <= ranges[i][1]) && a[1] < a[2] && a[2] < a[3]), "seuils tirés dans les fourchettes, toujours croissants", rolls[0]);
+  ok(new Set(rolls.map(a => a.join())).size > 5, "seuils différents d'un Gymon à l'autre");
+  const pageTxt = await p.evaluate(() => { tab = "creature"; render(); return document.getElementById("view").innerText; });
+  ok(!/séances? avant|Poussin|Poulet|Dinosaure|\d\/4/.test(pageTxt), "la page ne révèle ni le prochain stade ni le nombre de séances restantes");
+  ok(/Mon Gymon/.test(await p.evaluate(() => document.getElementById("title").textContent)), "la page s'appelle « Mon Gymon »");
+  // Pour la suite des tests : seuils de référence 2 / 10 / 30
+  await p.evaluate(() => { creatureState().at = [0, 2, 10, 30]; saveLocal(); });
 
   // Une séance importée ou antérieure ne nourrit pas la créature
   await p.evaluate(() => { S.workouts.push({id:"old", name:"Ancienne", start:Date.now()-5*864e5, end:Date.now()-5*864e5, exercises:[{exId:"squat", sets:[{w:"100",r:"5",done:true}]}]}); });
