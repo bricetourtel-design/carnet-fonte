@@ -1324,8 +1324,8 @@ function render(){
   document.getElementById("title").textContent = TITLES[tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===tab ? "page" : "false"));
   const v = document.getElementById("view");
-  v.innerHTML = tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : viewHome())
-    : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : viewExercises();
+  v.innerHTML = installHint() + (tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : viewHome())
+    : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : viewExercises());
   tickClock(); wakeLock();
 }
 
@@ -1897,13 +1897,12 @@ const ACT = {
   "do-import": async () => {
     let d; try{ d = JSON.parse(document.getElementById("imp-txt").value); }catch(e){ toast("Texte illisible : collez l'export complet"); return; }
     if(!d || !Array.isArray(d.workouts)){ toast("Ce texte n'est pas un export du Carnet de Fonte"); return; }
-    const known = new Set(S.workouts.map(w=>w.id)), fresh = d.workouts.filter(w => w && w.id && Array.isArray(w.exercises) && !known.has(w.id));
-    if(d.profile){ const p = d.profile;
-      (p.custom||[]).forEach(e => { if(!S.profile.custom.some(x=>x.id===e.id)) S.profile.custom.push(e); });
-      (p.routines||[]).forEach(r => { if(!S.profile.routines.some(x=>x.id===r.id)) S.profile.routines.push(r); }); }
+    const c = cleanImport(d), known = new Set(S.workouts.map(w=>w.id)), fresh = c.workouts.filter(w => !known.has(w.id));
+    c.custom.forEach(e => { if(!S.profile.custom.some(x=>x.id===e.id)) S.profile.custom.push(e); });
+    c.routines.forEach(r => { if(!S.profile.routines.some(x=>x.id===r.id)) S.profile.routines.push(r); });
     S.workouts.push(...fresh); touchProfile(); closeSheet(); render();
     for(const w of fresh) await saveWorkout(w);
-    toast(`${fresh.length} séance${fresh.length>1?"s":""} importée${fresh.length>1?"s":""}`);
+    toast(`${fresh.length} séance${fresh.length>1?"s":""} importée${fresh.length>1?"s":""}` + (c.skipped ? ` · ${c.skipped} élément${c.skipped>1?"s":""} invalide${c.skipped>1?"s":""} ignoré${c.skipped>1?"s":""}` : ""));
   }
 };
 
@@ -1950,6 +1949,37 @@ document.addEventListener("change", e => {
   else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
 });
 
+/* ---------- Import : ne garder que des éléments complets, aux identifiants sûrs ---------- */
+// Les identifiants finissent dans des attributs HTML : lettres, chiffres, « - » et « _ » seulement
+const safeId = v => typeof v==="string" && /^[\w-]{1,80}$/.test(v);
+const isTime = v => typeof v==="number" && isFinite(v) && v > 0;
+function cleanImport(d){
+  let skipped = 0; const keep = (ok, make) => { if(!ok){ skipped++; return null; } return make(); };
+  const p = d.profile || {};
+  const custom = (Array.isArray(p.custom) ? p.custom : []).map(e => keep(e && safeId(e.id) && typeof e.name==="string" && e.name.trim() && MUSCLES.includes(e.muscle),
+    () => ({id:e.id, name:e.name.trim(), muscle:e.muscle, equip:typeof e.equip==="string" ? e.equip : "Autre"}))).filter(Boolean);
+  const routines = (Array.isArray(p.routines) ? p.routines : []).map(r => keep(r && safeId(r.id) && typeof r.name==="string" && Array.isArray(r.items),
+    () => ({id:r.id, name:r.name, items:r.items.filter(it => it && safeId(it.exId)).map(it => ({exId:it.exId, sets:Math.min(10, Math.max(1, Math.round(num(it.sets)) || 3))}))}))).filter(Boolean);
+  const workouts = d.workouts.map(w => keep(w && safeId(w.id) && isTime(w.start) && Array.isArray(w.exercises), () => ({...w,
+    name:typeof w.name==="string" ? w.name : "Séance", end:isTime(w.end) ? w.end : w.start,
+    routineId:safeId(w.routineId) ? w.routineId : null, prs:Array.isArray(w.prs) ? w.prs.filter(safeId) : [],
+    exercises:w.exercises.filter(ex => ex && safeId(ex.exId) && Array.isArray(ex.sets)).map(ex => ({...ex,
+      feel:Math.min(5, Math.max(0, Math.round(num(ex.feel)))),
+      sets:ex.sets.filter(st => st && typeof st==="object").map(st => ({...st, w:String(st.w ?? "").replace(/[^\d.,]/g,""), r:String(st.r ?? "").replace(/[^\d.,]/g,""), done:!!st.done, warm:!!st.warm}))}))}))).filter(Boolean);
+  return {custom, routines, workouts, skipped};
+}
+
+/* ---------- Installation : hors écran d'accueil, Safari peut effacer les données après 7 jours sans visite ---------- */
+const isInstalled = () => navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+function installHint(){
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), android = /Android/.test(navigator.userAgent);
+  if(isInstalled() || S.profile.installHintOff || !(ios || android)) return "";
+  return `<div class="alert warn row" style="align-items:flex-start;gap:8px;margin-bottom:12px"><span style="flex:1">ⓘ Pour ne pas perdre vos séances, ajoutez l'app à l'écran d'accueil : ${ios
+    ? "bouton Partager de Safari › « Sur l'écran d'accueil »" : "menu ⋮ de Chrome › « Ajouter à l'écran d'accueil »"}. Pensez aussi à exporter vos données de temps en temps.</span>
+    <button class="tbtn" data-act="install-off" aria-label="Masquer">✕</button></div>`;
+}
+ACT["install-off"] = () => { S.profile.installHintOff = true; touchProfile(); render(); };
+
 /* ---------- Premier lancement : poids, taille, référence de force ---------- */
 function onboarding(){
   openSheet(`<h3>Bienvenue sur Carnet de Fonte</h3>
@@ -1976,6 +2006,7 @@ loadLocal();
 const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h; else if(h==="historique"){ tab = "progres"; progSub = "hist"; }
 if(!S.profile.creature){ creatureState(); saveLocal(); } else creatureFixLevels();   // l'œuf naît à la première ouverture : seules les séances suivantes comptent
 render(); setStatus();
+if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});   // demande au navigateur de ne pas effacer les données
 // Uniquement pour un nouvel utilisateur : un carnet déjà rempli n'affiche pas l'accueil
 if(!S.profile.onboarded){ if(S.workouts.length || S.profile.bw){ S.profile.onboarded = true; saveLocal(); } else onboarding(); }
 if("serviceWorker" in navigator){
