@@ -64,6 +64,9 @@ async function uiChecks(browser){
   page.on("pageerror", e => errs.push(e.message));
   await page.goto(URL); await page.waitForTimeout(300);
   const res = {};
+  // Premier lancement : l'accueil (poids, taille) s'affiche, « Plus tard » le ferme pour de bon
+  res.onboarding = await page.isVisible("#ob-bw");
+  await page.click('#sheet-in [data-act="close"]');
   // Chaque onglet s'affiche sans erreur
   const tabs = await page.$$eval(".tabs button", bs => bs.map(b => b.dataset.tab));
   for(const t of tabs){ await page.click(`.tabs [data-tab="${t}"]`); await page.waitForTimeout(80); }
@@ -84,6 +87,7 @@ async function uiChecks(browser){
   // Persistance : la séance est toujours là après rechargement, sans doublon
   await page.reload(); await page.waitForTimeout(300);
   res.afterReload = await page.evaluate(() => S.workouts.length);
+  res.onboardingAfterReload = await page.isVisible("#ob-bw");
   res.errors = errs;
   await ctx.close();
   return res;
@@ -108,6 +112,8 @@ async function uiChecks(browser){
     const ok = JSON.stringify(gold.ui[k]) === JSON.stringify(data.ui[k]);
     console.log(`${ok ? "OK  " : "ÉCHEC"} carnet : ${k}`); if(!ok) fails++;
   }
+  const obOk = ui.onboarding && !ui.onboardingAfterReload;
+  console.log(`${obOk ? "OK  " : "ÉCHEC"} accueil : affiché au premier lancement, plus ensuite`); if(!obOk) fails++;
   const allErr = errs.concat(ui.errors);
   console.log(allErr.length ? "ÉCHEC erreurs JavaScript : " + allErr.join(" | ") : "OK   aucune erreur JavaScript");
   if(allErr.length) fails++;

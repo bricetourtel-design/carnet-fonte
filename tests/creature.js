@@ -8,6 +8,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const b = await chromium.launch(), ctx = await b.newContext({...devices["iPhone 13"]}), p = await ctx.newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message));
   await p.goto(URL); await p.waitForTimeout(300);
+  await p.click('#sheet-in [data-act="close"]');   // accueil du premier lancement
   ok(await p.evaluate(() => tab) === "creature", "la page Créature s'ouvre en premier");
   ok(await p.evaluate(() => document.querySelector(".tabs button").dataset.tab) === "creature", "Créature en première position de la navigation");
   let c = await p.evaluate(() => creatureState());
