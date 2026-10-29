@@ -1,0 +1,1222 @@
+{
+ "snap": {
+  "library": [
+   [
+    "dc-barre",
+    "Développé couché (barre)",
+    "Pectoraux",
+    "Barre"
+   ],
+   [
+    "dc-halteres",
+    "Développé couché (haltères)",
+    "Pectoraux",
+    "Haltères"
+   ],
+   [
+    "di-barre",
+    "Développé incliné (barre)",
+    "Pectoraux",
+    "Barre"
+   ],
+   [
+    "di-halteres",
+    "Développé incliné (haltères)",
+    "Pectoraux",
+    "Haltères"
+   ],
+   [
+    "ecarte-poulie",
+    "Écarté à la poulie",
+    "Pectoraux",
+    "Poulie"
+   ],
+   [
+    "ecarte-halteres",
+    "Écarté couché (haltères)",
+    "Pectoraux",
+    "Haltères"
+   ],
+   [
+    "dips",
+    "Dips",
+    "Pectoraux",
+    "Poids du corps"
+   ],
+   [
+    "pompes",
+    "Pompes",
+    "Pectoraux",
+    "Poids du corps"
+   ],
+   [
+    "tractions",
+    "Tractions",
+    "Dos",
+    "Poids du corps"
+   ],
+   [
+    "tirage-vertical",
+    "Tirage vertical",
+    "Dos",
+    "Poulie"
+   ],
+   [
+    "rowing-barre",
+    "Rowing barre",
+    "Dos",
+    "Barre"
+   ],
+   [
+    "rowing-haltere",
+    "Rowing haltère",
+    "Dos",
+    "Haltères"
+   ],
+   [
+    "tirage-horizontal",
+    "Tirage horizontal",
+    "Dos",
+    "Poulie"
+   ],
+   [
+    "souleve-terre",
+    "Soulevé de terre",
+    "Dos",
+    "Barre"
+   ],
+   [
+    "pullover",
+    "Pull-over à la poulie",
+    "Dos",
+    "Poulie"
+   ],
+   [
+    "dm-barre",
+    "Développé militaire (barre)",
+    "Épaules",
+    "Barre"
+   ],
+   [
+    "dm-halteres",
+    "Développé épaules (haltères)",
+    "Épaules",
+    "Haltères"
+   ],
+   [
+    "elev-lat",
+    "Élévations latérales",
+    "Épaules",
+    "Haltères"
+   ],
+   [
+    "oiseau",
+    "Oiseau (arrière d'épaule)",
+    "Épaules",
+    "Haltères"
+   ],
+   [
+    "face-pull",
+    "Face pull",
+    "Épaules",
+    "Poulie"
+   ],
+   [
+    "curl-barre",
+    "Curl barre",
+    "Biceps",
+    "Barre"
+   ],
+   [
+    "curl-halteres",
+    "Curl haltères",
+    "Biceps",
+    "Haltères"
+   ],
+   [
+    "curl-marteau",
+    "Curl marteau",
+    "Biceps",
+    "Haltères"
+   ],
+   [
+    "curl-pupitre",
+    "Curl pupitre",
+    "Biceps",
+    "Machine"
+   ],
+   [
+    "ext-poulie",
+    "Extension triceps à la poulie",
+    "Triceps",
+    "Poulie"
+   ],
+   [
+    "barre-front",
+    "Barre au front",
+    "Triceps",
+    "Barre"
+   ],
+   [
+    "ext-nuque",
+    "Extension nuque haltère",
+    "Triceps",
+    "Haltères"
+   ],
+   [
+    "squat",
+    "Squat (barre)",
+    "Jambes",
+    "Barre"
+   ],
+   [
+    "front-squat",
+    "Front squat",
+    "Jambes",
+    "Barre"
+   ],
+   [
+    "presse",
+    "Presse à cuisses",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "fentes",
+    "Fentes (haltères)",
+    "Jambes",
+    "Haltères"
+   ],
+   [
+    "bulgare",
+    "Squat bulgare",
+    "Jambes",
+    "Haltères"
+   ],
+   [
+    "leg-ext",
+    "Leg extension",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "leg-curl",
+    "Leg curl",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "sdt-roumain",
+    "Soulevé de terre roumain",
+    "Jambes",
+    "Barre"
+   ],
+   [
+    "hip-thrust",
+    "Hip thrust",
+    "Jambes",
+    "Barre"
+   ],
+   [
+    "mollets",
+    "Mollets debout",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "crunch",
+    "Crunch",
+    "Abdos",
+    "Poids du corps"
+   ],
+   [
+    "releve-jambes",
+    "Relevé de jambes suspendu",
+    "Abdos",
+    "Poids du corps"
+   ],
+   [
+    "crunch-poulie",
+    "Crunch à la poulie",
+    "Abdos",
+    "Poulie"
+   ],
+   [
+    "ab-wheel",
+    "Roue abdominale",
+    "Abdos",
+    "Poids du corps"
+   ]
+  ],
+  "gravlMap": {
+   "Face-Pull à la Poulie": "face-pull",
+   "Développé épaules avec haltères": "dm-halteres",
+   "Développé Couché à la Barre": "dc-barre",
+   "Développé Couché Incliné aux Haltères": "di-halteres",
+   "Développé Couché Incliné à la Barre": "di-barre",
+   "Curl barre debout": "curl-barre",
+   "Curl Marteau": "curl-marteau",
+   "Pull Up": "tractions",
+   "Curl Ischio-jambiers Allongé": "leg-curl",
+   "Extension des Jambes": "leg-ext",
+   "Presse à Cuisses": "presse",
+   "Fente aux Haltères": "fentes",
+   "Hip thrust à disques": "hip-thrust",
+   "Rowing à la Barre": "rowing-barre",
+   "Rowing avec Haltères": "rowing-haltere",
+   "Rowing assis à la poulie": "tirage-horizontal",
+   "Tirage vertical à la poulie": "tirage-vertical",
+   "Tirage avec Bras Tendus": "pullover",
+   "Écarté Croisé à la Poulie": "ecarte-poulie",
+   "Écartés couché avec haltères": "ecarte-halteres",
+   "Élévation Latérale aux Haltères": "elev-lat",
+   "Extensions des triceps poulie haute corde": "ext-poulie",
+   "Extensions barre au front à la barre EZ": "barre-front",
+   "Extension Triceps Haltères": "ext-nuque",
+   "Dips pour Pectoraux": "dips",
+   "Abducteurs des Hanches à la Machine": [
+    "Jambes",
+    "Machine"
+   ],
+   "Adduction à la Machine": [
+    "Jambes",
+    "Machine"
+   ],
+   "Bicep curl à la poulie basse": [
+    "Biceps",
+    "Poulie"
+   ],
+   "Chin Up": [
+    "Dos",
+    "Poids du corps"
+   ],
+   "Curl Marteau Incliné": [
+    "Biceps",
+    "Haltères"
+   ],
+   "Curl aux Jambes Assis": [
+    "Jambes",
+    "Machine"
+   ],
+   "Curl avec Haltères Assis": [
+    "Biceps",
+    "Haltères"
+   ],
+   "Curl avec câble croisé d'un bras": [
+    "Biceps",
+    "Poulie"
+   ],
+   "Curl marteau poulie basse": [
+    "Biceps",
+    "Poulie"
+   ],
+   "Curl poignet sur banc paumes vers le bas à la barre": [
+    "Biceps",
+    "Barre"
+   ],
+   "Curl poignet sur banc paumes vers le haut à la barre": [
+    "Biceps",
+    "Barre"
+   ],
+   "Curl à la Barre EZ": [
+    "Biceps",
+    "Barre"
+   ],
+   "Dips Triceps à la Machine": [
+    "Triceps",
+    "Machine"
+   ],
+   "Dips pour Triceps": [
+    "Triceps",
+    "Poids du corps"
+   ],
+   "Dips à la machine à disques": [
+    "Pectoraux",
+    "Machine"
+   ],
+   "Ecarté inversé à la machine": [
+    "Épaules",
+    "Machine"
+   ],
+   "Ecarté à la poulie vis à vis basse": [
+    "Pectoraux",
+    "Poulie"
+   ],
+   "Elévation frontale disque": [
+    "Épaules",
+    "Autre"
+   ],
+   "Extension des mollets à la presse inclinée à disques": [
+    "Jambes",
+    "Machine"
+   ],
+   "Extension des triceps à la poulie en supination": [
+    "Triceps",
+    "Poulie"
+   ],
+   "Extension du dos au banc à lombaires": [
+    "Dos",
+    "Poids du corps"
+   ],
+   "Extension lombaire à la machine": [
+    "Dos",
+    "Machine"
+   ],
+   "Extension verticale d'un bras avec haltère": [
+    "Triceps",
+    "Haltères"
+   ],
+   "Extensions de hanches au GHD": [
+    "Jambes",
+    "Poids du corps"
+   ],
+   "Haussement d'Épaules aux Haltères": [
+    "Dos",
+    "Haltères"
+   ],
+   "Presse pectorale à disques": [
+    "Pectoraux",
+    "Machine"
+   ],
+   "Presse à mollets": [
+    "Jambes",
+    "Machine"
+   ],
+   "Pushdown Triceps en Prise en V": [
+    "Triceps",
+    "Poulie"
+   ],
+   "Rowing vertical avec haltères": [
+    "Épaules",
+    "Haltères"
+   ],
+   "Rowing vertical à la poulie": [
+    "Épaules",
+    "Poulie"
+   ],
+   "Squat Hack": [
+    "Jambes",
+    "Machine"
+   ],
+   "Tirage Vertical Unilateral": [
+    "Dos",
+    "Poulie"
+   ],
+   "Tirage bras tendu à la corde": [
+    "Dos",
+    "Poulie"
+   ],
+   "Tirage horizontal à la poulie à un bras": [
+    "Dos",
+    "Poulie"
+   ],
+   "Trapèze haussement épaules à la poulie": [
+    "Dos",
+    "Poulie"
+   ],
+   "Écarté Incliné avec Haltères": [
+    "Pectoraux",
+    "Haltères"
+   ],
+   "Écarté inversé à la poulie pour deltoïdes postérieurs": [
+    "Épaules",
+    "Poulie"
+   ],
+   "Écartés à la poulie": [
+    "Pectoraux",
+    "Poulie"
+   ],
+   "Élévation Latérale à la Machine": [
+    "Épaules",
+    "Machine"
+   ],
+   "Élévation Latérale à la Poulie": [
+    "Épaules",
+    "Poulie"
+   ],
+   "Élévation Y sur banc incliné avec haltères": [
+    "Épaules",
+    "Haltères"
+   ],
+   "Élévation frontale avec corde": [
+    "Épaules",
+    "Poulie"
+   ],
+   "Élévation frontale avec haltères": [
+    "Épaules",
+    "Haltères"
+   ],
+   "Élévation latérale assise": [
+    "Épaules",
+    "Haltères"
+   ]
+  },
+  "muscles": [
+   "Pectoraux",
+   "Dos",
+   "Épaules",
+   "Biceps",
+   "Triceps",
+   "Jambes",
+   "Abdos"
+  ],
+  "repRanges": [
+   [
+    "dc-barre",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "dc-halteres",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "di-barre",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "di-halteres",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "ecarte-poulie",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "ecarte-halteres",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "dips",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "pompes",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "tractions",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "tirage-vertical",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "rowing-barre",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "rowing-haltere",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "tirage-horizontal",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "souleve-terre",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "pullover",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "dm-barre",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "dm-halteres",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "elev-lat",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "oiseau",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "face-pull",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "curl-barre",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "curl-halteres",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "curl-marteau",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "curl-pupitre",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "ext-poulie",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "barre-front",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "ext-nuque",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "squat",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "front-squat",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "presse",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "fentes",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "bulgare",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "leg-ext",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "leg-curl",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "sdt-roumain",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "hip-thrust",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "mollets",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "crunch",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "releve-jambes",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "crunch-poulie",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "ab-wheel",
+    [
+     12,
+     20
+    ]
+   ]
+  ],
+  "e1rm": [
+   100,
+   116.66666666666667,
+   106.66666666666666,
+   0,
+   31.499999999999996
+  ],
+  "history": [
+   [
+    [
+     106.67,
+     80,
+     2160,
+     27
+    ],
+    [
+     110,
+     82.5,
+     2475,
+     30
+    ],
+    [
+     107.67,
+     85,
+     1955,
+     23
+    ],
+    [
+     107.67,
+     85,
+     1275,
+     15
+    ]
+   ],
+   [
+    [
+     126.67,
+     100,
+     2300,
+     23
+    ],
+    [
+     126,
+     105,
+     1155,
+     11
+    ]
+   ],
+   [
+    [
+     0,
+     0,
+     0,
+     21
+    ]
+   ],
+   [
+    [
+     19.13,
+     14,
+     448,
+     32
+    ]
+   ]
+  ],
+  "volumes": [
+   [
+    "s1",
+    2608,
+    9
+   ],
+   [
+    "s2",
+    3260,
+    7
+   ],
+   [
+    "s3",
+    3430,
+    7
+   ],
+   [
+    "s4",
+    3400,
+    7
+   ],
+   [
+    "s5",
+    4555,
+    6
+   ],
+   [
+    "s6",
+    3305,
+    8
+   ],
+   [
+    "s7",
+    2244,
+    6
+   ]
+  ],
+  "coach": [
+   [
+    "dc-barre",
+    77.5,
+    6,
+    2,
+    "Décharge",
+    6,
+    10,
+    180
+   ],
+   [
+    "squat",
+    97.5,
+    6,
+    2,
+    "-7,5 kg",
+    6,
+    10,
+    180
+   ],
+   [
+    "tractions",
+    "",
+    5,
+    3,
+    "Reprise",
+    8,
+    12,
+    150
+   ],
+   [
+    "curl-halteres",
+    12,
+    15,
+    3,
+    "Reprise",
+    10,
+    15,
+    105
+   ],
+   [
+    "rowing-barre",
+    60,
+    10,
+    4,
+    "+1 rep",
+    6,
+    10,
+    180
+   ],
+   [
+    "elev-lat",
+    10,
+    12,
+    4,
+    "+2 kg",
+    12,
+    20,
+    90
+   ],
+   [
+    "ext-poulie",
+    24.5,
+    12,
+    2,
+    "-2,5 kg",
+    10,
+    15,
+    105
+   ],
+   [
+    "leg-press-inexistant",
+    "",
+    "",
+    3,
+    "Nouveau",
+    8,
+    12,
+    150
+   ]
+  ],
+  "strength": [
+   [
+    "Pectoraux",
+    3.476,
+    "fort"
+   ],
+   [
+    "Dos",
+    2.858,
+    "moyen"
+   ],
+   [
+    "Épaules",
+    2.662,
+    "moyen"
+   ],
+   [
+    "Biceps",
+    2.823,
+    "moyen"
+   ],
+   [
+    "Triceps",
+    2.556,
+    "moyen"
+   ],
+   [
+    "Jambes",
+    2.652,
+    "moyen"
+   ],
+   [
+    "Abdos",
+    null,
+    null
+   ]
+  ],
+  "recovery": [
+   [
+    "Pectoraux",
+    0.879
+   ],
+   [
+    "Dos",
+    1
+   ],
+   [
+    "Épaules",
+    1
+   ],
+   [
+    "Biceps",
+    1
+   ],
+   [
+    "Triceps",
+    1
+   ],
+   [
+    "Jambes",
+    1
+   ],
+   [
+    "Abdos",
+    1
+   ]
+  ],
+  "plan": [
+   [
+    0,
+    "Haut du corps",
+    [
+     [
+      "dc-barre",
+      2
+     ],
+     [
+      "di-halteres",
+      2
+     ],
+     [
+      "rowing-barre",
+      2
+     ],
+     [
+      "tirage-vertical",
+      2
+     ],
+     [
+      "dm-halteres",
+      3
+     ],
+     [
+      "ext-poulie",
+      2
+     ],
+     [
+      "curl-marteau",
+      2
+     ]
+    ]
+   ],
+   [
+    1,
+    "Jambes",
+    [
+     [
+      "squat",
+      3
+     ],
+     [
+      "hip-thrust",
+      3
+     ],
+     [
+      "mollets",
+      2
+     ],
+     [
+      "leg-curl",
+      2
+     ],
+     [
+      "crunch",
+      4
+     ]
+    ]
+   ],
+   [
+    3,
+    "Haut du corps",
+    [
+     [
+      "di-halteres",
+      2
+     ],
+     [
+      "dc-barre",
+      2
+     ],
+     [
+      "tirage-vertical",
+      2
+     ],
+     [
+      "rowing-barre",
+      2
+     ],
+     [
+      "dm-halteres",
+      3
+     ],
+     [
+      "ext-poulie",
+      2
+     ],
+     [
+      "curl-halteres",
+      2
+     ]
+    ]
+   ],
+   [
+    4,
+    "Jambes",
+    [
+     [
+      "hip-thrust",
+      3
+     ],
+     [
+      "squat",
+      3
+     ],
+     [
+      "mollets",
+      2
+     ],
+     [
+      "leg-curl",
+      2
+     ],
+     [
+      "crunch",
+      4
+     ]
+    ]
+   ]
+  ],
+  "planWeekly": {
+   "Pectoraux": 8,
+   "Dos": 8,
+   "Épaules": 6,
+   "Biceps": 4,
+   "Triceps": 4,
+   "Jambes": 20,
+   "Abdos": 8
+  },
+  "estMinutes": 26.25,
+  "gravl": {
+   "n": 2,
+   "sets": 4,
+   "skipped": 1,
+   "custom": [
+    [
+     "gx-squat-hack",
+     "Jambes",
+     "Machine"
+    ]
+   ],
+   "w": [
+    [
+     "gravl-202601050800",
+     "Lundi",
+     [
+      [
+       "dc-barre",
+       4,
+       [
+        [
+         "40",
+         "12",
+         true
+        ],
+        [
+         "80",
+         "8",
+         false
+        ]
+       ]
+      ],
+      [
+       "gx-squat-hack",
+       3,
+       [
+        [
+         "60",
+         "10",
+         false
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "gravl-202601071830",
+     "Mercredi",
+     [
+      [
+       "tractions",
+       2,
+       [
+        [
+         "92.2",
+         "6",
+         false
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  }
+ },
+ "ui": {
+  "saved": [
+   [
+    [
+     "dc-barre",
+     [
+      [
+       "70",
+       "10",
+       true
+      ],
+      [
+       "70",
+       "9",
+       true
+      ]
+     ]
+    ]
+   ]
+  ],
+  "afterReload": 1
+ }
+}
