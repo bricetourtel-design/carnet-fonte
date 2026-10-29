@@ -351,7 +351,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <div class="flash" id="flash" data-act="flash-close" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-29 a";
+const APP_VERSION = "2026-10-29 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1006,7 +1006,7 @@ const CREATURE_CFG = {
   freq: {window:14, target:6}               // régularité : séances sur 14 jours, objectif 6 (3/semaine)
 };
 function creatureState(){
-  if(!S.profile.creature) S.profile.creature = {born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null};
+  if(!S.profile.creature) S.profile.creature = {v:2, born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null};
   return S.profile.creature;
 }
 const stageFor = fid => CREATURE_CFG.stageAt.reduce((s, at, i) => fid >= at ? i : s, 0);
@@ -1023,15 +1023,29 @@ function creatureRegularity(c){
   const f = CREATURE_CFG.freq, n = S.workouts.filter(w => c.fed.includes(w.id) && Date.now() - w.start < f.window*86400000).length;
   return {n, perWeek: n / (f.window/7), pct: Math.min(1, n / f.target)};
 }
+// Niveau visé par muscle (force existante, ou séries faites depuis la naissance de la créature)
 function muscleLevels(){
   const {res} = strengthByMuscle(), out = {};
   MUSCLES.forEach(m => {
     const r = res[m];
     if(r && r.score!==null){ const t = CREATURE_CFG.levelThresholds[m] || CREATURE_CFG.levelThresholds.default; out[m] = t.filter(x => r.score >= x).length; }
-    else { let n = 0; S.workouts.forEach(w => w.exercises.forEach(ex => { if(exById(ex.exId).muscle===m) n += workSets(ex).length; }));
+    else { const c = creatureState(); let n = 0; S.workouts.forEach(w => { if(!c.fed.includes(w.id)) return; w.exercises.forEach(ex => { if(exById(ex.exId).muscle===m) n += workSets(ex).length; }); });
       out[m] = CREATURE_CFG.setsThresholds.filter(x => n >= x).length; }
   });
   return out;
+}
+// Seuls les muscles réellement travaillés (au moins une série validée) progressent, d'un niveau au plus par séance,
+// vers le niveau visé ; la musculature acquise ne régresse pas
+function workedMuscles(w){ return new Set(w.exercises.filter(ex => workSets(ex).length).map(ex => exById(ex.exId).muscle)); }
+function growMuscles(c, w){
+  const lv = muscleLevels(), worked = workedMuscles(w);
+  worked.forEach(m => { const cur = c.levels[m]||0; c.levels[m] = Math.max(cur, Math.min(lv[m], cur + 1)); });
+}
+// Correctif : recalcule la musculature à partir des seules séances réellement faites depuis la naissance
+function creatureFixLevels(){
+  const c = S.profile.creature; if(!c || c.v >= 2) return;
+  c.levels = {}; S.workouts.filter(w => c.fed.includes(w.id)).sort((a,b) => a.start-b.start).forEach(w => growMuscles(c, w));
+  c.v = 2; saveLocal();
 }
 // Appelée une fois à la validation d'une séance ; ne compte jamais deux fois la même séance
 function creatureFeed(w){
@@ -1045,7 +1059,7 @@ function creatureFeed(w){
   c.stage = Math.max(c.stage, stageFor(c.fidelity));                 // un stade acquis ne se perd jamais
   const gain = vol/1000 * CREATURE_CFG.foodPerTonne[c.stage] * freqFactor;
   c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + gain);
-  const lv = muscleLevels(); MUSCLES.forEach(m => c.levels[m] = Math.max(c.levels[m]||0, lv[m]));   // la musculature ne régresse pas
+  growMuscles(c, w);
   const ups = MUSCLES.filter(m => (c.levels[m]||0) > (before.levels[m]||0));
   c.lastMeal = {w:w.id, vol, gain:c.weight - before.weight, ts:Date.now()};
   touchProfile();
@@ -1154,7 +1168,7 @@ function viewCreature(){
     </div>
     <details class="duos card"><summary>Musculature par groupe</summary><div class="vol" style="margin-top:10px">${MUSCLES.map(m => {
       const l = c.levels[m]||0; return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${(l+1)*20}%;${mc(m)}"></i></div><b class="num">${l+1}</b></div>`; }).join("")}</div>
-      <p class="small muted" style="margin:8px 0 0">Niveaux 1 à 5, calculés depuis vos niveaux de force (onglet Progrès). Ils ne baissent jamais.</p></details>
+      <p class="small muted" style="margin:8px 0 0">Niveaux 1 à 5. Un muscle progresse seulement quand vous le travaillez vraiment (série validée), d'un niveau au plus par séance, jusqu'à votre niveau de force (onglet Progrès). Ils ne baissent jamais.</p></details>
     ${S.profile.active ? `<button class="btn primary wide" data-act="goto" data-tab="seance">Reprendre la séance en cours</button>`
       : ch ? `<button class="btn primary wide" data-act="goto" data-tab="seance">Séance du jour : ${esc(ch.eff.name)}</button>`
       : `<button class="btn primary wide" data-act="goto" data-tab="seance">Aller à la séance</button>`}
@@ -1937,7 +1951,7 @@ document.addEventListener("change", e => {
 /* ---------- Démarrage ---------- */
 loadLocal();
 const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h; else if(h==="historique"){ tab = "progres"; progSub = "hist"; }
-if(!S.profile.creature){ creatureState(); saveLocal(); }   // l'œuf naît à la première ouverture : seules les séances suivantes comptent
+if(!S.profile.creature){ creatureState(); saveLocal(); } else creatureFixLevels();   // l'œuf naît à la première ouverture : seules les séances suivantes comptent
 render(); setStatus();
 if("serviceWorker" in navigator){
   // Nouvelle version installée : on recharge une fois pour l'afficher (les données restent dans le téléphone)

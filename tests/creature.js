@@ -36,6 +36,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(c.fidelity === 1 && c.food === 1330, "séance validée : fidélité +1, nourriture = volume (1 330 kg)", {fid:c.fidelity, food:c.food});
   ok(c.weight > 0.06, "le poids augmente", c.weight);
   ok(meal1 === 1, "message de repas dans le résumé de séance");
+  const lv1 = await p.evaluate(() => creatureState().levels);
+  ok(Object.keys(lv1).every(m => m==="Pectoraux"), "séance pecs : seuls les pectoraux peuvent évoluer", lv1);
+  ok((lv1.Pectoraux||0) <= 1, "au plus un niveau gagné par séance", lv1.Pectoraux);
+  // Un exercice prévu mais sans série validée ne fait pas évoluer son muscle
+  const planned = await p.evaluate(() => { const c = creatureState(), before = JSON.stringify(c.levels);
+    const w = {id:"plan-only", name:"x", start:Date.now(), end:Date.now(), exercises:[{exId:"dc-barre", sets:[{w:"90",r:"8",done:true}]}, {exId:"squat", sets:[{w:"200",r:"5",done:false}]}]};
+    growMuscles(c, w); const ok = !c.levels.Jambes; c.levels = JSON.parse(before); return ok; });
+  ok(planned, "un exercice prévu mais non fait ne compte pas");
   const w = await p.evaluate(() => S.workouts[S.workouts.length-1]);
   ok(JSON.stringify(w.exercises[0].sets) === JSON.stringify([{w:"70",r:"10",done:true,warm:false},{w:"70",r:"9",done:true,warm:false}]), "les données de la séance ne sont pas modifiées par la créature");
   ok(await p.evaluate(() => JSON.stringify(S.workouts.slice(0, -1))) === before, "les séances précédentes sont intactes");
