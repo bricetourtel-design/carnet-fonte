@@ -1,34 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a9bff"/><stop offset="1" stop-color="#0a58d6"/></linearGradient>
-    <radialGradient id="shell" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#efe0bd"/></radialGradient>
-    <clipPath id="bottom"><path d="M230 545 L300 500 L370 560 L440 500 L512 560 L584 500 L654 560 L724 500 L800 545 L860 545 L860 1000 L160 1000 L160 545 Z"/></clipPath>
-    <clipPath id="top"><path d="M230 545 L300 500 L370 560 L440 500 L512 560 L584 500 L654 560 L724 500 L800 545 L860 545 L860 80 L160 80 L160 545 Z"/></clipPath>
+    <radialGradient id="bg" cx=".5" cy=".38" r=".75"><stop offset="0" stop-color="#4f8dff"/><stop offset=".6" stop-color="#2f55e8"/><stop offset="1" stop-color="#3a1fb8"/></radialGradient>
+    <radialGradient id="shell" cx=".36" cy=".28" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#fbf1dc"/><stop offset="1" stop-color="#e9d3a6"/></radialGradient>
+    <linearGradient id="arm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd94a"/><stop offset="1" stop-color="#f5a623"/></linearGradient>
+    <clipPath id="eggc"><path d="M512 230 C 680 230 772 450 772 600 C 772 770 660 870 512 870 C 364 870 252 770 252 600 C 252 450 344 230 512 230 Z"/></clipPath>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
-  <ellipse cx="512" cy="915" rx="240" ry="36" fill="rgba(0,20,60,.28)"/>
-  <!-- intérieur de l'œuf -->
-  <clipPath id="egg"><ellipse cx="512" cy="600" rx="268" ry="320"/></clipPath>
-  <path d="M244 545 Q 512 330 780 545 L 780 640 L 244 640 Z" fill="#3a2a1e" clip-path="url(#egg)"/>
-  <!-- la créature regarde dehors -->
-  <circle cx="440" cy="470" r="50" fill="#fff"/><circle cx="584" cy="470" r="50" fill="#fff"/>
-  <circle cx="452" cy="478" r="27" fill="#111"/><circle cx="596" cy="478" r="27" fill="#111"/>
-  <circle cx="461" cy="465" r="10" fill="#fff"/><circle cx="605" cy="465" r="10" fill="#fff"/>
-  <!-- bas de la coquille avec l'haltère -->
-  <g clip-path="url(#bottom)">
-    <ellipse cx="512" cy="600" rx="268" ry="320" fill="url(#shell)"/>
-    <circle cx="370" cy="800" r="24" fill="#e6d2a6"/><circle cx="660" cy="820" r="18" fill="#e6d2a6"/>
-    <g transform="translate(512 700)">
-      <rect x="-118" y="-15" width="236" height="30" rx="13" fill="#0a58d6"/>
-      <rect x="-126" y="-64" width="40" height="128" rx="13" fill="#0a58d6"/><rect x="86" y="-64" width="40" height="128" rx="13" fill="#0a58d6"/>
-      <rect x="-174" y="-44" width="42" height="88" rx="13" fill="#0a58d6"/><rect x="132" y="-44" width="42" height="88" rx="13" fill="#0a58d6"/>
-    </g>
+  <!-- rayons -->
+  <g opacity=".14" fill="#fff">
+    <path d="M512 560 L 470 0 L 554 0 Z"/><path d="M512 560 L 1024 300 L 1024 400 Z"/><path d="M512 560 L 0 300 L 0 400 Z"/>
+    <path d="M512 560 L 900 0 L 990 0 Z"/><path d="M512 560 L 34 0 L 124 0 Z"/>
   </g>
-  <!-- chapeau de coquille soulevé -->
-  <g transform="translate(20 -190) rotate(-16 512 520)">
-    <g clip-path="url(#top)">
-      <ellipse cx="512" cy="600" rx="268" ry="320" fill="url(#shell)"/>
-      <circle cx="430" cy="380" r="22" fill="#e6d2a6"/><circle cx="610" cy="340" r="15" fill="#e6d2a6"/>
-    </g>
+  <!-- étincelles -->
+  <g fill="#fff"><path d="M190 230 l14 34 l34 14 l-34 14 l-14 34 l-14 -34 l-34 -14 l34 -14 Z"/><path d="M850 190 l10 24 l24 10 l-24 10 l-10 24 l-10 -24 l-24 -10 l24 -10 Z" opacity=".85"/></g>
+  <ellipse cx="512" cy="905" rx="250" ry="40" fill="rgba(10,10,60,.35)"/>
+  <g id="armL" stroke="#1b1f4a" stroke-width="16" stroke-linejoin="round">
+    <!-- avant-bras vertical -->
+    <path d="M96 640 C 84 560 92 480 112 420 L 196 432 C 182 492 178 560 186 630 Z" fill="url(#arm)"/>
+    <!-- bras horizontal -->
+    <path d="M110 600 C 160 588 250 584 320 594 L 320 690 C 250 700 170 704 120 690 C 86 680 82 612 110 600 Z" fill="url(#arm)"/>
+    <!-- biceps contracté -->
+    <path d="M150 604 C 150 520 200 486 248 492 C 300 498 318 548 312 604 Z" fill="#ffd94a"/>
+    <path d="M196 528 C 214 512 240 510 258 520" stroke="#fff" stroke-width="12" stroke-linecap="round" fill="none" opacity=".8"/>
+    <!-- poing -->
+    <rect x="86" y="352" width="124" height="104" rx="44" fill="url(#arm)"/>
+    <path d="M120 360 v40 M152 358 v42 M182 362 v38" stroke="#1b1f4a" stroke-width="10" stroke-linecap="round" opacity=".5"/>
   </g>
+  <use href="#armL" transform="translate(1024 0) scale(-1 1)"/>
+  <!-- œuf -->
+  <path d="M512 230 C 680 230 772 450 772 600 C 772 770 660 870 512 870 C 364 870 252 770 252 600 C 252 450 344 230 512 230 Z" fill="url(#shell)" stroke="#1b1f4a" stroke-width="18"/>
+  <!-- fissure avec la créature qui regarde -->
+  <g clip-path="url(#eggc)">
+    <path d="M240 470 L 320 430 L 380 490 L 450 420 L 512 488 L 574 420 L 644 490 L 704 430 L 790 470 L 790 560 L 704 520 L 644 580 L 574 512 L 512 578 L 450 512 L 380 580 L 320 520 L 240 560 Z" fill="#2a1d14" stroke="#1b1f4a" stroke-width="14" stroke-linejoin="round"/>
+    <!-- yeux déterminés -->
+    <ellipse cx="440" cy="500" rx="40" ry="36" fill="#fff"/><ellipse cx="584" cy="500" rx="40" ry="36" fill="#fff"/>
+    <circle cx="452" cy="506" r="21" fill="#111"/><circle cx="572" cy="506" r="21" fill="#111"/>
+    <circle cx="460" cy="497" r="7" fill="#fff"/><circle cx="580" cy="497" r="7" fill="#fff"/>
+    <path d="M398 466 L 478 486" stroke="#2a1d14" stroke-width="18" stroke-linecap="round"/><path d="M626 466 L 546 486" stroke="#2a1d14" stroke-width="18" stroke-linecap="round"/>
+  </g>
+  <!-- reflet et taches -->
+  <path d="M360 330 C 330 380 315 430 312 470" stroke="#fff" stroke-width="22" stroke-linecap="round" fill="none" opacity=".9"/>
+  <circle cx="610" cy="700" r="24" fill="#e6cf9c"/><circle cx="430" cy="760" r="17" fill="#e6cf9c"/><circle cx="660" cy="360" r="14" fill="#e6cf9c"/>
 </svg>
