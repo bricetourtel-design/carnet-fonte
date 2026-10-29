@@ -1,44 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <defs>
-    <radialGradient id="bg" cx=".5" cy=".38" r=".75"><stop offset="0" stop-color="#4f8dff"/><stop offset=".6" stop-color="#2f55e8"/><stop offset="1" stop-color="#3a1fb8"/></radialGradient>
-    <radialGradient id="shell" cx=".36" cy=".28" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#fbf1dc"/><stop offset="1" stop-color="#e9d3a6"/></radialGradient>
-    <linearGradient id="arm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd94a"/><stop offset="1" stop-color="#f5a623"/></linearGradient>
-    <clipPath id="eggc"><path d="M512 230 C 680 230 772 450 772 600 C 772 770 660 870 512 870 C 364 870 252 770 252 600 C 252 450 344 230 512 230 Z"/></clipPath>
-  </defs>
-  <rect width="1024" height="1024" fill="url(#bg)"/>
-  <!-- rayons -->
-  <g opacity=".14" fill="#fff">
-    <path d="M512 560 L 470 0 L 554 0 Z"/><path d="M512 560 L 1024 300 L 1024 400 Z"/><path d="M512 560 L 0 300 L 0 400 Z"/>
-    <path d="M512 560 L 900 0 L 990 0 Z"/><path d="M512 560 L 34 0 L 124 0 Z"/>
-  </g>
-  <!-- étincelles -->
-  <g fill="#fff"><path d="M190 230 l14 34 l34 14 l-34 14 l-14 34 l-14 -34 l-34 -14 l34 -14 Z"/><path d="M850 190 l10 24 l24 10 l-24 10 l-10 24 l-10 -24 l-24 -10 l24 -10 Z" opacity=".85"/></g>
-  <ellipse cx="512" cy="905" rx="250" ry="40" fill="rgba(10,10,60,.35)"/>
-  <g id="armL" stroke="#1b1f4a" stroke-width="16" stroke-linejoin="round">
-    <!-- avant-bras vertical -->
-    <path d="M96 640 C 84 560 92 480 112 420 L 196 432 C 182 492 178 560 186 630 Z" fill="url(#arm)"/>
-    <!-- bras horizontal -->
-    <path d="M110 600 C 160 588 250 584 320 594 L 320 690 C 250 700 170 704 120 690 C 86 680 82 612 110 600 Z" fill="url(#arm)"/>
-    <!-- biceps contracté -->
-    <path d="M150 604 C 150 520 200 486 248 492 C 300 498 318 548 312 604 Z" fill="#ffd94a"/>
-    <path d="M196 528 C 214 512 240 510 258 520" stroke="#fff" stroke-width="12" stroke-linecap="round" fill="none" opacity=".8"/>
-    <!-- poing -->
-    <rect x="86" y="352" width="124" height="104" rx="44" fill="url(#arm)"/>
-    <path d="M120 360 v40 M152 358 v42 M182 362 v38" stroke="#1b1f4a" stroke-width="10" stroke-linecap="round" opacity=".5"/>
-  </g>
-  <use href="#armL" transform="translate(1024 0) scale(-1 1)"/>
-  <!-- œuf -->
-  <path d="M512 230 C 680 230 772 450 772 600 C 772 770 660 870 512 870 C 364 870 252 770 252 600 C 252 450 344 230 512 230 Z" fill="url(#shell)" stroke="#1b1f4a" stroke-width="18"/>
-  <!-- fissure avec la créature qui regarde -->
-  <g clip-path="url(#eggc)">
-    <path d="M240 470 L 320 430 L 380 490 L 450 420 L 512 488 L 574 420 L 644 490 L 704 430 L 790 470 L 790 560 L 704 520 L 644 580 L 574 512 L 512 578 L 450 512 L 380 580 L 320 520 L 240 560 Z" fill="#2a1d14" stroke="#1b1f4a" stroke-width="14" stroke-linejoin="round"/>
-    <!-- yeux déterminés -->
-    <ellipse cx="440" cy="500" rx="40" ry="36" fill="#fff"/><ellipse cx="584" cy="500" rx="40" ry="36" fill="#fff"/>
-    <circle cx="452" cy="506" r="21" fill="#111"/><circle cx="572" cy="506" r="21" fill="#111"/>
-    <circle cx="460" cy="497" r="7" fill="#fff"/><circle cx="580" cy="497" r="7" fill="#fff"/>
-    <path d="M398 466 L 478 486" stroke="#2a1d14" stroke-width="18" stroke-linecap="round"/><path d="M626 466 L 546 486" stroke="#2a1d14" stroke-width="18" stroke-linecap="round"/>
-  </g>
-  <!-- reflet et taches -->
-  <path d="M360 330 C 330 380 315 430 312 470" stroke="#fff" stroke-width="22" stroke-linecap="round" fill="none" opacity=".9"/>
-  <circle cx="610" cy="700" r="24" fill="#e6cf9c"/><circle cx="430" cy="760" r="17" fill="#e6cf9c"/><circle cx="660" cy="360" r="14" fill="#e6cf9c"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><rect width="1024" height="1024" fill="#F26B3A"/>
+<path d="M512 366 C 662 366 744 581 744 704.4 C 744 835 654 930 512 930 C 370 930 280 835 280 704.4 C 280 581 362 366 512 366 Z" fill="#FFF4DF"/>
+<!-- fissures qui partent du point d'impact -->
+<path d="M512 386 L 488 460 L 530 520 L 476 610 M530 520 L 590 556 L 572 630 M488 460 L 420 486 M512 386 L 556 452 L 620 470" stroke="#1F2544" stroke-width="14" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M378 600 C 362 640 356 690 358 730" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+<!-- traits d'impact et éclats -->
+<path d="M0 0 l44 -20 l20 42 l-50 18 Z" transform="translate(150 250) rotate(-35) scale(1.1)" fill="#FFF4DF"/><path d="M0 0 l44 -20 l20 42 l-50 18 Z" transform="translate(820 230) rotate(30) scale(1.1)" fill="#FFF4DF"/><path d="M0 0 l44 -20 l20 42 l-50 18 Z" transform="translate(250 150) rotate(10) scale(0.75)" fill="#FFF4DF"/><path d="M0 0 l44 -20 l20 42 l-50 18 Z" transform="translate(740 140) rotate(-25) scale(0.75)" fill="#FFF4DF"/><path d="M0 0 l44 -20 l20 42 l-50 18 Z" transform="translate(470 190) rotate(5) scale(0.6)" fill="#FFF4DF"/><path d="M0 0 l44 -20 l20 42 l-50 18 Z" transform="translate(560 170) rotate(-40) scale(0.55)" fill="#FFF4DF"/><g stroke="#FFF4DF" stroke-width="16" stroke-linecap="round"><path d="M380 230 l-36 -46"/><path d="M644 230 l36 -46"/><path d="M512 220 v-58"/></g><g transform="translate(512 354)">
+<rect x="-250" y="-18" width="500" height="36" rx="18" fill="#C9CED8"/>
+<rect x="-240" y="-104" width="70" height="208" rx="22" fill="#2B3150"/><rect x="170" y="-104" width="70" height="208" rx="22" fill="#2B3150"/>
+<rect x="-300" y="-74" width="58" height="148" rx="20" fill="#3A4166"/><rect x="242" y="-74" width="58" height="148" rx="20" fill="#3A4166"/></g></svg>
