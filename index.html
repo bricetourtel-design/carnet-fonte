@@ -306,6 +306,25 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .adapt{background:var(--fill);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;font-size:14px}
 .adapt .ch.up{color:var(--ok)} .adapt .ch.down{color:var(--warm)}
 .tagx.warnx{background:var(--warm)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--fill);border-radius:10px;padding:2px;gap:2px}
+.seg button{height:34px;border-radius:8px;font-size:15px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.cr-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:16px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 9%,var(--surface)),var(--surface))}
+.cr-stage{display:flex;align-items:baseline;gap:8px;width:100%}
+.cr-stage b{font-size:22px;flex:1}
+.creature{width:100%;max-width:210px;height:auto;display:block}
+.creature.sm{width:64px;flex:none}
+.cr-breathe{transform-origin:100px 230px;animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.018,1.012)}}
+.cr-egg{transform-origin:100px 220px;animation:wobble 4s ease-in-out infinite}
+@keyframes wobble{0%,82%,100%{transform:rotate(0)}86%{transform:rotate(-4deg)}90%{transform:rotate(4deg)}94%{transform:rotate(-2deg)}}
+@media (prefers-reduced-motion: reduce){.cr-breathe,.cr-egg{animation:none}}
+.cr-msg{margin:0;text-align:center;font-weight:500}
+.cr-next{width:100%;display:flex;flex-direction:column;gap:6px;align-items:center}
+.cr-next .vol-bar{width:100%}
+.cr-meal{display:flex;align-items:center;gap:12px;text-align:left;background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:12px;padding:8px 12px;width:100%}
+.cr-meal span{display:flex;flex-direction:column;font-size:14px;color:var(--muted)}
+.cr-meal b{color:var(--fg);font-size:16px}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 .foot{font-size:13px;color:var(--muted);text-align:center;padding-top:8px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -321,9 +340,9 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <main id="view"></main>
 <div class="rest" id="rest" hidden></div>
 <nav class="tabs" id="tabs">
+  <button data-tab="creature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C8 3 5 9 5 14a7 7 0 0 0 14 0c0-5-3-11-7-11z"/><path d="M8.5 13l2 1.5 2-2 2 2 1-1"/></svg>Créature</button>
   <button data-tab="seance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Séance</button>
   <button data-tab="routine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l2 2 4-4"/></svg>Routine</button>
-  <button data-tab="historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>Historique</button>
   <button data-tab="progres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M5 15l4-4 4 3 6-7"/></svg>Progrès</button>
   <button data-tab="exercices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>Exercices</button>
 </nav>
@@ -332,7 +351,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 <div class="flash" id="flash" data-act="flash-close" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-27 c";
+const APP_VERSION = "2026-10-29 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -401,7 +420,7 @@ function defaultProfile(){
 /* ---------- État et stockage ---------- */
 const LS = "carnet-fonte.v1";
 let S = {profile:defaultProfile(), workouts:[]};
-let tab = "seance", progEx = null, restState = null, sheetOnClose = null, pendingRender = false;
+let tab = "creature", progSub = "prog", progEx = null, restState = null, sheetOnClose = null, pendingRender = false;
 let mode = "local", saveTimer = null;
 const clone = o => JSON.parse(JSON.stringify(o));
 const uidGen = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
@@ -968,6 +987,180 @@ function todayCardHTML(ch){
     </div>`;
 }
 
+
+/* ---------- Créature (MVP) ----------
+   Module isolé : lit les séances et les calculs existants (wVolume, strengthByMuscle, workSets) sans les modifier,
+   et garde son propre état dans S.profile.creature. Tous les réglages sont dans CREATURE_CFG. */
+const CREATURE_CFG = {
+  stages: ["Œuf", "Poussin", "Poulet humanoïde", "Dinosaure humanoïde"],
+  stageAt: [0, 2, 10, 30],                  // fidélité (séances validées) pour atteindre chaque stade
+  foodPerTonne: [0.002, 0.03, 0.25, 1.0],   // kg de poids gagnés par tonne soulevée, selon le stade
+  minWeight: [0.06, 0.05, 2, 40],           // poids minimal de chaque stade (kg)
+  height: [[6,7], [8,25], [30,120], [130,220]],   // taille (cm) au début et à la fin de chaque stade
+  heightPerSessionAfter: 1,                 // cm par séance après le dernier seuil
+  // Musculature : score de force existant (0 à 5, strengthByMuscle) → 5 niveaux visuels (0 à 4)
+  levelThresholds: {default:[1.5, 2.5, 3.25, 4]},
+  // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
+  setsThresholds: [20, 60, 120, 200],
+  vitality: {graceDays:7, lossPerDay:6, min:20},   // après 7 jours sans séance, -6 %/jour, jamais sous 20 %
+  freq: {window:14, target:6}               // régularité : séances sur 14 jours, objectif 6 (3/semaine)
+};
+function creatureState(){
+  if(!S.profile.creature) S.profile.creature = {born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null};
+  return S.profile.creature;
+}
+const stageFor = fid => CREATURE_CFG.stageAt.reduce((s, at, i) => fid >= at ? i : s, 0);
+function creatureHeight(c){
+  const [lo, hi] = CREATURE_CFG.height[c.stage], at = CREATURE_CFG.stageAt, next = at[c.stage+1];
+  if(next===undefined) return Math.min(hi, lo + (c.fidelity - at[c.stage]) * CREATURE_CFG.heightPerSessionAfter);
+  return lo + (hi - lo) * Math.min(1, (c.fidelity - at[c.stage]) / (next - at[c.stage]));
+}
+function creatureVitality(c){
+  const v = CREATURE_CFG.vitality, ref = c.last || c.born, days = (Date.now() - ref) / 86400000;
+  return days <= v.graceDays ? 100 : Math.max(v.min, Math.round(100 - (days - v.graceDays) * v.lossPerDay));
+}
+function creatureRegularity(c){
+  const f = CREATURE_CFG.freq, n = S.workouts.filter(w => c.fed.includes(w.id) && Date.now() - w.start < f.window*86400000).length;
+  return {n, perWeek: n / (f.window/7), pct: Math.min(1, n / f.target)};
+}
+function muscleLevels(){
+  const {res} = strengthByMuscle(), out = {};
+  MUSCLES.forEach(m => {
+    const r = res[m];
+    if(r && r.score!==null){ const t = CREATURE_CFG.levelThresholds[m] || CREATURE_CFG.levelThresholds.default; out[m] = t.filter(x => r.score >= x).length; }
+    else { let n = 0; S.workouts.forEach(w => w.exercises.forEach(ex => { if(exById(ex.exId).muscle===m) n += workSets(ex).length; }));
+      out[m] = CREATURE_CFG.setsThresholds.filter(x => n >= x).length; }
+  });
+  return out;
+}
+// Appelée une fois à la validation d'une séance ; ne compte jamais deux fois la même séance
+function creatureFeed(w){
+  const c = creatureState();
+  if(c.fed.includes(w.id) || (w.end || w.start) < c.born) return null;
+  const before = {stage:c.stage, weight:c.weight, levels:{...c.levels}};
+  c.fed.push(w.id); if(c.fed.length > 1000) c.fed = c.fed.slice(-1000);
+  c.fidelity++; c.last = w.end || w.start;
+  const vol = wVolume(w), reg = creatureRegularity(c), freqFactor = 0.7 + 0.6 * reg.pct;   // 0,7 à 1,3 selon la régularité
+  c.food += vol;
+  c.stage = Math.max(c.stage, stageFor(c.fidelity));                 // un stade acquis ne se perd jamais
+  const gain = vol/1000 * CREATURE_CFG.foodPerTonne[c.stage] * freqFactor;
+  c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + gain);
+  const lv = muscleLevels(); MUSCLES.forEach(m => c.levels[m] = Math.max(c.levels[m]||0, lv[m]));   // la musculature ne régresse pas
+  const ups = MUSCLES.filter(m => (c.levels[m]||0) > (before.levels[m]||0));
+  c.lastMeal = {w:w.id, vol, gain:c.weight - before.weight, ts:Date.now()};
+  touchProfile();
+  return {vol, gain:c.weight - before.weight, evolved:c.stage > before.stage, stage:c.stage, ups};
+}
+const fmtWeight = kg => kg < 1 ? `${Math.round(kg*1000)} g` : `${fmtN(kg, kg < 10 ? 1 : 0)} kg`;
+
+/* Dessin : formes simples en SVG, la taille de chaque muscle suit son niveau (0 à 4) */
+function creatureSVG(c, small){
+  const L = m => c.levels[m] || 0, st = c.stage, vit = creatureVitality(c), sleepy = vit < 60;
+  const span = CREATURE_CFG.minWeight[Math.min(3, st+1)] || 100, fat = Math.min(1, Math.max(0, (c.weight - CREATURE_CFG.minWeight[st]) / span));
+  const eye = (x, y, r) => sleepy ? `<path d="M${x-r} ${y} Q${x} ${y+r*0.8} ${x+r} ${y}" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/>`
+    : `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/><circle cx="${x+r*0.25}" cy="${y}" r="${r*0.55}" fill="#1d1d1f"/><circle cx="${x+r*0.4}" cy="${y-r*0.3}" r="${r*0.18}" fill="#fff"/>`;
+  let g = "";
+  if(st===0){
+    const p = Math.min(1, c.fidelity / CREATURE_CFG.stageAt[1]);
+    g = `<ellipse cx="100" cy="226" rx="46" ry="7" fill="rgba(0,0,0,.12)"/>
+      <g class="cr-egg"><ellipse cx="100" cy="150" rx="54" ry="70" fill="#f6ecd6" stroke="#e2d3b3" stroke-width="2"/>
+      <circle cx="78" cy="122" r="7" fill="#e9d8b4"/><circle cx="120" cy="170" r="9" fill="#e9d8b4"/><circle cx="116" cy="112" r="5" fill="#e9d8b4"/><circle cx="84" cy="182" r="5" fill="#e9d8b4"/>
+      ${p>0 ? `<path d="M66 ${132} l10 8 l8 -10 l10 9 l9 -8 l9 9 l9 -9 l9 8" stroke="#a88f63" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-dasharray="${Math.round(p*110)} 200"/>` : ""}</g>`;
+  }else if(st===1){
+    const P = L("Pectoraux"), A = (L("Biceps")+L("Triceps")+L("Épaules"))/3, J = L("Jambes"), D = L("Dos"), r = 46 + fat*8 + D*1.5;
+    g = `<ellipse cx="100" cy="226" rx="40" ry="6" fill="rgba(0,0,0,.12)"/>
+      <path d="M86 ${180+r*0.2} L84 222 M114 ${180+r*0.2} L116 222" stroke="#f08a24" stroke-width="${3+J*1.2}" stroke-linecap="round"/>
+      <path d="M76 222 l8 -4 l8 4 M108 222 l8 -4 l8 4" stroke="#f08a24" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="${100-r+2}" cy="158" rx="${12+A*3}" ry="${20+A*2.5}" fill="#f7c22b" transform="rotate(20 ${100-r+2} 158)"/>
+      <ellipse cx="${100+r-2}" cy="158" rx="${12+A*3}" ry="${20+A*2.5}" fill="#f7c22b" transform="rotate(-20 ${100+r-2} 158)"/>
+      <circle cx="100" cy="160" r="${r}" fill="#ffd84d"/>
+      <ellipse cx="100" cy="${150}" rx="${18+P*4}" ry="${14+P*2.5}" fill="#ffe68a"/>
+      <circle cx="100" cy="100" r="32" fill="#ffd84d"/>
+      <path d="M86 72 l6 -10 l6 10 l6 -10 l6 10" fill="#fff" stroke="#e2d3b3" stroke-width="1.5"/>
+      ${eye(88, 98, 6)}${eye(112, 98, 6)}
+      <path d="M94 110 L106 110 L100 120 Z" fill="#f08a24"/>`;
+  }else{
+    const dino = st===3, P = L("Pectoraux"), D = L("Dos"), E = L("Épaules"), B = L("Biceps"), T = L("Triceps"), J = L("Jambes"), Ab = L("Abdos");
+    const skin = dino ? "#4caf6e" : "#f7f2e8", shade = dino ? "#2f7d4f" : "#ddd2bf", light = dino ? "#cdeac0" : "#fffdf8", line = dino ? "#24603c" : "#b9ab93";
+    const sw = 28 + D*4.5 + E*1.2, ww = 19 + fat*10 + D*1.2, top = 84, hip = 156;
+    const arm = 7 + (B+T)*0.9, bi = 4 + B*2.2, thigh = 9 + J*2.4, del = 7 + E*2.4;
+    // jambes et queue
+    g += `<ellipse cx="100" cy="228" rx="${48+fat*6}" ry="7" fill="rgba(0,0,0,.12)"/>`;
+    if(dino) g += `<path d="M${100-ww+4} 150 Q 40 170 18 214 Q 52 196 ${100-ww+10} 172 Z" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
+    [-1,1].forEach(s => {
+      const x = 100 + s*(ww*0.55 + 4);
+      g += `<ellipse cx="${x}" cy="176" rx="${thigh}" ry="24" fill="${skin}" stroke="${line}" stroke-width="1.5"/>
+        ${J>=2 ? `<path d="M${x - s*thigh*0.2} 162 Q ${x + s*thigh*0.5} 176 ${x - s*thigh*0.1} 192" stroke="${line}" stroke-width="1.2" fill="none" opacity=".7"/>` : ""}
+        <rect x="${x - (4 + J*0.9)}" y="196" width="${8 + J*1.8}" height="26" rx="4" fill="${dino ? skin : "#f4a259"}" stroke="${line}" stroke-width="1.2"/>
+        ${dino ? `<ellipse cx="${x + s*4}" cy="224" rx="14" ry="6" fill="${shade}"/>` : `<path d="M${x} 222 l-10 4 M${x} 222 l0 6 M${x} 222 l10 4" stroke="#f4a259" stroke-width="3" stroke-linecap="round"/>`}`;
+    });
+    // torse (largeur liée au dos), ventre (poids)
+    g += `<path d="M${100-sw} ${top+4} Q ${100-sw-3} 122 ${100-ww} ${hip} L ${100+ww} ${hip} Q ${100+sw+3} 122 ${100+sw} ${top+4} Q 100 ${top-8} ${100-sw} ${top+4} Z" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
+    if(D>=1) g += `<path d="M${100-sw+3} ${top+12} Q ${100-sw+12} 122 ${100-ww+3} ${hip-10}" stroke="${shade}" stroke-width="${2+D}" fill="none" opacity=".55"/><path d="M${100+sw-3} ${top+12} Q ${100+sw-12} 122 ${100+ww-3} ${hip-10}" stroke="${shade}" stroke-width="${2+D}" fill="none" opacity=".55"/>`;
+    g += `<ellipse cx="100" cy="${hip-16}" rx="${ww-2+fat*5}" ry="${16+fat*6}" fill="${light}"/>`;
+    // abdos
+    if(Ab>=1){ const rows = Math.min(3, Ab); for(let i=0;i<rows;i++) [-1,1].forEach(s => g += `<rect x="${100 + (s<0?-11:2)}" y="${hip-34+i*10}" width="9" height="8" rx="3" fill="${shade}" opacity="${0.25+Ab*0.1}"/>`); }
+    // pectoraux
+    const pr = 9 + P*2.8, py = top + 18 + P*0.6;
+    [-1,1].forEach(s => g += `<ellipse cx="${100 + s*(pr*0.95)}" cy="${py}" rx="${pr}" ry="${6.5 + P*1.7}" fill="${dino ? "#5cbd7d" : "#fbf8f1"}" stroke="${line}" stroke-width="${1 + P*0.25}"/>`);
+    // bras : deltoïde, bras (biceps/triceps), avant-bras
+    [-1,1].forEach(s => {
+      const sx = 100 + s*sw, ax = sx + s*(arm*0.6 + 2);
+      g += `<ellipse cx="${ax}" cy="${top+30}" rx="${arm}" ry="20" fill="${skin}" stroke="${line}" stroke-width="1.5" transform="rotate(${s*-8} ${ax} ${top+30})"/>
+        ${B>=1 ? `<ellipse cx="${ax - s*arm*0.25}" cy="${top+28}" rx="${bi}" ry="${8+B}" fill="${dino ? "#5cbd7d" : "#fbf8f1"}" stroke="${line}" stroke-width="1"/>` : ""}
+        ${T>=2 ? `<path d="M${ax + s*arm*0.55} ${top+18} Q ${ax + s*(arm+2)} ${top+30} ${ax + s*arm*0.5} ${top+44}" stroke="${shade}" stroke-width="${1+T*0.6}" fill="none"/>` : ""}
+        <ellipse cx="${ax + s*2}" cy="${top+58}" rx="${5.5 + (B+T)*0.5}" ry="15" fill="${skin}" stroke="${line}" stroke-width="1.5"/>
+        <circle cx="${ax + s*3}" cy="${top+74}" r="${5 + (B+T)*0.3}" fill="${dino ? skin : "#f4a259"}" stroke="${line}" stroke-width="1.2"/>
+        <circle cx="${sx}" cy="${top+8}" r="${del}" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
+    });
+    // tête
+    g += `<rect x="92" y="${top-16}" width="16" height="16" fill="${skin}"/>`;
+    if(dino){
+      g += `<path d="M86 30 l6 -9 l5 9 l6 -9 l5 9 l6 -8 l4 9" fill="${shade}"/>
+        <path d="M78 52 Q 80 26 106 26 Q 140 28 146 50 Q 146 66 120 70 L 92 72 Q 78 70 78 52 Z" fill="${skin}" stroke="${line}" stroke-width="1.5"/>
+        <path d="M108 62 Q 128 64 142 58" stroke="${line}" stroke-width="1.5" fill="none"/>
+        <path d="M114 63 l3 4 l3 -4 l3 4 l3 -4 l3 4" fill="#fff" stroke="none"/>
+        <circle cx="138" cy="44" r="1.8" fill="${line}"/>${eye(98, 44, 7)}`;
+    }else{
+      g += `<path d="M86 30 q4 -14 10 -2 q4 -14 10 -2 q6 -12 9 2 q-10 4 -29 2 Z" fill="#e63946"/>
+        <circle cx="100" cy="50" r="22" fill="${skin}" stroke="${line}" stroke-width="1.5"/>
+        <path d="M118 50 L134 55 L118 60 Z" fill="#f4a259"/><path d="M116 61 q6 10 0 14 q-6 -4 0 -14" fill="#e63946"/>${eye(106, 46, 6.5)}`;
+    }
+  }
+  const sat = Math.round(40 + vit*0.6);
+  return `<svg class="creature ${small?"sm":""}" viewBox="0 0 200 240" role="img" aria-label="${CREATURE_CFG.stages[st]}" style="filter:saturate(${sat}%)"><g class="cr-breathe">${g}</g></svg>`;
+}
+
+function viewCreature(){
+  const c = creatureState(), next = CREATURE_CFG.stageAt[c.stage+1], vit = creatureVitality(c), reg = creatureRegularity(c);
+  const lvAvg = MUSCLES.reduce((t,m) => t + (c.levels[m]||0), 0) / MUSCLES.length;
+  const toNext = next===undefined ? null : next - c.fidelity;
+  const msg = c.stage===0 ? (c.fidelity ? "L'œuf bouge… encore un effort !" : "Votre œuf attend sa première séance pour se réchauffer.")
+    : vit < 60 ? "Votre créature s'ennuie : une séance la remettra d'aplomb." : reg.perWeek >= 3 ? "En pleine forme, continuez sur ce rythme !" : "Elle grandit à chaque séance validée.";
+  const ch = S.profile.active ? null : (S.profile.routines.some(r => r.plan) ? chooseToday() : null);
+  return `
+    <section class="card cr-card">
+      <div class="cr-stage"><b>${esc(CREATURE_CFG.stages[c.stage])}</b><span class="small muted">${c.stage+1}/4</span></div>
+      ${creatureSVG(c)}
+      <p class="cr-msg">${esc(msg)}</p>
+      ${toNext!==null ? `<div class="cr-next"><div class="vol-bar"><i style="width:${Math.round((c.fidelity - CREATURE_CFG.stageAt[c.stage]) / (next - CREATURE_CFG.stageAt[c.stage]) * 100)}%;--mc:var(--accent)"></i></div>
+        <span class="small muted">${toNext} séance${toNext>1?"s":""} avant : ${esc(CREATURE_CFG.stages[c.stage+1])}</span></div>` : `<span class="small muted">Stade final atteint · ${c.fidelity} séances</span>`}
+    </section>
+    <div class="tiles cr-tiles">
+      <div class="tile"><span>Poids</span><strong>${fmtWeight(c.weight)}</strong><small>${c.lastMeal ? `dernier repas : ${fmtVol(c.lastMeal.vol)}` : "nourri par le volume soulevé"}</small></div>
+      <div class="tile"><span>Taille</span><strong>${fmtN(creatureHeight(c), 0)} cm</strong><small>grandit avec la fidélité</small></div>
+      <div class="tile"><span>Musculature</span><strong>${fmtN(lvAvg + 1, 1)} / 5</strong><small>${c.stage ? "selon vos niveaux de force" : "visible après l'éclosion"}</small></div>
+      <div class="tile"><span>Vitalité</span><strong>${vit} %</strong><small>${fmtN(reg.perWeek, 1)} séance${reg.perWeek>=2?"s":""}/sem · objectif 3</small></div>
+    </div>
+    <details class="duos card"><summary>Musculature par groupe</summary><div class="vol" style="margin-top:10px">${MUSCLES.map(m => {
+      const l = c.levels[m]||0; return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${(l+1)*20}%;${mc(m)}"></i></div><b class="num">${l+1}</b></div>`; }).join("")}</div>
+      <p class="small muted" style="margin:8px 0 0">Niveaux 1 à 5, calculés depuis vos niveaux de force (onglet Progrès). Ils ne baissent jamais.</p></details>
+    ${S.profile.active ? `<button class="btn primary wide" data-act="goto" data-tab="seance">Reprendre la séance en cours</button>`
+      : ch ? `<button class="btn primary wide" data-act="goto" data-tab="seance">Séance du jour : ${esc(ch.eff.name)}</button>`
+      : `<button class="btn primary wide" data-act="goto" data-tab="seance">Aller à la séance</button>`}
+    <p class="foot">La créature mange le volume soulevé à chaque séance validée et grandit avec votre fidélité. Une pause la fatigue mais ne lui fait rien perdre.</p>`;
+}
+
 /* ---------- Note de la séance ---------- */
 function rateWorkout(w){
   const before = S.workouts.filter(x => x.start < w.start && x.id!==w.id);
@@ -1112,13 +1305,13 @@ function fmtClock(ms){ const s = Math.max(0, Math.floor(ms/1000)); const h=Math.
 const setTxt = s => (num(s.w) ? fmtN(num(s.w))+" kg × " : "") + (num(s.r)||"–") + (num(s.w) ? "" : " reps");
 
 /* ---------- Rendu ---------- */
-const TITLES = {seance:"Séance", routine:"Routine", historique:"Historique", progres:"Progrès", exercices:"Exercices"};
+const TITLES = {creature:"Créature", seance:"Séance", routine:"Routine", historique:"Historique", progres:"Progrès", exercices:"Exercices"};
 function render(){
   document.getElementById("title").textContent = TITLES[tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===tab ? "page" : "false"));
   const v = document.getElementById("view");
-  v.innerHTML = tab==="seance" ? (S.profile.active ? viewActive() : viewHome())
-    : tab==="routine" ? viewPlan() : tab==="historique" ? viewHistory() : tab==="progres" ? viewProgress() : viewExercises();
+  v.innerHTML = tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : viewHome())
+    : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : viewExercises();
   tickClock(); wakeLock();
 }
 
@@ -1275,6 +1468,7 @@ function viewHistory(){
   return out;
 }
 
+const progSeg = () => `<div class="seg" role="tablist"><button data-act="prog-sub" data-s="prog" aria-pressed="${progSub!=="hist"}">Progression</button><button data-act="prog-sub" data-s="hist" aria-pressed="${progSub==="hist"}">Historique</button></div>`;
 function viewProgress(){
   if(!S.workouts.length) return `<div class="card empty"><b>Pas encore de courbe</b>
     <span class="muted">Après deux ou trois séances, vous verrez ici votre volume par semaine et l'évolution de votre 1RM estimé sur chaque exercice.</span>
@@ -1466,7 +1660,8 @@ function finishWorkout(){
   });
   w.rating = rateWorkout(w);
   S.workouts.push(w); S.profile.active = null; stopRest(); flash(null);
-  touchProfile(); saveWorkout(w); render();
+  touchProfile(); saveWorkout(w);
+  const cr = creatureFeed(w); render();
   openSheet(`<div class="rating"><span class="remo">${w.rating.e}</span><div><h3>${esc(w.rating.label)}</h3>
       <ul>${w.rating.why.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
     <div class="tiles">
@@ -1475,6 +1670,8 @@ function finishWorkout(){
       <div class="tile"><span>Séries</span><strong>${wSetCount(w)}</strong></div>
       <div class="tile"><span>Records</span><strong>${w.prs.length}</strong></div>
     </div>
+    ${cr ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>${cr.evolved ? `Évolution : ${esc(CREATURE_CFG.stages[cr.stage])} !` : "Votre créature a mangé"}</b>
+      ${fmtVol(cr.vol)} soulevés · ${cr.gain>0 ? "+"+fmtWeight(cr.gain) : "elle reprend des forces"}${cr.ups.length ? ` · plus musclée : ${cr.ups.join(", ").toLowerCase()}` : ""}</span></button>` : ""}
     ${w.prs.length ? `<p style="margin:0">Nouveau record sur ${w.prs.map(id=>"<b>"+esc(exById(id).name)+"</b>").join(", ")}.</p>` : ""}
     <button class="btn primary" data-act="close">Fermer</button>`);
 }
@@ -1515,6 +1712,7 @@ const ACT = {
   close: () => closeSheet(),
   goto: b => { tab = b.dataset.tab; render(); },
   "start-empty": () => startWorkout("Séance libre", []),
+  "cr-see": () => { closeSheet(); tab = "creature"; render(); window.scrollTo(0,0); },
   "start-today": () => { const ch = chooseToday(); if(!ch) return; const its = adaptToday(ch.eff).items;
     if(ch.switched && ch.pick.kind==="plan"){ const wk = weekStart(Date.now());
       S.profile.swaps = (S.profile.swaps||[]).filter(x => x.week===wk).concat({week:wk, a:ch.r0.id, b:ch.pick.r.id}); }
@@ -1546,6 +1744,7 @@ const ACT = {
   "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
     openPicker(ids => { progEx = ids[0]; render(); window.scrollTo(0,0); }, freq); },
   "body-m": b => { bodySel = bodySel===b.dataset.m ? null : b.dataset.m; render(); },
+  "prog-sub": b => { progSub = b.dataset.s; render(); window.scrollTo(0,0); },
   "plan-n": b => { const n = Math.min(6, Math.max(1, planDraft.n + +b.dataset.d)); if(n!==planDraft.n){ planDraft = newDraft(n); render(); } },
   // sections de l'accueil
   "plan-dow": b => { const i = +b.dataset.i, d = planDraft, k = d.days.findIndex(x => x.dow===i);
@@ -1737,7 +1936,8 @@ document.addEventListener("change", e => {
 
 /* ---------- Démarrage ---------- */
 loadLocal();
-const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h;
+const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h; else if(h==="historique"){ tab = "progres"; progSub = "hist"; }
+if(!S.profile.creature){ creatureState(); saveLocal(); }   // l'œuf naît à la première ouverture : seules les séances suivantes comptent
 render(); setStatus();
 if("serviceWorker" in navigator){
   // Nouvelle version installée : on recharge une fois pour l'afficher (les données restent dans le téléphone)

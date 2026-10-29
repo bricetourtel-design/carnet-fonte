@@ -33,6 +33,8 @@ const CSV = "\uFEFFDate,Start Date,Workout,Source,Workout Duration (min),Energy,
 
 async function snapshot(page){
   return page.evaluate(({SYNTH, CSV}) => {
+    // Horloge figée à la demi-heure en cours : les calculs liés au temps (récupération, reprise) restent identiques d'un lancement à l'autre
+    const H = 3600e3, FIXED = Math.floor(Date.now()/H)*H + H/2, RealDate = Date; Date.now = () => FIXED;
     const out = {};
     // Bibliothèque et associations exercice → muscle (ne doivent pas changer)
     out.library = EX.map(e => [e.id, e.name, e.muscle, e.equip]);
@@ -52,6 +54,7 @@ async function snapshot(page){
     out.estMinutes = Math.round(estMinutes([{exId:"dc-barre",sets:3},{exId:"curl-barre",sets:3}])*100)/100;
     const gr = gravlToWorkouts(CSV); out.gravl = {n:gr.workouts.length, sets:gr.sets, skipped:gr.skipped, custom:gr.custom.map(e => [e.id, e.muscle, e.equip]),
       w:gr.workouts.map(w => [w.id, w.name, w.exercises.map(x => [x.exId, x.feel||0, x.sets.map(s => [s.w, s.r, s.warm])])])};
+    Date.now = RealDate.now;
     return out;
   }, {SYNTH, CSV});
 }
