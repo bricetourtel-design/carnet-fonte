@@ -18,11 +18,14 @@ Hypothèse testée : une créature qui grandit avec les entraînements améliore
 | Fidélité | +1 par séance validée, ne baisse jamais. Une séance n'est comptée qu'une fois (liste des séances déjà « mangées ») | – |
 | Poids | Repas = volume soulevé. Gain = tonnes × coefficient du stade × facteur de régularité (0,7 à 1,3) | `foodPerTonne: [0.002, 0.03, 0.25, 1]`, `minWeight` |
 | Taille | Liée à la maturité : progresse avec la fidélité à l'intérieur de chaque stade | `height` |
-| Musculature | 5 niveaux par muscle, depuis le score de force existant (0–5) ; sans score (abdos, pas de poids de corps), depuis le nombre de séries. Ne baisse jamais | `levelThresholds`, `setsThresholds` |
+| Musculature | 5 niveaux par muscle. Niveau visé = score de force existant (0–5), ou séries faites depuis la naissance (abdos, pas de poids de corps). **Seuls les muscles réellement travaillés dans la séance (au moins une série validée) progressent, d'un niveau au plus par séance.** Ne baisse jamais | `levelThresholds`, `setsThresholds` |
 | Régularité | Séances validées sur 14 jours, objectif 6 (3/semaine) | `freq` |
 | Vitalité | 100 % jusqu'à 7 jours sans séance, puis −6 %/jour, minimum 20 %. Remonte à 100 % à la séance suivante. N'efface rien | `vitality` |
 
 Le profil 1,90 m / 93 kg a servi à vérifier le rendu. Les seuils de musculature reposent sur le score de force existant (rapporté au poids de corps de l'utilisateur), pas sur des kilos fixes.
+
+## Correctif V1.1
+La première version recalculait tous les muscles à chaque séance à partir de l'historique de force : une séance pecs faisait grossir le dos ou les jambes. Corrigé ; la musculature des créatures existantes est recalculée une fois à partir des seules séances réellement faites.
 
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.
