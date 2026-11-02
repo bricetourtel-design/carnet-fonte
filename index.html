@@ -389,6 +389,10 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .check{background:var(--glass)}
 
 /* ---------- Mon Gymon : le Gymon en plein écran ---------- */
+.top-r{display:flex;align-items:center;gap:10px;padding-bottom:2px}
+.idea-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--accent);background:var(--glass);border:1px solid var(--glass-line);
+  box-shadow:var(--glass-hi),var(--glass-shadow);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
+.idea-txt{min-height:140px;font-family:var(--body)!important;font-size:16px!important;border:1px solid var(--glass-line);background:var(--glass);border-radius:16px;padding:12px 14px;color:var(--fg);resize:vertical}
 .gy{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:-6px}
 .gy-stage{position:relative;width:100%;height:calc(100dvh - 400px);min-height:330px;max-height:600px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .gy-stage .creature{width:auto;height:84%;max-width:88%;max-height:none;position:relative;z-index:1}
@@ -413,7 +417,10 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 
 <header class="top">
   <h1 id="title">Séance</h1>
-  <div class="status" id="status"><i></i><span>Sur cet iPhone</span></div>
+  <div class="top-r">
+    <div class="status" id="status"><i></i><span>Sur cet iPhone</span></div>
+    <button class="idea-btn" data-act="idea" aria-label="Boîte à idées"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg></button>
+  </div>
 </header>
 <main id="view"></main>
 <div class="rest" id="rest" hidden></div>
@@ -429,7 +436,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="flash" id="flash" data-act="flash-close" hidden></div>
 
 <script>
-const APP_VERSION = "2026-10-30 a";
+const APP_VERSION = "2026-11-02 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1268,6 +1275,13 @@ function viewCreature(){
     </section>`;
 }
 
+/* ---------- Boîte à idées : brouillon gardé sur le téléphone ---------- */
+function ideaSave(){
+  const t = document.getElementById("idea-txt"), k = document.querySelector('#idea-kinds [aria-pressed="true"]');
+  if(!t) return; try{ localStorage.setItem("gymon.idea", JSON.stringify({kind: k ? k.dataset.k : "idee", txt: t.value})); }catch(e){}
+}
+document.addEventListener("input", e => { if(e.target.id==="idea-txt") ideaSave(); });
+
 /* ---------- Note de la séance ---------- */
 function rateWorkout(w){
   const before = S.workouts.filter(x => x.start < w.start && x.id!==w.id);
@@ -1826,6 +1840,28 @@ const ACT = {
       <div class="vol">${MUSCLES.map(m => { const l = c.levels[m]||0; return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${(l+1)*20}%;${mc(m)}"></i></div><b class="num">${l+1}</b></div>`; }).join("")}</div>
       <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) peut se développer, jusqu'à votre niveau de force. Le volume soulevé le nourrit, votre fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
       <button class="btn" data-act="close">Fermer</button>`); },
+  // Boîte à idées : le message est préparé puis envoyé par le partage de l'iPhone (aucun serveur)
+  idea: () => {
+    let draft = {kind:"idee", txt:""}; try{ draft = {...draft, ...JSON.parse(localStorage.getItem("gymon.idea")||"{}")}; }catch(e){}
+    const kinds = [["idee","💡 Une idée"],["manque","🧩 Il manque…"],["bug","🐞 Un bug"],["top","❤️ J'adore"]];
+    openSheet(`<h3>Boîte à idées</h3>
+      <p class="muted small" style="margin:-4px 0 0">Une idée, un manque, un bug ? Votre message sera préparé pour l'envoyer à la personne qui vous a partagé Gymon.</p>
+      <div class="chips wrapc" id="idea-kinds">${kinds.map(([k,l]) => `<button class="chip" data-act="idea-kind" data-k="${k}" aria-pressed="${draft.kind===k}">${l}</button>`).join("")}</div>
+      <textarea id="idea-txt" class="idea-txt" placeholder="Ex. J'aimerais pouvoir donner un nom à mon Gymon…">${esc(draft.txt)}</textarea>
+      <button class="btn primary" data-act="idea-send">Envoyer</button>
+      <button class="btn" data-act="close">Plus tard</button>`); },
+  "idea-kind": b => { document.querySelectorAll("#idea-kinds .chip").forEach(c => c.setAttribute("aria-pressed", c===b)); ideaSave(); },
+  "idea-send": () => {
+    const txt = document.getElementById("idea-txt").value.trim(), k = (document.querySelector('#idea-kinds [aria-pressed="true"]')||{}).dataset;
+    if(!txt){ toast("Écrivez quelques mots avant d'envoyer"); document.getElementById("idea-txt").focus(); return; }
+    const label = {idee:"💡 Idée", manque:"🧩 Il manque", bug:"🐞 Bug", top:"❤️ J'adore"}[k ? k.k : "idee"];
+    const msg = `${label} pour Gymon\n\n${txt}\n\n— Version ${APP_VERSION}, ${/iPhone|iPad/.test(navigator.userAgent) ? "iPhone" : /Android/.test(navigator.userAgent) ? "Android" : "ordinateur"}`;
+    const done = () => { try{ localStorage.removeItem("gymon.idea"); }catch(e){} closeSheet(); toast("Merci pour votre retour !"); };
+    const copy = () => (navigator.clipboard ? navigator.clipboard.writeText(msg) : Promise.reject())
+      .then(() => { done(); toast("Message copié : collez-le dans un SMS ou WhatsApp"); }, () => { toast("Copie impossible : sélectionnez le texte et copiez-le"); });
+    if(navigator.share) navigator.share({title:"Gymon", text:msg}).then(done, err => { if(err && err.name==="AbortError") return; copy(); });
+    else copy();
+  },
   "cr-see": () => { closeSheet(); tab = "creature"; render(); window.scrollTo(0,0); },
   "start-today": () => { const ch = chooseToday(); if(!ch) return; const its = adaptToday(ch.eff).items;
     if(ch.switched && ch.pick.kind==="plan"){ const wk = weekStart(Date.now());
