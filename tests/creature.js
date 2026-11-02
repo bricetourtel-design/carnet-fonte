@@ -19,6 +19,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(await p.isHidden("#tuto"), "le tuto ne revient pas au lancement suivant");
   await p.click('.gy-help'); ok(await p.isVisible("#tuto .tu-card"), "« ? » permet de revoir le tuto");
   await p.click('#tuto .tu-skip'); ok(await p.isHidden("#tuto"), "« Passer » ferme le tuto");
+  await p.evaluate(() => { S.profile.tutoAppDone = true; saveLocal(); });   // guide de l'app : testé dans tests/guide.js
   await p.click('#sheet-in [data-act="close"]', {timeout:1000}).catch(()=>{});   // accueil du premier lancement (déjà fermé plus haut)
   ok(await p.evaluate(() => tab) === "creature", "la page Créature s'ouvre en premier");
   ok(await p.evaluate(() => document.querySelector(".tabs button").dataset.tab) === "creature", "Créature en première position de la navigation");

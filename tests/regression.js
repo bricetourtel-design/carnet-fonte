@@ -69,6 +69,7 @@ async function uiChecks(browser){
   await page.click('#sheet-in [data-act="close"]');
   // Puis le tuto du Gymon s'affiche : on le passe
   await page.waitForSelector('#tuto [data-act="tuto-end"]', {timeout:2000}).then(() => page.click('#tuto .tu-skip')).catch(()=>{});
+  await page.evaluate(() => { S.profile.tutoAppDone = true; });   // guide de l'app : testé dans tests/guide.js
   // Chaque onglet s'affiche sans erreur
   const tabs = await page.$$eval(".tabs button", bs => bs.map(b => b.dataset.tab));
   for(const t of tabs){ await page.click(`.tabs [data-tab="${t}"]`); await page.waitForTimeout(80); }

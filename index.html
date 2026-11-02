@@ -433,6 +433,26 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .tu-mystery{display:flex;align-items:center;gap:12px;font-size:54px}
 .tu-mystery b{font-size:24px;color:var(--muted);font-weight:500}
 .tu-mystery .q{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font-size:40px;font-weight:800;color:var(--accent);background:var(--glass);border:1px dashed var(--accent)}
+/* mini-maquettes du guide */
+.tu-mock{background:none;height:auto;min-height:200px;padding:4px 0}
+.mk{width:100%;display:flex;flex-direction:column;gap:10px;text-align:left;padding:14px;border-radius:20px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--glass-hi)}
+.mk-center{align-items:center;text-align:center}
+.mk .body{max-width:250px}
+.mk-coach{display:flex;align-items:center;gap:8px;font-size:14px;background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:10px;padding:7px 10px}
+.mk-row{display:grid;grid-template-columns:28px 1fr 1fr 32px;gap:8px;align-items:center;font-variant-numeric:tabular-nums}
+.mk-row.done{background:var(--ok-soft);border-radius:10px}
+.mk-n{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:600;background:var(--fill)}
+.mk-v{height:32px;border-radius:9px;display:grid;place-items:center;font-weight:600;background:var(--fill)}
+.mk-v.ph{color:var(--muted);font-weight:400}
+.mk-ck{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;color:#fff;box-shadow:inset 0 0 0 2px var(--line)}
+.done .mk-ck{background:var(--ok);box-shadow:none}
+.mk-steps{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600}
+.mk-steps b{color:var(--muted);font-weight:500}
+.mk-ring{width:140px;height:140px;border-radius:50%;display:grid;place-items:center;border:8px solid var(--accent);border-right-color:var(--fill);transform:rotate(-30deg)}
+.mk-ring b{font-size:34px;font-weight:700;transform:rotate(30deg);font-variant-numeric:tabular-nums}
+.mk .feel-bar button{pointer-events:none}
+.mk .dows button,.mk .chip{pointer-events:none}
+.mk-big{width:84px;height:84px}
 .tu-dots{display:flex;justify-content:center;gap:7px}
 .tu-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 .tu-dots i.on{width:20px;border-radius:4px;background:var(--accent)}
@@ -463,7 +483,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-03 b";
+const APP_VERSION = "2026-11-03 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1353,23 +1373,59 @@ const TUTO = [
   {t:"Il évolue avec ta fidélité", d:"Plus tu viens régulièrement, plus il grandit. Quand évoluera-t-il ? Surprise…", mystery:true},
   {t:"Prends soin de lui", d:"Sans séance, il s'affaiblit, puis tombe malade. Au bout de 30 jours sans entraînement, il meurt… Tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
 ];
-let tutoI = 0;
-function showTuto(i){
-  tutoI = Math.max(0, Math.min(TUTO.length-1, i||0));
-  const s = TUTO[tutoI], el = document.getElementById("tuto"), last = tutoI===TUTO.length-1;
-  const demo = s.mystery ? `<div class="tu-mystery"><span>🥚</span><b>→</b><span class="q">?</span><b>→</b><span class="q">?</span></div>`
+/* Guide de prise en main : chaque écran est illustré par une mini-maquette de l'interface */
+const mk = {
+  set: `<div class="mk"><div class="mk-coach"><span class="ctag">+2,5 kg</span><b>Objectif 3 × 8 à 62,5 kg</b></div>
+    <div class="mk-row done"><span class="mk-n">1</span><span class="mk-v">62,5</span><span class="mk-v">8</span><i class="mk-ck">✓</i></div>
+    <div class="mk-row"><span class="mk-n">2</span><span class="mk-v ph">62,5</span><span class="mk-v ph">8</span><i class="mk-ck"></i></div>
+    <div class="mk-row"><span class="mk-n">3</span><span class="mk-v ph">62,5</span><span class="mk-v ph">8</span><i class="mk-ck"></i></div></div>`,
+  feel: `<div class="mk"><div class="small muted">Ressenti</div><div class="feel-bar">${FEEL.map(f => `<button aria-pressed="${f.v===3}" style="--fc:var(${f.col})" tabindex="-1"></button>`).join("")}</div>
+    <div class="feel-ends"><span>Trop facile</span><span>Trop dur</span></div>
+    <div class="mk-steps"><span>8 reps</span><b>→</b><span>9</span><b>→</b><span>10</span><b>→</b><span class="ctag">+2,5 kg</span></div></div>`,
+  rest: `<div class="mk mk-center"><div class="mk-ring"><b>1:30</b></div><div class="mk-steps"><span>🔔 10 s avant</span><span>🔔🔔🔔 c'est reparti</span></div></div>`,
+  routine: `<div class="mk"><div class="dows">${["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map((d,i) => `<button tabindex="-1" aria-pressed="${[0,2,4].includes(i)}">${d}</button>`).join("")}</div>
+    <div class="chips wrapc"><span class="chip" aria-pressed="true">Pecs + Triceps</span><span class="chip">Dos + Biceps</span><span class="chip">Jambes + Abdos</span></div>
+    <div class="chips wrapc"><span class="small muted">Temps dispo</span><span class="chip sm">45 min</span><span class="chip sm" aria-pressed="true">1 h</span><span class="chip sm">1 h 30</span></div></div>`,
+  today: `<div class="mk"><div><span class="ctag">Aujourd'hui</span> <span class="ctag soft">Changée</span></div>
+    <div class="alert warn">Prévu : Épaules + Bras, épaules à 40 %. Plus adaptée : <b>Jambes</b> (100 %).</div>
+    <div class="mk-steps"><span class="tagx ok">point faible</span><span>en tête de séance</span></div></div>`,
+  progress: () => { const r = {}; MUSCLES.forEach(m => r[m] = {score:2.5, tag:"moyen"}); r.Pectoraux = {score:3.5, tag:"fort"}; r["Épaules"] = {score:3.4, tag:"fort"}; r.Dos = {score:1.8, tag:"faible"}; r.Jambes = {score:1.9, tag:"faible"};
+    return `<div class="mk mk-center">${bodySVG(r, null)}</div>`; },
+  idea: `<div class="mk mk-center"><span class="idea-btn mk-big"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg></span>
+    <div class="chips wrapc" style="justify-content:center"><span class="chip">💡 Une idée</span><span class="chip">🧩 Il manque…</span><span class="chip">🐞 Un bug</span></div></div>`
+};
+const TUTO_APP = [
+  {t:"Note tes séries", d:"Démarre la séance du jour ou une séance libre. Les valeurs en gris sont la proposition du coach : touche ✓ pour la valider, ou tape ce que tu as vraiment fait.", html:mk.set},
+  {t:"Dis-lui comment c'était", d:"Après un exercice, la barre de ressenti règle la prochaine séance : des reps en plus jusqu'au haut de la fourchette, puis plus de charge. C'est la double progression, celle qui fait prendre du muscle.", html:mk.feel},
+  {t:"Respecte tes repos", d:"Le minuteur se lance tout seul après chaque série, avec un repos adapté à l'exercice : 1 bip 10 secondes avant la fin, 3 bips pour repartir.", html:mk.rest},
+  {t:"Construis ta semaine", d:"Dans Routine, choisis tes jours, ton temps dispo et une organisation conseillée (chaque muscle 2 fois par semaine). Les exercices viennent de ton historique, les gros mouvements d'abord. Valide : ta semaine arrive dans Séance.", html:mk.routine},
+  {t:"La bonne séance, le bon jour", d:"Chaque jour, Gymon regarde la récupération de tes muscles. Si la séance prévue tombe mal, il te propose d'échanger avec une autre, et met tes points faibles en tête.", html:mk.today},
+  {t:"Suis tes progrès", d:"Dans Progrès : ta force par exercice, ton volume par semaine et une silhouette de tes points forts (vert) et faibles (rouge). L'historique de tes séances est juste à côté.", html:mk.progress},
+  {t:"Ton avis compte", d:"Une idée, un manque, un bug ? Touche l'ampoule en haut de l'écran pour me l'envoyer.", html:mk.idea}
+];
+const DECKS = {gymon:{list:TUTO, flag:"tutoDone", label:"Comment marche ton Gymon"}, app:{list:TUTO_APP, flag:"tutoAppDone", label:"Prise en main de Gymon"}};
+let tutoI = 0, tutoDeck = "gymon";
+function showTuto(i, deck){
+  if(deck) tutoDeck = deck;
+  const D = DECKS[tutoDeck], L = D.list;
+  tutoI = Math.max(0, Math.min(L.length-1, i||0));
+  const s = L[tutoI], el = document.getElementById("tuto"), last = tutoI===L.length-1;
+  const demo = s.html ? (typeof s.html==="function" ? s.html() : s.html)
+    : s.mystery ? `<div class="tu-mystery"><span>🥚</span><b>→</b><span class="q">?</span><b>→</b><span class="q">?</span></div>`
     : creatureSVG({at:[0,2,10,30], born:Date.now(), last:Date.now(), levels:{}, weight:0.06, ...s.c});
-  el.innerHTML = `<div class="tu-card" role="dialog" aria-label="Comment marche ton Gymon">
+  el.innerHTML = `<div class="tu-card" role="dialog" aria-label="${esc(D.label)}">
       <button class="tbtn tu-skip" data-act="tuto-end">Passer</button>
-      <div class="tu-demo">${demo}${s.badge ? `<span class="tu-badge">${esc(s.badge)}</span>` : ""}</div>
+      <div class="tu-demo ${s.html ? "tu-mock" : ""}">${demo}${s.badge ? `<span class="tu-badge">${esc(s.badge)}</span>` : ""}</div>
       <h3>${esc(s.t)}</h3><p>${esc(s.d)}</p>
-      <div class="tu-dots">${TUTO.map((_,k) => `<i class="${k===tutoI?"on":""}"></i>`).join("")}</div>
+      <div class="tu-dots">${L.map((_,k) => `<i class="${k===tutoI?"on":""}"></i>`).join("")}</div>
       <div class="row">${tutoI ? `<button class="btn" style="flex:1" data-act="tuto-prev">Retour</button>` : ""}
         <button class="btn primary" style="flex:2" data-act="${last ? "tuto-end" : "tuto-next"}">${last ? "C'est parti !" : "Suivant"}</button></div>
     </div>`;
   el.hidden = false; lockBody();
 }
-function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody(); S.profile.tutoDone = true; touchProfile(); }
+function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody(); S.profile[DECKS[tutoDeck].flag] = true; touchProfile(); }
+// Le guide de l'app s'ouvre la première fois qu'on va sur Séance (après le tuto du Gymon)
+function maybeAppGuide(){ if(tab==="seance" && !S.profile.active && S.profile.tutoDone && !S.profile.tutoAppDone && document.getElementById("tuto").hidden) showTuto(0, "app"); }
 (() => { let x0 = null;   // glisser pour changer d'écran
   document.addEventListener("touchstart", e => { if(e.target.closest("#tuto")) x0 = e.touches[0].clientX; }, {passive:true});
   document.addEventListener("touchend", e => { if(x0===null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
@@ -1812,6 +1868,7 @@ function viewExercises(){
         <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="bw" inputmode="decimal" value="${esc(S.profile.bw||"")}" placeholder="${detectBodyweight() ? fmtN(detectBodyweight())+" (détecté)" : "Ex. 80"}"></label>
         <label class="field" style="flex:1;min-width:130px">Taille (cm)<input id="height" inputmode="numeric" value="${esc(S.profile.height||"")}" placeholder="Ex. 178"></label>
         <label class="field" style="flex:1;min-width:130px">Référence de force<select id="sex"><option value="h" ${S.profile.sex!=="f"?"selected":""}>Hommes</option><option value="f" ${S.profile.sex==="f"?"selected":""}>Femmes</option></select></label></div>
+      <div class="row wrap"><button class="btn sm" data-act="tuto-app">Revoir le guide de l'app</button><button class="btn sm" data-act="tuto">Revoir le tuto du Gymon</button></div>
       <div class="row wrap"><button class="btn sm" data-act="export">Exporter mes données</button><button class="btn sm" data-act="import">Importer</button>
         <label class="btn sm" for="gravl-file">Importer depuis Gravl (CSV)</label><input id="gravl-file" class="vh" type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain"></div>
       <p class="small muted" style="margin:0">Vos séances restent uniquement dans ce téléphone, sans compte ni serveur. Exportez-les de temps en temps pour garder une sauvegarde.</p>
@@ -1944,9 +2001,10 @@ document.addEventListener("visibilitychange", () => { if(document.visibilityStat
 const A = () => S.profile.active;
 const ACT = {
   close: () => closeSheet(),
-  goto: b => { tab = b.dataset.tab; render(); },
+  goto: b => { tab = b.dataset.tab; render(); maybeAppGuide(); },
   "start-empty": () => startWorkout("Séance libre", []),
-  tuto: () => showTuto(0),
+  tuto: () => showTuto(0, "gymon"),
+  "tuto-app": () => showTuto(0, "app"),
   "tuto-next": () => showTuto(tutoI + 1),
   "tuto-prev": () => showTuto(tutoI - 1),
   "tuto-end": () => endTuto(),
@@ -2161,7 +2219,7 @@ const ACT = {
 };
 
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if(b && ACT[b.dataset.act]) ACT[b.dataset.act](b, e); });
-document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if(!b) return; tab = b.dataset.tab; render(); window.scrollTo(0,0); });
+document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if(!b) return; tab = b.dataset.tab; render(); window.scrollTo(0,0); maybeAppGuide(); });
 document.addEventListener("input", e => {
   const t = e.target;
   if(t.dataset.f && A()){ const tr = t.closest("tr"); A().exercises[+tr.dataset.i].sets[+tr.dataset.j][t.dataset.f] = t.value.replace(/[^\d.,]/g,"");
