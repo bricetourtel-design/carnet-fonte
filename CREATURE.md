@@ -20,7 +20,8 @@ Hypothèse testée : une créature qui grandit avec les entraînements améliore
 | Taille | Liée à la maturité : progresse avec la fidélité à l'intérieur de chaque stade | `height` |
 | Musculature | 5 niveaux par muscle. Niveau visé = score de force existant (0–5), ou séries faites depuis la naissance (abdos, pas de poids de corps). **Seuls les muscles réellement travaillés dans la séance (au moins une série validée) progressent, d'un niveau au plus par séance.** Ne baisse jamais | `levelThresholds`, `setsThresholds` |
 | Régularité | Séances validées sur 14 jours, objectif 6 (3/semaine) | `freq` |
-| Vitalité | 100 % jusqu'à 7 jours sans séance, puis −6 %/jour, minimum 20 %. Remonte à 100 % à la séance suivante. N'efface rien | `vitality` |
+| Vitalité | 100 % jusqu'à 7 jours sans séance, puis baisse jusqu'à 0 % à 30 jours. Remonte à 100 % à la séance suivante | `vitality` |
+| Mort | Après 30 jours sans séance. Alertes avant : « il s'affaiblit » (7 j), « malade » (14 j), « mourant, plus que N jours » (21 j), pastille rouge sur l'onglet et alerte sur l'accueil. Mort : **Ressusciter** (garde stade, muscles, fidélité ; poids × 0,7 ; les séances faites pendant sa mort sont mangées) ou **Nouvel œuf** (l'ancien reste en souvenir, l'historique des séances n'est pas touché) | `vitality.deathDays`, `resurrectWeightKeep` |
 
 Le profil 1,90 m / 93 kg a servi à vérifier le rendu. Les seuils de musculature reposent sur le score de force existant (rapporté au poids de corps de l'utilisateur), pas sur des kilos fixes.
 
@@ -31,6 +32,10 @@ La première version recalculait tous les muscles à chaque séance à partir de
 - Le terme « créature » devient **Mon Gymon** (onglet « Gymon »).
 - Page épurée : le Gymon en plein écran avec une aura et des étincelles, 4 petites infos en verre aux coins (poids, taille, vitalité, force), un indice mystérieux à la place du compte à rebours (« Quelque chose remue à l'intérieur… »). Le prochain stade n'est jamais nommé. Le détail des muscles s'ouvre en touchant le Gymon.
 - Les Gymon existants reçoivent des seuils cachés cohérents avec le stade déjà atteint.
+
+## V1.3 : tuto et mort
+- Tuto en 5 écrans après l'écran de bienvenue (une fois aussi pour les utilisateurs existants), « Passer » sur chaque écran, « ? » sur la page Mon Gymon pour le revoir. Les illustrations montrent toujours l'œuf : les formes suivantes restent une surprise.
+- Mort après 30 jours sans séance avec résurrection possible (voir Règles).
 
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.

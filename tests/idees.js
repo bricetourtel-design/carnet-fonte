@@ -12,6 +12,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.addInitScript(() => { window.__shared = null; navigator.share = d => { window.__shared = d.text; return Promise.resolve(); }; });
   await p.goto(URL); await p.waitForTimeout(300);
   await p.click('.sheet [data-act="close"]').catch(()=>{});   // écran de bienvenue
+  await p.waitForSelector('#tuto .tu-skip', {timeout:2000}).then(() => p.click('#tuto .tu-skip')).catch(()=>{});   // tuto
   for(const t of ["creature","seance","progres"]){ await p.click(`.tabs [data-tab="${t}"]`); ok(await p.locator('.top [data-act="idea"]').isVisible(), `bouton boîte à idées visible (${t})`); }
 
   await p.click('.top [data-act="idea"]');
@@ -38,6 +39,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   p2.on("pageerror", e => errs.push(e.message));
   await p2.addInitScript(() => { delete Navigator.prototype.share; navigator.share = undefined; });
   await p2.goto(URL); await p2.waitForTimeout(300); await p2.click('.sheet [data-act="close"]').catch(()=>{});
+  await p2.waitForSelector('#tuto .tu-skip', {timeout:2000}).then(() => p2.click('#tuto .tu-skip')).catch(()=>{});
   await p2.click('.top [data-act="idea"]'); await p2.fill("#idea-txt", "Un mode sombre plus contrasté"); await p2.click('[data-act="idea-send"]'); await p2.waitForTimeout(300);
   const clip = await p2.evaluate(() => navigator.clipboard.readText());
   ok(/^💡 Idée pour Gymon/.test(clip) && clip.includes("mode sombre"), "sans partage : message copié", clip.split("\n")[0]);

@@ -410,6 +410,32 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .gy-hint{margin:0;font-size:20px;font-weight:500;letter-spacing:-.01em;text-align:center;text-wrap:balance}
 .gy-cta{margin-top:8px;min-width:72%}
 @media (prefers-reduced-motion: reduce){.gy-aura,.gy-spark{animation:none}.gy-spark{opacity:.6}}
+.gy-help{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:6px;border-radius:50%;font-size:12px;font-weight:700;color:var(--accent);
+  background:var(--glass);border:1px solid var(--glass-line);vertical-align:1px;letter-spacing:0}
+.gy-alert{display:block;width:100%;text-align:left;font-weight:600;margin-bottom:12px}
+.gy-dead .gy-stage{height:calc(100dvh - 560px);min-height:220px;max-height:420px;cursor:default}
+.creature.dead{animation:ghost 4s ease-in-out infinite}
+@keyframes ghost{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.tabs button.sick{position:relative}
+.tabs button.sick::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:9px;height:9px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 2px var(--glass-strong)}
+/* Tuto */
+.tuto{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:max(20px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:rgba(10,12,30,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:flin .25s ease-out}
+.tu-card{position:relative;width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;padding:22px 20px 18px;border-radius:30px;text-align:center;
+  background:var(--glass-strong);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);border:1px solid var(--glass-line);box-shadow:var(--glass-hi),0 20px 60px rgba(0,0,0,.25)}
+.tu-card h3{margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em}
+.tu-card p{margin:0;font-size:16px;color:var(--muted);line-height:1.45;text-wrap:balance}
+.tu-skip{position:absolute;top:14px;right:18px;font-size:15px;z-index:3}
+.tu-demo{position:relative;height:250px;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 55%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 65%)}
+.tu-demo .creature{height:230px;width:auto;max-width:100%}
+.tu-badge{position:absolute;right:8px;top:22px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;color:#fff;background:var(--ok)}
+.tu-mystery{display:flex;align-items:center;gap:12px;font-size:54px}
+.tu-mystery b{font-size:24px;color:var(--muted);font-weight:500}
+.tu-mystery .q{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font-size:40px;font-weight:800;color:var(--accent);background:var(--glass);border:1px dashed var(--accent)}
+.tu-dots{display:flex;justify-content:center;gap:7px}
+.tu-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.tu-dots i.on{width:20px;border-radius:4px;background:var(--accent)}
 </style>
 </head>
 <body>
@@ -434,9 +460,10 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheet-in" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
 <div class="flash" id="flash" data-act="flash-close" hidden></div>
+<div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-02 a";
+const APP_VERSION = "2026-11-03 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1089,7 +1116,9 @@ const CREATURE_CFG = {
   levelThresholds: {default:[1.5, 2.5, 3.25, 4]},
   // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
   setsThresholds: [20, 60, 120, 200],
-  vitality: {graceDays:7, lossPerDay:6, min:20},   // après 7 jours sans séance, -6 %/jour, jamais sous 20 %
+  // Vitalité : 100 % pendant 7 jours sans séance, puis baisse jusqu'à 0 % ; mort au-delà de 30 jours
+  vitality: {graceDays:7, deathDays:30},
+  resurrectWeightKeep: 0.7,                 // ressusciter garde tout, mais le Gymon a maigri (70 % du poids)
   freq: {window:14, target:6}               // régularité : séances sur 14 jours, objectif 6 (3/semaine)
 };
 const rollStages = () => CREATURE_CFG.stageRange.map(([a,b]) => a + Math.floor(Math.random()*(b-a+1)));
@@ -1100,7 +1129,23 @@ function creatureState(){
     c.at = rollStages().map((x,i) => i===0 ? 0 : c.stage >= i ? Math.min(x, c.fidelity) : Math.max(x, c.fidelity + 1));
     for(let i=1;i<c.at.length;i++) if(c.at[i] <= c.at[i-1]) c.at[i] = c.at[i-1] + 1;
   }
+  // Mort après 30 jours sans séance : rien n'est effacé, on peut le ressusciter ou repartir d'un œuf
+  if(!c.dead && creatureIdleDays(c) > CREATURE_CFG.vitality.deathDays){ c.dead = {ts:Date.now(), since:c.last || c.born}; c.pending = []; saveLocal(); }
   return c;
+}
+function creatureResurrect(){
+  const c = creatureState(); if(!c.dead) return;
+  const pending = (c.pending || []).slice();
+  c.dead = null; c.pending = []; c.resurrections = (c.resurrections||0) + 1;
+  c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight * CREATURE_CFG.resurrectWeightKeep);
+  c.last = Date.now();
+  // Les séances faites pendant qu'il était mort le nourrissent maintenant
+  S.workouts.filter(w => pending.includes(w.id)).sort((a,b) => a.start-b.start).forEach(w => creatureFeed(w));
+  c.last = Math.max(c.last, Date.now()); touchProfile();
+}
+function creatureRestart(){
+  const old = creatureState(), graves = (old.graves||[]).concat({stage:old.stage, fidelity:old.fidelity, died:old.dead ? old.dead.ts : Date.now()});
+  S.profile.creature = null; const c = creatureState(); c.graves = graves; touchProfile();
 }
 const stageAt = c => c.at || CREATURE_CFG.stageAt;
 const stageFor = (fid, c) => stageAt(c || creatureState()).reduce((s, at, i) => fid >= at ? i : s, 0);
@@ -1111,9 +1156,11 @@ function creatureHeight(c){
   if(next===undefined) return Math.min(hi, lo + (c.fidelity - at[c.stage]) * CREATURE_CFG.heightPerSessionAfter);
   return lo + (hi - lo) * Math.min(1, (c.fidelity - at[c.stage]) / (next - at[c.stage]));
 }
+const creatureIdleDays = c => (Date.now() - (c.last || c.born)) / 86400000;
 function creatureVitality(c){
-  const v = CREATURE_CFG.vitality, ref = c.last || c.born, days = (Date.now() - ref) / 86400000;
-  return days <= v.graceDays ? 100 : Math.max(v.min, Math.round(100 - (days - v.graceDays) * v.lossPerDay));
+  if(c.dead) return 0;
+  const v = CREATURE_CFG.vitality, days = creatureIdleDays(c);
+  return days <= v.graceDays ? 100 : Math.max(0, Math.round(100 * (1 - (days - v.graceDays) / (v.deathDays - v.graceDays))));
 }
 function creatureRegularity(c){
   const f = CREATURE_CFG.freq, n = S.workouts.filter(w => c.fed.includes(w.id) && Date.now() - w.start < f.window*86400000).length;
@@ -1147,6 +1194,7 @@ function creatureFixLevels(){
 function creatureFeed(w){
   const c = creatureState();
   if(c.fed.includes(w.id) || (w.end || w.start) < c.born) return null;
+  if(c.dead){ if(!(c.pending||[]).includes(w.id)) (c.pending = c.pending || []).push(w.id); touchProfile(); return {dead:true, vol:wVolume(w)}; }
   const before = {stage:c.stage, weight:c.weight, levels:{...c.levels}};
   c.fed.push(w.id); if(c.fed.length > 1000) c.fed = c.fed.slice(-1000);
   c.fidelity++; c.last = w.end || w.start;
@@ -1165,9 +1213,10 @@ const fmtWeight = kg => kg < 1 ? `${Math.round(kg*1000)} g` : `${fmtN(kg, kg < 1
 
 /* Dessin : formes simples en SVG, la taille de chaque muscle suit son niveau (0 à 4) */
 function creatureSVG(c, small){
-  const L = m => c.levels[m] || 0, st = c.stage, vit = creatureVitality(c), sleepy = vit < 60;
+  const L = m => c.levels[m] || 0, st = c.stage, vit = creatureVitality(c), sleepy = vit < 60, dead = !!c.dead;
   const span = CREATURE_CFG.minWeight[Math.min(3, st+1)] || 100, fat = Math.min(1, Math.max(0, (c.weight - CREATURE_CFG.minWeight[st]) / span));
-  const eye = (x, y, r) => sleepy ? `<path d="M${x-r} ${y} Q${x} ${y+r*0.8} ${x+r} ${y}" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/>`
+  const eye = (x, y, r) => dead ? `<path d="M${x-r} ${y-r} L${x+r} ${y+r} M${x+r} ${y-r} L${x-r} ${y+r}" stroke="#222" stroke-width="2.4" stroke-linecap="round"/>`
+    : sleepy ? `<path d="M${x-r} ${y} Q${x} ${y+r*0.8} ${x+r} ${y}" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/>`
     : `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/><circle cx="${x+r*0.25}" cy="${y}" r="${r*0.55}" fill="#1d1d1f"/><circle cx="${x+r*0.4}" cy="${y-r*0.3}" r="${r*0.18}" fill="#fff"/>`;
   let g = "";
   if(st===0){
@@ -1237,13 +1286,21 @@ function creatureSVG(c, small){
         <path d="M118 50 L134 55 L118 60 Z" fill="#f4a259"/><path d="M116 61 q6 10 0 14 q-6 -4 0 -14" fill="#e63946"/>${eye(106, 46, 6.5)}`;
     }
   }
-  const sat = Math.round(40 + vit*0.6);
-  return `<svg class="creature ${small?"sm":""}" viewBox="0 0 200 240" role="img" aria-label="${CREATURE_CFG.stages[st]}" style="filter:saturate(${sat}%)"><g class="cr-breathe">${g}</g></svg>`;
+  const sat = Math.round(40 + vit*0.6), haloY = st===0 ? 70 : st===1 ? 56 : 16;
+  if(dead) g += `<ellipse cx="100" cy="${haloY}" rx="24" ry="6" fill="none" stroke="#f5c542" stroke-width="4"/>`;
+  return `<svg class="creature ${small?"sm":""} ${dead?"dead":""}" viewBox="0 0 200 240" role="img" aria-label="${dead ? "Gymon mort" : CREATURE_CFG.stages[st]}" style="filter:${dead ? "grayscale(1) opacity(.75)" : `saturate(${sat}%)`}"><g class="cr-breathe">${g}</g></svg>`;
 }
 
 // Un indice, jamais un compte à rebours : le moment de l'évolution reste une surprise
 function gymonHint(c){
   const vit = creatureVitality(c), near = creatureNear(c), pick = l => l[c.fidelity % l.length];
+  // Alertes de santé : elles passent avant tout le reste
+  const idle = creatureIdleDays(c), left = Math.max(1, Math.ceil(CREATURE_CFG.vitality.deathDays - idle));
+  if(c.fidelity || c.stage){
+    if(idle > 21) return `Il est mourant ! Plus que ${left} jour${left>1?"s":""} pour le sauver avec une séance.`;
+    if(idle > 14) return "Il est malade… il a besoin d'une séance.";
+    if(idle > 7) return "Il s'affaiblit sans vous.";
+  }else if(idle > 21) return `L'œuf refroidit… plus que ${left} jour${left>1?"s":""} pour le réchauffer.`;
   if(c.stage===0){
     if(!c.fidelity) return "Votre Gymon dort au chaud. Une première séance pour le réveiller ?";
     return near >= 0.85 ? pick(["La coquille craque par endroits…", "On entend toquer de l'intérieur."]) : pick(["Il a senti votre séance.", "Quelque chose remue à l'intérieur."]);
@@ -1257,6 +1314,18 @@ function viewCreature(){
   const lvAvg = MUSCLES.reduce((t,m) => t + (c.levels[m]||0), 0) / MUSCLES.length, force = Math.round(lvAvg) + 1;
   const ch = S.profile.active ? null : (S.profile.routines.some(r => r.plan) ? chooseToday() : null);
   const cta = S.profile.active ? "Reprendre la séance" : ch ? `Séance du jour · ${ch.eff.name}` : "Aller à la séance";
+  if(c.dead){
+    const n = (c.pending||[]).length;
+    return `
+    <section class="gy gy-dead">
+      <div class="gy-stage">${creatureSVG(c)}</div>
+      <p class="gy-form">Repose en paix</p>
+      <p class="gy-hint">${c.stage ? "Votre Gymon est mort" : "L'œuf a refroidi"} après ${CREATURE_CFG.vitality.deathDays} jours sans séance.</p>
+      <p class="small muted" style="margin:0;text-align:center">${n ? `${n} séance${n>1?"s":""} faite${n>1?"s":""} depuis l'attend${n>1?"ent":""} pour le nourrir. ` : ""}Ressuscitez-le pour garder son stade et ses muscles (il aura un peu maigri), ou repartez d'un nouvel œuf.</p>
+      <button class="btn primary gy-cta" data-act="gy-resurrect">✨ Ressusciter mon Gymon</button>
+      <button class="btn gy-cta" data-act="gy-restart">Recommencer avec un nouvel œuf</button>
+    </section>`;
+  }
   return `
     <section class="gy">
       <div class="gy-stage" data-act="gy-more" role="button" aria-label="Voir mon Gymon de plus près">
@@ -1269,10 +1338,49 @@ function viewCreature(){
         <span class="gy-chip bl"><small>Vitalité</small>${vit} %</span>
         <span class="gy-chip br"><small>Force</small><span class="gy-dots">${"●".repeat(force)}<em>${"●".repeat(5-force)}</em></span></span>
       </div>
-      <p class="gy-form">${esc(CREATURE_CFG.stages[c.stage])}</p>
+      <p class="gy-form">${esc(CREATURE_CFG.stages[c.stage])} <button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button></p>
       <p class="gy-hint">${esc(gymonHint(c))}</p>
       <button class="btn primary gy-cta" data-act="goto" data-tab="seance">${esc(cta)}</button>
     </section>`;
+}
+
+/* ---------- Tuto du Gymon : 5 écrans, à passer ou revoir avec « ? » ---------- */
+const TUTO = [
+  {t:"Voici ton Gymon", d:"Cet œuf, c'est ton Gymon. Chaque séance validée le fait vivre.", c:{stage:0, fidelity:1}},
+  // Les démos montrent toujours l'œuf : les formes suivantes restent une surprise
+  {t:"Il mange ce que tu soulèves", d:"Le volume de ta séance devient sa nourriture : plus tu soulèves, plus il prend du poids.", c:{stage:0, fidelity:1}, badge:"+ 6,4 t avalées"},
+  {t:"Il se muscle comme toi", d:"Seuls les muscles que tu travailles vraiment (séries validées ✓) se développent chez lui. Tes points faibles se verront aussi !", c:{stage:0, fidelity:1}, badge:"💪 Pectoraux +1"},
+  {t:"Il évolue avec ta fidélité", d:"Plus tu viens régulièrement, plus il grandit. Quand évoluera-t-il ? Surprise…", mystery:true},
+  {t:"Prends soin de lui", d:"Sans séance, il s'affaiblit, puis tombe malade. Au bout de 30 jours sans entraînement, il meurt… Tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
+];
+let tutoI = 0;
+function showTuto(i){
+  tutoI = Math.max(0, Math.min(TUTO.length-1, i||0));
+  const s = TUTO[tutoI], el = document.getElementById("tuto"), last = tutoI===TUTO.length-1;
+  const demo = s.mystery ? `<div class="tu-mystery"><span>🥚</span><b>→</b><span class="q">?</span><b>→</b><span class="q">?</span></div>`
+    : creatureSVG({at:[0,2,10,30], born:Date.now(), last:Date.now(), levels:{}, weight:0.06, ...s.c});
+  el.innerHTML = `<div class="tu-card" role="dialog" aria-label="Comment marche ton Gymon">
+      <button class="tbtn tu-skip" data-act="tuto-end">Passer</button>
+      <div class="tu-demo">${demo}${s.badge ? `<span class="tu-badge">${esc(s.badge)}</span>` : ""}</div>
+      <h3>${esc(s.t)}</h3><p>${esc(s.d)}</p>
+      <div class="tu-dots">${TUTO.map((_,k) => `<i class="${k===tutoI?"on":""}"></i>`).join("")}</div>
+      <div class="row">${tutoI ? `<button class="btn" style="flex:1" data-act="tuto-prev">Retour</button>` : ""}
+        <button class="btn primary" style="flex:2" data-act="${last ? "tuto-end" : "tuto-next"}">${last ? "C'est parti !" : "Suivant"}</button></div>
+    </div>`;
+  el.hidden = false; lockBody();
+}
+function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody(); S.profile.tutoDone = true; touchProfile(); }
+(() => { let x0 = null;   // glisser pour changer d'écran
+  document.addEventListener("touchstart", e => { if(e.target.closest("#tuto")) x0 = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener("touchend", e => { if(x0===null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if(Math.abs(dx) > 50) showTuto(tutoI + (dx < 0 ? 1 : -1)); }, {passive:true});
+})();
+// Alerte de santé sur l'accueil quand le Gymon est malade ou mort
+function gymonHealthAlert(){
+  const c = creatureState(); if(!c.fidelity && !c.stage && !c.dead) return "";
+  if(c.dead) return `<button class="alert danger gy-alert" data-act="goto" data-tab="creature">💀 Votre Gymon est mort. Touchez ici pour le ressusciter.</button>`;
+  const idle = creatureIdleDays(c); if(idle <= 14) return "";
+  return `<button class="alert ${idle > 21 ? "danger" : "warn"} gy-alert" data-act="goto" data-tab="creature">${idle > 21 ? "⚠️ Votre Gymon est mourant : une séance vite !" : "🤒 Votre Gymon est malade, il a besoin d'une séance."}</button>`;
 }
 
 /* ---------- Boîte à idées : brouillon gardé sur le téléphone ---------- */
@@ -1431,7 +1539,9 @@ function render(){
   document.getElementById("title").textContent = TITLES[tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===tab ? "page" : "false"));
   const v = document.getElementById("view");
-  v.innerHTML = installHint() + (tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : viewHome())
+  const gc = creatureState(), sick = gc.dead || ((gc.fidelity || gc.stage) && creatureIdleDays(gc) > 14);
+  document.querySelector('.tabs [data-tab="creature"]').classList.toggle("sick", !!sick);
+  v.innerHTML = installHint() + (tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : gymonHealthAlert() + viewHome())
     : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : viewExercises());
   tickClock(); wakeLock();
 }
@@ -1792,8 +1902,10 @@ function finishWorkout(){
       <div class="tile"><span>Séries</span><strong>${wSetCount(w)}</strong></div>
       <div class="tile"><span>Records</span><strong>${w.prs.length}</strong></div>
     </div>
-    ${cr ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>${cr.evolved ? `Votre Gymon a évolué ! ${esc(CREATURE_CFG.stages[cr.stage])}` : "Votre Gymon a mangé"}</b>
-      ${fmtVol(cr.vol)} soulevés · ${cr.gain>0 ? "+"+fmtWeight(cr.gain) : "elle reprend des forces"}${cr.ups.length ? ` · plus musclée : ${cr.ups.join(", ").toLowerCase()}` : ""}</span></button>` : ""}
+    ${cr && cr.dead ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>Votre Gymon est mort…</b>
+      Cette séance l'attend : ressuscitez-le pour qu'il la mange.</span></button>`
+    : cr ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>${cr.evolved ? `Votre Gymon a évolué ! ${esc(CREATURE_CFG.stages[cr.stage])}` : "Votre Gymon a mangé"}</b>
+      ${fmtVol(cr.vol)} soulevés · ${cr.gain>0 ? "+"+fmtWeight(cr.gain) : "il reprend des forces"}${cr.ups.length ? ` · plus musclé : ${cr.ups.join(", ").toLowerCase()}` : ""}</span></button>` : ""}
     ${w.prs.length ? `<p style="margin:0">Nouveau record sur ${w.prs.map(id=>"<b>"+esc(exById(id).name)+"</b>").join(", ")}.</p>` : ""}
     <button class="btn primary" data-act="close">Fermer</button>`);
 }
@@ -1834,6 +1946,13 @@ const ACT = {
   close: () => closeSheet(),
   goto: b => { tab = b.dataset.tab; render(); },
   "start-empty": () => startWorkout("Séance libre", []),
+  tuto: () => showTuto(0),
+  "tuto-next": () => showTuto(tutoI + 1),
+  "tuto-prev": () => showTuto(tutoI - 1),
+  "tuto-end": () => endTuto(),
+  "gy-resurrect": () => { creatureResurrect(); render(); window.scrollTo(0,0); toast("✨ Votre Gymon est revenu à la vie !"); },
+  "gy-restart": () => confirmSheet("Recommencer avec un nouvel œuf ?", "Votre Gymon actuel restera dans vos souvenirs, mais vous repartez d'un œuf. Vos séances et votre historique ne changent pas.", "Nouvel œuf",
+    () => { creatureRestart(); render(); window.scrollTo(0,0); toast("🥚 Un nouvel œuf est arrivé"); }),
   "gy-more": () => { const c = creatureState();
     openSheet(`<h3>Mon Gymon</h3>
       <p class="muted" style="margin:-4px 0 0">${c.lastMeal ? `Dernier repas : ${fmtVol(c.lastMeal.vol)} soulevés.` : "Il attend son premier repas."} Il a partagé ${c.fidelity} séance${c.fidelity>1?"s":""} avec vous.</p>
@@ -2124,7 +2243,7 @@ function onboarding(){
       <label class="field" style="flex:1;min-width:130px">Taille (cm)<input id="ob-height" inputmode="numeric" placeholder="Ex. 178"></label></div>
     <label class="field">Référence de force<select id="ob-sex"><option value="h">Hommes</option><option value="f">Femmes</option></select></label>
     <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Plus tard</button><button class="btn primary" style="flex:1" data-act="ob-save">Commencer</button></div>`,
-    () => { S.profile.onboarded = true; touchProfile(); });
+    () => { S.profile.onboarded = true; touchProfile(); if(!S.profile.tutoDone) setTimeout(() => showTuto(0), 250); });
 }
 ACT["ob-save"] = () => {
   const bw = num(document.getElementById("ob-bw").value), ht = num(document.getElementById("ob-height").value);
@@ -2144,6 +2263,7 @@ render(); setStatus();
 if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});   // demande au navigateur de ne pas effacer les données
 // Uniquement pour un nouvel utilisateur : un carnet déjà rempli n'affiche pas l'accueil
 if(!S.profile.onboarded){ if(S.workouts.length || S.profile.bw){ S.profile.onboarded = true; saveLocal(); } else onboarding(); }
+if(S.profile.onboarded && !S.profile.tutoDone) showTuto(0);   // utilisateurs existants : le tuto une fois
 if("serviceWorker" in navigator){
   // Nouvelle version installée : on recharge une fois pour l'afficher (les données restent dans le téléphone)
   const hadSW = !!navigator.serviceWorker.controller;

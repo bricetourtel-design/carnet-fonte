@@ -8,7 +8,18 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const b = await chromium.launch(), ctx = await b.newContext({...devices["iPhone 13"]}), p = await ctx.newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message));
   await p.goto(URL); await p.waitForTimeout(300);
-  await p.click('#sheet-in [data-act="close"]');   // accueil du premier lancement
+  // Premier lancement : bienvenue, puis tuto du Gymon (5 écrans)
+  await p.click('.sheet [data-act="close"]').catch(()=>{});
+  ok(await p.waitForSelector('#tuto .tu-card', {timeout:2000}).then(() => true, () => false), "le tuto s'affiche après l'écran de bienvenue");
+  for(let i=0;i<4;i++) await p.click('#tuto [data-act="tuto-next"]');
+  ok(/30 jours/.test(await p.textContent("#tuto")) && /ressusciter/.test(await p.textContent("#tuto")), "dernier écran : prévient de la mort et de la résurrection");
+  await p.click('#tuto [data-act="tuto-end"]');
+  ok(await p.isHidden("#tuto") && await p.evaluate(() => S.profile.tutoDone === true), "« C'est parti » ferme le tuto pour de bon");
+  await p.reload(); await p.waitForTimeout(300);
+  ok(await p.isHidden("#tuto"), "le tuto ne revient pas au lancement suivant");
+  await p.click('.gy-help'); ok(await p.isVisible("#tuto .tu-card"), "« ? » permet de revoir le tuto");
+  await p.click('#tuto .tu-skip'); ok(await p.isHidden("#tuto"), "« Passer » ferme le tuto");
+  await p.click('#sheet-in [data-act="close"]', {timeout:1000}).catch(()=>{});   // accueil du premier lancement (déjà fermé plus haut)
   ok(await p.evaluate(() => tab) === "creature", "la page Créature s'ouvre en premier");
   ok(await p.evaluate(() => document.querySelector(".tabs button").dataset.tab) === "creature", "Créature en première position de la navigation");
   let c = await p.evaluate(() => creatureState());
@@ -97,11 +108,34 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const pause = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify({s:c.stage, l:c.levels, w:c.weight, f:c.fidelity});
     c.last = Date.now() - 20*864e5; const v = creatureVitality(c);
     return {v, same: keep === JSON.stringify({s:c.stage, l:c.levels, w:c.weight, f:c.fidelity})}; });
-  ok(pause.v === 22 && pause.same, "pause de 20 jours : vitalité 22 %, stade, muscles et poids conservés", pause.v);
+  ok(pause.v === 43 && pause.same, "pause de 20 jours : vitalité 43 %, stade, muscles et poids conservés", pause.v);
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3tired.png")});
   await play("90","8","90","8");
   ok(await p.evaluate(() => creatureVitality(creatureState())) === 100, "reprise : vitalité remontée à 100 %");
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3.png"), fullPage:true});
+
+  // Mort après 30 jours sans séance, séance mise de côté, résurrection, nouvel œuf
+  const death = await p.evaluate(() => { const c = creatureState(); c.last = Date.now() - 31*864e5; S.profile.creature = c;
+    const d = creatureState(); const keep = {stage:d.stage, levels:JSON.stringify(d.levels), w:d.weight, fid:d.fidelity};
+    const w = {id:"after-death", name:"x", start:Date.now(), end:Date.now(), exercises:[{exId:"dc-barre", sets:[{w:"80",r:"8",done:true}]}]};
+    S.workouts.push(w); const r = creatureFeed(w);
+    return {dead:!!d.dead, vit:creatureVitality(d), fedWhileDead:r && r.dead, pending:d.pending.length, fid:d.fidelity, keep}; });
+  ok(death.dead && death.vit === 0, "31 jours sans séance : le Gymon meurt");
+  ok(death.fedWhileDead && death.pending === 1 && death.fid === death.keep.fid, "une séance faite pendant sa mort est mise de côté, pas comptée");
+  await p.click('.tabs [data-tab="creature"]');
+  ok(/Ressusciter/.test(await p.textContent("#view")) && /nouvel œuf/.test(await p.textContent("#view")), "page Gymon : boutons Ressusciter et Nouvel œuf");
+  ok(await p.evaluate(() => document.querySelector('.tabs [data-tab="creature"]').classList.contains("sick")), "pastille rouge sur l'onglet Gymon");
+  if(SHOTS) await p.screenshot({path:path.join(SHOTS, "dead.png")});
+  await p.click('[data-act="gy-resurrect"]'); await p.waitForTimeout(150);
+  const res2 = await p.evaluate(() => { const c = creatureState(); return {dead:!!c.dead, vit:creatureVitality(c), stage:c.stage, levels:JSON.stringify(c.levels), fid:c.fidelity, w:c.weight, n:c.resurrections}; });
+  ok(!res2.dead && res2.vit === 100 && res2.stage === death.keep.stage && res2.levels === death.keep.levels, "ressuscité : vivant, vitalité 100 %, stade et muscles conservés");
+  ok(res2.fid === death.keep.fid + 1, "la séance mise de côté est mangée à la résurrection", res2.fid);
+  await p.evaluate(() => { creatureState().last = Date.now() - 31*864e5; creatureState(); render(); });
+  await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-restart"]'); await p.click('[data-act="confirm-ok"]'); await p.waitForTimeout(150);
+  const fresh = await p.evaluate(() => { const c = creatureState(); return {stage:c.stage, fid:c.fidelity, dead:!!c.dead, graves:(c.graves||[]).length, workouts:S.workouts.length}; });
+  ok(fresh.stage === 0 && fresh.fid === 0 && !fresh.dead && fresh.graves === 1, "nouvel œuf : départ à zéro, l'ancien Gymon reste en souvenir");
+  ok(fresh.workouts > 0, "repartir d'un œuf ne touche pas à l'historique des séances");
+  await p.evaluate(() => { const c = creatureState(); c.stage = 3; c.fidelity = 31; c.at = [0,2,10,30]; c.last = Date.now(); render(); });
 
   // Rendu des 4 stades avec muscles faibles puis forts
   if(SHOTS){ for(const st of [2,3]) for(const lv of [0,4]){

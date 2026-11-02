@@ -67,6 +67,8 @@ async function uiChecks(browser){
   // Premier lancement : l'accueil (poids, taille) s'affiche, « Plus tard » le ferme pour de bon
   res.onboarding = await page.isVisible("#ob-bw");
   await page.click('#sheet-in [data-act="close"]');
+  // Puis le tuto du Gymon s'affiche : on le passe
+  await page.waitForSelector('#tuto [data-act="tuto-end"]', {timeout:2000}).then(() => page.click('#tuto .tu-skip')).catch(()=>{});
   // Chaque onglet s'affiche sans erreur
   const tabs = await page.$$eval(".tabs button", bs => bs.map(b => b.dataset.tab));
   for(const t of tabs){ await page.click(`.tabs [data-tab="${t}"]`); await page.waitForTimeout(80); }
