@@ -483,7 +483,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-03 c";
+const APP_VERSION = "2026-11-03 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1124,13 +1124,14 @@ function todayCardHTML(ch){
    Module isolé : lit les séances et les calculs existants (wVolume, strengthByMuscle, workSets) sans les modifier,
    et garde son propre état dans S.profile.creature. Tous les réglages sont dans CREATURE_CFG. */
 const CREATURE_CFG = {
-  stages: ["Œuf", "Poussin", "Poulet humanoïde", "Dinosaure humanoïde"],
-  stageAt: [0, 2, 10, 30],                  // repères de fidélité (séances validées) pour chaque stade
+  stages: ["Œuf", "Œuf fêlé", "Poussin", "Poussin ado", "Jeune poule", "Poule adulte", "Poule en mutation",
+           "Jeune dinosaure", "Dinosaure ado", "Dinosaure", "Dinosaure en mutation", "Dragonnet", "Dragon"],
+  stageAt: [0, 1, 2, 4, 7, 10, 14, 19, 25, 32, 40, 50, 62],   // repères de fidélité (séances validées)
   // Seuils réels tirés au hasard à la naissance dans ces fourchettes, propres à chaque Gymon et jamais affichés
-  stageRange: [[0,0], [2,3], [8,13], [25,35]],
-  foodPerTonne: [0.002, 0.03, 0.25, 1.0],   // kg de poids gagnés par tonne soulevée, selon le stade
-  minWeight: [0.06, 0.05, 2, 40],           // poids minimal de chaque stade (kg)
-  height: [[6,7], [8,25], [30,120], [130,220]],   // taille (cm) au début et à la fin de chaque stade
+  stageRange: [[0,0], [1,1], [2,3], [4,6], [7,10], [11,15], [16,21], [22,28], [29,36], [37,46], [47,57], [58,70], [71,85]],
+  foodPerTonne: [0.002, 0.002, 0.01, 0.03, 0.08, 0.15, 0.3, 0.5, 0.8, 1.2, 1.5, 1.8, 2.5],   // kg gagnés par tonne soulevée
+  minWeight: [0.06, 0.06, 0.05, 0.3, 1, 2.5, 6, 15, 30, 60, 90, 120, 200],   // poids minimal de chaque stade (kg)
+  height: [[6,7], [7,7], [8,14], [15,25], [26,40], [40,55], [55,80], [80,110], [110,150], [150,200], [200,230], [230,260], [260,350]],   // cm
   heightPerSessionAfter: 1,                 // cm par séance après le dernier seuil
   // Musculature : score de force existant (0 à 5, strengthByMuscle) → 5 niveaux visuels (0 à 4)
   levelThresholds: {default:[1.5, 2.5, 3.25, 4]},
@@ -1143,8 +1144,12 @@ const CREATURE_CFG = {
 };
 const rollStages = () => CREATURE_CFG.stageRange.map(([a,b]) => a + Math.floor(Math.random()*(b-a+1)));
 function creatureState(){
-  if(!S.profile.creature) S.profile.creature = {v:3, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null};
+  if(!S.profile.creature) S.profile.creature = {v:4, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null};
   const c = S.profile.creature;
+  if((c.v||0) < 4){   // passage de 4 à 13 formes : l'ancien stade garde sa forme la plus proche
+    if(c.at && c.at.length < CREATURE_CFG.stages.length){ c.stage = [0, 2, 5, 9][c.stage] ?? c.stage; c.at = null; }
+    c.v = 4;
+  }
   if(!c.at){   // Gymon d'avant : seuils tirés au hasard, en restant cohérents avec le stade déjà atteint
     c.at = rollStages().map((x,i) => i===0 ? 0 : c.stage >= i ? Math.min(x, c.fidelity) : Math.max(x, c.fidelity + 1));
     for(let i=1;i<c.at.length;i++) if(c.at[i] <= c.at[i-1]) c.at[i] = c.at[i-1] + 1;
@@ -1231,82 +1236,152 @@ function creatureFeed(w){
 }
 const fmtWeight = kg => kg < 1 ? `${Math.round(kg*1000)} g` : `${fmtN(kg, kg < 10 ? 1 : 0)} kg`;
 
-/* Dessin : formes simples en SVG, la taille de chaque muscle suit son niveau (0 à 4) */
+/* Dessin : 13 formes, de l'œuf au dragon. Chaque forme est décrite par une fiche (espèce, taille, queue, épines,
+   cornes, ailes), la taille de chaque muscle suit son niveau (0 à 4). */
+const LOOKS = [
+  {kind:"egg"},
+  {kind:"egg", cracked:true},
+  {kind:"chick", r:40, legL:22, body:"#ffd84d", wing:"#f7c22b", belly:"#ffe68a"},
+  {kind:"chick", r:46, legL:34, teen:true, body:"#ffe27a", wing:"#f4d35e", belly:"#fff4cf"},
+  {kind:"biped", sp:"hen", size:.74, comb:.45, young:true},
+  {kind:"biped", sp:"hen", size:.9, comb:1},
+  {kind:"biped", sp:"henmut", size:.94, comb:.6, tail:.35, spikes:.5},
+  {kind:"biped", sp:"dino", size:.76, tail:.55, spikes:.4, young:true},
+  {kind:"biped", sp:"dino", size:.88, tail:.8, spikes:.7},
+  {kind:"biped", sp:"dino", size:1, tail:1, spikes:1},
+  {kind:"biped", sp:"dinomut", size:1, tail:1, spikes:1, horns:.45, wings:.3},
+  {kind:"biped", sp:"dragon", size:.95, tail:1, spikes:1, horns:.75, wings:.65, spade:true},
+  {kind:"biped", sp:"dragon", size:1, tail:1.1, spikes:1.2, horns:1, wings:1, spade:true, flame:true}
+];
+const PAL = {
+  hen:    {skin:"#f7f2e8", shade:"#ddd2bf", light:"#fffdf8", line:"#b9ab93", pec:"#fbf8f1", hand:"#f4a259", feet:"#f4a259"},
+  henmut: {skin:"#eef0dc", shade:"#b9cfa2", light:"#fbfdf2", line:"#8fa57a", pec:"#f4f7e6", hand:"#c9a64a", feet:"#c9a64a", scale:"#7dbb7a", spike:"#4f9a5f"},
+  dino:   {skin:"#4caf6e", shade:"#2f7d4f", light:"#cdeac0", line:"#24603c", pec:"#5cbd7d", hand:"#4caf6e", feet:"#2f7d4f", spike:"#2f7d4f"},
+  dinomut:{skin:"#3f9c8f", shade:"#2a6d6a", light:"#c9ece0", line:"#1f5550", pec:"#4fb3a3", hand:"#3f9c8f", feet:"#2a6d6a", spike:"#5b3f9e", horn:"#efe3c2", wing:"#5b3f9e"},
+  dragon: {skin:"#7b4bc4", shade:"#4e2d8a", light:"#f6d58a", line:"#3a2068", pec:"#8d5fd6", hand:"#7b4bc4", feet:"#4e2d8a", spike:"#c44569", horn:"#f3e6c4", wing:"#c44569"}
+};
 function creatureSVG(c, small){
-  const L = m => c.levels[m] || 0, st = c.stage, vit = creatureVitality(c), sleepy = vit < 60, dead = !!c.dead;
-  const span = CREATURE_CFG.minWeight[Math.min(3, st+1)] || 100, fat = Math.min(1, Math.max(0, (c.weight - CREATURE_CFG.minWeight[st]) / span));
+  const L = m => c.levels[m] || 0, st = Math.min(c.stage, LOOKS.length-1), lk = LOOKS[st], vit = creatureVitality(c), sleepy = vit < 60, dead = !!c.dead;
+  const mw = CREATURE_CFG.minWeight, span = mw[Math.min(mw.length-1, st+1)] || 100, fat = Math.min(1, Math.max(0, (c.weight - mw[st]) / span));
+  const reptile = lk.sp && lk.sp!=="hen";
   const eye = (x, y, r) => dead ? `<path d="M${x-r} ${y-r} L${x+r} ${y+r} M${x+r} ${y-r} L${x-r} ${y+r}" stroke="#222" stroke-width="2.4" stroke-linecap="round"/>`
     : sleepy ? `<path d="M${x-r} ${y} Q${x} ${y+r*0.8} ${x+r} ${y}" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/>`
+    : reptile && st >= 10 ? `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*0.9}" fill="#ffd34d"/><ellipse cx="${x+r*0.15}" cy="${y}" rx="${r*0.22}" ry="${r*0.75}" fill="#1d1d1f"/>`
     : `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/><circle cx="${x+r*0.25}" cy="${y}" r="${r*0.55}" fill="#1d1d1f"/><circle cx="${x+r*0.4}" cy="${y-r*0.3}" r="${r*0.18}" fill="#fff"/>`;
-  let g = "";
-  if(st===0){
-    const p = creatureNear(c);
+  let g = "", haloY = 16;
+  if(lk.kind==="egg"){
+    const p = lk.cracked ? 1 : creatureNear(c);
+    haloY = 70;
     g = `<ellipse cx="100" cy="226" rx="46" ry="7" fill="rgba(0,0,0,.12)"/>
       <g class="cr-egg"><ellipse cx="100" cy="150" rx="54" ry="70" fill="#f6ecd6" stroke="#e2d3b3" stroke-width="2"/>
-      <circle cx="78" cy="122" r="7" fill="#e9d8b4"/><circle cx="120" cy="170" r="9" fill="#e9d8b4"/><circle cx="116" cy="112" r="5" fill="#e9d8b4"/><circle cx="84" cy="182" r="5" fill="#e9d8b4"/>
-      ${p>0 ? `<path d="M66 ${132} l10 8 l8 -10 l10 9 l9 -8 l9 9 l9 -9 l9 8" stroke="#a88f63" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-dasharray="${Math.round(p*110)} 200"/>` : ""}</g>`;
-  }else if(st===1){
-    const P = L("Pectoraux"), A = (L("Biceps")+L("Triceps")+L("Épaules"))/3, J = L("Jambes"), D = L("Dos"), r = 46 + fat*8 + D*1.5;
-    g = `<ellipse cx="100" cy="226" rx="40" ry="6" fill="rgba(0,0,0,.12)"/>
-      <path d="M86 ${180+r*0.2} L84 222 M114 ${180+r*0.2} L116 222" stroke="#f08a24" stroke-width="${3+J*1.2}" stroke-linecap="round"/>
-      <path d="M76 222 l8 -4 l8 4 M108 222 l8 -4 l8 4" stroke="#f08a24" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <ellipse cx="${100-r+2}" cy="158" rx="${12+A*3}" ry="${20+A*2.5}" fill="#f7c22b" transform="rotate(20 ${100-r+2} 158)"/>
-      <ellipse cx="${100+r-2}" cy="158" rx="${12+A*3}" ry="${20+A*2.5}" fill="#f7c22b" transform="rotate(-20 ${100+r-2} 158)"/>
-      <circle cx="100" cy="160" r="${r}" fill="#ffd84d"/>
-      <ellipse cx="100" cy="${150}" rx="${18+P*4}" ry="${14+P*2.5}" fill="#ffe68a"/>
-      <circle cx="100" cy="100" r="32" fill="#ffd84d"/>
-      <path d="M86 72 l6 -10 l6 10 l6 -10 l6 10" fill="#fff" stroke="#e2d3b3" stroke-width="1.5"/>
-      ${eye(88, 98, 6)}${eye(112, 98, 6)}
-      <path d="M94 110 L106 110 L100 120 Z" fill="#f08a24"/>`;
+      <circle cx="78" cy="122" r="7" fill="#e9d8b4"/><circle cx="120" cy="178" r="9" fill="#e9d8b4"/><circle cx="116" cy="108" r="5" fill="#e9d8b4"/><circle cx="84" cy="188" r="5" fill="#e9d8b4"/>
+      ${lk.cracked ? `<path d="M48 136 L60 126 L70 138 L82 124 L94 138 L106 124 L118 138 L130 124 L142 136 L152 132 L150 150 L140 146 L128 156 L118 144 L106 156 L94 144 L82 156 L70 144 L58 154 L48 150 Z" fill="#3a2a1e"/>
+        ${eye(86, 141, 5.5)}${eye(114, 141, 5.5)}
+        <path d="M64 160 l8 10 M138 158 l-6 12" stroke="#a88f63" stroke-width="2" stroke-linecap="round"/>`
+      : p>0 ? `<path d="M66 132 l10 8 l8 -10 l10 9 l9 -8 l9 9 l9 -9 l9 8" stroke="#a88f63" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-dasharray="${Math.round(p*110)} 200"/>` : ""}</g>`;
+  }else if(lk.kind==="chick"){
+    const P = L("Pectoraux"), A = (L("Biceps")+L("Triceps")+L("Épaules"))/3, J = L("Jambes"), D = L("Dos"), r = lk.r + fat*8 + D*1.5;
+    const cy = 222 - lk.legL - r*0.92, hy = cy - r*0.95 - 22;
+    haloY = hy - 34;
+    g = `<ellipse cx="100" cy="226" rx="${r*0.85}" ry="6" fill="rgba(0,0,0,.12)"/>
+      ${lk.teen ? `<path d="M${100-r*0.7} ${cy+r*0.3} l-16 -10 l4 14 l-14 -2 l14 12 Z" fill="#fff" opacity=".9"/>` : ""}
+      <path d="M88 ${cy+r*0.8} L86 222 M112 ${cy+r*0.8} L114 222" stroke="#f08a24" stroke-width="${3+J*1.2+(lk.teen?1:0)}" stroke-linecap="round"/>
+      <path d="M76 222 l10 -4 l10 4 M104 222 l10 -4 l10 4" stroke="#f08a24" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="${100-r+2}" cy="${cy}" rx="${12+A*3+(lk.teen?4:0)}" ry="${20+A*2.5+(lk.teen?6:0)}" fill="${lk.wing}" transform="rotate(20 ${100-r+2} ${cy})"/>
+      <ellipse cx="${100+r-2}" cy="${cy}" rx="${12+A*3+(lk.teen?4:0)}" ry="${20+A*2.5+(lk.teen?6:0)}" fill="${lk.wing}" transform="rotate(-20 ${100+r-2} ${cy})"/>
+      <ellipse cx="100" cy="${cy}" rx="${r}" ry="${r*(lk.teen?1.05:0.95)}" fill="${lk.body}"/>
+      <ellipse cx="100" cy="${cy-6}" rx="${18+P*4}" ry="${14+P*2.5}" fill="${lk.belly}"/>
+      ${lk.teen ? `<path d="M${100-r*0.6} ${cy+r*0.5} q6 -6 12 0 M${100+r*0.3} ${cy+r*0.55} q6 -6 12 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>` : ""}
+      <circle cx="100" cy="${hy}" r="${lk.teen?27:30}" fill="${lk.body}"/>
+      ${lk.teen ? `<path d="M92 ${hy-26} q4 -12 8 -2 q4 -12 8 0" fill="#e63946"/><path d="M88 ${hy-24} q-8 -4 -6 -12 M112 ${hy-24} q8 -4 6 -12 M80 ${hy-14} q-8 0 -10 -6" stroke="${lk.body}" stroke-width="4" fill="none" stroke-linecap="round"/>`
+        : `<path d="M86 ${hy-28} l6 -10 l6 10 l6 -10 l6 10" fill="#fff" stroke="#e2d3b3" stroke-width="1.5"/>`}
+      ${eye(89, hy-2, 6)}${eye(111, hy-2, 6)}
+      <path d="M94 ${hy+10} L106 ${hy+10} L100 ${hy+20} Z" fill="#f08a24"/>`;
   }else{
-    const dino = st===3, P = L("Pectoraux"), D = L("Dos"), E = L("Épaules"), B = L("Biceps"), T = L("Triceps"), J = L("Jambes"), Ab = L("Abdos");
-    const skin = dino ? "#4caf6e" : "#f7f2e8", shade = dino ? "#2f7d4f" : "#ddd2bf", light = dino ? "#cdeac0" : "#fffdf8", line = dino ? "#24603c" : "#b9ab93";
+    const sp = lk.sp, C = PAL[sp], hen = sp==="hen", henmut = sp==="henmut", dragonish = sp==="dinomut" || sp==="dragon";
+    const P = L("Pectoraux"), D = L("Dos"), E = L("Épaules"), B = L("Biceps"), T = L("Triceps"), J = L("Jambes"), Ab = L("Abdos");
     const sw = 28 + D*4.5 + E*1.2, ww = 19 + fat*10 + D*1.2, top = 84, hip = 156;
     const arm = 7 + (B+T)*0.9, bi = 4 + B*2.2, thigh = 9 + J*2.4, del = 7 + E*2.4;
-    // jambes et queue
-    g += `<ellipse cx="100" cy="228" rx="${48+fat*6}" ry="7" fill="rgba(0,0,0,.12)"/>`;
-    if(dino) g += `<path d="M${100-ww+4} 150 Q 40 170 18 214 Q 52 196 ${100-ww+10} 172 Z" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
+    // ombre (hors de l'échelle de la forme)
+    g += `<ellipse cx="100" cy="228" rx="${(48+fat*6)*lk.size}" ry="7" fill="rgba(0,0,0,.12)"/>`;
+    let b = "";
+    // ailes, derrière le corps
+    if(lk.wings){
+      const w = lk.wings, reach = Math.min(92*w, 100 - sw - 4);
+      [-1,1].forEach(s => {
+        const x0 = 100 + s*(sw-6), y0 = top+10, tipX = 100 + s*(sw + reach), tipY = top - 70*w;
+        b += `<path d="M${x0} ${y0} L${tipX} ${tipY} Q${tipX + s*4} ${top+10} ${100 + s*(sw + reach*0.9)} ${top + 70*w} Q${100 + s*(sw + reach*0.6)} ${top+40*w} ${100 + s*(sw + reach*0.5)} ${top+62*w} Q${100 + s*(sw + reach*0.3)} ${top+34*w} ${100 + s*(sw+reach*0.12)} ${top+52*w} Z"
+          fill="${C.wing}" stroke="${C.line}" stroke-width="1.6" stroke-linejoin="round" opacity=".95"/>
+          <path d="M${x0} ${y0} L${100 + s*(sw + reach*0.5)} ${top+62*w} M${x0} ${y0} L${100 + s*(sw + reach*0.9)} ${top + 70*w}" stroke="${C.line}" stroke-width="1.2" opacity=".6"/>`;
+      });
+    }
+    // queue
+    if(lk.tail){
+      const t = lk.tail, tx = 100 - ww - 70*t, ty = 214 - 6*t;
+      b += `<path d="M${100-ww+4} 148 Q ${100-ww-30*t} ${168} ${tx} ${ty} Q ${100-ww-18*t} ${196} ${100-ww+10} 174 Z" fill="${henmut ? C.scale : C.skin}" stroke="${C.line}" stroke-width="1.5"/>`;
+      if(henmut) b += `<path d="M${100-ww+2} 150 q-14 -14 -4 -26 q4 12 12 16 Z" fill="#fff" stroke="${C.line}" stroke-width="1.2"/>`;
+      if(lk.spade) b += `<path d="M${tx} ${ty} l-6 -14 l16 8 Z M${tx} ${ty} l-14 4 l12 8 Z" fill="${C.spike}" stroke="${C.line}" stroke-width="1.2"/>`;
+    }
+    // jambes
     [-1,1].forEach(s => {
       const x = 100 + s*(ww*0.55 + 4);
-      g += `<ellipse cx="${x}" cy="176" rx="${thigh}" ry="24" fill="${skin}" stroke="${line}" stroke-width="1.5"/>
-        ${J>=2 ? `<path d="M${x - s*thigh*0.2} 162 Q ${x + s*thigh*0.5} 176 ${x - s*thigh*0.1} 192" stroke="${line}" stroke-width="1.2" fill="none" opacity=".7"/>` : ""}
-        <rect x="${x - (4 + J*0.9)}" y="196" width="${8 + J*1.8}" height="26" rx="4" fill="${dino ? skin : "#f4a259"}" stroke="${line}" stroke-width="1.2"/>
-        ${dino ? `<ellipse cx="${x + s*4}" cy="224" rx="14" ry="6" fill="${shade}"/>` : `<path d="M${x} 222 l-10 4 M${x} 222 l0 6 M${x} 222 l10 4" stroke="#f4a259" stroke-width="3" stroke-linecap="round"/>`}`;
+      b += `<ellipse cx="${x}" cy="176" rx="${thigh}" ry="24" fill="${C.skin}" stroke="${C.line}" stroke-width="1.5"/>
+        ${J>=2 ? `<path d="M${x - s*thigh*0.2} 162 Q ${x + s*thigh*0.5} 176 ${x - s*thigh*0.1} 192" stroke="${C.line}" stroke-width="1.2" fill="none" opacity=".7"/>` : ""}
+        <rect x="${x - (4 + J*0.9)}" y="196" width="${8 + J*1.8}" height="26" rx="4" fill="${hen || henmut ? C.feet : C.skin}" stroke="${C.line}" stroke-width="1.2"/>
+        ${hen || henmut ? `<path d="M${x} 222 l-10 4 M${x} 222 l0 6 M${x} 222 l10 4" stroke="${C.feet}" stroke-width="3" stroke-linecap="round"/>${henmut ? `<path d="M${x-12} 226 l-3 2 M${x+12} 226 l3 2" stroke="#333" stroke-width="2" stroke-linecap="round"/>` : ""}`
+          : `<ellipse cx="${x + s*4}" cy="224" rx="14" ry="6" fill="${C.feet}"/><path d="M${x+s*4-8} 228 l-2 3 M${x+s*4} 229 l0 3 M${x+s*4+8} 228 l2 3" stroke="#f1e3c6" stroke-width="2" stroke-linecap="round"/>`}`;
     });
-    // torse (largeur liée au dos), ventre (poids)
-    g += `<path d="M${100-sw} ${top+4} Q ${100-sw-3} 122 ${100-ww} ${hip} L ${100+ww} ${hip} Q ${100+sw+3} 122 ${100+sw} ${top+4} Q 100 ${top-8} ${100-sw} ${top+4} Z" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
-    if(D>=1) g += `<path d="M${100-sw+3} ${top+12} Q ${100-sw+12} 122 ${100-ww+3} ${hip-10}" stroke="${shade}" stroke-width="${2+D}" fill="none" opacity=".55"/><path d="M${100+sw-3} ${top+12} Q ${100+sw-12} 122 ${100+ww-3} ${hip-10}" stroke="${shade}" stroke-width="${2+D}" fill="none" opacity=".55"/>`;
-    g += `<ellipse cx="100" cy="${hip-16}" rx="${ww-2+fat*5}" ry="${16+fat*6}" fill="${light}"/>`;
+    // torse, dorsaux, ventre
+    b += `<path d="M${100-sw} ${top+4} Q ${100-sw-3} 122 ${100-ww} ${hip} L ${100+ww} ${hip} Q ${100+sw+3} 122 ${100+sw} ${top+4} Q 100 ${top-8} ${100-sw} ${top+4} Z" fill="${C.skin}" stroke="${C.line}" stroke-width="1.5"/>`;
+    if(D>=1) b += `<path d="M${100-sw+3} ${top+12} Q ${100-sw+12} 122 ${100-ww+3} ${hip-10}" stroke="${C.shade}" stroke-width="${2+D}" fill="none" opacity=".55"/><path d="M${100+sw-3} ${top+12} Q ${100+sw-12} 122 ${100+ww-3} ${hip-10}" stroke="${C.shade}" stroke-width="${2+D}" fill="none" opacity=".55"/>`;
+    b += `<ellipse cx="100" cy="${hip-16}" rx="${ww-2+fat*5}" ry="${16+fat*6}" fill="${C.light}"/>`;
+    if(sp==="dragon") for(let i=0;i<4;i++) b += `<path d="M${100-ww+6} ${hip-30+i*8} H${100+ww-6}" stroke="#e0b25c" stroke-width="1.2" opacity=".7"/>`;
+    if(henmut) [[78,112],[122,128],[84,140],[116,104],[70,130]].forEach(([x,y]) => b += `<circle cx="${x}" cy="${y}" r="4" fill="${C.scale}" opacity=".8"/>`);
     // abdos
-    if(Ab>=1){ const rows = Math.min(3, Ab); for(let i=0;i<rows;i++) [-1,1].forEach(s => g += `<rect x="${100 + (s<0?-11:2)}" y="${hip-34+i*10}" width="9" height="8" rx="3" fill="${shade}" opacity="${0.25+Ab*0.1}"/>`); }
+    if(Ab>=1){ const rows = Math.min(3, Ab); for(let i=0;i<rows;i++) [-1,1].forEach(s => b += `<rect x="${100 + (s<0?-11:2)}" y="${hip-34+i*10}" width="9" height="8" rx="3" fill="${C.shade}" opacity="${0.25+Ab*0.1}"/>`); }
     // pectoraux
     const pr = 9 + P*2.8, py = top + 18 + P*0.6;
-    [-1,1].forEach(s => g += `<ellipse cx="${100 + s*(pr*0.95)}" cy="${py}" rx="${pr}" ry="${6.5 + P*1.7}" fill="${dino ? "#5cbd7d" : "#fbf8f1"}" stroke="${line}" stroke-width="${1 + P*0.25}"/>`);
-    // bras : deltoïde, bras (biceps/triceps), avant-bras
+    [-1,1].forEach(s => b += `<ellipse cx="${100 + s*(pr*0.95)}" cy="${py}" rx="${pr}" ry="${6.5 + P*1.7}" fill="${C.pec}" stroke="${C.line}" stroke-width="${1 + P*0.25}"/>`);
+    // bras
     [-1,1].forEach(s => {
       const sx = 100 + s*sw, ax = sx + s*(arm*0.6 + 2);
-      g += `<ellipse cx="${ax}" cy="${top+30}" rx="${arm}" ry="20" fill="${skin}" stroke="${line}" stroke-width="1.5" transform="rotate(${s*-8} ${ax} ${top+30})"/>
-        ${B>=1 ? `<ellipse cx="${ax - s*arm*0.25}" cy="${top+28}" rx="${bi}" ry="${8+B}" fill="${dino ? "#5cbd7d" : "#fbf8f1"}" stroke="${line}" stroke-width="1"/>` : ""}
-        ${T>=2 ? `<path d="M${ax + s*arm*0.55} ${top+18} Q ${ax + s*(arm+2)} ${top+30} ${ax + s*arm*0.5} ${top+44}" stroke="${shade}" stroke-width="${1+T*0.6}" fill="none"/>` : ""}
-        <ellipse cx="${ax + s*2}" cy="${top+58}" rx="${5.5 + (B+T)*0.5}" ry="15" fill="${skin}" stroke="${line}" stroke-width="1.5"/>
-        <circle cx="${ax + s*3}" cy="${top+74}" r="${5 + (B+T)*0.3}" fill="${dino ? skin : "#f4a259"}" stroke="${line}" stroke-width="1.2"/>
-        <circle cx="${sx}" cy="${top+8}" r="${del}" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
+      b += `<ellipse cx="${ax}" cy="${top+30}" rx="${arm}" ry="20" fill="${C.skin}" stroke="${C.line}" stroke-width="1.5" transform="rotate(${s*-8} ${ax} ${top+30})"/>
+        ${B>=1 ? `<ellipse cx="${ax - s*arm*0.25}" cy="${top+28}" rx="${bi}" ry="${8+B}" fill="${C.pec}" stroke="${C.line}" stroke-width="1"/>` : ""}
+        ${T>=2 ? `<path d="M${ax + s*arm*0.55} ${top+18} Q ${ax + s*(arm+2)} ${top+30} ${ax + s*arm*0.5} ${top+44}" stroke="${C.shade}" stroke-width="${1+T*0.6}" fill="none"/>` : ""}
+        <ellipse cx="${ax + s*2}" cy="${top+58}" rx="${5.5 + (B+T)*0.5}" ry="15" fill="${C.skin}" stroke="${C.line}" stroke-width="1.5"/>
+        <circle cx="${ax + s*3}" cy="${top+74}" r="${5 + (B+T)*0.3}" fill="${C.hand}" stroke="${C.line}" stroke-width="1.2"/>
+        ${!hen ? `<path d="M${ax+s*3-4} ${top+79} l-1 4 M${ax+s*3} ${top+80} l0 4 M${ax+s*3+4} ${top+79} l1 4" stroke="#f1e3c6" stroke-width="1.6" stroke-linecap="round"/>` : ""}
+        <circle cx="${sx}" cy="${top+8}" r="${del}" fill="${C.skin}" stroke="${C.line}" stroke-width="1.5"/>`;
     });
     // tête
-    g += `<rect x="92" y="${top-16}" width="16" height="16" fill="${skin}"/>`;
-    if(dino){
-      g += `<path d="M86 30 l6 -9 l5 9 l6 -9 l5 9 l6 -8 l4 9" fill="${shade}"/>
-        <path d="M78 52 Q 80 26 106 26 Q 140 28 146 50 Q 146 66 120 70 L 92 72 Q 78 70 78 52 Z" fill="${skin}" stroke="${line}" stroke-width="1.5"/>
-        <path d="M108 62 Q 128 64 142 58" stroke="${line}" stroke-width="1.5" fill="none"/>
-        <path d="M114 63 l3 4 l3 -4 l3 4 l3 -4 l3 4" fill="#fff" stroke="none"/>
-        <circle cx="138" cy="44" r="1.8" fill="${line}"/>${eye(98, 44, 7)}`;
+    b += `<rect x="92" y="${top-16}" width="16" height="16" fill="${C.skin}"/>`;
+    if(hen || henmut){
+      const k = lk.comb;
+      if(henmut) b += `<path d="M76 40 l-8 -12 l12 4 l-2 -14 l10 10 l2 -14 l8 12" fill="${C.spike}" stroke="${C.line}" stroke-width="1.2" stroke-linejoin="round"/>`;
+      b += `<path d="M${100-14*k} 30 q${4*k} -${14*k} ${10*k} -2 q${4*k} -${14*k} ${10*k} -2 q${6*k} -${12*k} ${9*k} 2 q-${10*k} 4 -${29*k} 2 Z" fill="#e63946"/>
+        <circle cx="100" cy="50" r="${lk.young ? 24 : 22}" fill="${C.skin}" stroke="${C.line}" stroke-width="1.5"/>
+        <path d="M118 50 L${henmut ? 140 : 134} ${henmut ? 54 : 55} L118 60 Z" fill="${henmut ? "#d9b54a" : "#f4a259"}"/>
+        ${henmut ? `<path d="M122 58 l3 3 l3 -3 l3 3" stroke="#fff" stroke-width="1.6" fill="none"/>` : `<path d="M116 61 q6 10 0 14 q-6 -4 0 -14" fill="#e63946"/>`}
+        ${eye(106, 46, lk.young ? 7.5 : 6.5)}`;
     }else{
-      g += `<path d="M86 30 q4 -14 10 -2 q4 -14 10 -2 q6 -12 9 2 q-10 4 -29 2 Z" fill="#e63946"/>
-        <circle cx="100" cy="50" r="22" fill="${skin}" stroke="${line}" stroke-width="1.5"/>
-        <path d="M118 50 L134 55 L118 60 Z" fill="#f4a259"/><path d="M116 61 q6 10 0 14 q-6 -4 0 -14" fill="#e63946"/>${eye(106, 46, 6.5)}`;
+      const sk = lk.spikes || 0, hs = lk.young ? 1.12 : 1;
+      let h = `<path d="M${86} 30 ${Array.from({length:3+Math.round(sk*2)}, (_,i) => `l${5} -${8+sk*5} l${5} ${8+sk*5}`).join(" ")}" fill="${C.spike}" stroke="${C.line}" stroke-width="1" stroke-linejoin="round"/>`;
+      if(lk.horns){ const hr = lk.horns;
+        // deux cornes recourbées vers l'arrière, qui grandissent avec la mutation
+        h += `<path d="M88 34 Q ${80-6*hr} ${22-6*hr} ${74-10*hr} ${16-12*hr} Q ${88-2*hr} ${22-4*hr} 98 30 Z" fill="${C.horn}" stroke="${C.line}" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M106 28 Q ${108+2*hr} ${16-8*hr} ${114+6*hr} ${8-10*hr} Q ${116+2*hr} ${18-4*hr} 116 30 Z" fill="${C.horn}" stroke="${C.line}" stroke-width="1.2" stroke-linejoin="round"/>`; }
+      h += `<path d="M78 52 Q 80 26 106 26 Q 140 28 146 50 Q 146 66 120 70 L 92 72 Q 78 70 78 52 Z" fill="${C.skin}" stroke="${C.line}" stroke-width="1.5"/>
+        <path d="M108 62 Q 128 64 142 58" stroke="${C.line}" stroke-width="1.5" fill="none"/>
+        <path d="M114 63 l3 4 l3 -4 l3 4 l3 -4 l3 4" fill="#fff" stroke="none"/>
+        <circle cx="138" cy="44" r="1.8" fill="${C.line}"/>${eye(98, 44, lk.young ? 9 : 7)}`;
+      if(sp==="dinomut") h += `<circle cx="146" cy="56" r="3" fill="${C.glow}" opacity=".8"/>`;
+      if(lk.flame && !dead && !sleepy) h += `<path class="cr-flame" d="M146 56 Q 170 44 196 54 Q 178 58 192 66 Q 170 64 146 62 Z" fill="#ff8a3d"/><path class="cr-flame" d="M148 57 Q 166 52 182 57 Q 168 60 148 61 Z" fill="#ffd34d"/>`;
+      b += lk.young ? `<g transform="translate(100 50) scale(${hs}) translate(-100 -50)">${h}</g>` : h;
     }
+    g += `<g transform="translate(100 228) scale(${lk.size}) translate(-100 -228)">${b}</g>`;
+    haloY = 228 - (228 - (lk.horns ? 2 : 14)) * lk.size;
   }
-  const sat = Math.round(40 + vit*0.6), haloY = st===0 ? 70 : st===1 ? 56 : 16;
+  const sat = Math.round(40 + vit*0.6);
   if(dead) g += `<ellipse cx="100" cy="${haloY}" rx="24" ry="6" fill="none" stroke="#f5c542" stroke-width="4"/>`;
   return `<svg class="creature ${small?"sm":""} ${dead?"dead":""}" viewBox="0 0 200 240" role="img" aria-label="${dead ? "Gymon mort" : CREATURE_CFG.stages[st]}" style="filter:${dead ? "grayscale(1) opacity(.75)" : `saturate(${sat}%)`}"><g class="cr-breathe">${g}</g></svg>`;
 }
@@ -1326,7 +1401,7 @@ function gymonHint(c){
     return near >= 0.85 ? pick(["La coquille craque par endroits…", "On entend toquer de l'intérieur."]) : pick(["Il a senti votre séance.", "Quelque chose remue à l'intérieur."]);
   }
   if(vit < 60) return pick(["Il s'ennuie de vous.", "Il guette la porte de la salle."]);
-  if(near >= 0.85 && c.stage < 3) return pick(["Il se passe quelque chose d'étrange…", "Il ne tient plus en place."]);
+  if(near >= 0.85 && c.stage < CREATURE_CFG.stages.length - 1) return pick(["Il se passe quelque chose d'étrange…", "Il ne tient plus en place."]);
   return pick(["Il a l'air fier de vous.", "Il digère votre dernière séance.", "Il s'étire en vous voyant.", "Il compte vos répétitions."]);
 }
 function viewCreature(){

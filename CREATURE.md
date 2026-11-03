@@ -14,7 +14,7 @@ Hypothèse testée : une créature qui grandit avec les entraînements améliore
 ## Règles (réglables dans `CREATURE_CFG`)
 | Élément | Règle | Paramètres |
 |---|---|---|
-| Stades | Œuf → Poussin → Poulet humanoïde → Dinosaure humanoïde, selon la fidélité (séances validées). Jamais perdus, jamais sautés. **Seuils tirés au hasard à la naissance, propres à chaque Gymon et jamais affichés** : l'évolution reste une surprise | `stageRange: [[0,0],[2,3],[8,13],[25,35]]` |
+| Stades | 13 formes : Œuf → Œuf fêlé → Poussin → Poussin ado → Jeune poule → Poule adulte → Poule en mutation → Jeune dinosaure → Dinosaure ado → Dinosaure → Dinosaure en mutation → Dragonnet → Dragon, selon la fidélité (séances validées). Jamais perdues, jamais sautées. **Seuils tirés au hasard à la naissance, propres à chaque Gymon et jamais affichés** (dragon vers 71 à 85 séances, soit 6 à 7 mois à 3 séances par semaine) | `stageRange`, `stageAt` |
 | Fidélité | +1 par séance validée, ne baisse jamais. Une séance n'est comptée qu'une fois (liste des séances déjà « mangées ») | – |
 | Poids | Repas = volume soulevé. Gain = tonnes × coefficient du stade × facteur de régularité (0,7 à 1,3) | `foodPerTonne: [0.002, 0.03, 0.25, 1]`, `minWeight` |
 | Taille | Liée à la maturité : progresse avec la fidélité à l'intérieur de chaque stade | `height` |
@@ -36,6 +36,11 @@ La première version recalculait tous les muscles à chaque séance à partir de
 ## V1.3 : tuto et mort
 - Tuto en 5 écrans après l'écran de bienvenue (une fois aussi pour les utilisateurs existants), « Passer » sur chaque écran, « ? » sur la page Mon Gymon pour le revoir. Les illustrations montrent toujours l'œuf : les formes suivantes restent une surprise.
 - Mort après 30 jours sans séance avec résurrection possible (voir Règles).
+
+## V1.4 : 13 formes
+- Œuf fêlé et dragonnet ajoutés comme formes intermédiaires pour ralentir les transitions.
+- Mutations progressives : écailles, queue et griffes qui apparaissent sur la poule, cornes, ailes naissantes et yeux de reptile sur le dinosaure, puis ailes, queue en pique et souffle de feu pour le dragon.
+- Les Gymon existants gardent la forme la plus proche (poussin → poussin, poulet → poule adulte, dinosaure → dinosaure) et reçoivent de nouveaux seuils cachés cohérents.
 
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.

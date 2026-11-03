@@ -32,8 +32,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const pageTxt = await p.evaluate(() => { tab = "creature"; render(); return document.getElementById("view").innerText; });
   ok(!/séances? avant|Poussin|Poulet|Dinosaure|\d\/4/.test(pageTxt), "la page ne révèle ni le prochain stade ni le nombre de séances restantes");
   ok(/Mon Gymon/.test(await p.evaluate(() => document.getElementById("title").textContent)), "la page s'appelle « Mon Gymon »");
-  // Pour la suite des tests : seuils de référence 2 / 10 / 30
-  await p.evaluate(() => { creatureState().at = [0, 2, 10, 30]; saveLocal(); });
+  ok(await p.evaluate(() => CREATURE_CFG.stages.length === 13 && CREATURE_CFG.stages[12] === "Dragon"), "13 formes, de l'œuf au dragon");
+  // Pour la suite des tests : seuils de référence (repères de la configuration)
+  await p.evaluate(() => { creatureState().at = CREATURE_CFG.stageAt.slice(); saveLocal(); });
 
   // Une séance importée ou antérieure ne nourrit pas la créature
   await p.evaluate(() => { S.workouts.push({id:"old", name:"Ancienne", start:Date.now()-5*864e5, end:Date.now()-5*864e5, exercises:[{exId:"squat", sets:[{w:"100",r:"5",done:true}]}]}); });
@@ -85,13 +86,13 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   // Deuxième séance : éclosion
   await play("72.5","8","72.5","8");
   c = await p.evaluate(() => creatureState());
-  ok(c.stage === 1, "2 séances : poussin", c.stage);
+  ok(c.stage === 2, "2 séances : poussin (après l'œuf fêlé)", c.stage);
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c1.png")});
 
-  // Montée jusqu'au dinosaure par des séances simulées (même fonction que la validation)
+  // Montée jusqu'au dragon par des séances simulées (même fonction que la validation)
   const res = await p.evaluate(() => {
     const out = []; let prevLv = {...creatureState().levels};
-    for(let i=0;i<30;i++){
+    for(let i=0;i<64;i++){
       const t = Date.now() + i*1000;
       const w = {id:"sim"+i, name:"Sim", start:t, end:t+1800e3, exercises:[{exId:"squat", sets:[{w:String(100+i), r:"8", done:true}]}, {exId:"dc-barre", sets:[{w:String(80+i), r:"8", done:true}]}]};
       S.workouts.push(w); creatureFeed(w);
@@ -102,7 +103,8 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return {stages: out, weight: creatureState().weight, h: creatureHeight(creatureState())};
   });
   ok(!res.regress, "la musculature ne régresse jamais");
-  ok(res.stages.includes(2) && res.stages[res.stages.length-1] === 3, "progression poussin → poulet → dinosaure sans sauter de stade", res.stages.filter((x,i,a)=>a.indexOf(x)===i));
+  const seen = res.stages.filter((x,i,a) => a.indexOf(x)===i);
+  ok(seen.join() === [2,3,4,5,6,7,8,9,10,11,12].join() && res.stages.every((x,i,a) => i===0 || x - a[i-1] <= 1), "progression jusqu'au dragon, une forme à la fois, sans en sauter", seen);
   ok(res.stages.every((x,i,a) => i===0 || x >= a[i-1]), "un stade acquis ne se perd jamais");
 
   // Pause de 20 jours : vitalité en baisse, rien n'est perdu
@@ -114,6 +116,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await play("90","8","90","8");
   ok(await p.evaluate(() => creatureVitality(creatureState())) === 100, "reprise : vitalité remontée à 100 %");
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3.png"), fullPage:true});
+
+  // Migration : un Gymon de l'ancienne version (4 formes) garde la forme la plus proche
+  const mig = await p.evaluate(() => { const keep = S.profile.creature; const out = [];
+    for(const [old, fid] of [[0,1],[1,5],[2,15],[3,40]]){
+      S.profile.creature = {v:3, at:[0,2,10,30], born:Date.now(), fed:[], fidelity:fid, food:0, weight:1, stage:old, levels:{}, last:Date.now()};
+      const c = creatureState(); out.push([c.stage, stageFor(c.fidelity, c) <= c.stage || c.fidelity < c.at[c.stage+1], c.at.length]); }
+    S.profile.creature = keep; return out; });
+  ok(mig.map(x => x[0]).join() === "0,2,5,9" && mig.every(x => x[2] === 13), "migration : œuf → œuf, poussin → poussin, poulet → poule adulte, dino → dinosaure", mig);
 
   // Mort après 30 jours sans séance, séance mise de côté, résurrection, nouvel œuf
   const death = await p.evaluate(() => { const c = creatureState(); c.last = Date.now() - 31*864e5; S.profile.creature = c;
@@ -136,10 +146,10 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const fresh = await p.evaluate(() => { const c = creatureState(); return {stage:c.stage, fid:c.fidelity, dead:!!c.dead, graves:(c.graves||[]).length, workouts:S.workouts.length}; });
   ok(fresh.stage === 0 && fresh.fid === 0 && !fresh.dead && fresh.graves === 1, "nouvel œuf : départ à zéro, l'ancien Gymon reste en souvenir");
   ok(fresh.workouts > 0, "repartir d'un œuf ne touche pas à l'historique des séances");
-  await p.evaluate(() => { const c = creatureState(); c.stage = 3; c.fidelity = 31; c.at = [0,2,10,30]; c.last = Date.now(); render(); });
+  await p.evaluate(() => { const c = creatureState(); c.stage = 12; c.fidelity = 70; c.at = CREATURE_CFG.stageAt.slice(); c.last = Date.now(); render(); });
 
   // Rendu des 4 stades avec muscles faibles puis forts
-  if(SHOTS){ for(const st of [2,3]) for(const lv of [0,4]){
+  if(SHOTS){ for(const st of [5,9,12]) for(const lv of [0,4]){
     await p.evaluate(([st,lv]) => { const c = creatureState(); c.stage = st; MUSCLES.forEach(m => c.levels[m] = m==="Jambes" ? Math.min(lv,1) : lv); c.last = Date.now(); render(); }, [st,lv]);
     await p.locator(".creature").first().screenshot({path:path.join(SHOTS, `st${st}-lv${lv}.png`)}); } }
 
