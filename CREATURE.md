@@ -42,6 +42,11 @@ La première version recalculait tous les muscles à chaque séance à partir de
 - Mutations progressives : écailles, queue et griffes qui apparaissent sur la poule, cornes, ailes naissantes et yeux de reptile sur le dinosaure, puis ailes, queue en pique et souffle de feu pour le dragon.
 - Les Gymon existants gardent la forme la plus proche (poussin → poussin, poulet → poule adulte, dinosaure → dinosaure) et reçoivent de nouveaux seuils cachés cohérents.
 
+## V1.5 : style chibi et muscles exagérés
+- Style « chibi » plus attachant : grosse tête, grands yeux brillants qui clignent, joues roses, modelé doux en dégradé, contours de la même teinte.
+- Musculature exagérée : niveau 0 = membres en fil de fer, niveau 4 = muscles énormes. Un retard devient visible et comique (ex. jambes en allumettes sous un torse de bodybuilder).
+- Croissance progressive : chaque séance qui travaille un muscle le fait grossir de +0,15 à +0,5 (selon le nombre de séries), jusqu'au niveau de force + 0,5. Une petite évolution se voit presque à chaque séance.
+
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.
 - **Dos** : largeur du torse et dorsaux. **Pectoraux** : taille des pecs. **Épaules** : deltoïdes. **Biceps / triceps** : bras. **Jambes** : cuisses et mollets. **Abdos** : tablettes.

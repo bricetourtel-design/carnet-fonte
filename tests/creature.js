@@ -117,6 +117,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(await p.evaluate(() => creatureVitality(creatureState())) === 100, "reprise : vitalité remontée à 100 %");
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3.png"), fullPage:true});
 
+  // Croissance progressive : petites évolutions visibles à chaque séance, plafonnées par le niveau de force
+  const grow = await p.evaluate(() => { const c = {levels:{}}, out = [];
+    for(let i=0;i<4;i++){ growMuscles(c, {exercises:[{exId:"dc-barre", sets:[1,2,3].map(() => ({w:"60", r:"10", done:true}))}]}); out.push(c.levels.Pectoraux); }
+    const cap = muscleLevels().Pectoraux + 0.5; for(let i=0;i<40;i++) growMuscles(c, {exercises:[{exId:"dc-barre", sets:[{w:"60",r:"10",done:true}]}]});
+    return {out, last:c.levels.Pectoraux, cap, legs:c.levels.Jambes||0}; });
+  ok(grow.out[0] > 0 && grow.out[0] <= 0.5 && grow.out.every((x,i,a) => i===0 || x > a[i-1] || x === grow.cap), "chaque séance fait un peu grossir le muscle travaillé", grow.out);
+  ok(grow.last <= grow.cap + 1e-9 && grow.legs === 0, "plafond au niveau de force, les muscles non travaillés ne bougent pas", grow);
+
   // Migration : un Gymon de l'ancienne version (4 formes) garde la forme la plus proche
   const mig = await p.evaluate(() => { const keep = S.profile.creature; const out = [];
     for(const [old, fid] of [[0,1],[1,5],[2,15],[3,40]]){
