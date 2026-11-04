@@ -127,6 +127,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts.push(a); creatureFeed(a); const v1 = c.vit;
     const y = mk("st-y", now - 2*D); S.workouts.push(y); c.fed.push(y.id);   // séance de l'avant-veille déjà comptée
     S.workouts.push(b); creatureFeed(b); return [v1, c.vit]; });
+  const low = await p.evaluate(() => { const c = creatureState(), now = Date.now(), w = {id:"low-1", name:"x", start:now, end:now, exercises:[{exId:"dc-barre", sets:[{w:"60",r:"8",done:true}]}]};
+    S.workouts = S.workouts.filter(x => !/^st-/.test(x.id)); c.fed = c.fed.filter(id => !/^st-/.test(id)); c.vit = 20; c.last = now - 6e4; S.workouts.push(w); creatureFeed(w); return Math.round(c.vit); });
+  ok(low === 30, "sous 30 % : une séance augmente de 50 % (20 → 30 %)", low);
   ok(Math.round(streak[0]) === 60 && streak[1] === 100, "séance : +20 % de la vitalité (50 → 60 %) ; 3 jours de suite : retour à 100 %", streak);
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3.png"), fullPage:true});
 
