@@ -20,7 +20,7 @@ Hypothèse testée : une créature qui grandit avec les entraînements améliore
 | Taille | Liée à la maturité : progresse avec la fidélité à l'intérieur de chaque stade | `height` |
 | Musculature | 5 niveaux par muscle. Niveau visé = score de force existant (0–5), ou séries faites depuis la naissance (abdos, pas de poids de corps). **Seuls les muscles réellement travaillés dans la séance (au moins une série validée) progressent, d'un niveau au plus par séance.** Ne baisse jamais | `levelThresholds`, `setsThresholds` |
 | Régularité | Séances validées sur 14 jours, objectif 6 (3/semaine) | `freq` |
-| Vitalité | En points de % : -20 au 2ᵉ jour sans séance, puis -10 par jour. Chaque séance rend +20 ; une séance 3 jours de suite = retour à 100 %. Depuis 100 %, il meurt au bout de 10 jours sans séance | `vitality` |
+| Vitalité | Toujours en proportion de la vitalité actuelle : ×0,8 au 2ᵉ jour sans séance, puis ×0,9 par jour. Chaque séance : ×1,2 (max 100 %) ; une séance 3 jours de suite = retour à 100 %. Depuis 100 %, il meurt au bout de 22 jours sans séance | `vitality` |
 | Mort | Quand la vitalité passe sous 10 %. Alertes avant : « il s'affaiblit » (≤ 70 %), « malade » (≤ 50 %), « mourant, plus que N jours » (≤ 30 %), pastille rouge sur l'onglet et alerte sur l'accueil. Mort : **Ressusciter** (garde stade, muscles, fidélité ; poids × 0,7 ; les séances faites pendant sa mort sont mangées) ou **Nouvel œuf** (l'ancien reste en souvenir, l'historique des séances n'est pas touché) | `vitality.deathBelow`, `resurrectWeightKeep` |
 
 Le profil 1,90 m / 93 kg a servi à vérifier le rendu. Les seuils de musculature reposent sur le score de force existant (rapporté au poids de corps de l'utilisateur), pas sur des kilos fixes.
@@ -57,8 +57,8 @@ La première version recalculait tous les muscles à chaque séance à partir de
 - **Vue de dos** (bouton « ↻ Dos » à côté du nom du stade, à partir du poussin) : pose double biceps de dos. Dos → trapèzes, sus-épineux, grand V des dorsaux, lombaires ; Jambes → fessiers (dessinés dans le short moulant), ischios, mollets ; Triceps en fer à cheval ; deltoïdes arrière. Ailes et queue passent du bon côté, la tête montre la nuque (plumes ou épines).
 
 ## V1.7 : nouvelle vitalité
-- -20 % au 2ᵉ jour sans séance, puis -10 % par jour ; mort sous 10 % (10 jours sans séance depuis 100 %).
-- Chaque séance rend +20 % ; une séance 3 jours de suite = retour à 100 %.
+- Toujours en proportion de la vitalité actuelle : -20 % au 2ᵉ jour sans séance, puis -10 % par jour ; mort sous 10 % (22 jours sans séance depuis 100 %).
+- Chaque séance l'augmente de 20 % (ex. 50 % → 60 %) ; une séance 3 jours de suite = retour à 100 %.
 - Mise à jour : un Gymon existant repart avec au moins 60 % (personne ne meurt à cause de la mise à jour).
 
 ## Visuel
@@ -68,7 +68,7 @@ Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se 
 
 ## Tests
 - `node tests/regression.js` : non-régression (bibliothèque, associations exercice → muscle, 1RM, coach, force, récupération, routine, import Gravl, carnet et persistance), comparés aux valeurs enregistrées **avant** la créature (`tests/golden.json`).
-- `node tests/creature.js` : départ œuf, volume (1 330 kg pour 70×10 + 70×9), pas de double comptage, persistance, stades sans saut ni perte, musculature sans régression, règles de vitalité (80 % à 2 j, 10 % à 9 j, mort à 10 j), pause de 5 jours (50 %, rien perdu), reprise (+20 %), 3 jours de suite (100 %).
+- `node tests/creature.js` : départ œuf, volume (1 330 kg pour 70×10 + 70×9), pas de double comptage, persistance, stades sans saut ni perte, musculature sans régression, règles de vitalité en proportion (80 % à 2 j, 72 % à 3 j, mort à 22 j), pause de 5 jours (58 %, rien perdu), reprise (×1,2), 3 jours de suite (100 %).
 - Prérequis : Node et Playwright (Chromium). Non testé sur Safari iOS réel.
 
 ## Hors MVP / pistes

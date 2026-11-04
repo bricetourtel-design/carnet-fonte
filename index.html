@@ -493,7 +493,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-04 e";
+const APP_VERSION = "2026-11-04 f";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1147,9 +1147,9 @@ const CREATURE_CFG = {
   levelThresholds: {default:[1.5, 2.5, 3.25, 4]},
   // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
   setsThresholds: [20, 60, 120, 200],
-  // Vitalité (en points de %) : -20 au 2e jour sans séance, puis -10 par jour ; mort sous 10 %.
-  // Chaque séance rend +20 ; 3 jours de suite avec une séance = retour à 100 %.
-  vitality: {firstDay:2, firstDrop:20, dailyDrop:10, deathBelow:10, sessionGain:20, streakDays:3},
+  // Vitalité, toujours en proportion de la valeur actuelle : -20 % au 2e jour sans séance, puis -10 % par jour ;
+  // mort sous 10 %. Chaque séance : +20 % de la valeur actuelle ; 3 jours de suite avec une séance = retour à 100 %.
+  vitality: {firstDay:2, firstDrop:0.2, dailyDrop:0.1, deathBelow:10, sessionGain:0.2, streakDays:3},
   resurrectWeightKeep: 0.7,                 // ressusciter garde tout, mais le Gymon a maigri (70 % du poids)
   freq: {window:14, target:6}               // régularité : séances sur 14 jours, objectif 6 (3/semaine)
 };
@@ -1169,7 +1169,7 @@ function creatureState(){
     c.vit = 100; if(!c.dead) c.last = Math.max(c.last || c.born, Date.now() - 4*86400000);
   }
   // Mort quand la vitalité passe sous 10 % : rien n'est effacé, on peut le ressusciter ou repartir d'un œuf
-  if(!c.dead && creatureVitality(c) < CREATURE_CFG.vitality.deathBelow){ c.dead = {ts:Date.now(), since:c.last || c.born}; c.pending = []; saveLocal(); }
+  if(!c.dead && vitalityExact(c) < CREATURE_CFG.vitality.deathBelow){ c.dead = {ts:Date.now(), since:c.last || c.born}; c.pending = []; saveLocal(); }
   return c;
 }
 function creatureResurrect(){
@@ -1196,17 +1196,18 @@ function creatureHeight(c){
   return lo + (hi - lo) * Math.min(1, (c.fidelity - at[c.stage]) / (next - at[c.stage]));
 }
 const creatureIdleDays = c => (Date.now() - (c.last || c.born)) / 86400000;
-// Points de vitalité perdus après d jours pleins sans séance
-function vitalityDrop(d){ const v = CREATURE_CFG.vitality, n = Math.floor(d); return n < v.firstDay ? 0 : v.firstDrop + v.dailyDrop * (n - v.firstDay); }
-function creatureVitality(c, at){
+// Part de vitalité conservée après d jours pleins sans séance (ex. 2 j : ×0,8 ; 3 j : ×0,8×0,9)
+function vitalityKeep(d){ const v = CREATURE_CFG.vitality, n = Math.floor(d); return n < v.firstDay ? 1 : (1 - v.firstDrop) * Math.pow(1 - v.dailyDrop, n - v.firstDay); }
+function vitalityExact(c, at){
   if(c.dead) return 0;
   const days = ((at || Date.now()) - (c.last || c.born)) / 86400000;
-  return Math.max(0, Math.min(100, (c.vit ?? 100) - vitalityDrop(Math.max(0, days))));
+  return Math.min(100, (c.vit ?? 100) * vitalityKeep(Math.max(0, days)));
 }
+const creatureVitality = (c, at) => Math.round(vitalityExact(c, at));   // affichage, en % entier
 // Jours restants avant la mort si aucune séance n'est faite
 function creatureDaysLeft(c){
   const v = CREATURE_CFG.vitality, idle = creatureIdleDays(c);
-  let d = Math.floor(idle); while((c.vit ?? 100) - vitalityDrop(d) >= v.deathBelow && d < 400) d++;
+  let d = Math.floor(idle); while((c.vit ?? 100) * vitalityKeep(d) >= v.deathBelow && d < 400) d++;
   return Math.max(1, Math.ceil(d - idle));
 }
 // Une séance chaque jour sur les 3 derniers jours (celui de la séance compris) ?
@@ -1256,9 +1257,9 @@ function creatureFeed(w){
   if(c.dead){ if(!(c.pending||[]).includes(w.id)) (c.pending = c.pending || []).push(w.id); touchProfile(); return {dead:true, vol:wVolume(w)}; }
   const before = {stage:c.stage, weight:c.weight, levels:{...c.levels}};
   c.fed.push(w.id); if(c.fed.length > 1000) c.fed = c.fed.slice(-1000);
-  const t = w.end || w.start, vitBefore = creatureVitality(c, t);
+  const t = w.end || w.start, vitBefore = vitalityExact(c, t);
   c.fidelity++;
-  c.vit = creatureStreak(c, t) ? 100 : Math.min(100, vitBefore + CREATURE_CFG.vitality.sessionGain);
+  c.vit = creatureStreak(c, t) ? 100 : Math.min(100, vitBefore * (1 + CREATURE_CFG.vitality.sessionGain));
   c.last = Math.max(c.last || 0, t);
   const vol = wVolume(w), reg = creatureRegularity(c), freqFactor = 0.7 + 0.6 * reg.pct;   // 0,7 à 1,3 selon la régularité
   c.food += vol;
@@ -1602,7 +1603,7 @@ const TUTO = [
   {t:"Il mange ce que tu soulèves", d:"Le volume de ta séance devient sa nourriture : plus tu soulèves, plus il prend du poids.", c:{stage:0, fidelity:1}, badge:"+ 6,4 t avalées"},
   {t:"Il se muscle comme toi", d:"Seuls les muscles que tu travailles vraiment (séries validées ✓) se développent chez lui. Tes points faibles se verront aussi !", c:{stage:0, fidelity:1}, badge:"💪 Pectoraux +1"},
   {t:"Il évolue avec ta fidélité", d:"Plus tu viens régulièrement, plus il grandit. Quand évoluera-t-il ? Surprise…", mystery:true},
-  {t:"Prends soin de lui", d:"Après 2 jours sans séance, sa vitalité perd 20 %, puis 10 % par jour. Sous 10 %, il meurt (10 jours sans séance s'il est en pleine forme)… Chaque séance lui rend 20 %, et 3 jours de suite le remettent à 100 %. Mort, tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
+  {t:"Prends soin de lui", d:"Après 2 jours sans séance, sa vitalité perd 20 %, puis 10 % par jour (toujours sur sa vitalité du moment). Sous 10 %, il meurt : 22 jours sans séance s'il est en pleine forme… Chaque séance l'augmente de 20 %, et 3 jours de suite le remettent à 100 %. Mort, tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
 ];
 /* Guide de prise en main : chaque écran est illustré par une mini-maquette de l'interface */
 const mk = {

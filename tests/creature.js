@@ -109,25 +109,25 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
 
   // Règles de vitalité : -20 au 2e jour sans séance, puis -10 par jour, mort sous 10 %
   const rule = await p.evaluate(() => { const c = {vit:100, born:0, fidelity:1, stage:3}, at = d => { c.last = Date.now() - d*864e5 - 6e4; return creatureVitality(c); };
-    const r = [0,1,2,3,4,9,10].map(at); c.vit = 70; r.push(at(2)); c.last = Date.now() - 2*864e5; r.push(creatureDaysLeft(c)); return r; });
-  ok(rule.join() === "100,100,80,70,60,10,0,50,5", "vitalité : 100, 100, 80 (2 j), 70, 60, 10 (9 j), 0 (10 j) ; partie de 70 % → 50 % à 2 j, mort dans 5 j", rule);
+    const r = [0,1,2,3,4,21,22].map(d => Math.round(at(d)*10)/10); c.vit = 80; r.push(Math.round(at(2))); c.last = Date.now() - 2*864e5; r.push(creatureDaysLeft(c)); return r; });
+  ok(rule.join() === "100,100,80,72,65,11,10,64,18", "vitalité en proportion : 100, 100, 80 (2 j), 72 (×0,9), 65, 11 (21 j), 10 → sous 10 % à 22 j ; partie de 80 % → 64 % à 2 j, mort dans 18 j", rule);
   // Pause de 5 jours : vitalité en baisse, rien n'est perdu
   const pause = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify({s:c.stage, l:c.levels, w:c.weight, f:c.fidelity});
     c.vit = 100; c.last = Date.now() - 5*864e5 - 6e4; const v = creatureVitality(c);
     return {v, same: keep === JSON.stringify({s:c.stage, l:c.levels, w:c.weight, f:c.fidelity})}; });
-  ok(pause.v === 50 && pause.same, "pause de 5 jours : vitalité 50 %, stade, muscles et poids conservés", pause.v);
+  ok(pause.v === 58 && pause.same, "pause de 5 jours : vitalité 58 % (100×0,8×0,9×0,9×0,9), stade, muscles et poids conservés", pause.v);
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3tired.png")});
   await play("90","8","90","8");
-  ok(await p.evaluate(() => creatureVitality(creatureState())) === 70, "reprise : une séance rend +20 % (50 → 70 %)");
+  ok(await p.evaluate(() => creatureVitality(creatureState())) === 70, "reprise : une séance augmente de 20 % (58 → 70 %)");
   // 3 jours de suite avec une séance : retour à 100 %
   const streak = await p.evaluate(() => { const c = creatureState(), D = 864e5, now = Date.now();
     const mk = (id, t) => ({id, name:"x", start:t, end:t, exercises:[{exId:"dc-barre", sets:[{w:"60",r:"8",done:true}]}]});
-    c.vit = 30; c.last = now - 2*D - 6e4; c.born = Math.min(c.born, now - 5*D);
+    c.vit = 50; c.last = now - 2*D - 6e4; c.born = Math.min(c.born, now - 5*D);
     const a = mk("st-a", now - 1*D), b = mk("st-b", now);
     S.workouts.push(a); creatureFeed(a); const v1 = c.vit;
     const y = mk("st-y", now - 2*D); S.workouts.push(y); c.fed.push(y.id);   // séance de l'avant-veille déjà comptée
     S.workouts.push(b); creatureFeed(b); return [v1, c.vit]; });
-  ok(streak[0] === 50 && streak[1] === 100, "séance : +20 % ; 3 jours de suite : retour à 100 %", streak);
+  ok(Math.round(streak[0]) === 60 && streak[1] === 100, "séance : +20 % de la vitalité (50 → 60 %) ; 3 jours de suite : retour à 100 %", streak);
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3.png"), fullPage:true});
 
   // Croissance progressive : petites évolutions visibles à chaque séance, plafonnées par le niveau de force
@@ -147,12 +147,12 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(mig.map(x => x[0]).join() === "0,2,5,9" && mig.every(x => x[2] === 13), "migration : œuf → œuf, poussin → poussin, poulet → poule adulte, dino → dinosaure", mig);
 
   // Mort sous 10 % de vitalité (10 jours sans séance depuis 100 %), séance mise de côté, résurrection, nouvel œuf
-  const death = await p.evaluate(() => { const c = creatureState(); c.vit = 100; c.last = Date.now() - 10*864e5 - 6e4; S.profile.creature = c;
+  const death = await p.evaluate(() => { const c = creatureState(); c.vit = 100; c.last = Date.now() - 22*864e5 - 6e4; S.profile.creature = c;
     const d = creatureState(); const keep = {stage:d.stage, levels:JSON.stringify(d.levels), w:d.weight, fid:d.fidelity};
     const w = {id:"after-death", name:"x", start:Date.now(), end:Date.now(), exercises:[{exId:"dc-barre", sets:[{w:"80",r:"8",done:true}]}]};
     S.workouts.push(w); const r = creatureFeed(w);
     return {dead:!!d.dead, vit:creatureVitality(d), fedWhileDead:r && r.dead, pending:d.pending.length, fid:d.fidelity, keep}; });
-  ok(death.dead && death.vit === 0, "10 jours sans séance : vitalité sous 10 %, le Gymon meurt");
+  ok(death.dead && death.vit === 0, "22 jours sans séance : vitalité sous 10 %, le Gymon meurt");
   ok(death.fedWhileDead && death.pending === 1 && death.fid === death.keep.fid, "une séance faite pendant sa mort est mise de côté, pas comptée");
   await p.click('.tabs [data-tab="creature"]');
   ok(/Ressusciter/.test(await p.textContent("#view")) && /nouvel œuf/.test(await p.textContent("#view")), "page Gymon : boutons Ressusciter et Nouvel œuf");
@@ -162,7 +162,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const res2 = await p.evaluate(() => { const c = creatureState(); return {dead:!!c.dead, vit:creatureVitality(c), stage:c.stage, levels:JSON.stringify(c.levels), fid:c.fidelity, w:c.weight, n:c.resurrections}; });
   ok(!res2.dead && res2.vit === 100 && res2.stage === death.keep.stage && res2.levels === death.keep.levels, "ressuscité : vivant, vitalité 100 %, stade et muscles conservés");
   ok(res2.fid === death.keep.fid + 1, "la séance mise de côté est mangée à la résurrection", res2.fid);
-  await p.evaluate(() => { creatureState().last = Date.now() - 11*864e5; creatureState(); render(); });
+  await p.evaluate(() => { creatureState().last = Date.now() - 23*864e5; creatureState(); render(); });
   await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-restart"]'); await p.click('[data-act="confirm-ok"]'); await p.waitForTimeout(150);
   const fresh = await p.evaluate(() => { const c = creatureState(); return {stage:c.stage, fid:c.fidelity, dead:!!c.dead, graves:(c.graves||[]).length, workouts:S.workouts.length}; });
   ok(fresh.stage === 0 && fresh.fid === 0 && !fresh.dead && fresh.graves === 1, "nouvel œuf : départ à zéro, l'ancien Gymon reste en souvenir");
