@@ -405,6 +405,11 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .gy-chip small{font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.02em}
 .gy-chip em{font-style:normal;opacity:.22}
 .gy-dots{font-size:11px;letter-spacing:2px;line-height:1.6;color:var(--accent)}
+.gy-flip{display:inline-flex;align-items:center;height:22px;margin-left:6px;padding:0 9px;border-radius:11px;font-size:12px;font-weight:700;color:var(--accent);letter-spacing:0;
+  background:var(--glass);border:1px solid var(--glass-line);vertical-align:1px}
+.creature.flipin{animation:flipin .4s ease-out}
+@keyframes flipin{from{transform:scaleX(.05)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion: reduce){.creature.flipin{animation:none}}
 .gy-chip.tl{top:4px;left:0}.gy-chip.tr{top:4px;right:0;text-align:right}.gy-chip.bl{bottom:4px;left:0}.gy-chip.br{bottom:4px;right:0;text-align:right}
 .gy-form{margin:2px 0 0;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .gy-hint{margin:0;font-size:20px;font-weight:500;letter-spacing:-.01em;text-align:center;text-wrap:balance}
@@ -488,7 +493,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-04 b";
+const APP_VERSION = "2026-11-04 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1281,7 +1286,7 @@ function hexMix(hex, f){   // f > 0 éclaircit, f < 0 assombrit
   const n = parseInt(hex.slice(1), 16), c = [n>>16, (n>>8)&255, n&255].map(v => Math.round(f >= 0 ? v + (255-v)*f : v*(1+f)));
   return "#" + c.map(v => v.toString(16).padStart(2,"0")).join("");
 }
-function creatureSVG(c, small){
+function creatureSVG(c, small, back){
   const st = Math.min(c.stage, LOOKS.length-1), lk = LOOKS[st], vit = creatureVitality(c), sleepy = vit < 60, dead = !!c.dead;
   const amb = AMB[S.profile.gymonStyle] ? S.profile.gymonStyle : "aesthetic", A = AMB[amb];
   const uid = "g" + Math.random().toString(36).slice(2,8), lvl = m => Math.max(0, Math.min(1, (c.levels[m] || 0) / 4.5));
@@ -1312,17 +1317,20 @@ function creatureSVG(c, small){
     const SC = (cx, cy, sx, sy) => `translate(${cx} ${cy}) scale(${sx} ${sy}) translate(${-cx} ${-cy})`;
     const HL = (cx, cy, rx, ry, rot=0, o=.35) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#fff" opacity="${o}" transform="rotate(${rot} ${cx} ${cy})"/>`;
     const mirror = s => s + `<g transform="translate(240 0) scale(-1 1)">${s}</g>`;
-    let b = "";
-    // ailes (derrière)
+    let b = "", wingsS = "", tailS = "";
+    // ailes et queue : derrière le corps de face, devant lui de dos
     if(lk.wings){ const w = lk.wings;
-      b += mirror(`<path d="M96 100 Q ${70-40*w} ${70-60*w} ${40-30*w} ${30-60*w} Q ${44-26*w} ${70} ${30-30*w} ${120+10*w} Q ${48-10*w} ${104} ${54-6*w} ${136} Q ${64} ${112} ${76} ${140} Q ${84} ${118} 98 128 Z" fill="${P.wing}" stroke="${hexMix(P.wing,-.35)}" stroke-width="1.6" stroke-linejoin="round" opacity=".95"/>`); }
-    // queue (derrière)
+      wingsS += mirror(`<path d="M96 100 Q ${70-40*w} ${70-60*w} ${40-30*w} ${30-60*w} Q ${44-26*w} ${70} ${30-30*w} ${120+10*w} Q ${48-10*w} ${104} ${54-6*w} ${136} Q ${64} ${112} ${76} ${140} Q ${84} ${118} 98 128 Z" fill="${P.wing}" stroke="${hexMix(P.wing,-.35)}" stroke-width="1.6" stroke-linejoin="round" opacity=".95"/>`); }
     if(lk.tail){ const t = lk.tail, tx = 150 + 70*t, ty = 300 - 4*t;
-      b += `<path d="M136 192 Q ${170+20*t} 220 ${tx} ${ty} Q ${160+10*t} 262 132 214 Z" fill="${sp==="henmut" ? P.scale : fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"/>`;
-      if(P.spike) for(let i=1;i<4;i++) b += `<path d="M${138+22*t*i} ${200+28*t*i} l6 -10 l5 10 Z" fill="${P.spike}"/>`;
-      if(lk.spade) b += `<path d="M${tx} ${ty} l4 -16 l12 12 Z M${tx} ${ty} l16 -2 l-8 14 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.35)}" stroke-width="1.2"/>`; }
+      tailS += `<path d="M136 192 Q ${170+20*t} 220 ${tx} ${ty} Q ${160+10*t} 262 132 214 Z" fill="${sp==="henmut" ? P.scale : fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"/>`;
+      if(P.spike) for(let i=1;i<4;i++) tailS += `<path d="M${138+22*t*i} ${200+28*t*i} l6 -10 l5 10 Z" fill="${P.spike}"/>`;
+      if(lk.spade) tailS += `<path d="M${tx} ${ty} l4 -16 l12 12 Z M${tx} ${ty} l16 -2 l-8 14 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.35)}" stroke-width="1.2"/>`; }
+    const legk = .28 + .8*kJ, torsoX = .86 + .26*kD, shoulderX = 120 - 40*torsoX;
+    if(back && lk.wings) b += wingsS;   // de dos, les ailes partent des omoplates (racines dessinées sur le dos)
+    if(back) b += gymonBack({M, SC, HL, mirror, dark, mid, veinc, skin, fillM, A, uid, kD, kE, kB, kT, kJ, kF, avg, sp, P, legk, torsoX, shoulderX, wings:lk.wings}) + `<g transform="translate(240 0) scale(-1 1)">${tailS}</g>`;
+    else {
+    b += wingsS + tailS;
     // jambes : épaisseur = niveau des jambes (allumettes → poteaux)
-    const legk = .28 + .8*kJ;
     const leg = `<g transform="translate(-7 0) ${SC(106,0,legk,1)}">`
       + M("M94 204 C 82 214 80 238 88 258 L 100 258 C 98 238 100 220 106 206 Z")
       + M("M106 204 C 100 222 100 242 104 258 L 116 258 C 120 240 120 220 116 204 Z")
@@ -1333,7 +1341,6 @@ function creatureSVG(c, small){
     b += mirror(leg);
     b += `<path d="M90 178 L150 178 L156 214 L126 216 L120 198 L114 216 L84 214 Z" fill="url(#${uid}s)"/><path d="M90 182 H150" stroke="${hexMix(A.shorts,.3)}" stroke-width="3"/>`;
     // tronc : largeur et dorsaux suivent le dos, pecs/abdos leur niveau
-    const torsoX = .86 + .26*kD;
     const half = M("M120 92 L 120 182 L 100 186 C 92 176 86 160 86 146 C 84 128 84 112 88 102 Z")
       + M("M90 104 C 76 118 76 142 88 164 L 96 156 C 90 140 88 122 94 110 Z", SC(92,132,.35+.75*kD,1))
       + M("M92 146 C 90 160 94 174 104 182 L 108 168 C 100 162 96 154 92 146 Z")
@@ -1351,7 +1358,6 @@ function creatureSVG(c, small){
     if(sp==="dragon") for(let i=0;i<4;i++) b += `<path d="M104 ${138+i*11} Q 120 ${142+i*11} 136 ${138+i*11}" stroke="#f3d27a" stroke-width="1.6" fill="none" opacity=".75"/>`;
     if(sp==="henmut") [[96,130],[146,140],[100,160],[140,112],[60,100],[180,96]].forEach(([x,y]) => b += `<ellipse cx="${x}" cy="${y}" rx="5" ry="4" fill="${P.scale}" opacity=".85"/>`);
     // bras en double biceps : chaque muscle a son épaisseur
-    const shoulderX = 120 - 40*torsoX;
     const arm = `<g transform="translate(${shoulderX - 80} 0)">`
       + M("M64 114 C 50 126 32 126 22 116 L 28 106 C 38 114 50 114 62 108 Z", SC(44,112,1,.35+.8*kT))
       + M("M22 112 C 12 94 14 78 22 64 L 38 64 C 38 80 38 96 34 112 Z", SC(28,88,.4+.7*kF,1))
@@ -1367,14 +1373,65 @@ function creatureSVG(c, small){
     // brillance de transpiration (récompense des niveaux élevés)
     if(avg > .45) b += [[96,104,5,2],[144,104,5,2],[110,138,2,1.4],[130,138,2,1.4],[96,226,2.5,6],[144,226,2.5,6]].map(([x,y,rx,ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" opacity="${(avg-.45)*1.4}"/>`).join("");
     b += `<path d="M112 64 h16 v26 q-8 6 -16 0 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.4"/>`;
+    }
     // tête
-    b += `<g transform="${SC(120,46,lk.kid ? 1.15 : 1, lk.kid ? 1.15 : 1)}">${gymonHead(sp, lk, P, skin, uid, {dead, sleepy, mode:A.eyes})}</g>`;
+    b += `<g transform="${SC(120,46,lk.kid ? 1.15 : 1, lk.kid ? 1.15 : 1)}">${gymonHead(sp, lk, P, skin, uid, {dead, sleepy, mode:A.eyes, back})}</g>`;
     g = `<ellipse cx="120" cy="314" rx="${74*lk.size}" ry="7" fill="rgba(0,0,0,.25)"/><g transform="${SC(120,314,lk.size,lk.size)}">${b}</g>`;
     haloY = 314 - (314 - (lk.horns ? -6 : lk.kid ? -14 : 4)) * lk.size;
   }
   const sat = Math.round(40 + vit*0.6);
   if(dead) g += `<ellipse cx="120" cy="${haloY}" rx="28" ry="7" fill="none" stroke="#f5c542" stroke-width="4"/>`;
-  return `<svg class="creature ${small?"sm":""} ${dead?"dead":""}" viewBox="${VB}" role="img" aria-label="${dead ? "Gymon mort" : CREATURE_CFG.stages[st]}" style="filter:${dead ? "grayscale(1) opacity(.75)" : `saturate(${sat}%)`}"><defs>${defs}</defs><g class="cr-breathe">${g}</g></svg>`;
+  return `<svg class="creature ${small?"sm":""} ${dead?"dead":""}" viewBox="${VB}" role="img" aria-label="${dead ? "Gymon mort" : CREATURE_CFG.stages[st] + (back ? ", vu de dos" : "")}" style="filter:${dead ? "grayscale(1) opacity(.75)" : `saturate(${sat}%)`}"><defs>${defs}</defs><g class="cr-breathe">${g}</g></svg>`;
+}
+/* Vue de dos (pose double biceps de dos) : trapèzes, dorsaux, lombaires, fessiers, ischios, mollets, triceps.
+   Chaque muscle suit son niveau, comme de face : Dos → trapèzes, dorsaux, lombaires ; Jambes → fessiers, ischios, mollets. */
+function gymonBack(o){
+  const {M, SC, HL, mirror, dark, mid, veinc, fillM, A, uid, kD, kE, kB, kT, kJ, kF, avg, sp, P, legk, torsoX, shoulderX, wings} = o;
+  let b = "";
+  const leg = `<g transform="translate(-7 0) ${SC(106,0,legk,1)}">`
+    + M("M92 212 C 84 226 84 244 92 258 L 104 258 C 100 240 102 226 106 214 Z")
+    + M("M106 214 C 102 228 102 244 106 258 L 116 258 C 120 240 120 224 116 212 Z") + HL(96,234,3,11,5)
+    + M("M94 286 C 94 292 96 298 98 300 L 108 300 C 108 296 106 292 106 286 Z")
+    + `<g transform="${SC(100,276,.55+.5*kJ,1)}">` + M("M90 262 C 82 270 84 286 98 290 L 102 266 Z") + M("M102 264 C 116 266 120 282 106 292 L 100 270 Z") + HL(93,272,2.5,6,10) + `</g>`
+    + `<path d="M92 259 Q 104 263 116 259" stroke="${dark}" stroke-width="1.6" fill="none"/></g>`
+    + `<g transform="translate(-6 0)"><path d="M84 298 h32 a6 6 0 0 1 6 6 v3 h-44 v-3 a6 6 0 0 1 6 -6 Z" fill="${A.shoes}"/><rect x="78" y="305" width="44" height="5" rx="2.5" fill="${A.sole}"/></g>`;
+  b += mirror(leg);
+  // short moulant : les fessiers se dessinent dans le tissu
+  const sd = hexMix(A.shorts,-.45), gk = .7 + .45*kJ;
+  b += `<path d="M88 176 L152 176 L156 214 L126 216 L120 206 L114 216 L84 214 Z" fill="url(#${uid}s)"/>`;
+  b += mirror(`<g transform="${SC(120,200,gk,gk)}"><path d="M120 180 C 104 175 86 182 85 199 C 84 215 100 222 120 218 Z" fill="url(#${uid}s)" stroke="${sd}" stroke-width="1.6"/>`
+    + `<path d="M90 206 C 96 216 108 219 118 217" stroke="${sd}" stroke-width="2" fill="none" opacity=".7"/><ellipse cx="98" cy="190" rx="8" ry="4.5" fill="#fff" opacity=".16" transform="rotate(-20 98 190)"/></g>`);
+  b += `<path d="M120 182 V 210" stroke="${sd}" stroke-width="1.6"/><path d="M88 180 H152" stroke="${hexMix(A.shorts,.3)}" stroke-width="3"/>`;
+  // dos : grand V des dorsaux, trapèzes en losange, sus-épineux, lombaires
+  const half = M("M120 86 L 120 182 L 102 184 C 96 172 92 160 90 148 C 84 132 82 118 84 104 Z")
+    + M("M84 106 C 76 124 82 150 100 174 L 112 166 C 104 150 104 134 110 120 C 102 116 92 112 84 106 Z", SC(100,140,.35+.75*kD,1)) + HL(92,134,3,12,-20,.25)
+    + `<g opacity="${.4 + .6*kD}">` + M("M112 136 C 107 152 107 168 111 182 L 119 182 L 119 136 Z") + HL(114,158,1.6,8,0,.3) + `</g>`
+    + M("M88 98 C 98 94 110 102 112 114 C 106 122 92 120 86 110 Z", SC(98,108,.6+.5*kD,.6+.5*kD))
+    + M("M86 112 C 92 120 102 122 108 120 C 104 126 94 128 88 122 Z", SC(98,120,.6+.5*kD,.6+.5*kD))
+    + M("M120 64 C 116 76 104 84 82 90 C 94 96 106 108 112 124 L 120 138 Z", SC(120,100,.6+.5*kD,1)) + HL(110,92,7*kD+2,3,-25)
+    + (kD > .6 ? `<path d="M112 150 L 119 162 M110 160 L 119 172" stroke="${dark}" stroke-width="1.3" fill="none" opacity="${(kD-.6)*2.5}"/>` : "");
+  b += `<g transform="${SC(120,140,torsoX,1)}">${mirror(half)}<path d="M120 70 V 182" stroke="${dark}" stroke-width="1.8"/></g>`;
+  if(sp==="dino" || sp==="dinomut" || sp==="dragon") for(let i=0;i<5;i++) b += `<path d="M115 ${96+i*16} l5 -9 l5 9 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.3)}" stroke-width="1"/>`;
+  if(sp==="henmut") [[96,120],[146,150],[104,160],[60,106],[180,100]].forEach(([x,y]) => b += `<ellipse cx="${x}" cy="${y}" rx="5" ry="4" fill="${P.scale}" opacity=".85"/>`);
+  // bras de dos : triceps en fer à cheval dessous, pic du biceps dessus, deltoïde arrière
+  const arm = `<g transform="translate(${shoulderX - 80} 0)">`
+    + M("M62 100 C 54 88 40 86 30 94 L 30 104 C 42 104 54 104 62 100 Z", SC(46,100,1,.3+.7*kB))
+    + M("M22 112 C 12 94 14 78 22 64 L 38 64 C 38 80 38 96 34 112 Z", SC(28,88,.4+.7*kF,1))
+    + `<path d="M30 108 C 26 94 28 80 32 68" stroke="${mid}" stroke-width="1.6" fill="none" opacity="${kF}"/>`
+    + M("M66 108 C 58 128 34 130 22 116 L 28 104 C 40 112 54 112 64 102 Z", SC(44,110,1,.35+.85*kT)) + HL(46,114+6*kT,8*kT+2,3*kT+1,-8)
+    + `<path d="M58 112 C 50 122 38 122 30 114" stroke="${dark}" stroke-width="1.4" fill="none" opacity="${kT}" transform="${SC(44,110,1,.35+.85*kT)}"/>`
+    + `<ellipse cx="25" cy="112" rx="4" ry="3.4" fill="${fillM}" stroke="${dark}" stroke-width="1.2"/>`
+    + M("M80 88 C 62 84 50 98 54 118 C 66 118 76 110 86 104 C 88 98 86 92 80 88 Z", SC(70,102,.5+.6*kE,.5+.6*kE)) + HL(68,96,6*kE+1,3*kE+1,-30)
+    + `<path d="M64 94 Q 70 100 76 98 M62 102 Q 70 108 78 104" stroke="${mid}" stroke-width="1.1" fill="none" opacity="${kE}"/>`
+    + `<path d="M14 66 C 10 56 12 44 22 42 C 30 38 40 40 44 48 C 48 56 44 66 38 68 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"/>`
+    + `<path d="M16 50 q4 -4 8 0 M24 48 q4 -4 8 0 M32 48 q4 -4 8 0" stroke="${dark}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+    + (kT > .7 || kF > .75 ? `<path d="M60 116 C 52 122 44 122 36 118 M30 104 C 26 92 26 82 30 70" stroke="${veinc}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/>` : "")
+    + `</g>`;
+  b += mirror(arm);
+  if(avg > .45) b += [[100,96,5,2],[140,96,5,2],[96,138,2.5,6],[144,138,2.5,6],[96,232,2.5,6],[144,232,2.5,6]].map(([x,y,rx,ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" opacity="${(avg-.45)*1.4}"/>`).join("");
+  if(wings) b += mirror(`<path d="M104 100 C 98 94 92 92 86 94 C 90 100 96 106 104 110 Z" fill="${P.wing}" stroke="${hexMix(P.wing,-.35)}" stroke-width="1.4"/>`);
+  b += `<path d="M110 62 h20 v28 q-10 6 -20 0 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.4"/>`;
+  return b;
 }
 /* Têtes « mascotte » : plumes duveteuses, grands yeux brillants à iris orangé, crête rouge en lobes, bec ouvert souriant. */
 function gymonHead(sp, lk, P, skin, uid, o){
@@ -1444,6 +1501,12 @@ function gymonHead(sp, lk, P, skin, uid, o){
   if(bird){ const tuft = (x, yy, dx, dy, s) => `<path d="M${x} ${yy} q ${s*dx*.9} ${dy*.2} ${s*dx} ${dy} q ${-s*dx*.25} ${-dy*.15} ${-s*dx*.45} ${-dy*.05} q ${s*dx*.15} ${dy*.5} ${s*dx*.1} ${dy*.9} q ${-s*dx*.5} ${-dy*.3} ${-s*dx*.9} ${-dy*.8} Z" fill="url(#${uid}hf)" stroke="${fd}" stroke-width="1.3" stroke-linejoin="round"/>`;
     h += [-1,1].map(s => tuft(cx+s*28, y-6, 12, 10, s) + tuft(cx+s*30, y+8, 13, 12, s) + tuft(cx+s*24, y+24, 12, 12, s) + tuft(cx+s*12, y+32, 6, 10, s)).join(""); }
   h += `<path d="${headD}" fill="url(#${uid}hf)" stroke="${fd}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  if(o.back){   // vue de dos : nuque, sans visage
+    if(bird) h += [[-18,-8],[0,-12],[18,-8],[-24,6],[-8,2],[8,2],[24,6],[-16,16],[0,14],[16,16],[-8,26],[8,26]].map(([dx,dy]) => `<path d="M${cx+dx-5} ${y+dy} l5 7 l5 -7" stroke="${fd}" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>`).join("")
+      + `<path d="M${cx-26} ${y+18} Q${cx} ${y+44} ${cx+26} ${y+18} Q${cx} ${y+34} ${cx-26} ${y+18} Z" fill="${fd}" opacity=".35"/>`;
+    else h += [0,1,2,3].map(i => `<path d="M${cx-5} ${y-8+i*11} l5 -9 l5 9 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.3)}" stroke-width="1"/>`).join("");
+    return `<defs>${d}</defs>` + h;
+  }
   if(bird) h += `<path d="M${cx-26} ${y+18} q5 3 4 9 M${cx+26} ${y+18} q-5 3 -4 9 M${cx-19} ${y+26} q4 3 3 7 M${cx+19} ${y+26} q-4 3 -3 7 M${cx-30} ${y+2} q4 2 4 7 M${cx+30} ${y+2} q-4 2 -4 7" stroke="${fd}" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".6"/>`;
   else h += `<ellipse cx="${cx}" cy="${y+22}" rx="20" ry="10" fill="${hexMix(skin,.28)}"/><circle cx="${cx-6}" cy="${y+12}" r="1.6" fill="${hexMix(skin,-.45)}"/><circle cx="${cx+6}" cy="${y+12}" r="1.6" fill="${hexMix(skin,-.45)}"/>`;
   if(sp==="hen" || sp==="henmut") h += `<path d="M${cx} ${y-6} L${cx-7} ${y-24} L${cx+7} ${y-24} Z" fill="url(#${uid}cb)"/>`;
@@ -1475,6 +1538,7 @@ function gymonHint(c){
   if(near >= 0.85 && c.stage < CREATURE_CFG.stages.length - 1) return pick(["Il se passe quelque chose d'étrange…", "Il ne tient plus en place."]);
   return pick(["Il a l'air fier de vous.", "Il digère votre dernière séance.", "Il s'étire en vous voyant.", "Il compte vos répétitions."]);
 }
+let gyBack = false, gyFlipAnim = false;   // vue de dos du Gymon (non sauvegardée : on revient de face à l'ouverture)
 function viewCreature(){
   const c = creatureState(), vit = creatureVitality(c);
   const lvAvg = MUSCLES.reduce((t,m) => t + (c.levels[m]||0), 0) / MUSCLES.length, force = Math.min(5, Math.round(lvAvg) + 1);
@@ -1498,13 +1562,13 @@ function viewCreature(){
         <div class="gy-aura"></div>
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
         <i class="gy-spark" style="--x:72%;--y:72%;--d:2.1s"></i><i class="gy-spark" style="--x:24%;--y:66%;--d:.7s"></i>
-        ${creatureSVG(c)}
+        ${creatureSVG(c, false, gyBack && c.stage >= 2).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}`)}
         <span class="gy-chip tl"><small>Poids</small>${fmtWeight(c.weight)}</span>
         <span class="gy-chip tr"><small>Taille</small>${fmtN(creatureHeight(c), 0)} cm</span>
         <span class="gy-chip bl"><small>Vitalité</small>${vit} %</span>
         <span class="gy-chip br"><small>Force</small><span class="gy-dots">${"●".repeat(force)}<em>${"●".repeat(5-force)}</em></span></span>
       </div>
-      <p class="gy-form">${esc(CREATURE_CFG.stages[c.stage])} <button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button></p>
+      <p class="gy-form">${esc(CREATURE_CFG.stages[c.stage])} <button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button>` : ""}</p>
       <p class="gy-hint">${esc(gymonHint(c))}</p>
       <button class="btn primary gy-cta" data-act="goto" data-tab="seance">${esc(cta)}</button>
     </section>`;
@@ -2164,6 +2228,7 @@ const ACT = {
       <div class="seg" role="group" aria-label="Ambiance">${[["aesthetic","😏 Aesthetic"],["competition","😉 Compétition"]].map(([k,l]) => `<button data-act="gy-style" data-k="${k}" aria-pressed="${(S.profile.gymonStyle||"aesthetic")===k}">${l}</button>`).join("")}</div>
       <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) peut se développer, jusqu'à votre niveau de force. Le volume soulevé le nourrit, votre fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
       <button class="btn" data-act="close">Fermer</button>`); },
+  "gy-flip": (b, e) => { e.stopPropagation(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; },
   "gy-style": b => { S.profile.gymonStyle = b.dataset.k; touchProfile(); closeSheet(); render(); ACT["gy-more"](); },
   // Boîte à idées : le message est préparé puis envoyé par le partage de l'iPhone (aucun serveur)
   idea: () => {

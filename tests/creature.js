@@ -167,6 +167,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const style = await p.evaluate(() => ({s:S.profile.gymonStyle, svg:/#7b2cbf/.test(document.querySelector(".gy-stage .creature").outerHTML)}));
   ok(style.s === "competition" && style.svg, "ambiance Compétition choisie et appliquée (short violet)");
   await p.click('[data-act="gy-style"][data-k="aesthetic"]'); await p.click('[data-act="close"]');
+  // Vue de dos : bouton Dos / Face, fessiers et mollets suivent les jambes
+  await p.click('[data-act="gy-flip"]');
+  const backV = await p.evaluate(() => ({lbl:document.querySelector(".gy-stage .creature").getAttribute("aria-label"), btn:document.querySelector('[data-act="gy-flip"]').textContent, sheet:!!document.querySelector(".sheet.open, .sheet[open]")}));
+  ok(/vu de dos/.test(backV.lbl) && /Face/.test(backV.btn), "bouton Dos : le Gymon se retourne", backV);
+  const glutes = await p.evaluate(() => { const c = creatureState(); const g = lv => { c.levels.Jambes = lv; return creatureSVG(c, false, true).match(/scale\(([\d.]+) [\d.]+\) translate\(-120 -200\)/)[1]; }; return [g(0), g(4.5)]; });
+  ok(+glutes[1] > +glutes[0], "de dos, les fessiers grossissent avec les jambes", glutes);
+  await p.click('[data-act="gy-flip"]');
+  ok(!/vu de dos/.test(await p.evaluate(() => document.querySelector(".gy-stage .creature").getAttribute("aria-label"))), "bouton Face : retour de face");
 
   // Rendu des 4 stades avec muscles faibles puis forts
   if(SHOTS){ for(const st of [5,9,12]) for(const lv of [0,4]){

@@ -54,6 +54,8 @@ La première version recalculait tous les muscles à chaque séance à partir de
 - Récompenses visuelles : **veines** quand bras ou abdos sont très développés, **brillance de transpiration** quand la moyenne est élevée.
 - Deux ambiances au choix dans la fiche du Gymon : **Aesthetic** (par défaut, short noir) et **Compétition** (clin d'œil, short violet). Réglage `S.profile.gymonStyle`.
 
+- **Vue de dos** (bouton « ↻ Dos » à côté du nom du stade, à partir du poussin) : pose double biceps de dos. Dos → trapèzes, sus-épineux, grand V des dorsaux, lombaires ; Jambes → fessiers (dessinés dans le short moulant), ischios, mollets ; Triceps en fer à cheval ; deltoïdes arrière. Ailes et queue passent du bon côté, la tête montre la nuque (plumes ou épines).
+
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.
 - **Dos** : largeur du torse et dorsaux. **Pectoraux** : taille des pecs. **Épaules** : deltoïdes. **Biceps / triceps** : bras. **Jambes** : cuisses et mollets. **Abdos** : tablettes.
