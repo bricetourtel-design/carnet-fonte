@@ -493,7 +493,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-04 d";
+const APP_VERSION = "2026-11-04 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1147,14 +1147,15 @@ const CREATURE_CFG = {
   levelThresholds: {default:[1.5, 2.5, 3.25, 4]},
   // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
   setsThresholds: [20, 60, 120, 200],
-  // Vitalité : 100 % pendant 7 jours sans séance, puis baisse jusqu'à 0 % ; mort au-delà de 30 jours
-  vitality: {graceDays:7, deathDays:30},
+  // Vitalité (en points de %) : -20 au 2e jour sans séance, puis -10 par jour ; mort sous 10 %.
+  // Chaque séance rend +20 ; 3 jours de suite avec une séance = retour à 100 %.
+  vitality: {firstDay:2, firstDrop:20, dailyDrop:10, deathBelow:10, sessionGain:20, streakDays:3},
   resurrectWeightKeep: 0.7,                 // ressusciter garde tout, mais le Gymon a maigri (70 % du poids)
   freq: {window:14, target:6}               // régularité : séances sur 14 jours, objectif 6 (3/semaine)
 };
 const rollStages = () => CREATURE_CFG.stageRange.map(([a,b]) => a + Math.floor(Math.random()*(b-a+1)));
 function creatureState(){
-  if(!S.profile.creature) S.profile.creature = {v:4, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null};
+  if(!S.profile.creature) S.profile.creature = {v:4, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null, vit:100};
   const c = S.profile.creature;
   if((c.v||0) < 4){   // passage de 4 à 13 formes : l'ancien stade garde sa forme la plus proche
     if(c.at && c.at.length < CREATURE_CFG.stages.length){ c.stage = [0, 2, 5, 9][c.stage] ?? c.stage; c.at = null; }
@@ -1164,8 +1165,11 @@ function creatureState(){
     c.at = rollStages().map((x,i) => i===0 ? 0 : c.stage >= i ? Math.min(x, c.fidelity) : Math.max(x, c.fidelity + 1));
     for(let i=1;i<c.at.length;i++) if(c.at[i] <= c.at[i-1]) c.at[i] = c.at[i-1] + 1;
   }
-  // Mort après 30 jours sans séance : rien n'est effacé, on peut le ressusciter ou repartir d'un œuf
-  if(!c.dead && creatureIdleDays(c) > CREATURE_CFG.vitality.deathDays){ c.dead = {ts:Date.now(), since:c.last || c.born}; c.pending = []; saveLocal(); }
+  if(c.vit === undefined){   // passage à la nouvelle vitalité : personne ne meurt à cause de la mise à jour (au pire 60 %)
+    c.vit = 100; if(!c.dead) c.last = Math.max(c.last || c.born, Date.now() - 4*86400000);
+  }
+  // Mort quand la vitalité passe sous 10 % : rien n'est effacé, on peut le ressusciter ou repartir d'un œuf
+  if(!c.dead && creatureVitality(c) < CREATURE_CFG.vitality.deathBelow){ c.dead = {ts:Date.now(), since:c.last || c.born}; c.pending = []; saveLocal(); }
   return c;
 }
 function creatureResurrect(){
@@ -1173,7 +1177,7 @@ function creatureResurrect(){
   const pending = (c.pending || []).slice();
   c.dead = null; c.pending = []; c.resurrections = (c.resurrections||0) + 1;
   c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight * CREATURE_CFG.resurrectWeightKeep);
-  c.last = Date.now();
+  c.last = Date.now(); c.vit = 100;
   // Les séances faites pendant qu'il était mort le nourrissent maintenant
   S.workouts.filter(w => pending.includes(w.id)).sort((a,b) => a.start-b.start).forEach(w => creatureFeed(w));
   c.last = Math.max(c.last, Date.now()); touchProfile();
@@ -1192,10 +1196,24 @@ function creatureHeight(c){
   return lo + (hi - lo) * Math.min(1, (c.fidelity - at[c.stage]) / (next - at[c.stage]));
 }
 const creatureIdleDays = c => (Date.now() - (c.last || c.born)) / 86400000;
-function creatureVitality(c){
+// Points de vitalité perdus après d jours pleins sans séance
+function vitalityDrop(d){ const v = CREATURE_CFG.vitality, n = Math.floor(d); return n < v.firstDay ? 0 : v.firstDrop + v.dailyDrop * (n - v.firstDay); }
+function creatureVitality(c, at){
   if(c.dead) return 0;
-  const v = CREATURE_CFG.vitality, days = creatureIdleDays(c);
-  return days <= v.graceDays ? 100 : Math.max(0, Math.round(100 * (1 - (days - v.graceDays) / (v.deathDays - v.graceDays))));
+  const days = ((at || Date.now()) - (c.last || c.born)) / 86400000;
+  return Math.max(0, Math.min(100, (c.vit ?? 100) - vitalityDrop(Math.max(0, days))));
+}
+// Jours restants avant la mort si aucune séance n'est faite
+function creatureDaysLeft(c){
+  const v = CREATURE_CFG.vitality, idle = creatureIdleDays(c);
+  let d = Math.floor(idle); while((c.vit ?? 100) - vitalityDrop(d) >= v.deathBelow && d < 400) d++;
+  return Math.max(1, Math.ceil(d - idle));
+}
+// Une séance chaque jour sur les 3 derniers jours (celui de la séance compris) ?
+function creatureStreak(c, t){
+  const days = new Set(S.workouts.filter(w => c.fed.includes(w.id)).map(w => new Date(w.end || w.start).toDateString()));
+  for(let i=0;i<CREATURE_CFG.vitality.streakDays;i++){ const d = new Date(t); d.setDate(d.getDate() - i); if(!days.has(d.toDateString())) return false; }
+  return true;
 }
 function creatureRegularity(c){
   const f = CREATURE_CFG.freq, n = S.workouts.filter(w => c.fed.includes(w.id) && Date.now() - w.start < f.window*86400000).length;
@@ -1238,7 +1256,10 @@ function creatureFeed(w){
   if(c.dead){ if(!(c.pending||[]).includes(w.id)) (c.pending = c.pending || []).push(w.id); touchProfile(); return {dead:true, vol:wVolume(w)}; }
   const before = {stage:c.stage, weight:c.weight, levels:{...c.levels}};
   c.fed.push(w.id); if(c.fed.length > 1000) c.fed = c.fed.slice(-1000);
-  c.fidelity++; c.last = w.end || w.start;
+  const t = w.end || w.start, vitBefore = creatureVitality(c, t);
+  c.fidelity++;
+  c.vit = creatureStreak(c, t) ? 100 : Math.min(100, vitBefore + CREATURE_CFG.vitality.sessionGain);
+  c.last = Math.max(c.last || 0, t);
   const vol = wVolume(w), reg = creatureRegularity(c), freqFactor = 0.7 + 0.6 * reg.pct;   // 0,7 à 1,3 selon la régularité
   c.food += vol;
   c.stage = Math.max(c.stage, stageFor(c.fidelity, c));              // un stade acquis ne se perd jamais
@@ -1524,12 +1545,12 @@ function gymonHead(sp, lk, P, skin, uid, o){
 function gymonHint(c){
   const vit = creatureVitality(c), near = creatureNear(c), pick = l => l[c.fidelity % l.length];
   // Alertes de santé : elles passent avant tout le reste
-  const idle = creatureIdleDays(c), left = Math.max(1, Math.ceil(CREATURE_CFG.vitality.deathDays - idle));
+  const left = creatureDaysLeft(c);
   if(c.fidelity || c.stage){
-    if(idle > 21) return `Il est mourant ! Plus que ${left} jour${left>1?"s":""} pour le sauver avec une séance.`;
-    if(idle > 14) return "Il est malade… il a besoin d'une séance.";
-    if(idle > 7) return "Il s'affaiblit sans vous.";
-  }else if(idle > 21) return `L'œuf refroidit… plus que ${left} jour${left>1?"s":""} pour le réchauffer.`;
+    if(vit <= 30) return `Il est mourant ! Plus que ${left} jour${left>1?"s":""} pour le sauver avec une séance.`;
+    if(vit <= 50) return "Il est malade… il a besoin d'une séance.";
+    if(vit <= 70) return "Il s'affaiblit sans vous.";
+  }else if(vit <= 30) return `L'œuf refroidit… plus que ${left} jour${left>1?"s":""} pour le réchauffer.`;
   if(c.stage===0){
     if(!c.fidelity) return "Votre Gymon dort au chaud. Une première séance pour le réveiller ?";
     return near >= 0.85 ? pick(["La coquille craque par endroits…", "On entend toquer de l'intérieur."]) : pick(["Il a senti votre séance.", "Quelque chose remue à l'intérieur."]);
@@ -1550,7 +1571,7 @@ function viewCreature(){
     <section class="gy gy-dead">
       <div class="gy-stage">${creatureSVG(c)}</div>
       <p class="gy-form">Repose en paix</p>
-      <p class="gy-hint">${c.stage ? "Votre Gymon est mort" : "L'œuf a refroidi"} après ${CREATURE_CFG.vitality.deathDays} jours sans séance.</p>
+      <p class="gy-hint">${c.stage ? "Votre Gymon est mort" : "L'œuf a refroidi"} : sa vitalité est tombée sous ${CREATURE_CFG.vitality.deathBelow} %.</p>
       <p class="small muted" style="margin:0;text-align:center">${n ? `${n} séance${n>1?"s":""} faite${n>1?"s":""} depuis l'attend${n>1?"ent":""} pour le nourrir. ` : ""}Ressuscitez-le pour garder son stade et ses muscles (il aura un peu maigri), ou repartez d'un nouvel œuf.</p>
       <button class="btn primary gy-cta" data-act="gy-resurrect">✨ Ressusciter mon Gymon</button>
       <button class="btn gy-cta" data-act="gy-restart">Recommencer avec un nouvel œuf</button>
@@ -1581,7 +1602,7 @@ const TUTO = [
   {t:"Il mange ce que tu soulèves", d:"Le volume de ta séance devient sa nourriture : plus tu soulèves, plus il prend du poids.", c:{stage:0, fidelity:1}, badge:"+ 6,4 t avalées"},
   {t:"Il se muscle comme toi", d:"Seuls les muscles que tu travailles vraiment (séries validées ✓) se développent chez lui. Tes points faibles se verront aussi !", c:{stage:0, fidelity:1}, badge:"💪 Pectoraux +1"},
   {t:"Il évolue avec ta fidélité", d:"Plus tu viens régulièrement, plus il grandit. Quand évoluera-t-il ? Surprise…", mystery:true},
-  {t:"Prends soin de lui", d:"Sans séance, il s'affaiblit, puis tombe malade. Au bout de 30 jours sans entraînement, il meurt… Tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
+  {t:"Prends soin de lui", d:"Après 2 jours sans séance, sa vitalité perd 20 %, puis 10 % par jour. Sous 10 %, il meurt (10 jours sans séance s'il est en pleine forme)… Chaque séance lui rend 20 %, et 3 jours de suite le remettent à 100 %. Mort, tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
 ];
 /* Guide de prise en main : chaque écran est illustré par une mini-maquette de l'interface */
 const mk = {
@@ -1645,8 +1666,8 @@ function maybeAppGuide(){ if(tab==="seance" && !S.profile.active && S.profile.tu
 function gymonHealthAlert(){
   const c = creatureState(); if(!c.fidelity && !c.stage && !c.dead) return "";
   if(c.dead) return `<button class="alert danger gy-alert" data-act="goto" data-tab="creature">💀 Votre Gymon est mort. Touchez ici pour le ressusciter.</button>`;
-  const idle = creatureIdleDays(c); if(idle <= 14) return "";
-  return `<button class="alert ${idle > 21 ? "danger" : "warn"} gy-alert" data-act="goto" data-tab="creature">${idle > 21 ? "⚠️ Votre Gymon est mourant : une séance vite !" : "🤒 Votre Gymon est malade, il a besoin d'une séance."}</button>`;
+  const vit = creatureVitality(c); if(vit > 50) return "";
+  return `<button class="alert ${vit <= 30 ? "danger" : "warn"} gy-alert" data-act="goto" data-tab="creature">${vit <= 30 ? "⚠️ Votre Gymon est mourant : une séance vite !" : "🤒 Votre Gymon est malade, il a besoin d'une séance."}</button>`;
 }
 
 /* ---------- Boîte à idées : brouillon gardé sur le téléphone ---------- */
@@ -1805,7 +1826,7 @@ function render(){
   document.getElementById("title").textContent = TITLES[tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===tab ? "page" : "false"));
   const v = document.getElementById("view");
-  const gc = creatureState(), sick = gc.dead || ((gc.fidelity || gc.stage) && creatureIdleDays(gc) > 14);
+  const gc = creatureState(), sick = gc.dead || ((gc.fidelity || gc.stage) && creatureVitality(gc) <= 50);
   document.querySelector('.tabs [data-tab="creature"]').classList.toggle("sick", !!sick);
   v.innerHTML = installHint() + (tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : gymonHealthAlert() + viewHome())
     : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : viewExercises());
