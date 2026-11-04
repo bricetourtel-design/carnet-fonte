@@ -493,7 +493,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-04 c";
+const APP_VERSION = "2026-11-04 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1536,7 +1536,7 @@ function gymonHint(c){
   }
   if(vit < 60) return pick(["Il s'ennuie de vous.", "Il guette la porte de la salle."]);
   if(near >= 0.85 && c.stage < CREATURE_CFG.stages.length - 1) return pick(["Il se passe quelque chose d'étrange…", "Il ne tient plus en place."]);
-  return pick(["Il a l'air fier de vous.", "Il digère votre dernière séance.", "Il s'étire en vous voyant.", "Il compte vos répétitions."]);
+  return pick(["Il a l'air fier de vous.", "Il digère votre dernière séance.", "Il compte vos répétitions."]);
 }
 let gyBack = false, gyFlipAnim = false;   // vue de dos du Gymon (non sauvegardée : on revient de face à l'ouverture)
 function viewCreature(){
