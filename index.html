@@ -314,9 +314,9 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .cr-stage b{font-size:22px;flex:1}
 .creature{width:100%;max-width:210px;height:auto;display:block}
 .creature.sm{width:64px;flex:none}
-.cr-breathe{transform-origin:100px 230px;animation:breathe 3.2s ease-in-out infinite}
+.cr-breathe{transform-origin:120px 314px;animation:breathe 3.2s ease-in-out infinite}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.018,1.012)}}
-.cr-egg{transform-origin:100px 220px;animation:wobble 4s ease-in-out infinite}
+.cr-egg{transform-origin:120px 300px;animation:wobble 4s ease-in-out infinite}
 @keyframes wobble{0%,82%,100%{transform:rotate(0)}86%{transform:rotate(-4deg)}90%{transform:rotate(4deg)}94%{transform:rotate(-2deg)}}
 @media (prefers-reduced-motion: reduce){.cr-breathe,.cr-egg{animation:none}}
 .cr-msg{margin:0;text-align:center;font-weight:500}
@@ -417,7 +417,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .creature.dead{animation:ghost 4s ease-in-out infinite}
 .cr-blink{animation:blink 5.5s infinite}
 @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
-.cr-flame{transform-origin:110px 96px;animation:flick .6s ease-in-out infinite alternate}
+.cr-flame{transform-origin:130px 60px;animation:flick .6s ease-in-out infinite alternate}
 @keyframes flick{from{transform:scaleX(.9);opacity:.85}to{transform:scaleX(1.05);opacity:1}}
 @media (prefers-reduced-motion: reduce){.cr-blink,.cr-flame{animation:none}}
 @keyframes ghost{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
@@ -488,7 +488,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-04 a";
+const APP_VERSION = "2026-11-04 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1247,153 +1247,214 @@ function creatureFeed(w){
 }
 const fmtWeight = kg => kg < 1 ? `${Math.round(kg*1000)} g` : `${fmtN(kg, kg < 10 ? 1 : 0)} kg`;
 
-/* Dessin des 13 formes, style « chibi » : grosse tête, grands yeux, modelé doux.
-   La musculature est volontairement exagérée : niveau 0 = membres en fil de fer, niveau 4 = muscles énormes,
-   pour qu'un retard (ex. jambes jamais travaillées) saute aux yeux. Les niveaux sont continus (0 à 4,5). */
+/* Dessin des 13 formes (v1.6) : tête d'animal mascotte sur un corps humain musclé et détaillé (style « affiche de salle »).
+   Chaque muscle a son épaisseur pilotée par son niveau (0 à 4,5) : fil de fer → bodybuilder. Veines et brillance
+   apparaissent aux niveaux élevés. Deux ambiances : « aesthetic » (regard charmeur) et « competition » (clin d'œil). */
 const LOOKS = [
   {kind:"egg"},
   {kind:"egg", cracked:true},
-  {kind:"chick", size:.82, body:"#ffd54a"},
-  {kind:"chick", size:.95, body:"#ffe07a", teen:true},
-  {kind:"biped", sp:"hen", size:.78, young:true},
-  {kind:"biped", sp:"hen", size:.92},
-  {kind:"biped", sp:"henmut", size:.95, tail:.45},
-  {kind:"biped", sp:"dino", size:.8, tail:.6, spikes:.5, young:true},
-  {kind:"biped", sp:"dino", size:.9, tail:.8, spikes:.8},
-  {kind:"biped", sp:"dino", size:1, tail:1, spikes:1},
-  {kind:"biped", sp:"dinomut", size:1, tail:1, spikes:1, horns:.4, wings:.3},
-  {kind:"biped", sp:"dragon", size:.96, tail:1, spikes:1, horns:.75, wings:.65, spade:true},
-  {kind:"biped", sp:"dragon", size:1, tail:1.1, spikes:1.1, horns:1, wings:1, spade:true, flame:true}
+  {kind:"human", sp:"chick", size:.66, kid:true},
+  {kind:"human", sp:"chick", size:.76, kid:true, teen:true},
+  {kind:"human", sp:"hen", size:.84},
+  {kind:"human", sp:"hen", size:.93},
+  {kind:"human", sp:"henmut", size:.95, tail:.4},
+  {kind:"human", sp:"dino", size:.86, tail:.6},
+  {kind:"human", sp:"dino", size:.93, tail:.8},
+  {kind:"human", sp:"dino", size:1, tail:1},
+  {kind:"human", sp:"dinomut", size:1, tail:1, horns:.45, wings:.3},
+  {kind:"human", sp:"dragon", size:.98, tail:1, horns:.75, wings:.65, spade:true},
+  {kind:"human", sp:"dragon", size:1, tail:1.1, horns:1, wings:1, spade:true, flame:true}
 ];
-const PAL = {
-  hen:    {skin:"#fbf6ee", belly:"#ffffff", feet:"#f5a24b", beak:"#f7b23b"},
-  henmut: {skin:"#f1f3e2", belly:"#fbfdf3", feet:"#d4ab48", beak:"#e3b84a", scale:"#86c48a", spike:"#5aa56b"},
-  dino:   {skin:"#5cc27e", belly:"#d6f2c8", feet:"#3f9a5f", spike:"#3c9a5c"},
-  dinomut:{skin:"#45b0a2", belly:"#d3f1e8", feet:"#2f8279", spike:"#7a5ccf", horn:"#f4ead0", wing:"#7a5ccf"},
-  dragon: {skin:"#8a5ad6", belly:"#f8dfa0", feet:"#5e3aa6", spike:"#e0577f", horn:"#f6ecd2", wing:"#e0577f"}
+const AMB = {
+  aesthetic:  {shorts:"#161616", shoes:"#ffffff", sole:"#ff6b35", eyes:"lids"},
+  competition:{shorts:"#7b2cbf", shoes:"#f1e6ff", sole:"#7b2cbf", eyes:"wink"}
+};
+const SKIN = {
+  chick:  {aesthetic:"#f2c14e", competition:"#e8b13c", comb:"#ff7b8a", beak:"#ffb020"},
+  hen:    {aesthetic:"#c8602c", competition:"#b5672f", comb:"#e63946", beak:"#ffb020"},
+  henmut: {aesthetic:"#b07a3e", competition:"#a8743c", comb:"#e63946", beak:"#d9b54a", scale:"#6fbf7a", spike:"#3f9a5f"},
+  dino:   {aesthetic:"#4caf6e", competition:"#45a565", spike:"#2f7d4f", belly:"#cdeac0"},
+  dinomut:{aesthetic:"#3f9c8f", competition:"#3a9486", spike:"#6b4fc4", horn:"#f1e6c8", wing:"#6b4fc4"},
+  dragon: {aesthetic:"#7b4bc4", competition:"#7244b8", spike:"#e0577f", horn:"#f3e6c4", wing:"#c44569"}
 };
 function hexMix(hex, f){   // f > 0 éclaircit, f < 0 assombrit
   const n = parseInt(hex.slice(1), 16), c = [n>>16, (n>>8)&255, n&255].map(v => Math.round(f >= 0 ? v + (255-v)*f : v*(1+f)));
   return "#" + c.map(v => v.toString(16).padStart(2,"0")).join("");
 }
 function creatureSVG(c, small){
-  const lv = m => Math.max(0, Math.min(4.5, c.levels[m] || 0)), st = Math.min(c.stage, LOOKS.length-1), lk = LOOKS[st];
-  const vit = creatureVitality(c), sleepy = vit < 60, dead = !!c.dead, uid = "g" + Math.random().toString(36).slice(2,8);
+  const st = Math.min(c.stage, LOOKS.length-1), lk = LOOKS[st], vit = creatureVitality(c), sleepy = vit < 60, dead = !!c.dead;
+  const amb = AMB[S.profile.gymonStyle] ? S.profile.gymonStyle : "aesthetic", A = AMB[amb];
+  const uid = "g" + Math.random().toString(36).slice(2,8), lvl = m => Math.max(0, Math.min(1, (c.levels[m] || 0) / 4.5));
   const mw = CREATURE_CFG.minWeight, span = mw[Math.min(mw.length-1, st+1)] || 100, fat = Math.min(1, Math.max(0, (c.weight - mw[st]) / span));
-  let defs = "", g = "", haloY = 20;
-  const grad = (name, base) => { defs += `<radialGradient id="${uid}${name}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="${hexMix(base,.35)}"/><stop offset=".6" stop-color="${base}"/><stop offset="1" stop-color="${hexMix(base,-.12)}"/></radialGradient>`; return `url(#${uid}${name})`; };
-  const line = base => hexMix(base, -.38);
-  // Yeux : grands, brillants, avec clignement
-  const eyes = (x1, x2, y, r) => {
-    if(dead) return [x1,x2].map(x => `<path d="M${x-r*.6} ${y-r*.6} L${x+r*.6} ${y+r*.6} M${x+r*.6} ${y-r*.6} L${x-r*.6} ${y+r*.6}" stroke="#3b3346" stroke-width="2.6" stroke-linecap="round"/>`).join("");
-    if(sleepy) return [x1,x2].map(x => `<path d="M${x-r*.8} ${y} Q${x} ${y+r*.7} ${x+r*.8} ${y}" stroke="#3b3346" stroke-width="2.4" fill="none" stroke-linecap="round"/>`).join("");
-    const iris = lk.sp==="dinomut" || lk.sp==="dragon" ? "#b8741a" : "#2a2233";
-    return `<g class="cr-blink" style="transform-origin:100px ${y}px">${[x1,x2].map(x => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*1.08}" fill="#fff"/>
-      <ellipse cx="${x+r*.12}" cy="${y+r*.1}" rx="${r*.72}" ry="${r*.8}" fill="${iris}"/>${iris!=="#2a2233" ? `<ellipse cx="${x+r*.12}" cy="${y+r*.1}" rx="${r*.22}" ry="${r*.62}" fill="#1c1622"/>` : ""}
-      <circle cx="${x+r*.38}" cy="${y-r*.28}" r="${r*.3}" fill="#fff"/><circle cx="${x-r*.18}" cy="${y+r*.42}" r="${r*.14}" fill="#fff" opacity=".85"/>`).join("")}</g>`;
-  };
-  const blush = (x1, x2, y) => dead ? "" : `<ellipse cx="${x1}" cy="${y}" rx="7" ry="4" fill="#ff8fa3" opacity=".45"/><ellipse cx="${x2}" cy="${y}" rx="7" ry="4" fill="#ff8fa3" opacity=".45"/>`;
-  // Membre en « capsule » avec contour : épaisseur w (0 = fil de fer)
-  const limb = (pts, w, col) => { const d = "M" + pts.map(p => p.join(" ")).join(" L"); return `<path d="${d}" stroke="${line(col)}" stroke-width="${w+3}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`; };
-  const bulge = (x, y, rx, ry, col) => rx < .6 ? "" : `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${hexMix(col,.18)}" stroke="${line(col)}" stroke-width="1.6"/><ellipse cx="${x-rx*.25}" cy="${y-ry*.3}" rx="${rx*.35}" ry="${ry*.25}" fill="#fff" opacity=".35"/>`;
-  const P = lv("Pectoraux"), D = lv("Dos"), E = lv("Épaules"), B = lv("Biceps"), T = lv("Triceps"), J = lv("Jambes"), Ab = lv("Abdos");
-
+  let defs = "", g = "", haloY = 8;
+  const VB = "0 -24 240 344";
   if(lk.kind==="egg"){
-    const p = lk.cracked ? 1 : creatureNear(c); haloY = 72;
-    g = `<ellipse cx="100" cy="226" rx="44" ry="6" fill="rgba(40,30,60,.12)"/>
-      <g class="cr-egg"><ellipse cx="100" cy="150" rx="54" ry="70" fill="${grad("egg","#f7ead2")}" stroke="#e3d2b0" stroke-width="2"/>
-      <ellipse cx="80" cy="118" rx="7" ry="6" fill="#ecdbb8"/><ellipse cx="122" cy="176" rx="9" ry="8" fill="#ecdbb8"/><ellipse cx="117" cy="110" rx="4.5" ry="4" fill="#ecdbb8"/><ellipse cx="84" cy="186" rx="5" ry="4.5" fill="#ecdbb8"/>
-      <path d="M72 104 Q 66 120 68 134" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" opacity=".7"/>
-      ${lk.cracked ? `<path d="M48 136 L60 126 L70 138 L82 124 L94 138 L106 124 L118 138 L130 124 L142 136 L152 132 L150 152 L140 147 L128 157 L118 145 L106 157 L94 145 L82 157 L70 145 L58 155 L48 151 Z" fill="#3a2c22"/>${eyes(88, 112, 143, 6)}`
-        : p>0 ? `<path d="M66 132 l10 8 l8 -10 l10 9 l9 -8 l9 9 l9 -9 l9 8" stroke="#a88f63" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-dasharray="${Math.round(p*110)} 200"/>` : ""}</g>`;
-  }else if(lk.kind==="chick"){
-    const col = lk.body, r = 34 + fat*6 + D*1.5, cy = 150, hy = 98, teen = lk.teen;
-    const legW = .8 + J*3.2, legTop = cy + r*.8;
-    let b = `<ellipse cx="100" cy="226" rx="34" ry="5" fill="rgba(40,30,60,.12)"/>`;
-    // pattes (fil de fer si jambes jamais travaillées) et gros pieds
-    [-1,1].forEach(s => { const x = 100 + s*14; b += limb([[x, legTop],[x + s*2, 218]], legW, "#f29a3a") + `<ellipse cx="${x + s*4}" cy="221" rx="11" ry="5" fill="${grad("ft","#f5a24b")}"/>`; });
-    if(J >= 2) [-1,1].forEach(s => b += bulge(100 + s*14, legTop + 10, legW*.7, 9, "#f29a3a"));
-    // ailes-bras : épaisseur et biceps suivent les muscles
-    const A = (B+T)/2;
-    [-1,1].forEach(s => { const x0 = 100 + s*(r-6);
-      b += limb([[x0, cy-10],[x0 + s*(14+E*2), cy+8],[x0 + s*(10+E*2), cy+26]], 4 + A*3.5, hexMix(col,-.06));
-      b += bulge(x0 + s*(9+E), cy, B*2.6, B*2.2, col) + bulge(100 + s*(r-4), cy-12, E*2.2, E*2, col); });
-    b += `<ellipse cx="100" cy="${cy}" rx="${r}" ry="${r*.95}" fill="${grad("bd",col)}" stroke="${line(col)}" stroke-width="2"/>`;
-    // torse bombé (pecs) et abdos
-    b += P < .6 ? `<ellipse cx="100" cy="${cy}" rx="16" ry="13" fill="${hexMix(col,.4)}"/>`
-      : [-1,1].map(s => `<ellipse cx="${100 + s*(6+P*1.6)}" cy="${cy-6}" rx="${6+P*3}" ry="${5+P*2}" fill="${hexMix(col,.3)}" stroke="${line(col)}" stroke-width="1.4"/>`).join("");
-    if(Ab >= 1.5) for(let i=0;i<2;i++) [-1,1].forEach(s => b += `<rect x="${100 + (s<0?-9:1)}" y="${cy+12+i*8}" width="8" height="6" rx="3" fill="${hexMix(col,-.12)}" opacity=".6"/>`);
-    // tête
-    b += `<circle cx="100" cy="${hy}" r="${teen?30:32}" fill="${grad("hd",col)}" stroke="${line(col)}" stroke-width="2"/>`;
-    b += teen ? `<path d="M92 ${hy-28} q4 -12 8 -2 q4 -12 8 0" fill="#ef5b5b"/><path d="M84 ${hy-24} q-8 -6 -6 -14 M116 ${hy-24} q8 -6 6 -14" stroke="${col}" stroke-width="5" fill="none" stroke-linecap="round"/>`
-      : `<path d="M86 ${hy-29} l6 -10 l6 10 l6 -10 l6 10 l6 -9" fill="#fffaf0" stroke="#e3d2b0" stroke-width="1.5" stroke-linejoin="round"/>`;
-    b += eyes(88, 112, hy-2, 8) + blush(80, 120, hy+10) + `<path d="M95 ${hy+8} Q100 ${hy+16} 105 ${hy+8} Z" fill="#f59a2a"/>`;
-    g = `<g transform="translate(100 226) scale(${lk.size}) translate(-100 -226)">${b}</g>`; haloY = 226 - (226 - (hy-44))*lk.size;
+    const p = lk.cracked ? 1 : creatureNear(c);
+    defs += `<radialGradient id="${uid}e" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6ead2"/><stop offset="1" stop-color="#dcc9a4"/></radialGradient>`;
+    const ey = 228, eye = (x) => dead ? `<path d="M${x-4} ${ey-4} L${x+4} ${ey+4} M${x+4} ${ey-4} L${x-4} ${ey+4}" stroke="#2b2d42" stroke-width="2.4" stroke-linecap="round"/>`
+      : `<ellipse cx="${x}" cy="${ey}" rx="6" ry="6.6" fill="#fff"/><circle cx="${x+1.4}" cy="${ey+1}" r="3.8" fill="#2b2d42"/><circle cx="${x+2.6}" cy="${ey-1}" r="1.3" fill="#fff"/>`;
+    g = `<ellipse cx="120" cy="314" rx="52" ry="7" fill="rgba(0,0,0,.18)"/>
+      <g class="cr-egg"><ellipse cx="120" cy="232" rx="62" ry="80" fill="url(#${uid}e)" stroke="#d9c49c" stroke-width="2"/>
+      <ellipse cx="96" cy="196" rx="8" ry="7" fill="#e8d6ae"/><ellipse cx="146" cy="262" rx="10" ry="9" fill="#e8d6ae"/><ellipse cx="140" cy="186" rx="5" ry="4.5" fill="#e8d6ae"/><ellipse cx="102" cy="276" rx="6" ry="5" fill="#e8d6ae"/>
+      <path d="M86 176 Q 78 196 80 214" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round" opacity=".7"/>
+      ${lk.cracked ? `<path d="M60 220 L74 208 L86 222 L100 206 L114 222 L128 206 L142 222 L156 206 L170 220 L182 214 L180 238 L168 232 L156 244 L142 230 L128 244 L114 230 L100 244 L86 230 L72 242 L60 236 Z" fill="#3a2c22"/>${eye(108)}${eye(132)}`
+        : p>0 ? `<path d="M84 216 l12 9 l10 -12 l12 11 l11 -10 l11 11 l11 -11 l11 9" stroke="#a88f63" stroke-width="2.8" fill="none" stroke-linejoin="round" stroke-dasharray="${Math.round(p*130)} 240"/>` : ""}</g>`;
+    haloY = 140;
   }else{
-    const sp = lk.sp, C = PAL[sp], hen = sp==="hen", henmut = sp==="henmut", reptile = !hen && !henmut;
-    const col = C.skin, top = 116, hip = 168;
-    const sw = 18 + D*7 + E*1.5, ww = 15 + fat*12 + D*1.2;            // dos large = torse en V
-    const thighW = 2 + J*6.2, calfW = 1.6 + J*4.4;                       // jambes : fil de fer → poteaux
-    const uaW = 2.4 + (B+T)/2*4.6, faW = 2 + (B+T)/2*3.4;                // bras
+    const sp = lk.sp, P = SKIN[sp], skin = P[amb], dark = hexMix(skin,-.42), mid = hexMix(skin,-.22), veinc = hexMix(skin,-.34);
+    const kP = lvl("Pectoraux"), kD = lvl("Dos"), kE = lvl("Épaules"), kB = lvl("Biceps"), kT = lvl("Triceps"), kAb = lvl("Abdos"), kJ = lvl("Jambes"), kF = (kB+kT)/2;
+    const avg = (kP+kD+kE+kB+kT+kAb+kJ)/7;
+    defs += `<radialGradient id="${uid}m" cx=".32" cy=".25" r=".95"><stop offset="0" stop-color="${hexMix(skin,.45)}"/><stop offset=".45" stop-color="${skin}"/><stop offset="1" stop-color="${hexMix(skin,-.28)}"/></radialGradient>
+      <linearGradient id="${uid}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hexMix(A.shorts,.18)}"/><stop offset="1" stop-color="${hexMix(A.shorts,-.25)}"/></linearGradient>
+      <radialGradient id="${uid}h" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${hexMix(skin,.42)}"/><stop offset=".6" stop-color="${skin}"/><stop offset="1" stop-color="${hexMix(skin,-.22)}"/></radialGradient>`;
+    const fillM = `url(#${uid}m)`;
+    const M = (d, sc) => `<path d="${d}" fill="${fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"${sc ? ` transform="${sc}"` : ""}/>`;
+    const SC = (cx, cy, sx, sy) => `translate(${cx} ${cy}) scale(${sx} ${sy}) translate(${-cx} ${-cy})`;
+    const HL = (cx, cy, rx, ry, rot=0, o=.35) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#fff" opacity="${o}" transform="rotate(${rot} ${cx} ${cy})"/>`;
+    const mirror = s => s + `<g transform="translate(240 0) scale(-1 1)">${s}</g>`;
     let b = "";
-    // ailes
-    if(lk.wings){ const w = lk.wings, reach = Math.min(86*w, 100 - sw - 6);
-      [-1,1].forEach(s => { const x0 = 100 + s*(sw-6), y0 = top+4, tx = 100 + s*(sw + reach), ty = top - 66*w;
-        b += `<path d="M${x0} ${y0} Q${100 + s*(sw + reach*.5)} ${ty - 6} ${tx} ${ty} Q${tx + s*2} ${top+14} ${100 + s*(sw + reach*.82)} ${top+52*w} Q${100 + s*(sw + reach*.55)} ${top+30*w} ${100 + s*(sw + reach*.45)} ${top+48*w} Q${100 + s*(sw + reach*.25)} ${top+26*w} ${100 + s*(sw + 4)} ${top+40*w} Z" fill="${grad("wg"+s, C.wing)}" stroke="${line(C.wing)}" stroke-width="1.8" stroke-linejoin="round"/>`; }); }
-    // queue
-    if(lk.tail){ const t = lk.tail, tx = 100 - ww - 66*t, ty = 214 - 8*t;
-      b += `<path d="M${100-ww+6} ${hip-14} Q ${100-ww-26*t} ${hip+2} ${tx} ${ty} Q ${100-ww-12*t} ${hip+30} ${100-ww+12} ${hip+6} Z" fill="${grad("tl", henmut ? C.scale : col)}" stroke="${line(henmut ? C.scale : col)}" stroke-width="1.8" stroke-linejoin="round"/>`;
-      if(lk.spade) b += `<path d="M${tx+2} ${ty} l-10 -12 l18 4 Z M${tx+2} ${ty} l-14 6 l14 6 Z" fill="${C.spike}" stroke="${line(C.spike)}" stroke-width="1.4" stroke-linejoin="round"/>`;
-      if(reptile) for(let i=1;i<4;i++){ const x = 100-ww - 18*t*i, y = hip - 4 + 14*t*i; b += `<path d="M${x} ${y-2} l4 -9 l5 8 Z" fill="${C.spike}"/>`; } }
-    if(hen || henmut) b += `<path d="M${100-ww+2} ${hip-16} q-26 -10 -24 -34 q12 12 22 14 q-14 -18 -6 -30 q10 16 18 22 Z" fill="${grad("fe","#ffffff")}" stroke="#e2d8c8" stroke-width="1.6" stroke-linejoin="round"/>`;
-    // jambes
-    [-1,1].forEach(s => { const x = 100 + s*(ww*.5 + 3);
-      b += limb([[x, hip-4],[x + s*1.5, 196]], thighW, col) + limb([[x + s*1.5, 196],[x + s*1, 219]], calfW, hen||henmut ? C.feet : col);
-      b += bulge(x - s*thighW*.15, hip+10, thighW*.42, 9 + J*1.2, col);
-      b += hen || henmut ? `<path d="M${x} 220 l-11 5 M${x} 220 l0 7 M${x} 220 l11 5" stroke="${C.feet}" stroke-width="4" stroke-linecap="round"/>`
-        : `<ellipse cx="${x + s*3}" cy="222" rx="14" ry="6.5" fill="${grad("ft"+s, C.feet)}"/><path d="M${x+s*3-8} 226 l-1 3 M${x+s*3} 227 l0 3 M${x+s*3+8} 226 l1 3" stroke="#fff6e4" stroke-width="2" stroke-linecap="round"/>`; });
-    // torse en V, ventre, abdos
-    b += `<path d="M${100-sw} ${top+6} Q ${100-sw-2} ${top+26} ${100-ww} ${hip} Q 100 ${hip+8} ${100+ww} ${hip} Q ${100+sw+2} ${top+26} ${100+sw} ${top+6} Q 100 ${top-8} ${100-sw} ${top+6} Z" fill="${grad("ts",col)}" stroke="${line(col)}" stroke-width="2" stroke-linejoin="round"/>`;
-    b += `<ellipse cx="100" cy="${hip-14}" rx="${ww-3+fat*6}" ry="${15+fat*7}" fill="${C.belly}" opacity=".95"/>`;
-    if(sp==="dragon") for(let i=0;i<3;i++) b += `<path d="M${100-ww+6} ${hip-24+i*8} Q 100 ${hip-20+i*8} ${100+ww-6} ${hip-24+i*8}" stroke="#d9a64a" stroke-width="1.4" fill="none" opacity=".7"/>`;
-    if(henmut) [[86,132],[118,140],[90,152],[112,124]].forEach(([x,y]) => b += `<ellipse cx="${x}" cy="${y}" rx="4.5" ry="3.5" fill="${C.scale}" opacity=".85"/>`);
-    if(D >= 1) [-1,1].forEach(s => b += `<path d="M${100 + s*(sw-3)} ${top+12} Q ${100 + s*(sw-10)} ${top+30} ${100 + s*(ww+1)} ${hip-12}" stroke="${line(col)}" stroke-width="${1+D*.5}" fill="none" opacity=".45" stroke-linecap="round"/>`);
-    if(Ab >= 1) { const rows = Math.min(3, Math.floor(Ab)); for(let i=0;i<rows;i++) [-1,1].forEach(s => b += `<rect x="${100 + (s<0?-10:1.5)}" y="${hip-30+i*9}" width="8.5" height="7" rx="3" fill="${hexMix(C.belly,-.18)}"/>`); }
-    // pectoraux : plats → énormes
-    b += P < .6 ? `<path d="M${100-12} ${top+18} q6 4 11 0 M${100+1} ${top+18} q6 4 11 0" stroke="${line(col)}" stroke-width="1.4" fill="none"/>`
-      : [-1,1].map(s => `<path d="M100 ${top+8} Q ${100 + s*(8+P*4.4)} ${top+4} ${100 + s*(9+P*4.6)} ${top+16+P*1.6} Q ${100 + s*(5+P*2.4)} ${top+24+P*2.6} 100 ${top+20+P*2} Z" fill="${hexMix(col,.14)}" stroke="${line(col)}" stroke-width="1.6" stroke-linejoin="round"/>`).join("");
-    // bras : épaule (deltoïde), bras, avant-bras, biceps / triceps, main
-    [-1,1].forEach(s => { const sx = 100 + s*(sw-2), ex = sx + s*(7 + uaW*.3), hx = ex + s*2;
-      b += limb([[sx, top+10],[ex, top+38]], uaW, col) + limb([[ex, top+38],[hx, top+64]], faW, col);
-      b += bulge(sx + s*(uaW*.1) - s*2, top+22, B*2.4, B*2.4 + 2, col);                       // biceps (devant)
-      b += bulge(sx + s*(uaW*.55 + 2), top+26, T*1.5, T*2.6 + 1, col);                        // triceps (côté)
-      b += `<circle cx="${hx}" cy="${top+67}" r="${5 + (B+T)*.35}" fill="${grad("hn"+s, hen||henmut ? C.feet : col)}" stroke="${line(col)}" stroke-width="1.5"/>`;
-      b += `<circle cx="${sx}" cy="${top+9}" r="${3.5 + E*4}" fill="${grad("dl"+s,col)}" stroke="${line(col)}" stroke-width="1.6"/>`; });
-    // tête « chibi »
-    const hy = 72, hr = 38;
-    if(lk.horns){ const h = lk.horns;
-      // cornes : petites bosses au début de la mutation, grandes cornes recourbées chez le dragon
-      b += `<path d="M78 ${hy-24} Q ${76-10*h} ${hy-34-12*h} ${72-16*h} ${hy-36-24*h} Q ${84-4*h} ${hy-34-8*h} 92 ${hy-32} Z" fill="${grad("hl",C.horn)}" stroke="${line(C.horn)}" stroke-width="1.5" stroke-linejoin="round"/>
-        <path d="M122 ${hy-24} Q ${124+10*h} ${hy-34-12*h} ${128+16*h} ${hy-36-24*h} Q ${116+4*h} ${hy-34-8*h} 108 ${hy-32} Z" fill="${grad("hr",C.horn)}" stroke="${line(C.horn)}" stroke-width="1.5" stroke-linejoin="round"/>`; }
-    if(reptile && lk.spikes){ const k = lk.spikes; b += `<path d="M84 ${hy-34} q4 -${10+8*k} 9 -2 q5 -${12+10*k} 9 0 q5 -${10+8*k} 9 2 Z" fill="${grad("sp",C.spike)}" stroke="${line(C.spike)}" stroke-width="1.4" stroke-linejoin="round"/>`; }
-    if(henmut) b += `<path d="M78 ${hy-30} l-8 -12 l12 4 l-1 -13 l9 10" fill="${C.spike}" stroke="${line(C.spike)}" stroke-width="1.2" stroke-linejoin="round"/>`;
-    if(hen || henmut){ const k = lk.young ? .6 : 1;
-      b += `<path d="M${100-15*k} ${hy-32} q${4*k} -${15*k} ${10*k} -3 q${4*k} -${16*k} ${10*k} -2 q${6*k} -${14*k} ${10*k} 3 q-${12*k} 5 -${30*k} 2 Z" fill="#f05454" stroke="#c43c3c" stroke-width="1.2"/>`; }
-    b += `<circle cx="100" cy="${hy}" r="${hr}" fill="${grad("hd",col)}" stroke="${line(col)}" stroke-width="2"/>`;
-    if(reptile) b += `<ellipse cx="100" cy="${hy+16}" rx="22" ry="13" fill="${hexMix(col,.18)}"/><circle cx="94" cy="${hy+13}" r="1.6" fill="${line(col)}"/><circle cx="106" cy="${hy+13}" r="1.6" fill="${line(col)}"/>`;
-    if(henmut) b += `<ellipse cx="80" cy="${hy-8}" rx="5" ry="4" fill="${C.scale}" opacity=".85"/><ellipse cx="122" cy="${hy+4}" rx="4" ry="3" fill="${C.scale}" opacity=".85"/>`;
-    b += eyes(86, 114, hy-4, lk.young ? 11 : 10) + blush(78, 122, hy+12);
-    if(hen || henmut) b += `<path d="M93 ${hy+8} Q100 ${hy+20} 107 ${hy+8} Q100 ${hy+4} 93 ${hy+8} Z" fill="${C.beak}" stroke="${hexMix(C.beak,-.3)}" stroke-width="1.2"/>${hen ? `<path d="M100 ${hy+18} q5 8 0 13 q-5 -5 0 -13" fill="#f05454"/>` : `<path d="M96 ${hy+13} l2 3 l2 -3 l2 3" stroke="#fff" stroke-width="1.4" fill="none"/>`}`;
-    else b += dead || sleepy ? `<path d="M93 ${hy+22} Q100 ${hy+25} 107 ${hy+22}" stroke="${line(col)}" stroke-width="2" fill="none" stroke-linecap="round"/>`
-      : `<path d="M92 ${hy+21} Q100 ${hy+28} 108 ${hy+21}" stroke="${line(col)}" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M103 ${hy+23} l2 5 l2 -4" fill="#fff" stroke="${line(col)}" stroke-width=".8"/>`;
-    if(sp==="dinomut" && !dead) b += `<circle cx="100" cy="${hy+27}" r="2.5" fill="#ffb347" opacity=".9"/>`;
-    if(lk.flame && !dead && !sleepy) b += `<g class="cr-flame"><path d="M110 ${hy+22} Q 138 ${hy+6} 166 ${hy+12} Q 148 ${hy+18} 160 ${hy+26} Q 136 ${hy+30} 110 ${hy+26} Z" fill="#ff8a3d"/><path d="M112 ${hy+23} Q 134 ${hy+13} 152 ${hy+17} Q 136 ${hy+22} 112 ${hy+25} Z" fill="#ffd34d"/></g>`;
-    g = `<ellipse cx="100" cy="228" rx="${(46+fat*8)*lk.size}" ry="6.5" fill="rgba(40,30,60,.12)"/><g transform="translate(100 228) scale(${lk.size}) translate(-100 -228)">${b}</g>`;
-    haloY = 228 - (228 - (lk.horns ? hy-66 : hy-50)) * lk.size;
+    // ailes (derrière)
+    if(lk.wings){ const w = lk.wings;
+      b += mirror(`<path d="M96 100 Q ${70-40*w} ${70-60*w} ${40-30*w} ${30-60*w} Q ${44-26*w} ${70} ${30-30*w} ${120+10*w} Q ${48-10*w} ${104} ${54-6*w} ${136} Q ${64} ${112} ${76} ${140} Q ${84} ${118} 98 128 Z" fill="${P.wing}" stroke="${hexMix(P.wing,-.35)}" stroke-width="1.6" stroke-linejoin="round" opacity=".95"/>`); }
+    // queue (derrière)
+    if(lk.tail){ const t = lk.tail, tx = 150 + 70*t, ty = 300 - 4*t;
+      b += `<path d="M136 192 Q ${170+20*t} 220 ${tx} ${ty} Q ${160+10*t} 262 132 214 Z" fill="${sp==="henmut" ? P.scale : fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"/>`;
+      if(P.spike) for(let i=1;i<4;i++) b += `<path d="M${138+22*t*i} ${200+28*t*i} l6 -10 l5 10 Z" fill="${P.spike}"/>`;
+      if(lk.spade) b += `<path d="M${tx} ${ty} l4 -16 l12 12 Z M${tx} ${ty} l16 -2 l-8 14 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.35)}" stroke-width="1.2"/>`; }
+    // jambes : épaisseur = niveau des jambes (allumettes → poteaux)
+    const legk = .28 + .8*kJ;
+    const leg = `<g transform="translate(-7 0) ${SC(106,0,legk,1)}">`
+      + M("M94 204 C 82 214 80 238 88 258 L 100 258 C 98 238 100 220 106 206 Z")
+      + M("M106 204 C 100 222 100 242 104 258 L 116 258 C 120 240 120 220 116 204 Z")
+      + (kJ > .25 ? M("M116 234 C 108 242 108 256 118 262 C 124 254 124 242 116 234 Z") : "")
+      + HL(108,226,3,12,-5) + M("M92 264 C 84 274 86 288 96 298 L 110 298 C 118 288 118 274 112 264 Z")
+      + `<path d="M90 258 Q 104 266 118 260" stroke="${dark}" stroke-width="1.6" fill="none"/></g>`
+      + `<g transform="translate(-6 0)"><path d="M86 298 h28 a5 5 0 0 1 5 5 v4 h-38 v-4 a5 5 0 0 1 5 -5 Z" fill="${A.shoes}"/><rect x="80" y="305" width="40" height="5" rx="2.5" fill="${A.sole}"/></g>`;
+    b += mirror(leg);
+    b += `<path d="M90 178 L150 178 L156 214 L126 216 L120 198 L114 216 L84 214 Z" fill="url(#${uid}s)"/><path d="M90 182 H150" stroke="${hexMix(A.shorts,.3)}" stroke-width="3"/>`;
+    // tronc : largeur et dorsaux suivent le dos, pecs/abdos leur niveau
+    const torsoX = .86 + .26*kD;
+    const half = M("M120 92 L 120 182 L 100 186 C 92 176 86 160 86 146 C 84 128 84 112 88 102 Z")
+      + M("M90 104 C 76 118 76 142 88 164 L 96 156 C 90 140 88 122 94 110 Z", SC(92,132,.35+.75*kD,1))
+      + M("M92 146 C 90 160 94 174 104 182 L 108 168 C 100 162 96 154 92 146 Z")
+      + (kAb > .2 ? [[88,128],[89,137],[91,146]].map(([x,y]) => M(`M${x} ${y} q4 -3 8 0 l-2 6 q-3 2 -6 0 Z`)).join("") : "")
+      + `<g opacity="${.25 + .75*kAb}">` + [134,148,162].map(y => M(`M106 ${y} Q 112 ${y-3} 118 ${y-1} L 118 ${y+10} Q 112 ${y+12} 106 ${y+10} Z`, SC(112,y+5,.75+.3*kAb,.75+.3*kAb)) + HL(110,y+3,3,2)).join("") + `</g>`
+      + `<path d="M100 172 Q 108 186 118 192" stroke="${dark}" stroke-width="1.8" fill="none" opacity="${kAb}"/>`
+      + M("M120 94 C 104 88 86 92 80 104 C 78 118 88 128 104 130 C 112 130 118 126 120 122 Z", SC(120,108,.55+.55*kP,.6+.5*kP))
+      + `<path d="M86 104 Q 100 104 116 110 M84 112 Q 100 112 116 118" stroke="${mid}" stroke-width="1.2" fill="none" opacity="${kP*.9}" transform="${SC(120,108,.55+.55*kP,.6+.5*kP)}"/>`
+      + `<path d="M82 120 C 92 130 108 132 120 124" stroke="${dark}" stroke-width="${1+2.4*kP}" fill="none" stroke-linecap="round" transform="${SC(120,108,.55+.55*kP,.6+.5*kP)}"/>`
+      + HL(96,100,9*kP+2,4,-10)
+      + M("M110 72 Q 94 84 74 92 Q 92 94 112 90 Z", SC(110,84,1,.45+.75*kD));
+    b += `<g transform="${SC(120,140,torsoX,1)}">${mirror(half)}<path d="M120 94 V 182" stroke="${dark}" stroke-width="1.6"/></g>`;
+    if(fat > .15) b += `<ellipse cx="120" cy="${168-fat*4}" rx="${20+fat*12}" ry="${10+fat*8}" fill="${hexMix(skin,.1)}" opacity="${.5*fat+.2}"/>`;
+    if(sp==="dino" || sp==="dinomut") b += `<ellipse cx="120" cy="156" rx="18" ry="22" fill="${P.belly || hexMix(skin,.4)}" opacity=".35"/>`;
+    if(sp==="dragon") for(let i=0;i<4;i++) b += `<path d="M104 ${138+i*11} Q 120 ${142+i*11} 136 ${138+i*11}" stroke="#f3d27a" stroke-width="1.6" fill="none" opacity=".75"/>`;
+    if(sp==="henmut") [[96,130],[146,140],[100,160],[140,112],[60,100],[180,96]].forEach(([x,y]) => b += `<ellipse cx="${x}" cy="${y}" rx="5" ry="4" fill="${P.scale}" opacity=".85"/>`);
+    // bras en double biceps : chaque muscle a son épaisseur
+    const shoulderX = 120 - 40*torsoX;
+    const arm = `<g transform="translate(${shoulderX - 80} 0)">`
+      + M("M64 114 C 50 126 32 126 22 116 L 28 106 C 38 114 50 114 62 108 Z", SC(44,112,1,.35+.8*kT))
+      + M("M22 112 C 12 94 14 78 22 64 L 38 64 C 38 80 38 96 34 112 Z", SC(28,88,.4+.7*kF,1))
+      + `<path d="M28 108 C 24 94 26 80 30 68" stroke="${mid}" stroke-width="1.6" fill="none" opacity="${kF}"/>`
+      + M("M66 104 C 60 82 42 76 30 88 C 24 96 24 104 28 110 C 42 114 56 112 66 108 Z", SC(46,110,1,.18+.9*kB)) + HL(44,110-18*(.18+.9*kB),9*kB+2,4*kB+1,-15)
+      + M("M80 88 C 62 84 50 98 54 118 C 66 118 76 110 86 104 C 88 98 86 92 80 88 Z", SC(70,102,.5+.6*kE,.5+.6*kE)) + HL(66,96,6*kE+1,3*kE+1,-30)
+      + `<path d="M14 66 C 10 56 12 44 22 42 C 30 38 40 40 44 48 C 48 56 44 66 38 68 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"/>`
+      + `<path d="M20 44 q2 6 0 10 M28 41 q2 6 0 11 M36 43 q2 6 0 11 M16 58 C 22 54 30 54 38 58" stroke="${dark}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+      + (kB > .7 || kF > .75 ? `<path d="M58 96 C 50 92 44 94 36 98 M46 94 C 44 90 40 88 36 90 M30 104 C 26 92 26 82 30 70 M26 92 C 22 88 22 82 24 76" stroke="${veinc}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/>` : "")
+      + `</g>`;
+    b += mirror(arm);
+    if(kAb > .8) b += `<path d="M104 178 C 108 184 110 190 112 196 M136 178 C 132 184 130 190 128 196" stroke="${veinc}" stroke-width="1.4" fill="none" opacity=".8"/>`;
+    // brillance de transpiration (récompense des niveaux élevés)
+    if(avg > .45) b += [[96,104,5,2],[144,104,5,2],[110,138,2,1.4],[130,138,2,1.4],[96,226,2.5,6],[144,226,2.5,6]].map(([x,y,rx,ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" opacity="${(avg-.45)*1.4}"/>`).join("");
+    b += `<path d="M112 64 h16 v26 q-8 6 -16 0 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.4"/>`;
+    // tête
+    b += `<g transform="${SC(120,46,lk.kid ? 1.15 : 1, lk.kid ? 1.15 : 1)}">${gymonHead(sp, lk, P, skin, uid, {dead, sleepy, mode:A.eyes})}</g>`;
+    g = `<ellipse cx="120" cy="314" rx="${74*lk.size}" ry="7" fill="rgba(0,0,0,.25)"/><g transform="${SC(120,314,lk.size,lk.size)}">${b}</g>`;
+    haloY = 314 - (314 - (lk.horns ? -6 : lk.kid ? -14 : 4)) * lk.size;
   }
   const sat = Math.round(40 + vit*0.6);
-  if(dead) g += `<ellipse cx="100" cy="${haloY}" rx="24" ry="6" fill="none" stroke="#f5c542" stroke-width="4"/>`;
-  return `<svg class="creature ${small?"sm":""} ${dead?"dead":""}" viewBox="0 0 200 240" role="img" aria-label="${dead ? "Gymon mort" : CREATURE_CFG.stages[st]}" style="filter:${dead ? "grayscale(1) opacity(.75)" : `saturate(${sat}%)`}"><defs>${defs}</defs><g class="cr-breathe">${g}</g></svg>`;
+  if(dead) g += `<ellipse cx="120" cy="${haloY}" rx="28" ry="7" fill="none" stroke="#f5c542" stroke-width="4"/>`;
+  return `<svg class="creature ${small?"sm":""} ${dead?"dead":""}" viewBox="${VB}" role="img" aria-label="${dead ? "Gymon mort" : CREATURE_CFG.stages[st]}" style="filter:${dead ? "grayscale(1) opacity(.75)" : `saturate(${sat}%)`}"><defs>${defs}</defs><g class="cr-breathe">${g}</g></svg>`;
+}
+/* Têtes « mascotte » : plumes duveteuses, grands yeux brillants à iris orangé, crête rouge en lobes, bec ouvert souriant. */
+function gymonHead(sp, lk, P, skin, uid, o){
+  const y = 36, cx = 120, reptile = sp==="dino" || sp==="dinomut" || sp==="dragon", bird = !reptile;
+  const feather = sp==="chick" ? hexMix(skin,.25) : bird ? hexMix(skin,.42) : skin;
+  const fd = hexMix(feather, bird ? -.2 : -.32), fl = hexMix(feather, .45), ink = "#2a1a14";
+  let d = `<radialGradient id="${uid}hf" cx=".42" cy=".34" r=".75"><stop offset="0" stop-color="${fl}"/><stop offset=".55" stop-color="${feather}"/><stop offset="1" stop-color="${fd}"/></radialGradient>
+    <linearGradient id="${uid}cb" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#ff5a3c"/><stop offset=".6" stop-color="#e8261e"/><stop offset="1" stop-color="#b3121b"/></linearGradient>
+    <linearGradient id="${uid}bk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f"/><stop offset="1" stop-color="#f29a12"/></linearGradient>
+    <radialGradient id="${uid}ir" cx=".5" cy=".85" r=".9"><stop offset="0" stop-color="${reptile && sp!=="dino" ? "#ffd34d" : "#f08a24"}"/><stop offset=".55" stop-color="${reptile && sp!=="dino" ? "#c9781a" : "#7a3a12"}"/><stop offset="1" stop-color="#1a0d08"/></radialGradient>`;
+  // contour duveteux : touffes surtout sur les joues et le bas, lisse en haut
+  const fluff = (rx, ry, n, amp, smooth) => { let s = "";
+    for(let i=0;i<=n;i++){ const a = -Math.PI/2 + i*2*Math.PI/n, a2 = a + Math.PI/n, k = smooth ? 0 : Math.max(0, Math.sin(a2)*.6 + .55);
+      const p = (aa, r) => [(cx + Math.cos(aa)*rx*r).toFixed(1), (y + 4 + Math.sin(aa)*ry*r).toFixed(1)];
+      const [x1,y1] = p(a,1), [x2,y2] = p(a2, 1 + amp*k);
+      s += (i ? ` Q ${p(a - Math.PI/n*.5, 1.02).join(" ")} ${x1} ${y1}` : `M${x1} ${y1}`) + (i<n ? ` L ${x2} ${y2}` : ""); }
+    return s + " Z"; };
+  const eye = (x, side) => {
+    const ey = y + 2;
+    if(o.dead) return `<path d="M${x-7} ${ey-7} L${x+7} ${ey+7} M${x+7} ${ey-7} L${x-7} ${ey+7}" stroke="${ink}" stroke-width="3" stroke-linecap="round"/>`;
+    if(o.sleepy) return `<path d="M${x-9} ${ey+2} Q${x} ${ey+8} ${x+9} ${ey+2}" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    if(o.mode==="wink" && side===1 && !lk.kid) return `<path d="M${x-9} ${ey+3} Q${x} ${ey-7} ${x+9} ${ey+3}" stroke="${ink}" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M${x+8} ${ey} l4 -3 M${x+7} ${ey-3} l3 -5" stroke="${ink}" stroke-width="2" stroke-linecap="round"/>`;
+    const ix = x - side*1.5, slit = sp==="henmut" || sp==="dinomut" || sp==="dragon";
+    let e = `<ellipse cx="${x}" cy="${ey}" rx="11" ry="12.5" fill="#fff" stroke="${ink}" stroke-width="2.4"/>
+      <ellipse cx="${ix}" cy="${ey+1.5}" rx="8.2" ry="9.4" fill="url(#${uid}ir)"/>`
+      + (slit ? `<ellipse cx="${ix}" cy="${ey+1.5}" rx="1.8" ry="6.4" fill="#120806"/>` : `<circle cx="${ix}" cy="${ey+.5}" r="4.4" fill="#120806"/>`)
+      + `<circle cx="${ix+2.6}" cy="${ey-3}" r="2.9" fill="#fff"/><circle cx="${ix-2.6}" cy="${ey+5}" r="1.2" fill="#fff" opacity=".85"/>`;
+    if(false) e += `<path d="M${x-10.5} ${ey-3} Q${x} ${ey-16} ${x+10.5} ${ey-3} Q${x} ${ey-8} ${x-10.5} ${ey-3} Z" fill="url(#${uid}hf)" stroke="${ink}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    return e;
+  };
+  const brow = (x, s) => { const up = 0;
+    return `<path d="M${x-8} ${y-12-up} Q${x+s*1} ${y-18-up} ${x+9} ${y-13-up*.5} Q${x} ${y-15-up} ${x-8} ${y-12-up} Z" fill="${ink}" stroke="${ink}" stroke-width="2.2" stroke-linejoin="round" transform="${s===1 ? `translate(${2*x} 0) scale(-1 1)` : ""}"/>`; };
+  const mouth = (w, beak) => {
+    const my = y + 13;
+    let m = `<path d="M${cx-w} ${my+1} Q${cx} ${my+w*1.9} ${cx+w} ${my+1} Z" fill="#7d1515"/>
+      <ellipse cx="${cx}" cy="${my+w*.95}" rx="${w*.55}" ry="${w*.38}" fill="#f07a86"/>`;
+    if(beak) m += `<path d="M${cx-w-1} ${my+1} Q${cx} ${my+w*2.15} ${cx+w+1} ${my+1} Q${cx} ${my+w*1.75} ${cx-w-1} ${my+1} Z" fill="url(#${uid}bk)" stroke="#c46a0c" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M${cx-w-2} ${my+1} Q${cx} ${my-w*.9} ${cx+w+2} ${my+1} L${cx} ${my+w*.55} Z" fill="url(#${uid}bk)" stroke="#c46a0c" stroke-width="1.3" stroke-linejoin="round"/>
+      <path d="M${cx-w*.5} ${my-1} Q${cx} ${my-w*.55} ${cx+w*.4} ${my-1.5}" stroke="#fff3b0" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>
+      <circle cx="${cx-2.5}" cy="${my+1}" r=".9" fill="#a85a0a"/><circle cx="${cx+2.5}" cy="${my+1}" r=".9" fill="#a85a0a"/>`;
+    else m += `<path d="M${cx-w-1} ${my+1} Q${cx} ${my+w*1.95} ${cx+w+1} ${my+1}" stroke="${hexMix(feather,-.45)}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M${cx+w*.35} ${my+2} l2 4.5 l2 -4.5 M${cx-w*.35-4} ${my+2} l2 4.5 l2 -4.5" fill="#fff" stroke="${hexMix(feather,-.45)}" stroke-width=".8"/>`;
+    return m;
+  };
+  let h = "";
+  // derrière la tête : cornes, crête, épines
+  if(lk.horns){ const k = lk.horns, H = P.horn, hd = hexMix(H,-.35);
+    h += [-1,1].map(s => `<path d="M${cx+s*16} ${y-14} Q ${cx+s*(26+10*k)} ${y-34-14*k} ${cx+s*(34+16*k)} ${y-42-22*k} Q ${cx+s*(22+4*k)} ${y-30-8*k} ${cx+s*6} ${y-20} Z" fill="${H}" stroke="${hd}" stroke-width="1.6" stroke-linejoin="round"/>`).join(""); }
+  if(sp==="hen" || sp==="henmut"){
+    h += `<g stroke="#9c0f18" stroke-width="1.4" stroke-linejoin="round">
+      <ellipse cx="${cx-17}" cy="${y-30}" rx="9" ry="12" transform="rotate(-38 ${cx-17} ${y-30})" fill="#c4162a"/>
+      <ellipse cx="${cx-6}" cy="${y-42}" rx="12" ry="17" transform="rotate(-14 ${cx-6} ${y-42})" fill="url(#${uid}cb)"/>
+      <ellipse cx="${cx+12}" cy="${y-44}" rx="12" ry="19" transform="rotate(18 ${cx+12} ${y-44})" fill="url(#${uid}cb)"/>
+      <ellipse cx="${cx+25}" cy="${y-30}" rx="9" ry="13" transform="rotate(42 ${cx+25} ${y-30})" fill="url(#${uid}cb)"/></g>
+      <path d="M${cx-4} ${y-50} q4 -6 10 -4 M${cx+10} ${y-54} q5 -4 9 0" stroke="#ff8a6a" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8"/>`;
+    if(sp==="henmut") h += `<path d="M${cx-30} ${y-6} l-14 -8 l14 -4 l-8 -12 l14 6" fill="${P.spike}" stroke="${hexMix(P.spike,-.3)}" stroke-width="1.2" stroke-linejoin="round"/>`;
+  }
+  if(sp==="chick") h += lk.teen
+    ? `<g stroke="#b3121b" stroke-width="1.2"><ellipse cx="${cx-5}" cy="${y-30}" rx="5" ry="8" transform="rotate(-15 ${cx-5} ${y-30})" fill="url(#${uid}cb)"/><ellipse cx="${cx+5}" cy="${y-31}" rx="5" ry="9" transform="rotate(18 ${cx+5} ${y-31})" fill="url(#${uid}cb)"/></g>`
+    : `<path d="M${cx-6} ${y-26} q-6 -12 2 -16 M${cx} ${y-28} q2 -14 10 -12 M${cx+6} ${y-26} q8 -8 12 -2" stroke="${hexMix(feather,-.1)}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`;
+  if(reptile){ const S = P.spike; h += `<path d="M${cx-20} ${y-22} l6 -14 l6 10 l6 -16 l6 14 l6 -16 l6 14 l6 -12 l4 12 Z" fill="${S}" stroke="${hexMix(S,-.3)}" stroke-width="1.2" stroke-linejoin="round"/>`; }
+  // collerette de plumes au cou (cache la jonction tête/corps)
+  if(bird) h += `<path d="${fluff(22, 12, 12, .5, false).replace(/(-?\d+\.\d)/g, v => v)}" transform="translate(0 30)" fill="${hexMix(feather,-.06)}" stroke="${fd}" stroke-width="1.2" stroke-linejoin="round"/>`;
+  // tête : forme ronde élargie aux joues, touffes de plumes arrondies sur les côtés
+  const R = reptile ? 31 : 33;
+  const headD = `M${cx} ${y-R+2} C ${cx+R*.75} ${y-R+2} ${cx+R+2} ${y-8} ${cx+R+2} ${y+8} C ${cx+R+2} ${y+28} ${cx+14} ${y+R+4} ${cx} ${y+R+4} C ${cx-14} ${y+R+4} ${cx-R-2} ${y+28} ${cx-R-2} ${y+8} C ${cx-R-2} ${y-8} ${cx-R*.75} ${y-R+2} ${cx} ${y-R+2} Z`;
+  if(bird){ const tuft = (x, yy, dx, dy, s) => `<path d="M${x} ${yy} q ${s*dx*.9} ${dy*.2} ${s*dx} ${dy} q ${-s*dx*.25} ${-dy*.15} ${-s*dx*.45} ${-dy*.05} q ${s*dx*.15} ${dy*.5} ${s*dx*.1} ${dy*.9} q ${-s*dx*.5} ${-dy*.3} ${-s*dx*.9} ${-dy*.8} Z" fill="url(#${uid}hf)" stroke="${fd}" stroke-width="1.3" stroke-linejoin="round"/>`;
+    h += [-1,1].map(s => tuft(cx+s*28, y-6, 12, 10, s) + tuft(cx+s*30, y+8, 13, 12, s) + tuft(cx+s*24, y+24, 12, 12, s) + tuft(cx+s*12, y+32, 6, 10, s)).join(""); }
+  h += `<path d="${headD}" fill="url(#${uid}hf)" stroke="${fd}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  if(bird) h += `<path d="M${cx-26} ${y+18} q5 3 4 9 M${cx+26} ${y+18} q-5 3 -4 9 M${cx-19} ${y+26} q4 3 3 7 M${cx+19} ${y+26} q-4 3 -3 7 M${cx-30} ${y+2} q4 2 4 7 M${cx+30} ${y+2} q-4 2 -4 7" stroke="${fd}" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".6"/>`;
+  else h += `<ellipse cx="${cx}" cy="${y+22}" rx="20" ry="10" fill="${hexMix(skin,.28)}"/><circle cx="${cx-6}" cy="${y+12}" r="1.6" fill="${hexMix(skin,-.45)}"/><circle cx="${cx+6}" cy="${y+12}" r="1.6" fill="${hexMix(skin,-.45)}"/>`;
+  if(sp==="hen" || sp==="henmut") h += `<path d="M${cx} ${y-6} L${cx-7} ${y-24} L${cx+7} ${y-24} Z" fill="url(#${uid}cb)"/>`;
+  if(sp==="henmut") h += `<ellipse cx="${cx-20}" cy="${y-6}" rx="4" ry="3" fill="${P.scale}"/><ellipse cx="${cx+22}" cy="${y+14}" rx="3.5" ry="2.6" fill="${P.scale}"/>`;
+  h += `<ellipse cx="${cx-21}" cy="${y+12}" rx="6" ry="3.5" fill="#ff8c8c" opacity=".35"/><ellipse cx="${cx+21}" cy="${y+12}" rx="6" ry="3.5" fill="#ff8c8c" opacity=".35"/>`;
+  h += eye(cx-15,-1) + eye(cx+15,1) + (lk.kid ? "" : brow(cx-15,-1) + brow(cx+15,1));
+  if(sp==="hen" || sp==="henmut") h += `<g stroke="#9c0f18" stroke-width="1.2"><path d="M${cx-6} ${y+30} q-9 8 -4 17 q9 0 8 -13 Z" fill="url(#${uid}cb)"/><path d="M${cx+6} ${y+30} q9 8 4 17 q-9 0 -8 -13 Z" fill="url(#${uid}cb)"/></g>`;
+  h += o.dead ? `<path d="M${cx-7} ${y+18} Q${cx} ${y+14} ${cx+7} ${y+18}" stroke="${ink}" stroke-width="2.4" fill="none" stroke-linecap="round"/>` : mouth(bird ? (sp==="chick" ? 9 : 13) : 9, bird);
+  if(sp==="dinomut" && !o.dead) h += `<circle cx="${cx+12}" cy="${y+16}" r="2.4" fill="#ffb347" opacity=".9"/>`;
+  if(lk.flame && !o.dead && !o.sleepy) h += `<g class="cr-flame"><path d="M${cx+10} ${y+22} Q 170 ${y+4} 208 ${y+10} Q 186 ${y+20} 200 ${y+30} Q 168 ${y+34} ${cx+10} ${y+28} Z" fill="#ff8a3d"/><path d="M${cx+12} ${y+23} Q 166 ${y+12} 190 ${y+16} Q 168 ${y+24} ${cx+12} ${y+27} Z" fill="#ffd34d"/></g>`;
+  return `<defs>${d}</defs>` + h;
 }
 
 // Un indice, jamais un compte à rebours : le moment de l'évolution reste une surprise
@@ -2100,8 +2161,10 @@ const ACT = {
     openSheet(`<h3>Mon Gymon</h3>
       <p class="muted" style="margin:-4px 0 0">${c.lastMeal ? `Dernier repas : ${fmtVol(c.lastMeal.vol)} soulevés.` : "Il attend son premier repas."} Il a partagé ${c.fidelity} séance${c.fidelity>1?"s":""} avec vous.</p>
       <div class="vol">${MUSCLES.map(m => { const l = c.levels[m]||0; return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${Math.max(3, Math.min(100, l/4.5*100))}%;${mc(m)}"></i></div><b class="num">${fmtN(l, 1)}</b></div>`; }).join("")}</div>
+      <div class="seg" role="group" aria-label="Ambiance">${[["aesthetic","😏 Aesthetic"],["competition","😉 Compétition"]].map(([k,l]) => `<button data-act="gy-style" data-k="${k}" aria-pressed="${(S.profile.gymonStyle||"aesthetic")===k}">${l}</button>`).join("")}</div>
       <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) peut se développer, jusqu'à votre niveau de force. Le volume soulevé le nourrit, votre fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
       <button class="btn" data-act="close">Fermer</button>`); },
+  "gy-style": b => { S.profile.gymonStyle = b.dataset.k; touchProfile(); closeSheet(); render(); ACT["gy-more"](); },
   // Boîte à idées : le message est préparé puis envoyé par le partage de l'iPhone (aucun serveur)
   idea: () => {
     let draft = {kind:"idee", txt:""}; try{ draft = {...draft, ...JSON.parse(localStorage.getItem("gymon.idea")||"{}")}; }catch(e){}

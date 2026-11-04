@@ -156,6 +156,18 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(fresh.workouts > 0, "repartir d'un œuf ne touche pas à l'historique des séances");
   await p.evaluate(() => { const c = creatureState(); c.stage = 12; c.fidelity = 70; c.at = CREATURE_CFG.stageAt.slice(); c.last = Date.now(); render(); });
 
+  // Dessin : chaque muscle suit son niveau, et l'ambiance se choisit dans la fiche
+  const draw = await p.evaluate(() => { const c = creatureState(); c.stage = 5;
+    const w = lv => { MUSCLES.forEach(m => c.levels[m] = lv); return creatureSVG(c); };
+    const thin = w(0), big = w(4.5), legs = (MUSCLES.forEach(m => c.levels[m] = 4), c.levels.Jambes = 0, creatureSVG(c));
+    return {differs: thin !== big, veinsBig: /stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/.test(big), veinsThin: /opacity=".9"\/>/.test(thin) && /stroke-linecap="round" opacity=".9"/.test(thin), legsThin: /scale\(0\.28 1\)/.test(legs)}; });
+  ok(draw.differs && draw.veinsBig && !draw.veinsThin, "veines seulement aux niveaux élevés");
+  ok(draw.legsThin, "retard en jambes : jambes en allumettes");
+  await p.evaluate(() => render()); await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-more"]'); await p.click('[data-act="gy-style"][data-k="competition"]');
+  const style = await p.evaluate(() => ({s:S.profile.gymonStyle, svg:/#7b2cbf/.test(document.querySelector(".gy-stage .creature").outerHTML)}));
+  ok(style.s === "competition" && style.svg, "ambiance Compétition choisie et appliquée (short violet)");
+  await p.click('[data-act="gy-style"][data-k="aesthetic"]'); await p.click('[data-act="close"]');
+
   // Rendu des 4 stades avec muscles faibles puis forts
   if(SHOTS){ for(const st of [5,9,12]) for(const lv of [0,4]){
     await p.evaluate(([st,lv]) => { const c = creatureState(); c.stage = st; MUSCLES.forEach(m => c.levels[m] = m==="Jambes" ? Math.min(lv,1) : lv); c.last = Date.now(); render(); }, [st,lv]);

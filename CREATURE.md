@@ -47,6 +47,13 @@ La première version recalculait tous les muscles à chaque séance à partir de
 - Musculature exagérée : niveau 0 = membres en fil de fer, niveau 4 = muscles énormes. Un retard devient visible et comique (ex. jambes en allumettes sous un torse de bodybuilder).
 - Croissance progressive : chaque séance qui travaille un muscle le fait grossir de +0,15 à +0,5 (selon le nombre de séries), jusqu'au niveau de force + 0,5. Une petite évolution se voit presque à chaque séance.
 
+## V1.6 : corps humain détaillé, tête mascotte
+- Toutes les formes (sauf l'œuf) ont un **corps humain musclé et détaillé** en pose double biceps : formes, ombres, reflets. Seule la tête est animale, sans muscles.
+- Tête « mascotte » : grands yeux brillants à iris orangé, sourcils épais, bec ouvert souriant (poussin, poules), crête rouge en lobes et barbillons (poules), museau souriant à petits crocs (dinos, dragons). Les plumes de la tête sont une teinte claire de la couleur du corps, pour que tête et corps restent assortis.
+- Chaque muscle a sa propre épaisseur selon son niveau (0 = allumette, 4,5 = bodybuilder) : pecs, dorsaux et trapèzes, deltoïdes, biceps, triceps, avant-bras, abdos, cuisses et mollets.
+- Récompenses visuelles : **veines** quand bras ou abdos sont très développés, **brillance de transpiration** quand la moyenne est élevée.
+- Deux ambiances au choix dans la fiche du Gymon : **Aesthetic** (par défaut, short noir) et **Compétition** (clin d'œil, short violet). Réglage `S.profile.gymonStyle`.
+
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.
 - **Dos** : largeur du torse et dorsaux. **Pectoraux** : taille des pecs. **Épaules** : deltoïdes. **Biceps / triceps** : bras. **Jambes** : cuisses et mollets. **Abdos** : tablettes.
