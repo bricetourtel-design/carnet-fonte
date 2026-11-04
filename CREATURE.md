@@ -61,6 +61,10 @@ La première version recalculait tous les muscles à chaque séance à partir de
 - Chaque séance l'augmente de 20 % (ex. 50 % → 60 %), de 50 % s'il est sous 30 % (ex. 20 % → 30 %) ; une séance 3 jours de suite = retour à 100 %.
 - Mise à jour : un Gymon existant repart avec au moins 60 % (personne ne meurt à cause de la mise à jour).
 
+## V1.8 : phrase du jour
+- 50 phrases motivantes (`GYM_QUOTES`) : une par jour, différente chaque jour, toutes vues avant de revenir. Les alertes de santé, l'œuf et l'évolution proche gardent leurs messages.
+- Phrase écrite plus petite (15 px). Tuto simplifié sur la vitalité (le détail des règles reste dans ce document).
+
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.
 - **Dos** : largeur du torse et dorsaux. **Pectoraux** : taille des pecs. **Épaules** : deltoïdes. **Biceps / triceps** : bras. **Jambes** : cuisses et mollets. **Abdos** : tablettes.

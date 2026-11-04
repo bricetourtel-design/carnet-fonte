@@ -12,7 +12,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.click('.sheet [data-act="close"]').catch(()=>{});
   ok(await p.waitForSelector('#tuto .tu-card', {timeout:2000}).then(() => true, () => false), "le tuto s'affiche après l'écran de bienvenue");
   for(let i=0;i<4;i++) await p.click('#tuto [data-act="tuto-next"]');
-  ok(/10 %/.test(await p.textContent("#tuto")) && /ressusciter/.test(await p.textContent("#tuto")), "dernier écran : prévient de la mort et de la résurrection");
+  ok(/meurt/.test(await p.textContent("#tuto")) && /ressusciter/.test(await p.textContent("#tuto")), "dernier écran : prévient de la mort et de la résurrection");
   await p.click('#tuto [data-act="tuto-end"]');
   ok(await p.isHidden("#tuto") && await p.evaluate(() => S.profile.tutoDone === true), "« C'est parti » ferme le tuto pour de bon");
   await p.reload(); await p.waitForTimeout(300);
@@ -183,6 +183,12 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const style = await p.evaluate(() => ({s:S.profile.gymonStyle, svg:/#7b2cbf/.test(document.querySelector(".gy-stage .creature").outerHTML)}));
   ok(style.s === "competition" && style.svg, "ambiance Compétition choisie et appliquée (short violet)");
   await p.click('[data-act="gy-style"][data-k="aesthetic"]'); await p.click('[data-act="close"]');
+  // Phrase du jour : tirée parmi 50, différente d'un jour à l'autre
+  const q = await p.evaluate(() => { const c = creatureState(), real = Date; const at = d => { const t0 = new real(2026, 10, d, 12).getTime();
+      window.Date = class extends real { constructor(...a){ a.length ? super(...a) : super(t0); } static now(){ return t0; } }; const r = gymQuote(c); window.Date = real; return r; };
+    const days = Array.from({length:50}, (_, i) => at(i+1)); return {n:GYM_QUOTES.length, all:new Set(days).size, diff:days.every((x,i) => !i || x !== days[i-1]), hint:document.querySelector(".gy-hint") && getComputedStyle(document.querySelector(".gy-hint")).fontSize}; });
+  ok(q.n === 50 && q.all === 50 && q.diff, "phrase du jour : 50 phrases, une différente chaque jour, toutes vues en 50 jours", q);
+  ok(q.hint === "15px", "phrase écrite plus petite (15 px)", q.hint);
   // Vue de dos : bouton Dos / Face, fessiers et mollets suivent les jambes
   await p.click('[data-act="gy-flip"]');
   const backV = await p.evaluate(() => ({lbl:document.querySelector(".gy-stage .creature").getAttribute("aria-label"), btn:document.querySelector('[data-act="gy-flip"]').textContent, sheet:!!document.querySelector(".sheet.open, .sheet[open]")}));

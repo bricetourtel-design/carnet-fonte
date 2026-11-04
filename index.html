@@ -412,12 +412,13 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 @media (prefers-reduced-motion: reduce){.creature.flipin{animation:none}}
 .gy-chip.tl{top:4px;left:0}.gy-chip.tr{top:4px;right:0;text-align:right}.gy-chip.bl{bottom:4px;left:0}.gy-chip.br{bottom:4px;right:0;text-align:right}
 .gy-form{margin:2px 0 0;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-.gy-hint{margin:0;font-size:20px;font-weight:500;letter-spacing:-.01em;text-align:center;text-wrap:balance}
+.gy-hint{margin:0;font-size:15px;font-weight:500;letter-spacing:-.01em;text-align:center;text-wrap:balance}
 .gy-cta{margin-top:8px;min-width:72%}
 @media (prefers-reduced-motion: reduce){.gy-aura,.gy-spark{animation:none}.gy-spark{opacity:.6}}
 .gy-help{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:6px;border-radius:50%;font-size:12px;font-weight:700;color:var(--accent);
   background:var(--glass);border:1px solid var(--glass-line);vertical-align:1px;letter-spacing:0}
 .gy-alert{display:block;width:100%;text-align:left;font-weight:600;margin-bottom:12px}
+.gy-dead .gy-hint{font-size:20px}
 .gy-dead .gy-stage{height:calc(100dvh - 560px);min-height:220px;max-height:420px;cursor:default}
 .creature.dead{animation:ghost 4s ease-in-out infinite}
 .cr-blink{animation:blink 5.5s infinite}
@@ -493,7 +494,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-04 g";
+const APP_VERSION = "2026-11-04 h";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1542,6 +1543,63 @@ function gymonHead(sp, lk, P, skin, uid, o){
   return `<defs>${d}</defs>` + h;
 }
 
+const GYM_QUOTES = [
+  "Chaque série compte, même la plus dure.",
+  "Le plus dur, c'est de passer la porte. Le reste suit.",
+  "Aujourd'hui, une rep de plus qu'hier.",
+  "La régularité bat le talent.",
+  "Votre futur vous dit merci.",
+  "Petit progrès, grand résultat.",
+  "On ne lâche rien, surtout pas la barre.",
+  "Les muscles se construisent au repos, le mental à l'entraînement.",
+  "Pas besoin d'être parfait, juste présent.",
+  "Une séance de faite, c'est une séance de gagnée.",
+  "La motivation vous lance, l'habitude vous garde.",
+  "Votre seule concurrence : vous d'hier.",
+  "Les excuses ne soulèvent rien.",
+  "Respirez, contractez, poussez.",
+  "Le sérieux d'aujourd'hui, c'est la fierté de demain.",
+  "Un jour ou jour un : à vous de choisir.",
+  "Lourd, c'est relatif. Fort, c'est mérité.",
+  "Les résultats aiment les gens patients.",
+  "Faites-le pour la sensation après.",
+  "La sueur, c'est votre progrès qui s'en va… dans le bon sens.",
+  "On n'a jamais regretté une séance.",
+  "Aujourd'hui, on construit.",
+  "Doucement, mais sûrement.",
+  "Le corps suit là où le mental décide.",
+  "Chaque kilo soulevé raconte votre histoire.",
+  "Discipline aujourd'hui, liberté demain.",
+  "Visez la technique, la charge suivra.",
+  "Vous êtes plus fort que la semaine dernière.",
+  "Un pas, une rep, une séance à la fois.",
+  "Les champions s'entraînent aussi les jours sans envie.",
+  "Faites-vous confiance : vous l'avez déjà fait.",
+  "Le meilleur moment pour s'entraîner, c'est aujourd'hui.",
+  "Rien ne change si rien ne change.",
+  "La fatigue passe, la fierté reste.",
+  "Concentrez-vous sur ce que vous contrôlez : votre séance.",
+  "Il faut forger le fer pendant qu'il est chaud.",
+  "Une rep propre vaut mieux que trois bâclées.",
+  "Vous ne serez jamais aussi jeune qu'aujourd'hui : profitez-en.",
+  "Avancer lentement, c'est quand même avancer.",
+  "La constance fait les miracles.",
+  "Ce qui vous challenge vous change.",
+  "Dans un mois, vous serez content d'avoir commencé aujourd'hui.",
+  "Plus fort, un jour à la fois.",
+  "Le progrès ne fait pas de bruit, mais il se voit.",
+  "Gardez le rythme, le reste viendra.",
+  "Ne comptez pas les jours, faites que les jours comptent.",
+  "Votre Gymon croit en vous.",
+  "Soyez la raison pour laquelle votre Gymon sourit.",
+  "Bougez aujourd'hui, remerciez-vous demain.",
+  "Allez, une petite séance et on en parle plus."
+];
+// Une phrase par jour, différente chaque jour : les 50 défilent toutes avant de revenir (17 et 50 sont premiers entre eux)
+function gymQuote(c){
+  const d = new Date(), day = Math.floor((d - d.getTimezoneOffset()*60000) / 86400000), seed = Math.floor((c.born || 0) / 86400000);
+  return GYM_QUOTES[((day * 17 + seed) % 50 + 50) % 50];
+}
 // Un indice, jamais un compte à rebours : le moment de l'évolution reste une surprise
 function gymonHint(c){
   const vit = creatureVitality(c), near = creatureNear(c), pick = l => l[c.fidelity % l.length];
@@ -1558,7 +1616,7 @@ function gymonHint(c){
   }
   if(vit < 60) return pick(["Il s'ennuie de vous.", "Il guette la porte de la salle."]);
   if(near >= 0.85 && c.stage < CREATURE_CFG.stages.length - 1) return pick(["Il se passe quelque chose d'étrange…", "Il ne tient plus en place."]);
-  return pick(["Il a l'air fier de vous.", "Il digère votre dernière séance.", "Il compte vos répétitions."]);
+  return gymQuote(c);
 }
 let gyBack = false, gyFlipAnim = false;   // vue de dos du Gymon (non sauvegardée : on revient de face à l'ouverture)
 function viewCreature(){
@@ -1603,7 +1661,7 @@ const TUTO = [
   {t:"Il mange ce que tu soulèves", d:"Le volume de ta séance devient sa nourriture : plus tu soulèves, plus il prend du poids.", c:{stage:0, fidelity:1}, badge:"+ 6,4 t avalées"},
   {t:"Il se muscle comme toi", d:"Seuls les muscles que tu travailles vraiment (séries validées ✓) se développent chez lui. Tes points faibles se verront aussi !", c:{stage:0, fidelity:1}, badge:"💪 Pectoraux +1"},
   {t:"Il évolue avec ta fidélité", d:"Plus tu viens régulièrement, plus il grandit. Quand évoluera-t-il ? Surprise…", mystery:true},
-  {t:"Prends soin de lui", d:"Après 2 jours sans séance, sa vitalité perd 20 %, puis 10 % par jour (toujours sur sa vitalité du moment). Sous 10 %, il meurt : 22 jours sans séance s'il est en pleine forme… Chaque séance l'augmente de 20 % (de 50 % s'il est sous 30 %), et 3 jours de suite le remettent à 100 %. Mort, tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
+  {t:"Prends soin de lui", d:"Sans séance, il perd de la vitalité. S'il tombe trop bas, il meurt… Chaque séance le requinque, et 3 jours d'affilée le remettent en pleine forme. Mort, tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
 ];
 /* Guide de prise en main : chaque écran est illustré par une mini-maquette de l'interface */
 const mk = {
