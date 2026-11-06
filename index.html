@@ -494,7 +494,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-04 h";
+const APP_VERSION = "2026-11-06 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -626,15 +626,18 @@ const FEEL = [
   {v:4, label:"Dur",         hint:"0 à 1 rep en réserve",      rir:0.5, col:"--warm"},
   {v:5, label:"Trop dur",    hint:"échec ou reps manquées",    rir:0,   col:"--danger"}
 ];
-const RANGES = [[6,10],[8,12],[10,15],[12,20]];
-const REST_BY_RANGE = {6:180, 8:150, 10:105, 12:90};
+// Fourchettes v2 (audit nov. 2026) : plus lourdes et plus étroites, comme en bodybuilding.
+// Lourd sur les gros polyarticulaires à la barre, 6–10 sur les autres, 8–12 en isolation, 10–15 pour les petits muscles.
+const RANGES = [[5,8],[6,10],[8,12],[10,15],[12,20]];
+const REST_BY_RANGE = {5:180, 6:150, 8:120, 10:90, 12:90};
 function repRange(e){
   const o = S.profile.ranges && S.profile.ranges[e.id]; if(o) return o;
   const n = e.name.toLowerCase();
-  if(/élévation|elevation|face|oiseau|mollet|crunch|relev|roue|abduct|adduct|poignet|y sur|haussement|trapèze/.test(n)) return [12,20];
-  if(/curl|extension|écart|ecart|pull-over|pullover|pushdown|leg |bras tendu|kickback|pec deck/.test(n)) return [10,15];
-  if(e.equip==="Barre" && /squat|soulevé|souleve|développé|developpe|rowing|military|militaire|deadlift/.test(n)) return [6,10];
-  return [8,12];
+  if(/crunch|relev|roue|gainage/.test(n)) return [12,20];
+  if(/élévation|elevation|face|oiseau|mollet|abduct|adduct|poignet|y sur|haussement|trapèze|inverse|postérieur/.test(n)) return [10,15];
+  if(/curl|extension|écart|ecart|pull-over|pullover|pushdown|leg |bras tendu|kickback|pec deck/.test(n)) return [8,12];
+  if(e.equip==="Barre" && /squat|soulevé|souleve|développé|developpe|rowing|military|militaire|deadlift/.test(n)) return [5,8];
+  return [6,10];
 }
 function stepFor(e, w){
   if(e.equip==="Haltères") return w<10 ? 1 : 2;
@@ -651,7 +654,8 @@ function sessionsFor(exId, beforeTs){
   }
   return out;
 }
-function inferFeel(sess, lo){ return sess.sets.some(s => num(s.r) < lo) ? 4 : 3; }
+// Ressenti non noté : « Idéal » par défaut (les reps sous la fourchette sont traitées à part, avec une tolérance)
+function inferFeel(sess, lo){ return 3; }
 function muscleSetsThisWeek(muscle, untilTs){
   const end = untilTs || Infinity, ws = untilTs ? untilTs - 7*86400000 : weekStart(Date.now()); let n = 0;
   S.workouts.forEach(w => { if(w.start < ws || w.start >= end) return; w.exercises.forEach(ex => { if(exById(ex.exId).muscle===muscle) n += workSets(ex).length; }); });
@@ -689,7 +693,9 @@ function coach(exId, beforeTs, planned){
   // Décharge : 3 séances d'affilée notées « Dur/Trop dur » ou 1RM estimé en baisse sur 3 séances
   const e1 = s => { const ww = Math.max(...s.sets.map(x=>num(x.w))), rr = num(s.sets.filter(x=>num(x.w)===ww).slice(-1)[0].r);
     return ww*(1 + (rr + FEEL[(s.feel||inferFeel(s,lo))-1].rir)/30); };
-  if(hist.length>=3 && (hist.slice(0,3).every(s => s.feel>=4) || (e1(hist[0]) < e1(hist[1]) && e1(hist[1]) < e1(hist[2]) && e1(hist[0]) < e1(hist[2])*0.97))){
+  // (baisse du 1RM : au moins 5 %, sur 3 séances rapprochées, pour ne pas confondre le bruit avec de la fatigue)
+  const close3 = hist.length>=3 && hist[0].ts - hist[2].ts < 42*86400000;
+  if(close3 && (hist.slice(0,3).every(s => s.feel>=4) || (e1(hist[0]) < e1(hist[1]) && e1(hist[1]) < e1(hist[2]) && e1(hist[0]) < e1(hist[2])*0.95))){
     const w = Math.max(st, roundTo(W*0.9, st));
     return {lo, hi, rest, w, r:lo, sets:Math.max(2, sets-1), tag:"Décharge", deload:true,
       why:"Performances en baisse ou séances trop dures 3 fois de suite : on allège (-10 % de charge, une série de moins) pour récupérer, puis on repart."};
@@ -697,9 +703,14 @@ function coach(exId, beforeTs, planned){
   let w = W, r, why;
   // Baisse jusqu'à retrouver le bas de la fourchette, 15 % maximum
   const lower = () => { let x = W - st; while(repsAt(x) < lo && x - st >= Math.max(st, W*0.85)) x -= st; return Math.max(st, x); };
-  if(minR < lo){
+  if(minR < lo && feel <= 3 && minR >= lo - 2){
+    // Juste sous la fourchette sans difficulté : on garde la charge lourde et on va chercher les reps
+    r = lo; why = `${minR} reps à ${fmtN(W)} kg sans difficulté : on garde la charge et on vise ${lo} reps.`;
+  }else if(minR < lo && feel === 4 && minR >= lo - 1){
+    r = minR; why = `Dur, juste sous la fourchette : on garde ${fmtN(W)} kg et on consolide.`;
+  }else if(minR < lo){
     w = lower(); r = Math.max(lo, Math.min(hi, repsAt(w)));
-    why = `Reps sous la fourchette (${minR} < ${lo}) : on baisse la charge pour revenir à ${lo} reps minimum.`;
+    why = `Reps nettement sous la fourchette (${minR} < ${lo}) : on baisse un peu la charge pour revenir à ${lo} reps minimum.`;
   }else if(feel===5){
     if(minR < lo){ w = lower(); r = Math.max(lo, Math.min(hi, repsAt(w))); why = `Reps sous la fourchette (${minR} < ${lo}) : on baisse la charge pour revenir à ${lo} reps minimum.`; }
     else { r = Math.max(lo, minR - 1); why = "Trop dur : même charge, une rep de moins pour revenir à 1–2 reps en réserve."; }

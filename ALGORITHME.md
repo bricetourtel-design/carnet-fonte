@@ -5,12 +5,15 @@ Objectif : prise de masse musculaire (hypertrophie). Aucune IA : règles fixes, 
 ## Principes issus de la littérature
 | Principe | Règle dans l'app | Source |
 |---|---|---|
-| L'hypertrophie est similaire de ~6 à 30 reps si l'effort est proche de l'échec | Fourchette de reps par exercice : 6–10 (polyarticulaires à la barre), 8–12 (autres polyarticulaires), 10–15 (isolation), 12–20 (petits muscles : élévations, face pull, mollets, abdos). Modifiable par exercice | Schoenfeld et al. 2021, *Sports* 9(2):32 |
+| L'hypertrophie est similaire de ~5 à 30 reps si l'effort est proche de l'échec, mais la force progresse mieux avec des charges lourdes, et le RIR s'estime mal au-delà de ~12–15 reps | Fourchettes v2, plus lourdes et plus étroites : 5–8 (gros polyarticulaires à la barre), 6–10 (autres polyarticulaires, haltères, machines), 8–12 (isolation), 10–15 (petits muscles : élévations, face pull, mollets, poignets), 12–20 (abdos). Modifiable par exercice | Schoenfeld et al. 2017, *J Strength Cond Res* 31(12) ; Schoenfeld et al. 2021, *Sports* 9(2):32 ; Zourdos et al. 2021 (précision du RIR) |
 | Être proche de l'échec favorise un peu l'hypertrophie | Cible : 1 à 2 reps en réserve (RIR) sur chaque série | Robinson et al. 2024, *Sports Medicine* 54(9) |
 | Le RIR s'estime bien (~1 rep près) quand on est à 0–3 RIR | Barre de ressenti à 5 niveaux après chaque exercice | Helms et al. 2016 (échelle RPE basée sur le RIR) |
 | Progresser en reps ou en charge donne une hypertrophie similaire | Double progression : on ajoute des reps jusqu'au haut de la fourchette, puis on monte la charge | Plotkin et al. 2022, *PeerJ* 10:e14142 |
 | Plus de volume hebdomadaire = plus d'hypertrophie, avec rendements décroissants | Suivi des séries par muscle sur 7 jours, cible 10–20 ; +1 série si < 10 et récupération correcte (max 4 par exercice) | Pelland et al., *Sports Medicine* 2025 (préprint 2024) |
-| Décharge : période de stress réduit pour récupérer | -10 % de charge et -1 série après 3 séances « Dur/Trop dur » ou un 1RM estimé en baisse sur 3 séances | Bell et al. 2023, *Sports Medicine – Open* (consensus Delphi) |
+| Décharge : période de stress réduit pour récupérer | -10 % de charge et -1 série après 3 séances « Dur/Trop dur » ou un 1RM estimé en baisse de plus de 5 % sur 3 séances, ces 3 séances tenant en moins de 6 semaines | Bell et al. 2023, *Sports Medicine – Open* (consensus Delphi) |
+
+## Audit v2 (novembre 2026)
+Simulation sur un historique réel de 43 exercices : l'ancien coach proposait de **baisser la charge sur 21 exercices** et de l'augmenter sur 1 seul, car les fourchettes d'isolation (10–15, 12–20) étaient au-dessus des habitudes et la moindre série sous la fourchette faisait baisser la charge. Après correction : 4 baisses (reps vraiment trop basses), 3 hausses de charge, 35 progressions en reps à charge égale. Les tractions sans ressenti noté ne restent plus bloquées en « Consolider ». La décharge ne se déclenche plus sur le bruit de séances espacées.
 
 ## Ressenti → reps en réserve
 | Barre | Signification | RIR utilisé |
@@ -21,13 +24,14 @@ Objectif : prise de masse musculaire (hypertrophie). Aucune IA : règles fixes, 
 | Dur | 0–1 en réserve | 0,5 |
 | Trop dur | échec / reps manquées | 0 |
 
-Sans ressenti noté : « Idéal », ou « Dur » si une série est sous la fourchette.
+Sans ressenti noté : « Idéal ».
 
 ## Proposition pour la séance suivante (même exercice)
 1. On prend la charge la plus lourde de la dernière séance (W) et le minimum de reps à cette charge.
 2. 1RM estimé = W × (1 + (reps + RIR) / 30) (Epley corrigé par le ressenti).
 3. Règles :
-   - reps sous la fourchette → on baisse la charge jusqu'à pouvoir faire le bas de la fourchette à 1–2 RIR (max -15 %) ;
+   - 1 ou 2 reps sous la fourchette sans difficulté (Idéal ou plus facile) → **on garde la charge** et on vise le bas de la fourchette ; « Dur » à 1 rep près → on consolide ;
+   - reps nettement sous la fourchette → on baisse la charge jusqu'à pouvoir faire le bas de la fourchette à 1–2 RIR (max -15 %) ;
    - **Trop dur** → même charge, 1 rep de moins ;
    - **Dur** → même charge, mêmes reps (consolider) ;
    - **Idéal** → +1 rep ; si toutes les séries ont atteint le haut de la fourchette → +1 palier de charge ;
@@ -37,7 +41,7 @@ Sans ressenti noté : « Idéal », ou « Dur » si une série est sous la fourc
 4. Paliers : barre 2,5 kg ; haltères 2 kg (1 kg sous 10 kg) ; machine/poulie 2,5 kg (1 kg sous 10 kg).
 5. Exercices au poids du corps : progression en reps uniquement.
 6. Reprise : plus de 3 semaines sans l'exercice → -10 % de charge, 3 séries max.
-7. Repos automatique : 3 min (6–10 reps), 2 min 30 (8–12), 1 min 45 (10–15), 1 min 30 (12–20).
+7. Repos automatique : 3 min (5–8 reps), 2 min 30 (6–10), 2 min (8–12), 1 min 30 (10–15 et 12–20). Des repos de 2 à 3 min favorisent l'hypertrophie sur les polyarticulaires (Schoenfeld et al. 2016, *J Strength Cond Res* 30(7)).
 
 ## Routine de la semaine (onglet Routine)
 | Principe | Règle dans l'app | Source |
