@@ -65,6 +65,16 @@ La première version recalculait tous les muscles à chaque séance à partir de
 - 50 phrases motivantes (`GYM_QUOTES`) : une par jour, différente chaque jour, toutes vues avant de revenir. Les alertes de santé, l'œuf et l'évolution proche gardent leurs messages.
 - Phrase écrite plus petite (15 px). Tuto simplifié sur la vitalité (le détail des règles reste dans ce document).
 
+## V1.9 : un Gymon unique, qui parle et qui se partage
+- **Couleur et short tirés à la naissance**, gardés à toutes les évolutions : 20 couleurs (`GYM_COLORS`), dont 3 rares (Or, Argent, Obsidienne, 2 % chacune, avec des éclats scintillants) et 10 couleurs de short (`GYM_SHORTS`). Les taches de l'œuf annoncent sa couleur. Les Gymon d'avant la v1.9 reçoivent leur couleur à la mise à jour.
+- **Nom** : à l'éclosion (dans la célébration), ou en touchant « Donner un nom » sur la page ; 🎲 propose un nom au hasard.
+- **Bulles de dialogue** (phrases écrites, choisies selon les données) : repas et record du jour, séries en plus vs la dernière fois, muscle en retard, muscle oublié depuis 10 jours, muscle qui chauffe, petit creux, humeur. Toucher la bulle : phrase suivante.
+- **Effets sur les muscles** : rouge pendant 24 h sur les muscles qui viennent de grossir ; fumée animée sur les muscles en récupération (< 90 %).
+- **Célébration de fin de séance** : plein écran, confettis, Gymon qui saute, muscles gagnés (+0,2…), records, boutons Partager / Continuer.
+- **Évolution en plein écran** : silhouettes blanches qui alternent de plus en plus vite, flash, révélation avec rayons, « X est devenu … ! ».
+- **Partage** : carte image 1080×1350 (Gymon, nom, stade, couleur rare, stats de la semaine ou de la séance, 3 meilleures séries), créée dans le téléphone et envoyée par le partage de l'iPhone. Aucun serveur.
+- L'ambiance (Aesthetic / Compétition) ne règle plus que l'expression (clin d'œil en Compétition).
+
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.
 - **Dos** : largeur du torse et dorsaux. **Pectoraux** : taille des pecs. **Épaules** : deltoïdes. **Biceps / triceps** : bras. **Jambes** : cuisses et mollets. **Abdos** : tablettes.

@@ -85,6 +85,7 @@ async function uiChecks(browser){
   await page.click('[data-act="rest-skip"]').catch(()=>{});
   await page.click('[data-act="finish-w"]'); await page.click('[data-act="confirm-ok"]').catch(()=>{});
   await page.waitForTimeout(200);
+  await page.evaluate(() => { if(typeof celebClose === "function") celebClose(true); });
   const saved = await page.evaluate(() => S.workouts.map(w => w.exercises.map(x => [x.exId, x.sets.map(s => [s.w, s.r, s.done])])));
   res.saved = saved;
   // Persistance : la séance est toujours là après rechargement, sans doublon

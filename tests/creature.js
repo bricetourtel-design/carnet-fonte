@@ -41,6 +41,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(await p.evaluate(() => creatureFeed(S.workouts.find(w => w.id==="old"))) === null, "une séance antérieure à la naissance n'est pas comptée");
 
   // Séance validée par le carnet : 70×10 + 70×9 = 1 330 kg
+  const celebSeen = [];
   const play = async (w1, r1, w2, r2) => {
     await p.click('.tabs [data-tab="seance"]'); await p.click('[data-act="start-empty"]');
     await p.click('[data-act="pick-ex"]'); await p.click('#pick-list [data-act="pick-toggle"][data-id="dc-barre"]'); await p.click("#pick-go");
@@ -48,6 +49,8 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     await p.fill("#w-0-1", w2); await p.fill("#r-0-1", r2); await p.click('tr[data-i="0"][data-j="1"] .check');
     await p.click('[data-act="rest-skip"]').catch(()=>{});
     await p.click('[data-act="finish-w"]'); await p.click('[data-act="confirm-ok"]').catch(()=>{}); await p.waitForTimeout(200);
+    celebSeen.push(await p.evaluate(() => !!document.getElementById("celebrate")));
+    await p.evaluate(() => celebClose(true));
     const meal = await p.locator(".cr-meal").count();
     if(SHOTS) await p.screenshot({path:path.join(SHOTS, "meal-"+w1+".png")});
     await p.click('.sheet [data-act="close"]').catch(()=>{}); await p.waitForTimeout(100);
@@ -180,8 +183,8 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(draw.differs && draw.veinsBig && !draw.veinsThin, "veines seulement aux niveaux élevés");
   ok(draw.legsThin, "retard en jambes : jambes en allumettes");
   await p.evaluate(() => render()); await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-more"]'); await p.click('[data-act="gy-style"][data-k="competition"]');
-  const style = await p.evaluate(() => ({s:S.profile.gymonStyle, svg:/#7b2cbf/.test(document.querySelector(".gy-stage .creature").outerHTML)}));
-  ok(style.s === "competition" && style.svg, "ambiance Compétition choisie et appliquée (short violet)");
+  const style = await p.evaluate(() => ({s:S.profile.gymonStyle, svg:/Q\d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)?" stroke="#2a1a14" stroke-width="3.4"/.test(document.querySelector(".gy-stage .creature").outerHTML)}));
+  ok(style.s === "competition" && style.svg, "ambiance Compétition choisie et appliquée (clin d'œil)");
   await p.click('[data-act="gy-style"][data-k="aesthetic"]'); await p.click('[data-act="close"]');
   // Phrase du jour : tirée parmi 50, différente d'un jour à l'autre
   const q = await p.evaluate(() => { const c = creatureState(), real = Date; const at = d => { const t0 = new real(2026, 10, d, 12).getTime();
@@ -189,6 +192,43 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const days = Array.from({length:50}, (_, i) => at(i+1)); return {n:GYM_QUOTES.length, all:new Set(days).size, diff:days.every((x,i) => !i || x !== days[i-1]), hint:document.querySelector(".gy-hint") && getComputedStyle(document.querySelector(".gy-hint")).fontSize}; });
   ok(q.n === 50 && q.all === 50 && q.diff, "phrase du jour : 50 phrases, une différente chaque jour, toutes vues en 50 jours", q);
   ok(q.hint === "15px", "phrase écrite plus petite (15 px)", q.hint);
+  // v1.9 : couleur et short tirés à la naissance, gardés à vie ; 3 couleurs rares
+  const look = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify(c.look);
+    const svgs = [5, 9, 12].map(st => { c.stage = st; return creatureSVG(c); }); c.stage = 5;
+    const N = 20000, cnt = {}; for(let i=0;i<N;i++){ const l = rollLook(); cnt[l.col] = (cnt[l.col]||0) + 1; }
+    const rare = GYM_COLORS.reduce((t,g,i) => t + (g.rare ? (cnt[i]||0) : 0), 0) / N;
+    return {has:!!c.look, keep: keep === JSON.stringify(c.look), sameColor: svgs.every(x => x.includes(gymColor(c).h)), n:GYM_COLORS.length, rares:GYM_COLORS.filter(g => g.rare).length, rare, shorts:GYM_SHORTS.includes(GYM_SHORTS[c.look.shorts])}; });
+  ok(look.has && look.keep && look.sameColor, "couleur tirée à la naissance et gardée à toutes les évolutions", look);
+  ok(look.n === 20 && look.rares === 3 && look.rare > 0.045 && look.rare < 0.075 && look.shorts, "20 couleurs dont 3 rares (≈ 6 % au total), short tiré au hasard", look.rare);
+  // Muscles qui viennent de grossir en rouge, fumée sur les muscles en récupération
+  const fx = await p.evaluate(() => { const c = creatureState(), n = Date.now();
+    c.lastMeal = {ts:n - 3600000, ups:["Pectoraux"], dl:{Pectoraux:.2}, vol:1000};
+    S.workouts.push({id:"fx", name:"x", start:n - 3600000, end:n - 3600000, exercises:[{exId:"squat", sets:Array.from({length:6}, () => ({w:"100", r:"8", done:true}))}]});
+    const a = creatureSVG(c); c.lastMeal.ts = n - 30*3600000; const b2 = creatureSVG(c);
+    S.workouts = S.workouts.filter(w => w.id !== "fx");
+    return {pump:/url\(#g\w+p\)/.test(a), pumpGone:!/url\(#g\w+p\)/.test(b2), steam:/cr-steam/.test(a)}; });
+  ok(fx.pump && fx.pumpGone, "muscles qui viennent de grossir en rouge pendant 24 h", fx);
+  ok(fx.steam, "fumée sur les muscles en récupération (jambes après un squat)", fx);
+  // Nom, bulles, partage
+  await p.evaluate(() => { tab = "creature"; render(); });
+  await p.click('[data-act="gy-name"]'); await p.fill("#gy-name-in", "Rocky"); await p.click('[data-act="gy-name-ok"]');
+  ok(await p.evaluate(() => creatureState().name === "Rocky" && /Rocky/.test(document.querySelector(".gy-name").textContent)), "nommer son Gymon : nom enregistré et affiché");
+  const talk = await p.evaluate(() => { const c = creatureState(); MUSCLES.forEach(m => c.levels[m] = 3); c.levels.Jambes = 0.5; return gymonLines(c); });
+  ok(talk.some(x => /jambes… on les oublie/.test(x)), "bulle : un muscle en retard est signalé (jambes)", talk);
+  const bub1 = await p.evaluate(() => { render(); return document.querySelector(".gy-bubble").textContent; });
+  await p.click(".gy-bubble"); const bub2 = await p.evaluate(() => document.querySelector(".gy-bubble").textContent);
+  ok(bub1 && bub2 && bub1 !== bub2, "toucher la bulle : il dit autre chose", [bub1, bub2]);
+  const card = await p.evaluate(async () => { const bl = await cardPNG(cardSVG("week")); return {type:bl.type, size:bl.size, svg:/Rocky/.test(cardSVG("week"))}; });
+  ok(card.type === "image/png" && card.size > 20000 && card.svg, "carte de partage : image PNG avec le Gymon, son nom et les perfs", card);
+  // Célébration de fin de séance et évolution en plein écran
+  const cel = await p.evaluate(() => { const c = creatureState(), n = Date.now(); c.dead = null; c.last = n; c.vit = 100;
+    const w = {id:"cel1", name:"x", start:n - 3000000, end:n, prs:[], exercises:[{exId:"dc-barre", sets:[{w:"60", r:"8", done:true}]}]}; S.workouts.push(w);
+    celebrate(w, {vol:480, evolved:true, from:4, stage:5, ups:[]}); const evo = document.getElementById("celebrate").className;
+    celebState.main(); const main = !!document.querySelector("#celebrate .celeb-in"); celebClose(true);
+    return {evo, main, gone:!document.getElementById("celebrate")}; });
+  ok(/evo/.test(cel.evo) && cel.main && cel.gone, "fin de séance : évolution en plein écran puis célébration, fermée par « Continuer »", cel);
+  ok(celebSeen.length && celebSeen.every(Boolean), "la célébration s'affiche après chaque séance terminée", celebSeen);
+
   // Vue de dos : bouton Dos / Face, fessiers et mollets suivent les jambes
   await p.click('[data-act="gy-flip"]');
   const backV = await p.evaluate(() => ({lbl:document.querySelector(".gy-stage .creature").getAttribute("aria-label"), btn:document.querySelector('[data-act="gy-flip"]').textContent, sheet:!!document.querySelector(".sheet.open, .sheet[open]")}));
