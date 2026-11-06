@@ -120,6 +120,7 @@ table.sets{width:100%;border-collapse:separate;border-spacing:0 4px;font-variant
 .sets tr.done td{background:var(--ok-soft)}
 .sets tr.done td:first-child{border-radius:10px 0 0 10px} .sets tr.done td:last-child{border-radius:0 10px 10px 0}
 .setno{width:32px;height:32px;border-radius:8px;font-weight:600;font-size:16px;background:var(--fill)}
+[data-act],[data-tab],button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .setno.warm{color:var(--warm)}
 .set.warm td{background:color-mix(in srgb,var(--warm) 9%,transparent)}.set.warm td:first-child{border-radius:10px 0 0 10px}.set.warm td:last-child{border-radius:0 10px 10px 0}
 .prev{font-size:14px;color:var(--muted);white-space:nowrap}
@@ -496,7 +497,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-06 d";
+const APP_VERSION = "2026-11-06 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -583,7 +584,12 @@ async function removeWorkout(id){ saveLocal(); }
 function setStatus(){}
 function isTyping(){ const a = document.activeElement; return a && (a.tagName==="INPUT" || a.tagName==="TEXTAREA"); }
 function softRender(){ if(isTyping()) pendingRender = true; else render(); }
-document.addEventListener("focusout", ()=>{ setTimeout(()=>{ if(pendingRender && !isTyping()){ pendingRender=false; render(); } }, 50); });
+let fingerDown = false;
+document.addEventListener("pointerdown", () => { fingerDown = true; }, true);
+["pointerup","pointercancel"].forEach(t => document.addEventListener(t, () => setTimeout(() => { fingerDown = false; }, 120), true));
+// Rendu différé après la saisie : jamais sous le doigt, sinon le bouton touché est remplacé et le toucher est perdu
+function flushPending(){ if(!pendingRender) return; if(fingerDown){ setTimeout(flushPending, 80); return; } if(!isTyping()){ pendingRender = false; render(); } }
+document.addEventListener("focusout", () => setTimeout(flushPending, 50));
 
 /* ---------- Calculs ---------- */
 const sortW = l => l.sort((a,b) => b.start - a.start);
@@ -2356,9 +2362,12 @@ function drawRest(){
   if(left <= 10000 && !restState.warned && restState.total > 12000){ restState.warned = true; beeps(1); flash("warn", Math.ceil(left/1000)); }
   if(restState.warned){ const n = document.getElementById("fl-n"); if(n) n.textContent = Math.ceil(left/1000); }
   el.hidden = false;
-  el.innerHTML = `<div class="rest-in"><span class="small" style="opacity:.75">Repos</span><span class="rest-t">${fmtClock(left)}</span><span class="spacer"></span>
+  // Les boutons ne sont créés qu'une fois : les reconstruire 4 fois par seconde faisait perdre des touchers
+  if(!el.querySelector(".rest-t")) el.innerHTML = `<div class="rest-in"><span class="small" style="opacity:.75">Repos</span><span class="rest-t"></span><span class="spacer"></span>
     <button class="btn sm" data-act="rest-minus">−15 s</button><button class="btn sm" data-act="rest-plus">+15 s</button><button class="btn sm" data-act="rest-skip">Passer</button>
-    <div class="rest-bar" style="width:${(100*left/restState.total).toFixed(1)}%"></div></div>`;
+    <div class="rest-bar"></div></div>`;
+  const t = fmtClock(left), tt = el.querySelector(".rest-t"); if(tt.textContent !== t) tt.textContent = t;
+  el.querySelector(".rest-bar").style.width = (100*left/restState.total).toFixed(1) + "%";
 }
 function tickClock(){ const c = document.getElementById("clock"); if(c && S.profile.active) c.textContent = fmtClock(Date.now()-S.profile.active.start); }
 setInterval(tickClock, 1000);
@@ -2636,7 +2645,7 @@ document.addEventListener("change", e => {
     rd.readAsText(f);
     return;
   }
-  if(e.target.id==="bw"){ S.profile.bw = num(e.target.value) || ""; touchProfile(); render(); }
+  if(e.target.id==="bw"){ S.profile.bw = num(e.target.value) || ""; touchProfile(); pendingRender = true; setTimeout(flushPending, 50); }
   else if(e.target.id==="height"){ S.profile.height = num(e.target.value) || ""; touchProfile(); }
   else if(e.target.id==="sex"){ S.profile.sex = e.target.value; touchProfile(); }
   else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }

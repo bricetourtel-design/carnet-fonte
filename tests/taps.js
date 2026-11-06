@@ -1,0 +1,30 @@
+// Fiabilité des touchers : un bouton ne doit jamais être remplacé pendant qu'on le touche (iPhone)
+// Lancer : node tests/taps.js
+const {chromium, devices} = require("playwright"), path = require("path"), http = require("http"), fs = require("fs");
+const ROOT = path.resolve(__dirname, "..");
+let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") + m + (d !== undefined ? " → " + JSON.stringify(d) : "")); if(!c) fails++; };
+(async () => {
+  const srv = http.createServer((q, r) => { const f = path.join(ROOT, decodeURIComponent(q.url.split("?")[0]).replace(/^\/$/, "/index.html"));
+    fs.readFile(f, (e, d) => { if(e){ r.writeHead(404); r.end(); return; } r.writeHead(200, {"Content-Type": f.endsWith(".html") ? "text/html" : f.endsWith(".js") ? "text/javascript" : "application/octet-stream"}); r.end(d); }); }).listen(0);
+  const b = await chromium.launch(), ctx = await b.newContext({...devices["iPhone 13"]}), p = await ctx.newPage(), errs = []; p.on("pageerror", e => errs.push(e.message));
+  await p.goto(`http://localhost:${srv.address().port}/index.html`); await p.waitForTimeout(300);
+  await p.evaluate(() => { S.profile.tutoAppDone = true; S.profile.tutoDone = true; try{ closeSheet(); }catch(e){} try{ endTuto(); }catch(e){}
+    startWorkout("T", [{exId:"curl-halteres", sets:[blankSet(), blankSet()]}]); startRest(90); });
+  await p.waitForTimeout(400);
+  const hold = async (sel, ms) => { const x = await p.locator(sel).boundingBox(); await p.mouse.move(x.x + x.width/2, x.y + x.height/2); await p.mouse.down(); await p.waitForTimeout(ms); await p.mouse.up(); await p.waitForTimeout(100); };
+  const t0 = await p.evaluate(() => restState.end);
+  await hold('[data-act="rest-plus"]', 350);
+  ok(Math.round((await p.evaluate(() => restState.end) - t0) / 1000) === 15, "minuteur : un toucher long sur « +15 s » est bien pris en compte");
+  const same = await p.evaluate(() => new Promise(res => { const a = document.querySelector('[data-act="rest-skip"]'); setTimeout(() => res(a === document.querySelector('[data-act="rest-skip"]')), 700); }));
+  ok(same, "minuteur : les boutons ne sont pas reconstruits pendant le décompte");
+  await hold('[data-act="rest-skip"]', 400);
+  ok(await p.evaluate(() => restState === null), "minuteur : « Passer » fonctionne au premier toucher, même long");
+  await p.waitForTimeout(300);
+  // Saisie puis toucher d'un bouton : le rendu différé attend que le doigt soit levé
+  const deferred = await p.evaluate(() => new Promise(res => { let n = 0; const r0 = render; window.render = (...a) => { n++; return r0(...a); };
+    fingerDown = true; pendingRender = true; flushPending(); setTimeout(() => { const during = n; fingerDown = false; setTimeout(() => { window.render = r0; res([during, n]); }, 200); }, 150); }));
+  ok(deferred[0] === 0 && deferred[1] === 1, "rendu différé : jamais pendant un toucher, fait juste après", deferred);
+  ok(errs.length === 0, "aucune erreur JavaScript", errs);
+  await b.close(); srv.close();
+  console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de touchers passent"); process.exit(fails ? 1 : 0);
+})();
