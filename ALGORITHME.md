@@ -15,6 +15,22 @@ Objectif : prise de masse musculaire (hypertrophie). Aucune IA : règles fixes, 
 ## Audit v2 (novembre 2026)
 Simulation sur un historique réel de 43 exercices : l'ancien coach proposait de **baisser la charge sur 21 exercices** et de l'augmenter sur 1 seul, car les fourchettes d'isolation (10–15, 12–20) étaient au-dessus des habitudes et la moindre série sous la fourchette faisait baisser la charge. Après correction : 4 baisses (reps vraiment trop basses), 3 hausses de charge, 35 progressions en reps à charge égale. Les tractions sans ressenti noté ne restent plus bloquées en « Consolider ». La décharge ne se déclenche plus sur le bruit de séances espacées.
 
+## Séances lourdes et séances volume (périodisation ondulante, v2.1)
+Sur les polyarticulaires chargés (fourchettes 5–8 et 6–10, hors poids du corps et fourchettes choisies à la main), l'app alterne d'une séance à l'autre pour chaque exercice :
+
+| Type | Barre (développé, squat, rowing…) | Autres polyarticulaires | Repos |
+|---|---|---|---|
+| **Lourd** : charge la plus haute possible | 4–6 reps | 5–7 reps | 3 min |
+| **Volume** : plus de reps | 8–10 reps | 8–12 reps | 2 min |
+
+- Le type suit la dernière séance de l'exercice : après une séance lourde (reps moyennes ≤ haut de la fourchette lourde + 1), une séance volume, et inversement.
+- Charge calculée depuis la force la plus récente (1RM estimé de la dernière séance, corrigé par le ressenti) : lourd → bas de la fourchette lourde ; volume → bas de la fourchette volume + 2 reps, à 1–2 reps en réserve.
+- Jamais de recul par rapport à la dernière séance du même type réussie (moins de 5 semaines) : même charge → +1 rep ; haut de fourchette atteint → +1 palier de charge.
+- Isolation et petits muscles : pas d'alternance, double progression classique (8–12, 10–15, 12–20).
+- Reprise après 3 semaines et décharge passent avant l'alternance.
+
+Pourquoi : la périodisation fait mieux progresser la force que des séries toujours identiques (Williams et al. 2017, *Sports Medicine* 47(10) ; Moesgaard et al. 2022, *Sports Medicine* 52(7)), et la prise de muscle est au moins équivalente (Grgic et al. 2017, *PeerJ* 5:e3695). Plus de force = plus de charge sur les séances de volume, donc plus de tension mécanique à long terme.
+
 ## Ressenti → reps en réserve
 | Barre | Signification | RIR utilisé |
 |---|---|---|

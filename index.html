@@ -494,7 +494,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-06 a";
+const APP_VERSION = "2026-11-06 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -629,12 +629,23 @@ const FEEL = [
 // Fourchettes v2 (audit nov. 2026) : plus lourdes et plus étroites, comme en bodybuilding.
 // Lourd sur les gros polyarticulaires à la barre, 6–10 sur les autres, 8–12 en isolation, 10–15 pour les petits muscles.
 const RANGES = [[5,8],[6,10],[8,12],[10,15],[12,20]];
-const REST_BY_RANGE = {5:180, 6:150, 8:120, 10:90, 12:90};
+const REST_BY_RANGE = {4:180, 5:180, 6:150, 8:120, 10:90, 12:90};
+// Périodisation ondulante (DUP) sur les polyarticulaires : une séance « Lourd » (peu de reps, grosse charge),
+// la suivante « Volume » (plus de reps), et ainsi de suite. Plus de force, donc plus de charge sur les séances de volume.
+function dupRanges(e){
+  if((S.profile.ranges||{})[e.id] || e.equip==="Poids du corps") return null;
+  const base = repRange(e)[0];
+  return base===5 ? {lourd:[4,6], volume:[8,10]} : base===6 ? {lourd:[5,7], volume:[8,12]} : null;
+}
+function isHeavySess(s, dup){
+  const W = Math.max(...s.sets.map(x => num(x.w))), top = s.sets.filter(x => num(x.w)===W);
+  return top.reduce((t,x) => t + num(x.r), 0) / top.length <= dup.lourd[1] + 1;
+}
 function repRange(e){
   const o = S.profile.ranges && S.profile.ranges[e.id]; if(o) return o;
   const n = e.name.toLowerCase();
   if(/crunch|relev|roue|gainage/.test(n)) return [12,20];
-  if(/élévation|elevation|face|oiseau|mollet|abduct|adduct|poignet|y sur|haussement|trapèze|inverse|postérieur/.test(n)) return [10,15];
+  if(/élévation|elevation|face|oiseau|mollet|abduct|adduct|poignet|y sur|haussement|trapèze|inverse|postérieur|rowing vertical|rowing menton/.test(n)) return [10,15];
   if(/curl|extension|écart|ecart|pull-over|pullover|pushdown|leg |bras tendu|kickback|pec deck/.test(n)) return [8,12];
   if(e.equip==="Barre" && /squat|soulevé|souleve|développé|developpe|rowing|military|militaire|deadlift/.test(n)) return [5,8];
   return [6,10];
@@ -663,13 +674,22 @@ function muscleSetsThisWeek(muscle, untilTs){
 }
 // Proposition pour la prochaine séance de cet exercice
 function coach(exId, beforeTs, planned){
-  const e = exById(exId), [lo,hi] = repRange(e), rest = REST_BY_RANGE[lo] || 120;
-  const hist = sessionsFor(exId, beforeTs);
+  const e = exById(exId), hist = sessionsFor(exId, beforeTs), dup = dupRanges(e);
+  let [lo,hi] = repRange(e), mode = null, ref = hist[0], fromEst = false;
+  if(dup && hist.length){   // on alterne : après une séance lourde, une séance volume, et inversement
+    const heavy = s => isHeavySess(s, dup), now = beforeTs || Date.now();
+    mode = heavy(hist[0]) ? "volume" : "lourd"; [lo,hi] = dup[mode];
+    const same = hist.find(s => heavy(s) === (mode==="lourd") && now - s.ts < 35*86400000);
+    if(same) ref = same; else fromEst = true;
+  }
+  const rest = REST_BY_RANGE[lo] || 120, ML = mode==="lourd" ? "Lourd · " : mode ? "Volume · " : "";
+  const MW = mode==="lourd" ? "Séance lourde : peu de reps, grosse charge, pour la force. " : mode ? "Séance volume : plus de reps, pour la masse. " : "";
   if(!hist.length) return {lo, hi, rest, w:"", r:"", sets:planned||3, tag:"Nouveau",
     why:`Première fois : prenez une charge qui permet ${lo} à ${hi} reps en gardant 1 à 2 reps en réserve.`};
-  const last = hist[0], feel = last.feel || inferFeel(last, lo), f = FEEL[feel-1];
-  const W = Math.max(...last.sets.map(s => num(s.w))), top = last.sets.filter(s => num(s.w)===W);
-  const minR = Math.min(...top.map(s => num(s.r))), lastR = num(top[top.length-1].r);
+  const last = hist[0];
+  let feel = last.feel || inferFeel(last, lo), f = FEEL[feel-1];
+  let W = Math.max(...last.sets.map(s => num(s.w))), top = last.sets.filter(s => num(s.w)===W);
+  let minR = Math.min(...top.map(s => num(s.r))), lastR = num(top[top.length-1].r);
   const nSets = last.sets.filter(s => num(s.w) >= W*0.75).length;   // les séries dégressives légères ne comptent pas
   let sets = planned || Math.min(5, Math.max(2, nSets));
   const gapDays = Math.round(((beforeTs || Date.now()) - last.ts) / 86400000);
@@ -680,9 +700,9 @@ function coach(exId, beforeTs, planned){
     return {lo, hi, rest, w: W || "", r, sets, tag: gapDays > 21 ? "Reprise" : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider",
       why: (gapDays > 21 ? `Dernière séance il y a ${Math.round(gapDays/7)} semaines : on reprend avec une rep de moins. ` : `Dernière fois ${minR} reps minimum, ressenti « ${f.label} ». `) + (r>hi+5 ? "Vous dépassez largement la fourchette : ajoutez du lest." : r<lo ? `Objectif à terme : ${lo} reps et plus.` : "")};
   }
-  const st = stepFor(e, W);
+  let st = stepFor(e, W);
   // 1RM estimé corrigé par les reps en réserve (Epley)
-  const E = W * (1 + (lastR + f.rir)/30);
+  let E = W * (1 + (lastR + f.rir)/30);
   const repsAt = w => Math.floor(30*(E/w - 1) - 1.5 + 1e-9);
   // Reprise après plus de 3 semaines sans cet exercice : -10 %
   if(gapDays > 21){
@@ -699,6 +719,26 @@ function coach(exId, beforeTs, planned){
     const w = Math.max(st, roundTo(W*0.9, st));
     return {lo, hi, rest, w, r:lo, sets:Math.max(2, sets-1), tag:"Décharge", deload:true,
       why:"Performances en baisse ou séances trop dures 3 fois de suite : on allège (-10 % de charge, une série de moins) pour récupérer, puis on repart."};
+  }
+  // Lourd / Volume : charge calée sur la force la plus récente (1RM estimé de la dernière séance, corrigé par le ressenti),
+  // sans jamais reculer par rapport à la dernière séance du même type réussie
+  if(mode){
+    const target = mode==="lourd" ? lo : lo + 2;   // lourd : on vise le bas de la fourchette avec la charge la plus haute possible
+    let x = Math.max(st, roundTo(E / (1 + (target + 1.5)/30), st)); while(repsAt(x) < target && x - st >= st) x -= st;
+    let note = `Charge calculée depuis votre dernière séance (1RM estimé ${fmtN(E,0)} kg).`, ref0 = null, minRep = 0;
+    if(!fromEst){
+      const rW = Math.max(...ref.sets.map(s => num(s.w))), rTop = ref.sets.filter(s => num(s.w)===rW), rMin = Math.min(...rTop.map(s => num(s.r))), rFeel = ref.feel || 3;
+      ref0 = rW;
+      if(rFeel <= 3 && rMin >= hi && x <= rW){ x = rW + stepFor(e, rW); note = `Dernière séance ${mode==="lourd"?"lourde":"volume"} : ${rMin} reps à ${fmtN(rW)} kg, haut de fourchette atteint, on monte.`; }
+      else if(rFeel <= 3 && rMin >= lo && x <= rW){ x = rW; minRep = Math.min(hi, rMin + 1);
+        note = `Même charge que votre dernière séance ${mode==="lourd"?"lourde":"volume"} (${fmtN(rW)} kg × ${rMin}) : on vise une rep de plus.`; }
+    }
+    const wk = muscleSetsThisWeek(e.muscle, last.ts + 1);
+    if(!planned && feel <= 3 && wk < 10 && sets < 4){ sets++; note += ` ${e.muscle} : ${wk} séries sur 7 jours, sous les 10 conseillées, une série de plus.`; }
+    const r0 = Math.max(lo, minRep, Math.min(hi, repsAt(x))), d = ref0 === null ? null : x - ref0;
+    return {lo, hi, rest, w:+x.toFixed(2), r:r0, sets, mode,
+      tag: ML.replace(" · ", "") + (d === null ? "" : d > 0 ? ` · +${fmtN(d)} kg` : d < 0 ? ` · ${fmtN(d)} kg` : minRep ? " · +1 rep" : " · même charge"),
+      why: MW + note + ` Objectif ${r0} reps en gardant 1 à 2 reps en réserve.`, from:{W, minR, feel}};
   }
   let w = W, r, why;
   // Baisse jusqu'à retrouver le bas de la fourchette, 15 % maximum
@@ -733,8 +773,8 @@ function coach(exId, beforeTs, planned){
   const wk = muscleSetsThisWeek(e.muscle, last.ts + 1);
   if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; why += ` ${e.muscle} : ${wk} séries sur les 7 jours précédant la dernière séance, sous les 10 conseillées, on ajoute une série.`; }
   if(feel===5 && hist[1] && (hist[1].feel||0)===5 && sets > 2){ sets--; why += " Une série de moins pour récupérer."; }
-  const dW = w - W, tag = dW>0 ? `+${fmtN(dW)} kg` : dW<0 ? `${fmtN(dW)} kg` : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider";
-  return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, from:{W, minR, feel}};
+  const dW = w - W, tag = ML + (dW>0 ? `+${fmtN(dW)} kg` : dW<0 ? `${fmtN(dW)} kg` : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider");
+  return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, mode, from:{W, minR, feel}};
 }
 
 /* ---------- Routine de la semaine ----------
