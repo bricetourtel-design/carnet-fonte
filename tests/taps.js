@@ -24,6 +24,15 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   const deferred = await p.evaluate(() => new Promise(res => { let n = 0; const r0 = render; window.render = (...a) => { n++; return r0(...a); };
     fingerDown = true; pendingRender = true; flushPending(); setTimeout(() => { const during = n; fingerDown = false; setTimeout(() => { window.render = r0; res([during, n]); }, 200); }, 150); }));
   ok(deferred[0] === 0 && deferred[1] === 1, "rendu différé : jamais pendant un toucher, fait juste après", deferred);
+  // 10 s avant la fin : bandeau en haut qui ne bloque pas la saisie ; fin : plein écran
+  await p.evaluate(() => { startRest(14); }); await p.waitForTimeout(4600);
+  const ban = await p.evaluate(() => { const f = document.getElementById("flash"), r = f.getBoundingClientRect(); return {cls:f.className, hidden:f.hidden, h:r.height, vh:innerHeight}; });
+  ok(!ban.hidden && /warn/.test(ban.cls) && ban.h < ban.vh/4, "10 s avant la fin : bandeau en haut (pas plein écran)", ban);
+  const inp = await p.locator("#w-0-0").boundingBox(); await p.touchscreen.tap(inp.x + 20, inp.y + 10); await p.keyboard.type("12");
+  ok(await p.evaluate(() => A().exercises[0].sets[0].w) === "12", "pendant le bandeau, la saisie de la charge reste possible");
+  await p.waitForTimeout(10500);
+  const go = await p.evaluate(() => { const f = document.getElementById("flash"), r = f.getBoundingClientRect(); return {cls:f.className, hidden:f.hidden, h:r.height, vh:innerHeight}; });
+  ok(!go.hidden && /go/.test(go.cls) && go.h >= go.vh - 1, "fin du repos : écran « C'est reparti ! » en plein écran", go);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de touchers passent"); process.exit(fails ? 1 : 0);

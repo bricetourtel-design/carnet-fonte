@@ -82,7 +82,7 @@ Duos proposés : Pecs + Triceps et Dos + Biceps (muscles synergiques), Pecs + Do
 Le jour J, la séance prévue apparaît en premier sur l'onglet Séance (« Aujourd'hui »), puis les suivantes dans l'ordre ; un jour sans séance affiche la prochaine.
 
 ## Minuteur de repos
-Un bip et un écran bleu plein écran avec compte à rebours à 10 s de la fin, puis 3 bips et l'écran « C'est reparti ! » à la fin (2,6 s, toucher pour fermer). Le son se mêle à la musique dans les écouteurs (iOS 17+). Sur iPhone, le son ne sort que si l'app est ouverte et l'écran allumé.
+Un bip et un bandeau bleu en haut de l'écran avec compte à rebours à 10 s de la fin (il ne bloque pas l'écran : on peut saisir sa charge), puis 3 bips et l'écran plein écran « GO · C'est reparti ! » à la fin (5 s, toucher pour fermer). Le son se mêle à la musique dans les écouteurs (iOS 17+). Sur iPhone, le son ne sort que si l'app est ouverte et l'écran allumé.
 
 ## Points forts / points faibles (Progrès)
 Niveau par exercice = 1RM estimé ÷ poids de corps, comparé à des repères de force usuels (niveau « intermédiaire » homme ; ×0,6 pour le haut et ×0,75 pour le bas en référence femmes), sur 5 niveaux de débutant à élite. Exercices au poids du corps : nombre de répétitions. Machines à disques ou guidées exclues (résistance trop variable d'un modèle à l'autre). Niveau du muscle = moyenne de ses 3 exercices les plus pratiqués (120 derniers jours si possible). Point fort / faible = au moins un demi-niveau au-dessus / en dessous de votre propre moyenne. Évolution = meilleur 1RM des 6 dernières semaines de pratique vs les 6 précédentes. Repères indicatifs, pas une norme scientifique.

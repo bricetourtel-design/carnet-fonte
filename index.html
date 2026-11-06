@@ -280,6 +280,19 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .rec-row.mid .rs{color:var(--warm)} .rec-row.low .rs{color:var(--danger)}
 .flash{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;
   color:#fff;background:radial-gradient(circle at 50% 40%,#3d9bff,#0a63d8 60%,#0646a8);padding:24px max(24px,env(safe-area-inset-left,0px));animation:flin .25s ease-out}
+.flash.warn{inset:auto max(12px,env(safe-area-inset-right,0px)) auto max(12px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 8px);
+  flex-direction:row;justify-content:flex-start;gap:14px;padding:12px 16px;border-radius:22px;text-align:left;max-width:560px;margin:0 auto;
+  box-shadow:0 14px 40px rgba(6,70,168,.35);animation:fldown .3s ease-out}
+.flash.warn .fl-ring{width:54px;height:54px;border-width:3px;flex:none}
+.flash.warn .fl-ring span{font-size:26px}
+.flash.warn .fl-txt{display:flex;flex-direction:column;gap:2px}
+.flash.warn b{font-size:19px}
+.flash.warn span{font-size:13px}
+@keyframes fldown{from{transform:translateY(-120%)}to{transform:translateY(0)}}
+.flash.go .fl-ring{width:250px;height:250px;border-width:8px}
+.flash.go .fl-ring span{font-size:92px}
+.flash.go b{font-size:44px}
+.flash.go span{font-size:18px}
 .flash b{font-size:32px;font-weight:800;letter-spacing:-.01em}
 .flash span{font-size:15px;opacity:.85}
 .fl-ring{width:190px;height:190px;border-radius:50%;display:grid;place-items:center;border:6px solid rgba(255,255,255,.9);animation:pulse 1s ease-in-out infinite}
@@ -497,7 +510,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-06 e";
+const APP_VERSION = "2026-11-06 f";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1856,9 +1869,10 @@ function flash(mode, sec){
   const f = document.getElementById("flash"); clearTimeout(flashT);
   if(!mode){ f.hidden = true; return; }
   f.hidden = false; f.className = "flash " + mode;
-  f.innerHTML = mode==="warn" ? `<div class="fl-ring"><span id="fl-n">${sec}</span></div><b>Prépare-toi</b><span>Série suivante dans quelques secondes · toucher pour masquer</span>`
+  // 10 s avant la fin : bandeau en haut, qui ne bloque pas l'écran ; fin du repos : plein écran pour ne pas louper la reprise
+  f.innerHTML = mode==="warn" ? `<div class="fl-ring"><span id="fl-n">${sec}</span></div><div class="fl-txt"><b>Prépare-toi</b><span>Série suivante dans quelques secondes</span></div>`
     : `<div class="fl-ring go"><span>GO</span></div><b>C'est reparti !</b><span>Repos terminé</span>`;
-  if(mode==="go") flashT = setTimeout(() => { f.hidden = true; }, 2600);
+  if(mode==="go") flashT = setTimeout(() => { f.hidden = true; }, 5000);   // reste 5 s (ou jusqu'au toucher) pour ne pas louper la reprise
 }
 
 /* ---------- Import Gravl (CSV) ---------- */
