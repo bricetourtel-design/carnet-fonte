@@ -48,7 +48,11 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
     startWorkout("T", ["dc-barre","di-halteres","curl-halteres","squat"].map(id => ({exId:id, sets:[blankSet(), blankSet(), blankSet()]}))); render();
     const a = S.profile.active, warm = a.exercises.map(x => x.sets.filter(s => s.warm).length);
     const ph = [...document.querySelectorAll('.ex[data-i="0"] tr.set')].slice(0, 2).map(tr => [tr.querySelector('[data-f="w"]').placeholder, tr.querySelector('[data-f="r"]').placeholder]);
-    const out = {warm, ph, rest:null}; S.profile.active = null; return out; });
+    const hint = document.querySelector('.ex[data-i="0"] .wu-hint'), btn = document.querySelector('.ex[data-i="2"] [data-act="add-warm"]');
+    btn && btn.click(); const forced = S.profile.active.exercises[2].sets.filter(s => s.warm).length;
+    const out = {warm, ph, hint: hint ? hint.textContent : "", btn:!!btn, forced}; S.profile.active = null; return out; });
+  ok(/45 kg × 8 puis 65 kg × 3/.test(wu.hint), "message « Échauffement d'abord » visible au-dessus des séries", wu.hint);
+  ok(wu.btn && wu.forced === 1, "bouton « + Échauffement » sur un exercice sans échauffement (curls) : ajoute une série légère", wu);
   ok(wu.warm.join() === "2,0,0,2", "échauffement : 2 séries avant le 1er exercice lourd de chaque muscle (développé, squat), aucune sur le 2e exercice pecs ni sur les curls", wu.warm);
   ok(wu.ph[0][0] === "45" && wu.ph[0][1] === "8" && wu.ph[1][0] === "65" && wu.ph[1][1] === "3", "échauffement proposé : ~50 % × 8 puis ~75 % × 3 de la charge de travail (87,5 kg)", wu.ph);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
