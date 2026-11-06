@@ -39,6 +39,18 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(R.spread !== "Décharge", "séances espacées : pas de décharge sur du bruit", R.spread);
   ok(R.close === "Décharge", "3 séances rapprochées en baisse de plus de 5 % : décharge", R.close);
   ok(R.restH === 180 && R.restV === 120, "repos : 3 min en séance lourde, 2 min en séance volume", [R.restH, R.restV]);
+  // Séries d'échauffement : seulement quand c'est utile
+  const wu = await p.evaluate(() => { const D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true});
+    S.profile.tutoAppDone = true; S.profile.tutoDone = true; S.profile.active = null;
+    S.workouts = [{id:"h", name:"x", start:n-3*D, end:n-3*D, exercises:[
+      {exId:"dc-barre", feel:3, sets:[set(80,8), set(80,8)]}, {exId:"di-halteres", feel:3, sets:[set(26,9)]},
+      {exId:"curl-halteres", feel:3, sets:[set(14,10)]}, {exId:"squat", feel:3, sets:[set(100,9)]}]}];
+    startWorkout("T", ["dc-barre","di-halteres","curl-halteres","squat"].map(id => ({exId:id, sets:[blankSet(), blankSet(), blankSet()]}))); render();
+    const a = S.profile.active, warm = a.exercises.map(x => x.sets.filter(s => s.warm).length);
+    const ph = [...document.querySelectorAll('.ex[data-i="0"] tr.set')].slice(0, 2).map(tr => [tr.querySelector('[data-f="w"]').placeholder, tr.querySelector('[data-f="r"]').placeholder]);
+    const out = {warm, ph, rest:null}; S.profile.active = null; return out; });
+  ok(wu.warm.join() === "2,0,0,2", "échauffement : 2 séries avant le 1er exercice lourd de chaque muscle (développé, squat), aucune sur le 2e exercice pecs ni sur les curls", wu.warm);
+  ok(wu.ph[0][0] === "45" && wu.ph[0][1] === "8" && wu.ph[1][0] === "65" && wu.ph[1][1] === "3", "échauffement proposé : ~50 % × 8 puis ~75 % × 3 de la charge de travail (87,5 kg)", wu.ph);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);

@@ -31,6 +31,13 @@ Sur les polyarticulaires chargés (fourchettes 5–8 et 6–10, hors poids du co
 
 Pourquoi : la périodisation fait mieux progresser la force que des séries toujours identiques (Williams et al. 2017, *Sports Medicine* 47(10) ; Moesgaard et al. 2022, *Sports Medicine* 52(7)), et la prise de muscle est au moins équivalente (Grgic et al. 2017, *PeerJ* 5:e3695). Plus de force = plus de charge sur les séances de volume, donc plus de tension mécanique à long terme.
 
+## Séries d'échauffement (v2.2)
+Ajoutées automatiquement (marquées « É ») seulement quand c'est utile :
+- **Quand** : polyarticulaire chargé (pas les exercices d'isolation, ni le poids du corps, ni les haltères de moins de 20 kg), et seulement sur le **premier exercice de la séance pour ce muscle** : le 2ᵉ exercice pecs est déjà chaud.
+- **Combien** : séance lourde (ou fourchette basse) → 2 séries, ~50 % × 8 puis ~75 % × 3 de la charge de travail ; sinon 1 série, ~60 % × 6. Barre vide (20 kg) au minimum.
+- Elles ne comptent ni dans le volume, ni pour le coach, ni pour le Gymon, et ne lancent pas le minuteur. Toucher « É » la retransforme en série normale.
+- Pourquoi : un échauffement spécifique et léger prépare la charge lourde sans fatiguer (les séries d'approche courtes, loin de l'échec, ne réduisent pas la performance des séries de travail). Ribeiro et al. 2020, *J Strength Cond Res* ; recommandations NSCA.
+
 ## Ressenti → reps en réserve
 | Barre | Signification | RIR utilisé |
 |---|---|---|

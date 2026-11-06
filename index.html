@@ -494,7 +494,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-06 b";
+const APP_VERSION = "2026-11-06 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -775,6 +775,30 @@ function coach(exId, beforeTs, planned){
   if(feel===5 && hist[1] && (hist[1].feel||0)===5 && sets > 2){ sets--; why += " Une série de moins pour récupérer."; }
   const dW = w - W, tag = ML + (dW>0 ? `+${fmtN(dW)} kg` : dW<0 ? `${fmtN(dW)} kg` : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider");
   return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, mode, from:{W, minR, feel}};
+}
+
+/* ---------- Séries d'échauffement ----------
+   Proposées seulement quand c'est utile : polyarticulaire chargé, premier exercice de la séance pour ce muscle.
+   Séance lourde (ou fourchette 4–6/5–8) : 2 séries, ~50 % × 8 puis ~75 % × 3. Sinon : 1 série, ~60 % × 6.
+   Les séries d'échauffement ne comptent ni dans le volume, ni pour le coach, ni pour le Gymon, et ne lancent pas le minuteur. */
+function warmupFor(exId, beforeTs, planned, first){
+  if(!first) return [];
+  const e = exById(exId), c = coach(exId, beforeTs, planned), W = num(c.w);
+  if(!W || e.equip==="Poids du corps") return [];
+  const compound = dupRanges(e) || repRange(e)[0] <= 6;
+  if(!compound || (W < 20 && e.equip!=="Barre")) return [];
+  const st = stepFor(e, W), min = e.equip==="Barre" ? 20 : st;
+  const plan = c.mode==="lourd" || c.lo <= 5 ? [[0.5,8],[0.75,3]] : [[0.6,6]], out = [];
+  plan.forEach(([p, r]) => { const w = Math.max(min, roundTo(W*p, st)); if(w < W*0.9 && !out.some(x => x.w===w)) out.push({w, r}); });
+  return out;
+}
+// Ajoute les séries d'échauffement en tête des exercices où elles sont utiles (ordre de la séance)
+function addWarmups(exercises, ts, seen){
+  seen = seen || new Set();
+  exercises.forEach(ex => { const m = exById(ex.exId).muscle, first = !seen.has(m); seen.add(m);
+    const n = warmupFor(ex.exId, ts, ex.plan, first).length;
+    if(n && !ex.sets.some(s => s.warm)) ex.sets.unshift(...Array.from({length:n}, () => ({...blankSet(), warm:true}))); });
+  return exercises;
 }
 
 /* ---------- Routine de la semaine ----------
@@ -2028,6 +2052,7 @@ function viewActive(){
   const a = S.profile.active;
   const exs = a.exercises.map((ex,i) => {
     const e = exById(ex.exId), prev = lastSetsFor(ex.exId, a.start), c = coach(ex.exId, a.start, ex.plan);
+    const wu = ex.sets.some(s => s.warm) ? warmupFor(ex.exId, a.start, ex.plan, !a.exercises.slice(0, i).some(x => exById(x.exId).muscle===e.muscle)) : [];
     const prevWork = (sessionsFor(ex.exId, a.start)[0] || {sets:[]}).sets, prevWarm = prev.filter(x => x.warm);
     let nw = 0;
     let n = 0;
@@ -2036,8 +2061,8 @@ function viewActive(){
       return `<tr class="set ${s.done?"done":""}" data-i="${i}" data-j="${j}">
         <td><button class="setno ${s.warm?"warm":""}" data-act="toggle-warm" aria-label="Série ${label}, toucher pour marquer en échauffement">${label}</button></td>
         <td class="prev">${p ? esc(setTxt(p)) : "—"}</td>
-        <td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (p&&num(p.w)?fmtN(num(p.w)):"kg") : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg"></td>
-        <td><input id="r-${i}-${j}" data-f="r" inputmode="numeric" value="${esc(s.r)}" placeholder="${s.warm ? (p?num(p.r)||"":"reps") : c.r || (c.lo+"–"+c.hi)}" aria-label="Répétitions"></td>
+        <td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (wu[nw-1] ? fmtN(wu[nw-1].w) : p&&num(p.w)?fmtN(num(p.w)):"kg") : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg"></td>
+        <td><input id="r-${i}-${j}" data-f="r" inputmode="numeric" value="${esc(s.r)}" placeholder="${s.warm ? (wu[nw-1] ? wu[nw-1].r : p?num(p.r)||"":"reps") : c.r || (c.lo+"–"+c.hi)}" aria-label="Répétitions"></td>
         <td><button class="check" data-act="check" aria-label="Valider la série"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button></td>
       </tr>`;
     }).join("");
@@ -2274,7 +2299,8 @@ function openRoutineEditor(){
 const blankSet = () => ({w:"", r:"", done:false, warm:false});
 function startWorkout(name, exercises, routineId){
   if(S.profile.active){ toast("Une séance est déjà en cours"); tab = "seance"; render(); return; }
-  S.profile.active = {id:uidGen("w"), name, start:Date.now(), routineId:routineId||null, exercises};
+  const start = Date.now();
+  S.profile.active = {id:uidGen("w"), name, start, routineId:routineId||null, exercises:addWarmups(exercises, start)};
   touchProfile(); tab = "seance"; render(); window.scrollTo(0,0);
 }
 function finishWorkout(){
@@ -2409,7 +2435,8 @@ const ACT = {
   "r-remove": () => { const d = draft; confirmSheet("Supprimer ce programme ?", `« ${d.name} » sera retiré. Vos séances passées restent dans l'historique.`, "Supprimer", () => {
     S.profile.routines = S.profile.routines.filter(r=>r.id!==d.id); touchProfile(); render(); toast("Programme supprimé"); }); },
 
-  "pick-ex": () => openPicker(ids => { ids.forEach(id => A().exercises.push({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})); touchProfile(); render(); }),
+  "pick-ex": () => openPicker(ids => { const seen = new Set(A().exercises.map(x => exById(x.exId).muscle));
+    addWarmups(ids.map(id => ({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})), A().start, seen).forEach(x => A().exercises.push(x)); touchProfile(); render(); }),
   "pick-toggle": b => { const id = b.dataset.id;
     if(picker.only){ const f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
   "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
