@@ -553,7 +553,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-09 a";
+const APP_VERSION = "2026-11-09 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2963,7 +2963,7 @@ const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h; else if(h==="hist
 /* ---------- Statistiques anonymes (GoatCounter, gratuit, sans cookie) ----------
    Deux chiffres seulement : installations sur l'écran d'accueil et ouvertures de l'app par jour.
    Rien d'autre n'est envoyé : ni séance, ni nom, ni Gymon. Désactivable dans Réglages. Inactif tant que GC_CODE est vide. */
-const GC_CODE = "";   // code du compte GoatCounter (ex. "gymon" pour gymon.goatcounter.com)
+const GC_CODE = "gymon";   // code du compte GoatCounter (ex. "gymon" pour gymon.goatcounter.com)
 function gcCount(path){
   if(!GC_CODE || S.profile.noStats || navigator.webdriver || /^(localhost|127\.)/.test(location.hostname)) return;
   try{ const u = `https://${GC_CODE}.goatcounter.com/count?p=${encodeURIComponent(path)}&e=true&t=${encodeURIComponent(path)}&rnd=${Math.random().toString(36).slice(2)}`;
