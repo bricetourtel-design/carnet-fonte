@@ -553,7 +553,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-06 g";
+const APP_VERSION = "2026-11-09 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2490,6 +2490,8 @@ function viewExercises(){
       <div class="row wrap"><button class="btn sm" data-act="export">Exporter mes données</button><button class="btn sm" data-act="import">Importer</button>
         <label class="btn sm" for="gravl-file">Importer depuis Gravl (CSV)</label><input id="gravl-file" class="vh" type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain"></div>
       <p class="small muted" style="margin:0">Vos séances restent uniquement dans ce téléphone, sans compte ni serveur. Exportez-les de temps en temps pour garder une sauvegarde.</p>
+      <label class="row" style="gap:10px;align-items:flex-start"><input type="checkbox" id="stats-on" ${S.profile.noStats ? "" : "checked"} style="margin-top:3px">
+        <span class="small">Statistiques anonymes : Gymon compte seulement les installations et les ouvertures de l'app (aucune séance, aucun nom, aucun cookie). Décochez pour refuser.</span></label>
     </section>
     <p class="foot">Gymon · aucune IA dans l'application · Assisté par IA<br>Photos d'exercices : Free Exercise DB (domaine public)<br>Version ${APP_VERSION}</p>`;
 }
@@ -2897,6 +2899,7 @@ document.addEventListener("change", e => {
     return;
   }
   if(e.target.id==="bw"){ S.profile.bw = num(e.target.value) || ""; touchProfile(); pendingRender = true; setTimeout(flushPending, 50); }
+  else if(e.target.id==="stats-on"){ S.profile.noStats = !e.target.checked; touchProfile(); toast(e.target.checked ? "Statistiques anonymes activées" : "Statistiques désactivées"); }
   else if(e.target.id==="height"){ S.profile.height = num(e.target.value) || ""; touchProfile(); }
   else if(e.target.id==="sex"){ S.profile.sex = e.target.value; touchProfile(); }
   else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
@@ -2957,6 +2960,28 @@ ACT["ob-save"] = () => {
 /* ---------- Démarrage ---------- */
 loadLocal();
 const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h; else if(h==="historique"){ tab = "progres"; progSub = "hist"; }
+/* ---------- Statistiques anonymes (GoatCounter, gratuit, sans cookie) ----------
+   Deux chiffres seulement : installations sur l'écran d'accueil et ouvertures de l'app par jour.
+   Rien d'autre n'est envoyé : ni séance, ni nom, ni Gymon. Désactivable dans Réglages. Inactif tant que GC_CODE est vide. */
+const GC_CODE = "";   // code du compte GoatCounter (ex. "gymon" pour gymon.goatcounter.com)
+function gcCount(path){
+  if(!GC_CODE || S.profile.noStats || navigator.webdriver || /^(localhost|127\.)/.test(location.hostname)) return;
+  try{ const u = `https://${GC_CODE}.goatcounter.com/count?p=${encodeURIComponent(path)}&e=true&t=${encodeURIComponent(path)}&rnd=${Math.random().toString(36).slice(2)}`;
+    if(navigator.sendBeacon) navigator.sendBeacon(u); else (new Image()).src = u; }catch(e){}
+}
+function gcOpen(){
+  if(isInstalled()){
+    gcCount("ouverture-ecran-accueil");
+    try{ if(!localStorage.getItem("gymon.installCounted")){ localStorage.setItem("gymon.installCounted", "1"); gcCount("installation"); } }catch(e){}
+  } else gcCount("ouverture-navigateur");
+}
+let gcHiddenAt = 0;
+document.addEventListener("visibilitychange", () => {   // revenir dans l'app après 30 min compte comme une nouvelle utilisation
+  if(document.visibilityState === "hidden") gcHiddenAt = Date.now();
+  else if(gcHiddenAt && Date.now() - gcHiddenAt > 30*60000){ gcHiddenAt = 0; gcOpen(); }
+});
+gcOpen();
+
 if(!S.profile.creature){ creatureState(); saveLocal(); } else creatureFixLevels();   // l'œuf naît à la première ouverture : seules les séances suivantes comptent
 render(); setStatus();
 if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});   // demande au navigateur de ne pas effacer les données

@@ -103,3 +103,6 @@ Comparaison avec votre historique : 1RM estimé de chaque exercice vs la derniè
 Les propositions sont une aide : la décision finale reste celle de l'utilisateur.
 
 *Assisté par IA*
+
+## Statistiques anonymes (MVP)
+Deux chiffres seulement, via GoatCounter (gratuit, sans cookie) : **installations** sur l'écran d'accueil (une fois par téléphone, au premier lancement depuis l'icône) et **ouvertures** de l'app (`ouverture-ecran-accueil` ou `ouverture-navigateur`, une de plus si on revient après 30 min). Aucune séance, aucun nom, aucune donnée du Gymon n'est envoyée. Désactivable dans Exercices → Réglages. Inactif tant que `GC_CODE` (code du compte GoatCounter) est vide ; jamais envoyé pendant les tests ni en local.
