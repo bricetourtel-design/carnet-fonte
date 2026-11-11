@@ -577,7 +577,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-11 e";
+const APP_VERSION = "2026-11-11 f";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2164,6 +2164,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-11", t:"✍️ Saisie plus rapide", x:"Toucher une case de charge ou de reps sélectionne la valeur : tapez directement la nouvelle (10 → 20, plus de 1020)."},
   {d:"2026-11-11", t:"🩸 Séance moins bonne ? Dites pourquoi", x:"En fin de séance, indiquez la raison (règles, fatigue, santé, hygiène de vie…). Une séance « hors forme » ne fait plus baisser vos charges."},
   {d:"2026-11-11", t:"🧠 Le coach tient compte de la fatigue", x:"Un exercice fait en fin de séance donne moins de reps : c'est normal, le coach l'anticipe et ne le compte plus comme un recul. Le calcul s'adapte à votre propre historique."},
   {d:"2026-11-11", t:"💪 Des muscles plus vivants", x:"Votre Gymon grossit tant que vous vous entraînez, ses muscles délaissés fondent après 14 jours, et le dessin montre bien vos forces… et vos retards (pas d'abdos si vous ne les travaillez pas !)."},
@@ -3066,6 +3067,12 @@ const ACT = {
 
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if(b && ACT[b.dataset.act]) ACT[b.dataset.act](b, e); });
 document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if(!b) return; tab = b.dataset.tab; render(); window.scrollTo(0,0); maybeAppGuide(); });
+// Toucher une case de charge ou de reps sélectionne tout son contenu : ce qu'on tape remplace la valeur (10 → 20, pas 1020)
+document.addEventListener("focusin", e => {
+  const t = e.target; if(!(t instanceof HTMLInputElement) || !(t.dataset.f || /decimal|numeric/.test(t.inputMode))) return;
+  const sel = () => { try{ if(document.activeElement === t && t.value) t.setSelectionRange(0, t.value.length); }catch(err){} };
+  sel(); setTimeout(sel, 0); setTimeout(sel, 60);   // iOS replace parfois le curseur juste après le focus
+});
 document.addEventListener("input", e => {
   const t = e.target;
   if(t.dataset.f && A()){ const tr = t.closest("tr"); A().exercises[+tr.dataset.i].sets[+tr.dataset.j][t.dataset.f] = t.value.replace(/[^\d.,]/g,"");

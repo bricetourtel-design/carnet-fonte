@@ -33,6 +33,13 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   await p.waitForTimeout(10500);
   const go = await p.evaluate(() => { const f = document.getElementById("flash"), r = f.getBoundingClientRect(); return {cls:f.className, hidden:f.hidden, h:r.height, vh:innerHeight}; });
   ok(!go.hidden && /go/.test(go.cls) && go.h >= go.vh - 1, "fin du repos : écran « C'est reparti ! » en plein écran", go);
+  // Toucher une case de charge : la valeur est sélectionnée, ce qu'on tape la remplace
+  await p.evaluate(() => { stopRest(); flash(null); S.profile.active = null; startWorkout("Saisie", [{exId:"curl-halteres", sets:[blankSet()]}]); const s = A().exercises[0].sets.find(x => !x.warm); s.w = "10"; render(); });
+  const idx = await p.evaluate(() => A().exercises[0].sets.findIndex(x => !x.warm));
+  const box = await p.locator(`#w-0-${idx}`).boundingBox(); await p.touchscreen.tap(box.x + box.width - 6, box.y + box.height/2); await p.waitForTimeout(150);
+  await p.keyboard.type("20");
+  ok(await p.evaluate(i => A().exercises[0].sets[i].w, idx) === "20", "toucher la case « 10 » puis taper 20 donne 20 (pas 1020)");
+  await p.evaluate(() => { S.profile.active = null; render(); });
   // Statistiques anonymes : rien n'est envoyé pendant les tests, réglage pour refuser
   const gc = []; p.on("request", r => { if(/goatcounter/.test(r.url())) gc.push(r.url()); });
   await p.evaluate(() => { flash(null); stopRest(); S.profile.active = null; tab = "exercices"; render(); gcOpen(); });
