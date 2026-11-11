@@ -30,7 +30,7 @@ Statut : MVP en test auprès de testeurs (novembre 2026). Les fonctionnalités e
 | Retours testeurs | `.retours-utilisateurs.md` | Anonymes, interne |
 | Contexte complet | `docs/CONTEXTE.md` | Historique, décisions, glossaire, backlog |
 | Audit | `docs/AUDIT-2026-11.md` | État des lieux, risques, recommandations |
-| Migration | `docs/MIGRATION.md` | Procédure de changement de compte ou d'hébergement |
+| Migration | `docs/MIGRATION.md` | Changement de compte Claude (dépôt, GitHub et URL inchangés) ; annexe pour les autres cas |
 
 Ordre des blocs dans le JS de `index.html` : données de base (`MUSCLES`, `EX`) → état et stockage (`S`, `loadLocal`, `saveLocal`) → calculs (`e1rm`, `exHistory`) → coach (`coach`, `coachFresh`, fatigue) → échauffement → routine de la semaine (`generatePlan`) → points forts (`strengthByMuscle`) → séance du jour (`chooseToday`, `adaptToday`) → créature (`CREATURE_CFG`, `creatureState`, `creatureFeed`, `creatureSVG`) → partage, célébration, bulles → tutos et « Quoi de neuf » → raisons de séance moins bonne → import Gravl → rendu (`render`, `view*`) → actions (`ACT`) → démarrage.
 

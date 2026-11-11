@@ -221,10 +221,12 @@ Issues de `CREATURE.md`, des retours et du brainstorming du 6 novembre :
 ## 11. Points à renseigner lors de la migration
 
 À compléter par le propriétaire, ils ne sont pas dans le dépôt :
-- URL de production et hébergeur réel (Netlify ? GitHub Pages ? domaine ?).
-- Identifiants des comptes liés : GoatCounter, hébergeur, éventuel domaine.
-- Liste des testeurs (hors dépôt, à garder dans un espace privé).
-- Décisions prises à l'oral ou dans d'autres conversations et non reflétées ici.
+- URL de production et hébergeur réel (Netlify ? GitHub Pages ? domaine ?) : ____________________
+- Comptes liés (sans identifiants ni mots de passe, juste « lequel ») : GoatCounter `gymon`, hébergeur : ____________________
+- Liste des testeurs : hors dépôt, à garder dans un espace privé.
+- Décisions prises à l'oral ou dans d'autres conversations Claude et non reflétées dans la section 6 : à reporter avant de changer de compte Claude (voir `docs/MIGRATION.md`, section 2).
+
+Migration prévue (novembre 2026) : changement de compte Claude seulement. Dépôt GitHub, URL de l'app et hébergement inchangés.
 
 ---
 *Assisté par IA. Le collaborateur reste responsable et vérifie.*
