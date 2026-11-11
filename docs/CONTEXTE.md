@@ -18,10 +18,10 @@ Aucune donnée personnelle ne figure ici. Les testeurs sont anonymes.
 | Langue | Français uniquement |
 | Dépôt | `github.com/bricetourtel-design/carnet-fonte`, branche `main` |
 | Hébergement | **GitHub Pages**, depuis ce dépôt (confirmé par le propriétaire le 11 novembre 2026). URL de production : `https://bricetourtel-design.github.io/carnet-fonte/` (confirmée). Conséquence : **tout push sur `main` est déployé** chez les testeurs |
-| Modèle économique | Gratuit pour l'utilisateur. Pistes B2B et abonnement en section 10 |
+| Modèle économique | Gratuit pour l'utilisateur. Sujets business : hors du dépôt public, dans le document Claude privé « Gymon — dossier privé » (https://claude.ai/artifact/3cgRPQyaPkfaAqKMZ9M2qi, lisible seulement par le propriétaire et ses sessions Claude) |
 | Statistiques | GoatCounter, compte `gymon` (`gymon.goatcounter.com`), deux événements seulement |
 | Licence | Aucun fichier de licence dans le dépôt. Par défaut, tous droits réservés au propriétaire |
-| Visibilité du dépôt | **Public** (vérifié le 11 novembre 2026) : code, documentation et historique git lisibles par tous. Décision à prendre par le propriétaire (voir audit 4.2) |
+| Visibilité du dépôt | **Public** (vérifié le 11 novembre 2026) : code, documentation et historique git lisibles par tous. Pas d'offre payante : les sujets business sont sortis du dépôt (décision du 11 novembre 2026) |
 
 ## 2. Vision et thèse produit
 
@@ -34,12 +34,7 @@ Aucune donnée personnelle ne figure ici. Les testeurs sont anonymes.
 - Un coach qui s'explique (bouton « pourquoi ? » sur chaque proposition) et qui cite la littérature.
 - Une créature mystérieuse : on ne sait jamais quand elle évolue, ni quelle forme vient ensuite.
 
-**Ce qui sera valorisé commercialement** (indication du propriétaire, novembre 2026) : les fonctionnalités et la logique de développement du MVP. Concrètement, la propriété intellectuelle est dans :
-1. Les règles du coach et leur justification scientifique (`ALGORITHME.md`, fonctions `coach*`, `fatigueK`, `generatePlan`, `chooseToday`, `adaptToday`, `recovery`, `strengthByMuscle`).
-2. Le modèle de la créature : stades cachés tirés au hasard, vitalité proportionnelle, mort et résurrection, musculature par muscle avec croissance et fonte, dessin SVG paramétrique par muscle (`CREATURE_CFG`, `creatureFeed`, `growMuscles`, `creatureSVG`, `gymonBack`, `gymonHead`).
-3. La mécanique d'engagement : bulles de dialogue pilotées par les données, célébrations, évolution plein écran, avant/après, partage d'image, phrase du jour.
-4. Les choix d'ergonomie iPhone (rendu jamais sous le doigt, minuteur sans reconstruction, sélection au focus) et le corpus de tests.
-5. Les tutos, les textes, le ton.
+**Valeur et valorisation** : voir le document privé (sujets business hors du dépôt public).
 
 ## 3. Chronologie
 
@@ -237,19 +232,12 @@ Issues de `CREATURE.md`, des retours et du brainstorming du 6 novembre :
 - Sauvegarde plus simple que le copier-coller de texte (fichier, iCloud…) sans serveur.
 - Version Android testée sur appareil réel.
 
-Idées retenues lors des conversations de conception (novembre 2026), non planifiées :
-- **Clans de salle** : choisir sa salle de sport, puis un « clan de salle ». Piste business B2B envisagée : de l'ordre de 20 salles à 50 € par mois pour viser 1 000 € par mois. À valider avec des salles.
-- **Gymon+** : abonnement avec sauvegarde cloud et cosmétiques. Nécessiterait un serveur : contraire à la promesse actuelle, donc décision produit à part entière, pas une fonctionnalité de plus.
+Idées produit retenues lors des conversations de conception (novembre 2026), non planifiées (les pistes business sont dans le document privé) :
 - **Duels de Gymon** par code entre amis.
 - **Bilan du mois** façon « Wrapped ».
 - **Branches d'évolution** selon le style d'entraînement.
 - **Détail des disques** à mettre sur la barre (prolongement de la charge par côté).
-- **Comptage des utilisateurs par salle** (option étudiée pour les clans) : recherche de salle via OpenStreetMap, consentement explicite, politique de confidentialité, hébergement en Europe. Demande un serveur : même réserve que Gymon+.
 - **Suivi du cycle menstruel**, à traiter avec précaution : donnée de santé, à garder dans le téléphone, jamais partagée ni envoyée. La raison « Règles » de séance en est le premier pas.
-
-Objectif business indiqué par le propriétaire : un revenu complémentaire de l'ordre de 1 000 € par mois au bout d'un an. Scepticisme sur le modèle grand public ; la piste des salles de sport était recommandée.
-
-Avant toute valorisation commerciale : vérifier ses engagements contractuels (exclusivité, non-concurrence, propriété intellectuelle) avec un juriste.
 
 Questions ouvertes (à trancher par le propriétaire) :
 - Barre EZ ou barre droite par défaut pour « Barre au front » ? (aujourd'hui : barre droite, 20 kg)
