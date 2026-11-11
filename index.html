@@ -319,6 +319,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .chip.sm{padding:5px 10px;font-size:13px}
 .tsel{gap:6px}
 .wu-hint{margin:6px 2px 0;font-size:13px;color:var(--muted);line-height:1.35}
+.plates{display:block;font-size:10.5px;line-height:1.1;color:var(--muted);text-align:center;margin-top:2px;font-variant-numeric:tabular-nums}
 .coach .fat{font-weight:500;color:var(--muted);font-size:12px}
 .wn{display:flex;flex-direction:column;gap:8px}
 .wn-d{margin:6px 0 0;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -577,7 +578,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-11 g";
+const APP_VERSION = "2026-11-11 h";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2164,6 +2165,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-11", t:"🏋️ Charge par côté de la barre", x:"Sous la charge d'un exercice à la barre, l'app indique ce qu'il faut mettre de chaque côté (barre de 20 kg, EZ de 10 kg, réglables dans Réglages)."},
   {d:"2026-11-11", t:"🩸 Séance moins bonne ? Dites pourquoi", x:"En fin de séance, indiquez la raison (règles, fatigue, santé, hygiène de vie…). Une séance « hors forme » ne fait plus baisser vos charges."},
   {d:"2026-11-11", t:"🧠 Le coach tient compte de la fatigue", x:"Un exercice fait en fin de séance donne moins de reps : c'est normal, le coach l'anticipe et ne le compte plus comme un recul. Le calcul s'adapte à votre propre historique."},
   {d:"2026-11-11", t:"💪 Des muscles plus vivants", x:"Votre Gymon grossit tant que vous vous entraînez, ses muscles délaissés fondent après 14 jours, et le dessin montre bien vos forces… et vos retards (pas d'abdos si vous ne les travaillez pas !)."},
@@ -2505,7 +2507,7 @@ function viewActive(){
       return `<tr class="set ${s.done?"done":""} ${s.warm?"warm":""}" data-i="${i}" data-j="${j}">
         <td><button class="setno ${s.warm?"warm":""}" data-act="toggle-warm" aria-label="Série ${label}, toucher pour marquer en échauffement">${label}</button></td>
         <td class="prev">${p ? esc(setTxt(p)) : "—"}</td>
-        <td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (wu[nw-1] ? fmtN(wu[nw-1].w) : p&&num(p.w)?fmtN(num(p.w)):"kg") : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg"></td>
+        <td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (wu[nw-1] ? fmtN(wu[nw-1].w) : p&&num(p.w)?fmtN(num(p.w)):"kg") : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg">${e.equip==="Barre" ? `<small class="plates" id="pl-${i}-${j}">${plateText(e, num(s.w) || num(s.warm ? (wu[nw-1]||{}).w : c.w))}</small>` : ""}</td>
         <td><input id="r-${i}-${j}" data-f="r" inputmode="numeric" value="${esc(s.r)}" placeholder="${s.warm ? (wu[nw-1] ? wu[nw-1].r : p?num(p.r)||"":"reps") : c.r || (c.lo+"–"+c.hi)}" aria-label="Répétitions"></td>
         <td><button class="check" data-act="check" aria-label="Valider la série"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button></td>
       </tr>`;
@@ -2678,6 +2680,8 @@ function viewExercises(){
         <select id="rest-default">${[-1,0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s<0?"Auto selon l'exercice (1 min 30 à 3 min)":s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
       <div class="row wrap">
         <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="bw" inputmode="decimal" value="${esc(S.profile.bw||"")}" placeholder="${detectBodyweight() ? fmtN(detectBodyweight())+" (détecté)" : "Ex. 80"}"></label>
+        <label class="field" style="flex:1;min-width:130px">Barre droite<select id="bar">${[20,15,10].map(v => `<option value="${v}" ${(S.profile.bar||20)===v?"selected":""}>${v} kg</option>`).join("")}</select></label>
+        <label class="field" style="flex:1;min-width:130px">Barre EZ<select id="bar-ez">${[10,8,7,12].map(v => `<option value="${v}" ${(S.profile.barEz||10)===v?"selected":""}>${v} kg</option>`).join("")}</select></label>
         <label class="field" style="flex:1;min-width:130px">Taille (cm)<input id="height" inputmode="numeric" value="${esc(S.profile.height||"")}" placeholder="Ex. 178"></label>
         <label class="field" style="flex:1;min-width:130px">Vous êtes<select id="sex"><option value="h" ${S.profile.sex!=="f"?"selected":""}>Un homme</option><option value="f" ${S.profile.sex==="f"?"selected":""}>Une femme</option></select></label></div>
       <div class="row wrap"><button class="btn sm" data-act="whats-new">Les nouveautés</button><button class="btn sm" data-act="tuto-app">Revoir le guide de l'app</button><button class="btn sm" data-act="tuto">Revoir le tuto du Gymon</button></div>
@@ -3066,6 +3070,14 @@ const ACT = {
 
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if(b && ACT[b.dataset.act]) ACT[b.dataset.act](b, e); });
 document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if(!b) return; tab = b.dataset.tab; render(); window.scrollTo(0,0); maybeAppGuide(); });
+// Charge par côté de la barre : (total − barre) ÷ 2. Barre droite 20 kg et barre EZ 10 kg par défaut (réglables)
+const barWeight = e => /\bez\b/i.test(e.name) ? (S.profile.barEz || 10) : (S.profile.bar || 20);
+function plateText(e, total){
+  if(e.equip !== "Barre" || !total) return "";
+  const bar = barWeight(e); if(total < bar) return "";
+  const side = (total - bar) / 2;
+  return side > 0 ? `(${fmtN(side, 2)} kg / côté)` : "(barre seule)";
+}
 // Toucher une case de charge ou de reps sélectionne tout son contenu : ce qu'on tape remplace la valeur (10 → 20, pas 1020)
 document.addEventListener("focusin", e => {
   const t = e.target; if(!(t instanceof HTMLInputElement) || !(t.dataset.f || /decimal|numeric/.test(t.inputMode))) return;
@@ -3075,6 +3087,8 @@ document.addEventListener("focusin", e => {
 document.addEventListener("input", e => {
   const t = e.target;
   if(t.dataset.f && A()){ const tr = t.closest("tr"); A().exercises[+tr.dataset.i].sets[+tr.dataset.j][t.dataset.f] = t.value.replace(/[^\d.,]/g,"");
+    const pl = t.dataset.f==="w" && document.getElementById(`pl-${tr.dataset.i}-${tr.dataset.j}`);
+    if(pl) pl.textContent = plateText(exById(A().exercises[+tr.dataset.i].exId), num(t.value) || num(String(t.placeholder).replace(/\s/g,"")));
     touchProfile(); const m = document.getElementById("live-meta"); if(m) m.textContent = liveMeta(); }
   else if(t.id==="w-name" && A()){ A().name = t.value; touchProfile(); }
   else if(t.id==="r-name" && draft){ draft.name = t.value; }
@@ -3109,6 +3123,8 @@ document.addEventListener("change", e => {
   }
   if(e.target.id==="bw"){ S.profile.bw = num(e.target.value) || ""; touchProfile(); pendingRender = true; setTimeout(flushPending, 50); }
   else if(e.target.id==="stats-on"){ S.profile.noStats = !e.target.checked; touchProfile(); toast(e.target.checked ? "Statistiques anonymes activées" : "Statistiques désactivées"); }
+  else if(e.target.id==="bar"){ S.profile.bar = +e.target.value; touchProfile(); }
+  else if(e.target.id==="bar-ez"){ S.profile.barEz = +e.target.value; touchProfile(); }
   else if(e.target.id==="height"){ S.profile.height = num(e.target.value) || ""; touchProfile(); }
   else if(e.target.id==="sex"){ S.profile.sex = e.target.value; touchProfile(); }
   else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }

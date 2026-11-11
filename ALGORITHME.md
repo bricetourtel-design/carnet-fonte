@@ -104,6 +104,9 @@ Duos proposés : Pecs + Triceps et Dos + Biceps (muscles synergiques), Pecs + Do
 
 Le jour J, la séance prévue apparaît en premier sur l'onglet Séance (« Aujourd'hui »), puis les suivantes dans l'ordre ; un jour sans séance affiche la prochaine.
 
+## Charge par côté de la barre
+Sous la charge de chaque série d'un exercice à la barre : (charge totale − poids de la barre) ÷ 2, entre parenthèses. Barre droite 20 kg et barre EZ 10 kg par défaut (exercices dont le nom contient « EZ »), réglables dans Exercices → Réglages. « (barre seule) » si la charge est égale au poids de la barre ; rien sous ce poids, ni pour les haltères et les machines.
+
 ## Minuteur de repos
 Un bip et un bandeau bleu en haut de l'écran avec compte à rebours à 10 s de la fin (il ne bloque pas l'écran : on peut saisir sa charge), puis 3 bips et l'écran plein écran « GO · C'est reparti ! » à la fin (5 s, toucher pour fermer). Le son se mêle à la musique dans les écouteurs (iOS 17+). Sur iPhone, le son ne sort que si l'app est ouverte et l'écran allumé.
 

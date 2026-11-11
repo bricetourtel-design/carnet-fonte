@@ -40,6 +40,16 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   await p.keyboard.type("20");
   ok(await p.evaluate(i => A().exercises[0].sets[i].w, idx) === "20", "toucher la case « 10 » puis taper 20 donne 20 (pas 1020)");
   await p.evaluate(() => { S.profile.active = null; render(); });
+  // Charge par côté de la barre
+  const pl = await p.evaluate(() => { stopRest(); S.profile.active = null; S.workouts = [];
+    startWorkout("Barre", [{exId:"dc-barre", sets:[blankSet()]}, {exId:"curl-halteres", sets:[blankSet()]}]); render();
+    const j = A().exercises[0].sets.findIndex(x => !x.warm), inp = document.getElementById(`w-0-${j}`);
+    inp.value = "50"; inp.dispatchEvent(new Event("input", {bubbles:true})); const a = document.getElementById(`pl-0-${j}`).textContent;
+    inp.value = "20"; inp.dispatchEvent(new Event("input", {bubbles:true})); const b2 = document.getElementById(`pl-0-${j}`).textContent;
+    const ez = plateText({equip:"Barre", name:"Curl à la barre EZ"}, 30), db = !!document.querySelector('[id^="pl-1-"]');
+    S.profile.active = null; render(); return {a, b2, ez, db}; });
+  ok(pl.a === "(15 kg / côté)" && pl.b2 === "(barre seule)", "développé couché : 50 kg → 15 kg par côté ; 20 kg → barre seule", pl);
+  ok(pl.ez === "(10 kg / côté)" && !pl.db, "barre EZ de 10 kg (30 kg → 10 par côté) ; rien sur les haltères", pl);
   // Statistiques anonymes : rien n'est envoyé pendant les tests, réglage pour refuser
   const gc = []; p.on("request", r => { if(/goatcounter/.test(r.url())) gc.push(r.url()); });
   await p.evaluate(() => { flash(null); stopRest(); S.profile.active = null; tab = "exercices"; render(); gcOpen(); });
