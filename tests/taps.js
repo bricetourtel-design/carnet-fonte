@@ -56,6 +56,16 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   await p.locator("#stats-on").scrollIntoViewIfNeeded(); await p.click("#stats-on");
   ok(await p.evaluate(() => S.profile.noStats === true), "Réglages : décocher « Statistiques anonymes » les désactive");
   await p.click("#stats-on");
+  // Indicateurs de validation du MVP : une seule fois par téléphone, seulement si une séance récente
+  const ret = await p.evaluate(() => { const D = 86400000, keys = ["gymon.firstSeen","gymon.gc.j7","gymon.gc.j30","gymon.gc.partage"], saved = S.workouts;
+    keys.forEach(k => localStorage.removeItem(k)); localStorage.setItem("gymon.firstSeen", String(Date.now() - 31*D));
+    S.workouts = []; gcRetention(); const none = !localStorage.getItem("gymon.gc.j7");
+    S.workouts = [{id:"t1", start:Date.now() - D, end:Date.now() - D + 3600000, exercises:[]}]; gcRetention();
+    const both = !!localStorage.getItem("gymon.gc.j7") && !!localStorage.getItem("gymon.gc.j30");
+    S.profile.noStats = true; gcOnce("gymon.gc.partage", "partage-premier"); const refused = !localStorage.getItem("gymon.gc.partage"); S.profile.noStats = false;
+    S.workouts = saved; keys.forEach(k => localStorage.removeItem(k)); return {none, both, refused}; });
+  ok(ret.none && ret.both, "rétention : rien sans séance récente ; actif à 7 et 30 jours avec une séance récente", ret);
+  ok(ret.refused, "statistiques refusées : l'indicateur n'est ni envoyé ni marqué", ret);
   ok(await p.evaluate(() => S.profile.noStats === false) && gc.length === 0, "aucune statistique envoyée pendant les tests", gc);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();

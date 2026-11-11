@@ -578,7 +578,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-11 j";
+const APP_VERSION = "2026-11-11 k";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1998,6 +1998,7 @@ function shareSheet(kind, wid){
 }
 function shareSend(){
   if(!shareFile) return;
+  gcCount("partage-image"); gcOnce("gymon.gc.partage", "partage-premier");   // statistiques anonymes : seulement le fait de partager
   const c = creatureState(), text = `${c.name || "Mon Gymon"} (${CREATURE_CFG.stages[c.stage]}) sur Gymon 💪 ${location.origin + location.pathname}`;
   if(navigator.canShare && navigator.canShare({files:[shareFile]})) navigator.share({files:[shareFile], text}).catch(() => {});
   else { const a = document.createElement("a"); a.href = URL.createObjectURL(shareFile); a.download = "gymon.png"; document.body.appendChild(a); a.click(); a.remove(); toast("Image enregistrée"); }
@@ -2696,7 +2697,7 @@ function viewExercises(){
         <label class="btn sm" for="gravl-file">Importer depuis Gravl (CSV)</label><input id="gravl-file" class="vh" type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain"></div>
       <p class="small muted" style="margin:0">Vos séances restent uniquement dans ce téléphone, sans compte ni serveur. Exportez-les de temps en temps pour garder une sauvegarde.</p>
       <label class="row" style="gap:10px;align-items:flex-start"><input type="checkbox" id="stats-on" ${S.profile.noStats ? "" : "checked"} style="margin-top:3px">
-        <span class="small">Statistiques anonymes : Gymon compte seulement les installations et les ouvertures de l'app (aucune séance, aucun nom, aucun cookie). Décochez pour refuser.</span></label>
+        <span class="small">Statistiques anonymes : Gymon compte seulement les installations, les ouvertures de l'app, si elle est encore utilisée après 7 et 30 jours, et les partages d'image (aucune séance, aucun nom, aucun cookie). Décochez pour refuser.</span></label>
     </section>
     <p class="foot">Gymon · aucune IA dans l'application · Assisté par IA<br>Photos d'exercices : Free Exercise DB (domaine public)<br>Version ${APP_VERSION}</p>`;
 }
@@ -2776,7 +2777,7 @@ function finishWorkout(){
   w.rating = rateWorkout(w);
   S.workouts.push(w); S.profile.active = null; stopRest(); flash(null);
   touchProfile(); saveWorkout(w);
-  const cr = creatureFeed(w); render();
+  const cr = creatureFeed(w); render(); gcRetention();
   openSheet(`<div class="rating"><span class="remo">${w.rating.e}</span><div><h3>${esc(w.rating.label)}</h3>
       <ul>${w.rating.why.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
     ${/correcte|dessous/.test(w.rating.label) ? offReasonsHTML(w) : ""}
@@ -3194,7 +3195,7 @@ ACT["ob-save"] = () => {
 loadLocal();
 const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h; else if(h==="historique"){ tab = "progres"; progSub = "hist"; }
 /* ---------- Statistiques anonymes (GoatCounter, gratuit, sans cookie) ----------
-   Deux chiffres seulement : installations sur l'écran d'accueil et ouvertures de l'app par jour.
+   Installations sur l'écran d'accueil, ouvertures de l'app, et deux indicateurs de validation du MVP (voir gcRetention, shareSend).
    Rien d'autre n'est envoyé : ni séance, ni nom, ni Gymon. Désactivable dans Réglages. Inactif tant que GC_CODE est vide. */
 const GC_CODE = "gymon";   // code du compte GoatCounter (ex. "gymon" pour gymon.goatcounter.com)
 function gcCount(path){
@@ -3207,6 +3208,26 @@ function gcOpen(){
     gcCount("ouverture-ecran-accueil");
     try{ if(!localStorage.getItem("gymon.installCounted")){ localStorage.setItem("gymon.installCounted", "1"); gcCount("installation"); } }catch(e){}
   } else gcCount("ouverture-navigateur");
+  gcRetention();
+}
+// Un événement envoyé une seule fois par téléphone (rien n'est marqué si les statistiques sont refusées)
+function gcOnce(key, path){
+  try{ if(S.profile.noStats || localStorage.getItem(key)) return; localStorage.setItem(key, "1"); }catch(e){ return; }
+  gcCount(path);
+}
+// Date de première utilisation, gardée dans le téléphone ; pour un utilisateur existant : naissance du Gymon ou première séance saisie (pas l'import Gravl)
+function gcFirstSeen(){
+  try{ let t = +localStorage.getItem("gymon.firstSeen");
+    if(!t){ const c = S.profile.creature; t = Math.min(Date.now(), (c && c.born) || Infinity, ...S.workouts.filter(w => !w.source).map(w => w.start));
+      localStorage.setItem("gymon.firstSeen", String(t)); }
+    return t; }catch(e){ return Date.now(); }
+}
+// Rétention : toujours actif (au moins une séance dans les 7 derniers jours) 7 puis 30 jours après la première utilisation. Une fois par téléphone.
+function gcRetention(){
+  const now = Date.now(), days = (now - gcFirstSeen()) / 86400000;
+  if(!S.workouts.some(w => !w.source && now - (w.end || w.start) < 7*86400000)) return;
+  if(days >= 7) gcOnce("gymon.gc.j7", "actif-j7");
+  if(days >= 30) gcOnce("gymon.gc.j30", "actif-j30");
 }
 let gcHiddenAt = 0;
 document.addEventListener("visibilitychange", () => {   // revenir dans l'app après 30 min compte comme une nouvelle utilisation
