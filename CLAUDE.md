@@ -32,6 +32,7 @@ Statut : MVP en test auprès de testeurs (novembre 2026). Les fonctionnalités e
 | Retours testeurs | `.retours-utilisateurs.md` | Anonymes, interne |
 | Contexte complet | `docs/CONTEXTE.md` | Historique, décisions, glossaire, backlog |
 | Audit | `docs/AUDIT-2026-11.md` | État des lieux, risques, recommandations |
+| Business et propriété | Document Claude privé « Gymon — dossier privé » : https://claude.ai/artifact/3cgRPQyaPkfaAqKMZ9M2qi | Valeur, modèle économique, pistes business, risques juridiques. **Hors du dépôt**, lu et mis à jour avec les outils Claude Docs |
 | Migration | `docs/MIGRATION.md` | Changement de compte Claude (dépôt, GitHub et URL inchangés) ; annexe pour les autres cas |
 
 Ordre des blocs dans le JS de `index.html` : données de base (`MUSCLES`, `EX`) → état et stockage (`S`, `loadLocal`, `saveLocal`) → calculs (`e1rm`, `exHistory`) → coach (`coach`, `coachFresh`, fatigue) → échauffement → routine de la semaine (`generatePlan`) → points forts (`strengthByMuscle`) → séance du jour (`chooseToday`, `adaptToday`) → créature (`CREATURE_CFG`, `creatureState`, `creatureFeed`, `creatureSVG`) → partage, célébration, bulles → tutos et « Quoi de neuf » → raisons de séance moins bonne → import Gravl → rendu (`render`, `view*`) → actions (`ACT`) → démarrage.
@@ -83,6 +84,7 @@ Backlog et idées : `docs/CONTEXTE.md`, section « Pistes ».
 - Changer les identifiants d'exercices (`EX`, `GRAVL`, `gx-*`) : ils sont dans l'historique de tous les utilisateurs.
 - Changer la clé `localStorage`, le nom du cache sans incrément, ou le champ `app:"carnet-fonte"` des exports : la compatibilité des sauvegardes en dépend.
 - Toucher aux photos ou à leur nommage sans mettre à jour `sw.js` et `EXTRA_IMG`.
+- Écrire dans le dépôt (fichiers ou messages de commit) des sujets business : valeur, prix, revenus, pistes commerciales, risques juridiques, contrat. Ils vont dans le document privé (décision du 11 novembre 2026).
 - Mettre des données personnelles (noms de testeurs, numéros) dans le dépôt, y compris dans `.retours-utilisateurs.md`. Jamais de CSV Gravl, de poids du propriétaire ni de captures d'écran commités : les captures de test vont dans un dossier temporaire (il y a eu un précédent, effacé par réécriture d'historique).
 
 ## Hébergement et déploiement
