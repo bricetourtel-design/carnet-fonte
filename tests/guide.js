@@ -28,6 +28,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.click('#tuto .tu-skip'); await p.click('[data-act="tuto"]');
   ok(await p.textContent("#tuto h3") === "Voici ton Gymon", "« Revoir le tuto du Gymon » rouvre l'autre tuto");
   await p.click('#tuto .tu-skip');
+  // Quoi de neuf : nouvel utilisateur → rien ; testeur d'avant → les nouveautés depuis sa dernière séance, une seule fois
+  const wn = await p.evaluate(() => { closeSheet();
+    const fresh = S.profile.seenVersion === versionDate(APP_VERSION);
+    S.profile.seenVersion = undefined; S.workouts = [{id:"old", name:"x", start:new Date(2026, 10, 5, 18).getTime(), end:new Date(2026, 10, 5, 19).getTime(), exercises:[{exId:"squat", sets:[{w:"100", r:"5", done:true}]}]}];
+    maybeWhatsNew(); const shown = !document.getElementById("sheet").hidden, items = document.querySelectorAll(".wn-i").length, oldest = [...document.querySelectorAll(".wn-d")].pop().textContent;
+    closeSheet(); maybeWhatsNew(); const again = !document.getElementById("sheet").hidden;
+    return {fresh, shown, items, oldest, again, total:WHATS_NEW.length, after:WHATS_NEW.filter(x => x.d > "2026-11-05").length}; });
+  ok(wn.fresh, "nouvel utilisateur : pas de fenêtre « Quoi de neuf »", wn);
+  ok(wn.shown && wn.items === wn.after && /6 novembre/.test(wn.oldest) && !wn.again, "testeur dont la dernière séance date du 5 nov. : nouveautés depuis le 6 nov., affichées une seule fois", wn);
+  await p.click('.tabs [data-tab="exercices"]'); await p.click('[data-act="whats-new"]');
+  ok(await p.evaluate(() => document.querySelectorAll(".wn-i").length === WHATS_NEW.length), "Réglages : « Les nouveautés » rouvre la liste complète");
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du guide passent");
