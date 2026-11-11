@@ -13,6 +13,8 @@ Statut : MVP en test auprès de testeurs (novembre 2026). Les fonctionnalités e
 - Agir comme **responsable produit et technique** du projet : vision, priorités, arbitrages argumentés, pas d'exécution aveugle.
 - Avant toute modification de règle (coach, créature, routine), lire la section correspondante de `ALGORITHME.md` ou `CREATURE.md`, et la mettre à jour dans le même commit.
 - Proposer, ne pas décider seul, sur tout ce qui change les règles du jeu pour l'utilisateur (seuils, vitalité, mort, fourchettes de reps). Faire les retouches techniques sans demander.
+- Tout changement du dessin du Gymon est d'abord présenté sur une planche visuelle (captures) et validé par le propriétaire avant intégration.
+- Chaque algorithme se base sur l'historique **de chaque utilisateur**. L'historique du propriétaire (Gravl) ne sert qu'aux simulations, jamais de référence codée en dur.
 - Dire clairement ce qui est fait, ce qui ne l'est pas, et ce qui n'a pas pu être vérifié (les tests ne couvrent pas Safari iOS réel).
 
 ## Architecture (à connaître avant de toucher au code)
@@ -63,7 +65,7 @@ Données : tout est dans `localStorage` sous la clé `carnet-fonte.v1`, objet `S
 3. Incrémenter `APP_VERSION` dans `index.html` (format `AAAA-MM-JJ` + lettre) **et** `CACHE` dans `sw.js` (`carnet-fonte-vN`). Sans ça, les téléphones gardent l'ancienne version.
 4. Ajouter une entrée `WHATS_NEW` seulement pour une nouveauté qui change l'usage (nouvelle fonction, règle du jeu ou du coach). Pas pour une correction ni une retouche.
 5. Mettre à jour `ALGORITHME.md` ou `CREATURE.md` si une règle change.
-6. Commit en français, une ligne qui dit ce que voit l'utilisateur (voir `git log` pour le style). Pousser sur la branche de travail, jamais directement sur `main` sans accord.
+6. Commit en français, une ligne qui dit ce que voit l'utilisateur (voir `git log` pour le style). Puis déployer (voir « Hébergement et déploiement »).
 7. Mention « Assisté par IA » dans tout document produit.
 
 ## Priorités produit (novembre 2026)
@@ -81,11 +83,15 @@ Backlog et idées : `docs/CONTEXTE.md`, section « Pistes ».
 - Changer les identifiants d'exercices (`EX`, `GRAVL`, `gx-*`) : ils sont dans l'historique de tous les utilisateurs.
 - Changer la clé `localStorage`, le nom du cache sans incrément, ou le champ `app:"carnet-fonte"` des exports : la compatibilité des sauvegardes en dépend.
 - Toucher aux photos ou à leur nommage sans mettre à jour `sw.js` et `EXTRA_IMG`.
-- Mettre des données personnelles (noms de testeurs, numéros) dans le dépôt, y compris dans `.retours-utilisateurs.md`.
+- Mettre des données personnelles (noms de testeurs, numéros) dans le dépôt, y compris dans `.retours-utilisateurs.md`. Jamais de CSV Gravl, de poids du propriétaire ni de captures d'écran commités : les captures de test vont dans un dossier temporaire (il y a eu un précédent, effacé par réécriture d'historique).
 
 ## Hébergement et déploiement
 
-L'app est un dossier statique servi par **GitHub Pages depuis ce dépôt**. Conséquence directe : **un push sur `main` est un déploiement chez les testeurs**. On ne pousse sur `main` qu'avec `APP_VERSION` et `CACHE` incrémentés, les tests verts et l'accord du propriétaire. Les fichiers Markdown et `docs/` ne sont pas chargés par l'app : les modifier sur `main` est sans effet pour les utilisateurs. URL de production : `https://bricetourtel-design.github.io/carnet-fonte/`. Changer d'URL fait perdre les données des utilisateurs installés (le `localStorage` est lié à l'origine) : voir `docs/MIGRATION.md`.
+L'app est un dossier statique servi par **GitHub Pages depuis ce dépôt**. Conséquence directe : **un push sur `main` est un déploiement chez les testeurs**. On ne pousse sur `main` qu'avec `APP_VERSION` et `CACHE` incrémentés et les tests verts.
+
+**Règle de déploiement (décidée par le propriétaire le 11 novembre 2026)** : Claude déploie seul dès que le propriétaire a demandé ou validé la fonctionnalité, tests verts et versions incrémentées. Exceptions qui demandent un accord explicite avant déploiement : tout changement des règles du jeu, toute migration ou risque sur les données des utilisateurs, tout changement de dessin du Gymon (planche validée), toute réécriture d'historique (force push). Selon la session, le déploiement se fait par `git push origin main` ou, si la session impose une branche `claude/…`, par une pull request fusionnée dans `main`. Après déploiement, conseiller aux testeurs de fermer et rouvrir l'app.
+
+Auteur des commits : le propriétaire, avec son adresse personnelle (pas d'adresse professionnelle). Les fichiers Markdown et `docs/` ne sont pas chargés par l'app : les modifier sur `main` est sans effet pour les utilisateurs. URL de production : `https://bricetourtel-design.github.io/carnet-fonte/`. Changer d'URL fait perdre les données des utilisateurs installés (le `localStorage` est lié à l'origine) : voir `docs/MIGRATION.md`.
 
 ---
 *Assisté par IA. Le collaborateur reste responsable et vérifie.*
