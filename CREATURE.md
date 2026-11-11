@@ -75,6 +75,12 @@ La première version recalculait tous les muscles à chaque séance à partir de
 - **Partage** : carte image 1080×1350 (Gymon, nom, stade, couleur rare, stats de la semaine ou de la séance, 3 meilleures séries), créée dans le téléphone et envoyée par le partage de l'iPhone. Aucun serveur.
 - L'ambiance (Aesthetic / Compétition) ne règle plus que l'expression (clin d'œil en Compétition).
 
+## V2.0 : musculature plus vivante et plus contrastée
+- **Croissance sans plafond de force** : chaque séance qui travaille un muscle le fait grossir selon ses séries (`growth.perSet` 0,04 par série, 0,45 max par séance), de moins en moins vite près du sommet (×(1 − niveau/5)), jusqu'à 4,5. Un record sur un exercice du muscle donne +0,15.
+- **Fonte** : après 14 jours sans travailler un muscle, −0,05 par jour, jamais sous 40 % de son maximum atteint. Le Gymon le dit en priorité dans sa bulle (« Mes jambes fondent 💧 »). À la mise à jour, la musculature est rejouée sur l'historique et la fonte ne démarre qu'à partir de ce jour.
+- **Dessin exagéré** : niveau affiché = niveau réel + 80 % de l'écart à la moyenne des muscles ; amplitudes de dessin augmentées (biceps, pecs, dorsaux, jambes…) ; abdos invisibles tant qu'ils ne sont pas travaillés.
+- **Avant / après** sur la page du Gymon : tous les 15 jours si l'évolution se voit (somme des écarts ≥ 0,75 ou nouveau stade), sinon tous les 30 jours ; « Super, on continue ! » fixe un nouveau point de départ.
+
 ## Visuel
 Dessin vectoriel (SVG) généré dans la page, sans bibliothèque : œuf qui se fissure, poussin, poulet puis dinosaure humanoïdes.
 - **Dos** : largeur du torse et dorsaux. **Pectoraux** : taille des pecs. **Épaules** : deltoïdes. **Biceps / triceps** : bras. **Jambes** : cuisses et mollets. **Abdos** : tablettes.

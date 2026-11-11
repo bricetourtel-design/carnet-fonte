@@ -1,4 +1,5 @@
 // Tests de la créature (Node + Playwright). Usage : node tests/creature.js [dossier-captures]
+const MUSCLES_LIST = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const {chromium, devices} = require("playwright");
 const path = require("path");
 const URL = "file://" + path.resolve(__dirname, "..", "index.html"), SHOTS = process.argv[2];
@@ -136,13 +137,20 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(Math.round(streak[0]) === 60 && streak[1] === 100, "séance : +20 % de la vitalité (50 → 60 %) ; 3 jours de suite : retour à 100 %", streak);
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3.png"), fullPage:true});
 
-  // Croissance progressive : petites évolutions visibles à chaque séance, plafonnées par le niveau de force
-  const grow = await p.evaluate(() => { const c = {levels:{}}, out = [];
-    for(let i=0;i<4;i++){ growMuscles(c, {exercises:[{exId:"dc-barre", sets:[1,2,3].map(() => ({w:"60", r:"10", done:true}))}]}); out.push(c.levels.Pectoraux); }
-    const cap = muscleLevels().Pectoraux + 0.5; for(let i=0;i<40;i++) growMuscles(c, {exercises:[{exId:"dc-barre", sets:[{w:"60",r:"10",done:true}]}]});
-    return {out, last:c.levels.Pectoraux, cap, legs:c.levels.Jambes||0}; });
-  ok(grow.out[0] > 0 && grow.out[0] <= 0.5 && grow.out.every((x,i,a) => i===0 || x > a[i-1] || x === grow.cap), "chaque séance fait un peu grossir le muscle travaillé", grow.out);
-  ok(grow.last <= grow.cap + 1e-9 && grow.legs === 0, "plafond au niveau de force, les muscles non travaillés ne bougent pas", grow);
+  // Croissance v2 : chaque séance fait grossir le muscle travaillé, sans plafond de force, de moins en moins vite, max 4,5
+  const grow = await p.evaluate(() => { const c = {levels:{}}, out = [], n = Date.now(), W = (i, prs) => ({end:n + i*3600000, prs:prs||[], exercises:[{exId:"dc-barre", sets:[1,2,3,4].map(() => ({w:"60", r:"10", done:true}))}]});
+    for(let i=0;i<4;i++){ growMuscles(c, W(i)); out.push(c.levels.Pectoraux); }
+    for(let i=4;i<120;i++) growMuscles(c, W(i));
+    const a = {levels:{Pectoraux:2}}, b = {levels:{Pectoraux:2}}; growMuscles(a, W(1)); growMuscles(b, W(1, ["dc-barre"]));
+    return {out, last:c.levels.Pectoraux, legs:c.levels.Jambes||0, gain:a.levels.Pectoraux - 2, prGain:b.levels.Pectoraux - 2}; });
+  ok(grow.out[0] > 0.1 && grow.out.every((x,i,a) => i===0 || x > a[i-1]), "chaque séance fait grossir le muscle travaillé (4 séries ≈ +0,16)", grow.out);
+  ok(grow.last > 4 && grow.last <= 4.5 && grow.legs === 0, "plus de plafond de force : il continue de grossir jusqu'à 4,5 ; les muscles non travaillés ne bougent pas", grow);
+  ok(grow.prGain > grow.gain + 0.1, "un record donne un bonus de croissance", grow);
+  // Fonte : après 14 jours sans travailler un muscle, il fond doucement (jamais sous 40 % de son maximum)
+  const melt = await p.evaluate(() => { const D = 864e5, n = Date.now(), c = {levels:{Jambes:3}, lastWorked:{Jambes:n - 20*D}, peak:{Jambes:3}};
+    const a = muscleLevel(c, "Jambes"); c.lastWorked.Jambes = n - 200*D; const b = muscleLevel(c, "Jambes"); c.lastWorked.Jambes = n - 5*D; const z = muscleLevel(c, "Jambes");
+    return [Math.round(a*100)/100, Math.round(b*100)/100, z]; });
+  ok(melt[0] === 2.7 && melt[1] === 1.2 && melt[2] === 3, "fonte : 20 jours → 3 devient 2,7 ; 200 jours → plancher 1,2 (40 %) ; 5 jours → rien", melt);
 
   // Migration : un Gymon de l'ancienne version (4 formes) garde la forme la plus proche
   const mig = await p.evaluate(() => { const keep = S.profile.creature; const out = [];
@@ -166,7 +174,8 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   if(SHOTS) await p.screenshot({path:path.join(SHOTS, "dead.png")});
   await p.click('[data-act="gy-resurrect"]'); await p.waitForTimeout(150);
   const res2 = await p.evaluate(() => { const c = creatureState(); return {dead:!!c.dead, vit:creatureVitality(c), stage:c.stage, levels:JSON.stringify(c.levels), fid:c.fidelity, w:c.weight, n:c.resurrections}; });
-  ok(!res2.dead && res2.vit === 100 && res2.stage === death.keep.stage && res2.levels === death.keep.levels, "ressuscité : vivant, vitalité 100 %, stade et muscles conservés");
+  const kept = JSON.parse(death.keep.levels), now2 = JSON.parse(res2.levels);
+  ok(!res2.dead && res2.vit === 100 && res2.stage === death.keep.stage && MUSCLES_LIST.every(m => (now2[m]||0) >= (kept[m]||0) - 1e-9), "ressuscité : vivant, vitalité 100 %, stade et muscles conservés (la séance en attente peut les faire grossir)");
   ok(res2.fid === death.keep.fid + 1, "la séance mise de côté est mangée à la résurrection", res2.fid);
   await p.evaluate(() => { creatureState().last = Date.now() - 23*864e5; creatureState(); render(); });
   await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-restart"]'); await p.click('[data-act="confirm-ok"]'); await p.waitForTimeout(150);
@@ -179,7 +188,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const draw = await p.evaluate(() => { const c = creatureState(); c.stage = 5;
     const w = lv => { MUSCLES.forEach(m => c.levels[m] = lv); return creatureSVG(c); };
     const thin = w(0), big = w(4.5), legs = (MUSCLES.forEach(m => c.levels[m] = 4), c.levels.Jambes = 0, creatureSVG(c));
-    return {differs: thin !== big, veinsBig: /stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/.test(big), veinsThin: /opacity=".9"\/>/.test(thin) && /stroke-linecap="round" opacity=".9"/.test(thin), legsThin: /scale\(0\.28 1\)/.test(legs)}; });
+    return {differs: thin !== big, veinsBig: /stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/.test(big), veinsThin: /opacity=".9"\/>/.test(thin) && /stroke-linecap="round" opacity=".9"/.test(thin), legsThin: /scale\(0\.2 1\)/.test(legs)}; });
   ok(draw.differs && draw.veinsBig && !draw.veinsThin, "veines seulement aux niveaux élevés");
   ok(draw.legsThin, "retard en jambes : jambes en allumettes");
   await p.evaluate(() => render()); await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-more"]'); await p.click('[data-act="gy-style"][data-k="competition"]');
@@ -213,6 +222,22 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.evaluate(() => { tab = "creature"; render(); });
   await p.click('[data-act="gy-name"]'); await p.fill("#gy-name-in", "Rocky"); await p.click('[data-act="gy-name-ok"]');
   ok(await p.evaluate(() => creatureState().name === "Rocky" && /Rocky/.test(document.querySelector(".gy-name").textContent)), "nommer son Gymon : nom enregistré et affiché");
+  const ba = await p.evaluate(() => { const c = creatureState(), D = 864e5; c.dead = null; c.last = Date.now(); c.vit = 100;
+    c.ref = {ts:Date.now() - 16*D, stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSCLES.map(m => [m, Math.max(0, muscleLevel(c, m) - 0.5)]))};
+    render(); const shown = !!document.querySelector(".ba"); c.ref.ts = Date.now() - 5*D; render(); const early = !!document.querySelector(".ba");
+    c.ref = {ts:Date.now() - 31*D, stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSCLES.map(m => [m, muscleLevel(c, m)]))}; render(); const month = !!document.querySelector(".ba");
+    return {shown, early, month}; });
+  ok(ba.shown && !ba.early && ba.month, "avant / après : à 15 jours si ça a bougé, jamais avant, à 30 jours dans tous les cas", ba);
+  await p.click('[data-act="ba-ok"]');
+  ok(await p.evaluate(() => !document.querySelector(".ba") && Date.now() - creatureState().ref.ts < 60000), "« Super, on continue » : nouveau point de départ");
+  const meltTalk = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify([c.levels, c.lastWorked, c.peak]);
+    c.levels.Jambes = 3; c.peak = {...(c.peak||{}), Jambes:3}; c.lastWorked = {...(c.lastWorked||{}), Jambes:Date.now() - 25*864e5}; const L = gymonLines(c);
+    [c.levels, c.lastWorked, c.peak] = JSON.parse(keep); return L; });
+  ok(/Mes jambes fondent/.test(meltTalk[0]), "bulle : « Mes jambes fondent » en priorité", meltTalk[0]);
+  const bubMelt = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify([c.levels, c.lastWorked, c.peak]);
+    c.levels.Jambes = 3; c.peak = {...(c.peak||{}), Jambes:3}; c.lastWorked = {...(c.lastWorked||{}), Jambes:Date.now() - 25*864e5}; gyTalk = 0; tab = "creature"; render();
+    const txt = document.querySelector(".gy-bubble").textContent; [c.levels, c.lastWorked, c.peak] = JSON.parse(keep); render(); return txt; });
+  ok(/jambes fondent/.test(bubMelt), "la bulle affiche d'abord la fonte", bubMelt);
   const talk = await p.evaluate(() => { const c = creatureState(); MUSCLES.forEach(m => c.levels[m] = 3); c.levels.Jambes = 0.5; return gymonLines(c); });
   ok(talk.some(x => /jambes… on les oublie/.test(x)), "bulle : un muscle en retard est signalé (jambes)", talk);
   const bub1 = await p.evaluate(() => { render(); return document.querySelector(".gy-bubble").textContent; });
