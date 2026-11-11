@@ -320,6 +320,9 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .tsel{gap:6px}
 .wu-hint{margin:6px 2px 0;font-size:13px;color:var(--muted);line-height:1.35}
 .coach .fat{font-weight:500;color:var(--muted);font-size:12px}
+.off{display:flex;flex-direction:column;gap:6px;background:var(--fill);border-radius:14px;padding:10px 12px}
+.off-t{margin:0;font-weight:600;font-size:15px}.off-c{margin:0}.off-c:empty{display:none}
+.off-tag{font-size:11px;font-weight:700;color:var(--warm);border:1px solid currentColor;border-radius:8px;padding:1px 6px;vertical-align:2px}
 .adapt{background:var(--fill);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;font-size:14px}
 .adapt .ch.up{color:var(--ok)} .adapt .ch.down{color:var(--warm)}
 .tagx.warnx{background:var(--warm)}
@@ -564,7 +567,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-11 b";
+const APP_VERSION = "2026-11-11 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -737,6 +740,7 @@ function sessionsFor(exId, beforeTs){
   const out = [];
   for(const w of sortW(S.workouts.slice())){
     if(beforeTs && w.start >= beforeTs) continue;
+    if(offIgnored(w)) continue;   // séance « hors forme » : pas prise en compte pour les prochaines charges
     w.exercises.forEach((ex, i) => { if(ex.exId!==exId) return;
       const sets = workSets(ex).filter(s => num(s.r)>0); if(sets.length) out.push({ts:w.start, sets, feel:ex.feel||0, pre:preLoad(w.exercises, i)}); });
   }
@@ -756,10 +760,10 @@ function preLoad(exercises, i, planned){
 }
 let fatigueMemo = null;
 function fatigueK(){
-  const key = S.workouts.length + ":" + S.workouts.reduce((t,w) => Math.max(t, w.start), 0);
+  const key = S.workouts.length + ":" + S.workouts.reduce((t,w) => Math.max(t, w.start), 0) + ":" + S.workouts.filter(offIgnored).length;
   if(fatigueMemo && fatigueMemo.key===key) return fatigueMemo;
   const by = {};
-  S.workouts.forEach(w => w.exercises.forEach((ex, i) => { const s = workSets(ex).filter(x => num(x.r) > 0 && num(x.w) > 0); if(!s.length) return;
+  S.workouts.forEach(w => !offIgnored(w) && w.exercises.forEach((ex, i) => { const s = workSets(ex).filter(x => num(x.r) > 0 && num(x.w) > 0); if(!s.length) return;
     (by[ex.exId] = by[ex.exId] || []).push({ts:w.start, P:preLoad(w.exercises, i), E:Math.max(...s.map(x => e1rm(num(x.w), num(x.r))))}); }));
   const slopes = [];
   Object.values(by).forEach(h => { h.sort((a,b) => a.ts - b.ts);
@@ -2068,6 +2072,7 @@ function gymonLines(c){
     if(last.prs && last.prs.length) L.push(`Record au ${exById(last.prs[0]).name.toLowerCase()} ! Je l'ai senti jusque dans mes plumes.`);
     L.push(`Miam ! ${fmtVol(wVolume(last))} avalés. Je digère…`);
   }
+  if(last && offIgnored(last) && now - (last.end||last.start) < 2*D) L.push("Pas en forme hier ? On ne compte pas cette séance contre toi. Repose-toi 💤");
   if(last){ const a = setsBy(last);
     Object.keys(a).forEach(m => { const prev = ws.slice(1).find(w => setsBy(w)[m]); if(prev){ const d = a[m] - setsBy(prev)[m]; if(d >= 2) L.push(`${d} séries de plus ${M_AUX[m]||""} que la dernière fois !`); } }); }
   const lv = MUSCLES.map(m => [m, muscleLevel(c, m)]), avg = lv.reduce((t,[,l]) => t + l, 0) / lv.length;
@@ -2166,6 +2171,42 @@ function ideaSave(){
 document.addEventListener("input", e => { if(e.target.id==="idea-txt") ideaSave(); });
 
 /* ---------- Note de la séance ---------- */
+/* ---------- Séance moins bonne : la raison change la façon de l'interpréter ----------
+   « Hors forme » (santé, sommeil, cycle…) : la séance compte pour le Gymon, le volume et la récupération, mais le coach
+   ne s'en sert pas pour régler les prochaines charges (ni baisse, ni décharge). Motivation, temps, salle : comptée normalement.
+   Ces informations restent dans le téléphone : jamais envoyées, jamais sur les images partagées. */
+const OFF_REASONS = [
+  {k:"sommeil", l:"😴 Manque de sommeil", ignore:true},
+  {k:"fatigue", l:"🥱 Fatigue générale", ignore:true},
+  {k:"malade", l:"🤒 Malade", ignore:true},
+  {k:"douleur", l:"🤕 Douleur ou blessure", ignore:true, care:true},
+  {k:"regles", l:"🩸 Règles", ignore:true, female:true},
+  {k:"stress", l:"😣 Stress", ignore:true},
+  {k:"nutrition", l:"🍽️ Mal mangé ou mal hydraté", ignore:true},
+  {k:"alcool", l:"🍻 Lendemain de soirée", ignore:true},
+  {k:"technique", l:"🎯 Travail technique, charges allégées", ignore:true},
+  {k:"chaleur", l:"🥵 Chaleur", ignore:true},
+  {k:"motivation", l:"😶 Baisse de motivation", ignore:false},
+  {k:"temps", l:"⏱️ Manque de temps", ignore:false},
+  {k:"salle", l:"🏋️ Salle bondée, matériel pris", ignore:false}
+];
+const offIgnored = w => !!(w && w.off && w.off.ignore);
+function offConsequence(w){
+  const rs = (w.off && w.off.reasons) || []; if(!rs.length) return "";
+  const R = rs.map(k => OFF_REASONS.find(x => x.k===k)).filter(Boolean), ign = R.some(x => x.ignore), care = R.some(x => x.care);
+  let t = ign ? "Séance mise de côté pour la progression : elle compte pour votre Gymon, votre volume et la récupération, mais vos prochaines charges se basent sur vos séances normales (pas de baisse de charge ni de décharge à cause d'elle)."
+    : "Séance comptée normalement : vos charges ne changent pas pour autant.";
+  if(R.some(x => x.k==="motivation")) t += " Un coup de mou, ça arrive : être venu, c'est déjà gagné 💪";
+  if(care) t += " Douleur : ne forcez pas sur la zone, allégez si besoin, et consultez si elle persiste.";
+  return t;
+}
+function offReasonsHTML(w, intro){
+  const sel = new Set((w.off && w.off.reasons) || []), fem = S.profile.sex === "f";
+  return `<div class="off" id="off-${esc(w.id)}"><p class="off-t">${intro || "Pas au top ? Une raison (facultatif)"}</p>
+    <div class="chips wrapc">${OFF_REASONS.filter(x => !x.female || fem || sel.has(x.k)).map(x => `<button class="chip sm" data-act="off-reason" data-id="${esc(w.id)}" data-k="${x.k}" aria-pressed="${sel.has(x.k)}">${esc(x.l)}</button>`).join("")}</div>
+    <p class="small muted off-c">${esc(offConsequence(w))}</p></div>`;
+}
+
 function rateWorkout(w){
   const before = S.workouts.filter(x => x.start < w.start && x.id!==w.id);
   if(!before.length) return {e:"🙂", label:"Première référence", why:["Les prochaines séances seront comparées à celle-ci."]};
@@ -2472,7 +2513,7 @@ function viewHistory(){
       return `<li><span>${s.length} × ${esc(exById(ex.exId).name)}${(w.prs||[]).includes(ex.exId)?'<span class="pr">PR</span>':""}</span><span>${esc(setTxt(best))}</span></li>`;
     }).join("");
     out += `<button class="card wk" data-act="open-w" data-id="${w.id}">
-      <div class="wk-top"><b>${w.rating ? w.rating.e+" " : ""}${esc(w.name)}</b><span class="muted small">${esc(fmtDate(w.start))}</span></div>
+      <div class="wk-top"><b>${w.rating ? w.rating.e+" " : ""}${esc(w.name)}${offIgnored(w) ? ' <span class="off-tag">hors forme</span>' : ""}</b><span class="muted small">${esc(fmtDate(w.start))}</span></div>
       <div class="wk-meta"><span>${fmtDur((w.end||w.start)-w.start)}</span><span>${fmtVol(wVolume(w))}</span><span>${wSetCount(w)} séries</span></div>
       <ul>${lines}</ul></button>`;
   });
@@ -2680,6 +2721,7 @@ function finishWorkout(){
   const cr = creatureFeed(w); render();
   openSheet(`<div class="rating"><span class="remo">${w.rating.e}</span><div><h3>${esc(w.rating.label)}</h3>
       <ul>${w.rating.why.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
+    ${/correcte|dessous/.test(w.rating.label) ? offReasonsHTML(w) : ""}
     <div class="tiles">
       <div class="tile"><span>Durée</span><strong>${fmtDur(w.end-w.start)}</strong></div>
       <div class="tile"><span>Volume</span><strong>${fmtVol(wVolume(w))}</strong></div>
@@ -2934,11 +2976,17 @@ const ACT = {
   "open-w": b => { const w = S.workouts.find(x=>x.id===b.dataset.id); if(!w) return;
     openSheet(`<h3>${esc(w.name)}</h3>
       <p class="muted" style="margin:0">${esc(fmtDate(w.start,{weekday:"long",day:"numeric",month:"long",year:"numeric"}))} · ${fmtDur((w.end||w.start)-w.start)} · ${fmtVol(wVolume(w))}</p>
+      ${offReasonsHTML(w, "Pas en forme ce jour-là ? Indiquez pourquoi (facultatif)")}
       ${w.exercises.map(ex => { let n=0; return `<section class="card"><b>${esc(exById(ex.exId).name)}</b>${(w.prs||[]).includes(ex.exId)?'<span class="pr">PR</span>':""}
         <ul style="margin:6px 0 0;padding:0;list-style:none;font-variant-numeric:tabular-nums">${ex.sets.map(s => `<li><span class="muted" style="display:inline-block;width:28px">${s.warm?"É":++n}</span>${esc(setTxt(s))}</li>`).join("")}</ul></section>`; }).join("")}
       <button class="btn primary" data-act="w-repeat" data-id="${w.id}">Refaire cette séance</button>
       <button class="btn" data-act="w-to-routine" data-id="${w.id}">Enregistrer comme programme</button>
       <button class="btn ghost danger" data-act="w-delete" data-id="${w.id}">Supprimer la séance</button>`); },
+  "off-reason": b => { const w = S.workouts.find(x => x.id===b.dataset.id); if(!w) return;
+    const rs = new Set((w.off && w.off.reasons) || []); rs.has(b.dataset.k) ? rs.delete(b.dataset.k) : rs.add(b.dataset.k);
+    w.off = rs.size ? {reasons:[...rs], ignore:[...rs].some(k => (OFF_REASONS.find(x => x.k===k)||{}).ignore)} : null; fatigueMemo = null;
+    b.setAttribute("aria-pressed", rs.has(b.dataset.k)); const box = document.getElementById("off-" + w.id);
+    if(box) box.querySelector(".off-c").textContent = offConsequence(w); touchProfile(); },
   "w-repeat": b => { const w = S.workouts.find(x=>x.id===b.dataset.id); closeSheet();
     startWorkout(w.name, w.exercises.map(ex => ({exId:ex.exId, sets:ex.sets.map(s => ({...blankSet(), warm:!!s.warm}))})), w.routineId); },
   "w-to-routine": b => { const w = S.workouts.find(x=>x.id===b.dataset.id);

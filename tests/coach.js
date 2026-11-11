@@ -75,6 +75,27 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(F.fresh[0] >= 26 && F.fresh[2] === 0, "dernière fois en 4e position (26 × 6), aujourd'hui en 1er : on ne baisse pas la charge", F.fresh);
   ok(F.late[2] > 0 && (F.late[0] < F.fresh[0] || F.late[1] < F.fresh[1]), "aujourd'hui en 4e position : objectif adapté à la fatigue, affichée", F.late);
   ok(/0 en recul/.test(F.rate), "note de fin de séance : faire moins en fin de séance n'est pas compté comme un recul", F.rate);
+  // Séance moins bonne : la raison change son interprétation
+  const OFF = await p.evaluate(() => { const D = 864e5, n = Date.now(), set = (w, r, k) => Array.from({length:k}, () => ({w:String(w), r:String(r), done:true}));
+    const good = {id:"g1", name:"x", start:n - 6*D, end:n - 6*D, exercises:[{exId:"curl-halteres", feel:3, sets:set(16, 10, 3)}]};
+    const bad = {id:"b1", name:"x", start:n - 2*D, end:n - 2*D, exercises:[{exId:"curl-halteres", feel:4, sets:set(16, 5, 3)}]};
+    S.workouts = [good, bad]; const before = coach("curl-halteres");
+    bad.off = {reasons:["sommeil"], ignore:true}; const asleep = coach("curl-halteres");
+    bad.off = {reasons:["motivation"], ignore:false}; const unmotivated = coach("curl-halteres");
+    // fin de séance « en dessous » : les raisons sont proposées ; « Règles » seulement si la référence Femmes est choisie
+    S.profile.sex = "h"; S.workouts = [good]; S.profile.active = null;
+    startWorkout("T", [{exId:"curl-halteres", sets:[blankSet()]}]); const a = A(); a.exercises[0].sets.forEach(s => { s.w = "16"; s.r = "4"; s.done = true; }); a.start -= 1800000;
+    finishWorkout(); celebClose(true);
+    const chips = [...document.querySelectorAll('.sheet [data-act="off-reason"]')].map(c => c.dataset.k);
+    document.querySelector('.sheet [data-act="off-reason"][data-k="malade"]').click();
+    const last = sortW(S.workouts.slice())[0], cons = document.querySelector(".sheet .off-c").textContent;
+    closeSheet(); S.profile.sex = "f"; const fem = offReasonsHTML(last).includes('data-k="regles"');
+    S.workouts = []; S.profile.sex = "h";
+    return {before:[before.w, before.r], asleep:[asleep.w, asleep.r], unmotivated:[unmotivated.w, unmotivated.r], chips, saved:last.off, cons, fem}; });
+  ok(OFF.before[0] < 16 && OFF.asleep[0] === 16 && OFF.asleep[1] >= 10, "« Manque de sommeil » : la séance ratée n'entraîne pas de baisse de charge", OFF);
+  ok(OFF.unmotivated[0] === OFF.before[0], "« Baisse de motivation » : séance comptée normalement", OFF);
+  ok(OFF.chips.length >= 10 && OFF.chips.includes("motivation") && !OFF.chips.includes("regles"), "fin de séance « en dessous » : raisons proposées (« Règles » seulement avec la référence Femmes)", OFF.chips);
+  ok(OFF.saved && OFF.saved.ignore && /mise de côté/.test(OFF.cons) && OFF.fem, "raison enregistrée sur la séance, conséquence expliquée", OFF.saved);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);

@@ -45,6 +45,16 @@ Un exercice fait après d'autres pour le même muscle donne moins de reps : ce n
 - **Coach** : l'historique est d'abord ramené à un début de séance (« à frais »), les règles s'appliquent, puis l'objectif est adapté à la place du jour (moins de reps ; charge baissée seulement s'il manquerait plus d'1 rep pour atteindre le bas de la fourchette). « Pourquoi ? » l'explique et l'objectif affiche « fatigue −x % ».
 - **Note de fin de séance** et **décharge** comparent les performances à frais : faire moins en fin de séance n'est pas compté comme un recul.
 
+## Séance moins bonne : la raison (v2.4)
+Quand la note de fin de séance est « Séance correcte » ou « En dessous de vos habitudes », l'app propose (facultatif) d'indiquer une ou plusieurs raisons. On peut aussi le faire plus tard depuis le détail d'une séance dans l'historique.
+
+| Raison | Conséquence |
+|---|---|
+| 😴 Manque de sommeil, 🥱 fatigue générale, 🤒 malade, 🤕 douleur ou blessure, 🩸 règles (affiché avec la référence Femmes), 😣 stress, 🍽️ mal mangé ou mal hydraté, 🍻 lendemain de soirée, 🥵 chaleur, 🎯 travail technique | **Séance « hors forme »** : elle compte pour le Gymon, le volume et la récupération, mais le coach ne s'en sert pas pour les prochaines charges (ni baisse, ni décharge), ni pour mesurer la fatigue selon la place des exercices. Douleur : conseil de prudence. |
+| 😶 Baisse de motivation, ⏱️ manque de temps, 🏋️ salle bondée | **Comptée normalement** (rien ne change). |
+
+Ces informations (dont santé et cycle) restent dans le téléphone : jamais envoyées, jamais sur les images partagées.
+
 ## Ressenti → reps en réserve
 | Barre | Signification | RIR utilisé |
 |---|---|---|
