@@ -21,6 +21,7 @@ Aucune donnée personnelle ne figure ici. Les testeurs sont anonymes.
 | Modèle économique | Gratuit pour l'utilisateur. Pistes B2B et abonnement en section 10 |
 | Statistiques | GoatCounter, compte `gymon` (`gymon.goatcounter.com`), deux événements seulement |
 | Licence | Aucun fichier de licence dans le dépôt. Par défaut, tous droits réservés au propriétaire |
+| Visibilité du dépôt | **Public** (vérifié le 11 novembre 2026) : code, documentation et historique git lisibles par tous. Décision à prendre par le propriétaire (voir audit 4.2) |
 
 ## 2. Vision et thèse produit
 
@@ -42,7 +43,7 @@ Aucune donnée personnelle ne figure ici. Les testeurs sont anonymes.
 
 ## 3. Chronologie
 
-Reconstituée depuis l'historique git (50 commits sur `main`).
+Reconstituée depuis l'historique git (une cinquantaine de commits au 11 novembre 2026).
 
 | Date | Étape |
 |---|---|
@@ -158,7 +159,7 @@ Export : `{app:"carnet-fonte", exported, profile (sans active), workouts}`. L'im
 | Départ à zéro de la créature (les séances importées ne la nourrissent pas) | L'engagement commence à l'installation ; évite un dragon instantané pour un ancien de Gravl | 29 oct. |
 | Seuils d'évolution tirés au hasard et jamais affichés | Mystère et surprise ; impossible de « calculer » son Gymon | 29 oct. (V1.2) |
 | Les démos des tutos ne montrent que l'œuf | Les formes suivantes restent une surprise | 2 nov. |
-| Un stade, une fidélité, un niveau ne se perdent jamais | Jamais punir une mise à jour ou une pause ; la seule sanction est la vitalité | 29 oct. |
+| Un stade et une fidélité ne se perdent jamais ; rien ne se perd par une mise à jour | Jamais punir une mise à jour ou une pause. Depuis Gymon v2.0, les niveaux de muscle peuvent fondre après 14 jours sans travail (plancher 40 % du maximum) : c'est une règle du jeu, pas une perte due à une mise à jour | 29 oct. (nuancé le 11 nov.) |
 | Vitalité en proportion de la valeur actuelle | Courbe douce, mort à 22 jours depuis 100 %, résurrection toujours possible | 4 nov. (V1.7) |
 | Mort possible | Retenu après retours : l'enjeu plaît ; prévenu dans le tuto | 2 nov. |
 | Coach v2 plus lourd | Audit sur un historique réel : l'ancien coach proposait 21 baisses de charge sur 43 exercices | 6 nov. |
@@ -169,7 +170,7 @@ Export : `{app:"carnet-fonte", exported, profile (sans active), workouts}`. L'im
 | « Quoi de neuf » marqué vu à la fermeture | Un rechargement de mise à jour ne doit pas faire disparaître la fenêtre | 11 nov. |
 | Tests Playwright sur Chromium, valeurs de référence figées | Détecter toute dérive de calcul ; Safari iOS réel non couvert | 29 oct. |
 | Gymon en 2D détaillée plutôt qu'en 3D | Le rendu 3D essayé donnait un effet « ballon » ; la 2D permet des muscles lisibles et un style affirmé | 4 nov. |
-| App gratuite, hébergée sur GitHub Pages | Coût nul, déploiement par simple push | 29 oct. |
+| App gratuite, hébergée sur GitHub Pages | Coût nul, déploiement par simple push | 24–25 oct. |
 | Algorithmes basés sur l'historique de chaque utilisateur | L'historique Gravl du propriétaire n'a servi qu'aux simulations ; aucune valeur personnelle codée en dur | 25 oct. |
 | Ambiances Aesthetic / Compétition : expression du Gymon seulement | Le corps et les muscles restent ceux gagnés par l'entraînement ; la tête de mascotte suit le modèle d'image fourni par le propriétaire | 4 nov. |
 | Planche visuelle avant tout changement de dessin | Le dessin du Gymon est l'actif le plus visible ; le propriétaire valide sur captures avant intégration | 3 nov. |
@@ -247,16 +248,19 @@ Idées retenues lors des conversations de conception (novembre 2026), non planif
 
 Objectif business indiqué par le propriétaire : un revenu complémentaire de l'ordre de 1 000 € par mois au bout d'un an. Scepticisme sur le modèle grand public ; la piste des salles de sport était recommandée.
 
+Avant toute valorisation commerciale : vérifier ses engagements contractuels (exclusivité, non-concurrence, propriété intellectuelle) avec un juriste.
+
 Questions ouvertes (à trancher par le propriétaire) :
-- Barre EZ ou barre droite par défaut pour « Barre au front » ?
-- Afficher dans « pourquoi ? » le nombre de mesures de l'historique personnel sur lesquelles repose la proposition ?
+- Barre EZ ou barre droite par défaut pour « Barre au front » ? (aujourd'hui : barre droite, 20 kg)
+- Afficher dans « pourquoi ? » le nombre de mesures de l'historique personnel utilisées pour la fatigue (« calculé sur 23 mesures » ou « valeur par défaut ») ?
+- Tutoiement ou vouvoiement sur la page Gymon : les bulles tutoient, la phrase du jour (`GYM_QUOTES`) et la célébration vouvoient (« Votre futur vous dit merci »).
 - Détail des disques à mettre sur la barre : forme et place dans l'interface.
 
 ## 11. Points à renseigner lors de la migration
 
 À compléter par le propriétaire, ils ne sont pas dans le dépôt :
 - Hébergeur et URL : GitHub Pages depuis ce dépôt, `https://bricetourtel-design.github.io/carnet-fonte/` (renseignés et confirmés le 11 novembre 2026). Pas de domaine à soi : l'adresse dépend du nom du compte GitHub, qui ne doit donc pas changer.
-- Comptes liés (sans identifiants ni mots de passe, juste « lequel ») : GoatCounter `gymon`, hébergeur : ____________________
+- Comptes liés (sans identifiants ni mots de passe, juste « lequel ») : GoatCounter `gymon`, hébergeur : GitHub Pages (compte GitHub `bricetourtel-design`)
 - Liste des testeurs : hors dépôt, à garder dans un espace privé.
 - Décisions prises à l'oral ou dans d'autres conversations Claude et non reflétées dans la section 6 : à reporter avant de changer de compte Claude (voir `docs/MIGRATION.md`, section 2).
 

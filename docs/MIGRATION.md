@@ -1,5 +1,7 @@
 # Migrer Gymon vers un autre compte Claude
 
+> **Migration terminée le 11 novembre 2026.** Le nouveau compte travaille sur le dépôt et déploie par pull request ; l'ancien compte a fait son dernier envoi (notes de passation intégrées à `docs/CONTEXTE.md`, `docs/AUDIT-2026-11.md` et `CLAUDE.md`). Ce guide reste pour mémoire et pour l'annexe.
+
 Guide écrit le 11 novembre 2026. Cas visé : **changer de compte Claude uniquement**. Le compte GitHub, le dépôt, l'historique git, l'hébergement et l'URL de l'app ne changent pas. Pour les utilisateurs de l'app, rien ne bouge.
 
 L'annexe, en fin de document, couvre le cas différent où un jour le dépôt ou l'URL devraient changer. Elle n'est pas à suivre pour la migration prévue.
@@ -48,14 +50,14 @@ Rien de tout cela ne touche à l'app ni aux testeurs.
 
 ## 5. Checklist
 
-- [ ] Branche de documentation fusionnée dans `main`
-- [ ] Décisions et idées des anciennes conversations reportées dans `docs/CONTEXTE.md`
+- [x] Branche de documentation fusionnée dans `main`
+- [x] Décisions et idées des anciennes conversations reportées dans `docs/CONTEXTE.md`
 - [x] Section 11 de `docs/CONTEXTE.md` renseignée (URL, hébergeur)
-- [ ] Branches obsolètes supprimées sur GitHub
-- [ ] Tests verts sur `main`
-- [ ] GitHub connecté sur le nouveau compte Claude, dépôt autorisé
-- [ ] Première session : lecture des trois documents, résumé correct
-- [ ] Plus de session depuis l'ancien compte
+- [x] Branches obsolètes supprimées sur GitHub
+- [x] Tests verts sur `main`
+- [x] GitHub connecté sur le nouveau compte Claude, dépôt autorisé
+- [x] Première session : lecture des trois documents, résumé correct
+- [x] Plus de session depuis l'ancien compte
 
 Durée estimée : une heure, dont l'essentiel pour relire les anciennes conversations.
 

@@ -47,7 +47,7 @@ Données : tout est dans `localStorage` sous la clé `carnet-fonte.v1`, objet `S
 5. **Lire avant d'écrire.** `index.html` est long : chercher la fonction, lire le bloc entier et ses commentaires, puis modifier. Pas de réécriture de bloc « pour faire propre ».
 6. **Style du code existant** : français dans les commentaires et les textes, fonctions courtes et denses, templates HTML dans les fonctions `view*`, actions dans `ACT` déclenchées par `data-act`. Échapper toute chaîne avec `esc()`.
 7. **iPhone d'abord.** Tout rendu différé passe par `softRender`/`flushPending` (jamais de re-rendu sous le doigt), le minuteur ne reconstruit pas ses boutons, les saisies sélectionnent leur valeur au focus.
-8. **Textes en français**, tutoiement dans les tutos et les bulles du Gymon, vouvoiement dans le coach et les réglages (c'est l'existant, on ne mélange pas dans une même zone).
+8. **Textes en français**, tutoiement dans les tutos et les bulles du Gymon, vouvoiement dans le coach et les réglages (c'est l'existant, on ne mélange pas dans une même zone). Exception existante à trancher par le propriétaire : sur la page Gymon, la phrase du jour (`GYM_QUOTES`) et la célébration vouvoient alors que les bulles tutoient.
 
 ## Avant de livrer une modification
 
@@ -91,7 +91,7 @@ L'app est un dossier statique servi par **GitHub Pages depuis ce dépôt**. Cons
 
 **Règle de déploiement (décidée par le propriétaire le 11 novembre 2026)** : Claude déploie seul dès que le propriétaire a demandé ou validé la fonctionnalité, tests verts et versions incrémentées. Exceptions qui demandent un accord explicite avant déploiement : tout changement des règles du jeu, toute migration ou risque sur les données des utilisateurs, tout changement de dessin du Gymon (planche validée), toute réécriture d'historique (force push). Selon la session, le déploiement se fait par `git push origin main` ou, si la session impose une branche `claude/…`, par une pull request fusionnée dans `main`. Après déploiement, conseiller aux testeurs de fermer et rouvrir l'app.
 
-Auteur des commits : le propriétaire, avec son adresse personnelle (pas d'adresse professionnelle). Les fichiers Markdown et `docs/` ne sont pas chargés par l'app : les modifier sur `main` est sans effet pour les utilisateurs. URL de production : `https://bricetourtel-design.github.io/carnet-fonte/`. Changer d'URL fait perdre les données des utilisateurs installés (le `localStorage` est lié à l'origine) : voir `docs/MIGRATION.md`.
+Auteur des commits : le propriétaire, avec son adresse personnelle (pas d'adresse professionnelle). Chaque message de commit se termine par les lignes `Co-Authored-By: Claude …` et `Claude-Session: …`. **Le dépôt est public** : rien de personnel ni de confidentiel dans les fichiers ni dans les messages de commit. Les fichiers Markdown et `docs/` ne sont pas chargés par l'app : les modifier sur `main` est sans effet pour les utilisateurs. URL de production : `https://bricetourtel-design.github.io/carnet-fonte/`. Changer d'URL fait perdre les données des utilisateurs installés (le `localStorage` est lié à l'origine) : voir `docs/MIGRATION.md`.
 
 ---
 *Assisté par IA. Le collaborateur reste responsable et vérifie.*
