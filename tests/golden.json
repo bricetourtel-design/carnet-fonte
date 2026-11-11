@@ -915,7 +915,7 @@
    [
     "ext-poulie",
     27,
-    9,
+    10,
     2,
     "Consolider",
     8,
@@ -1031,7 +1031,7 @@
      ],
      [
       "curl-marteau",
-      3
+      2
      ]
     ]
    ],
@@ -1041,18 +1041,18 @@
     [
      [
       "squat",
-      2
+      3
      ],
      [
       "hip-thrust",
-      2
-     ],
-     [
-      "leg-curl",
       3
      ],
      [
       "mollets",
+      2
+     ],
+     [
+      "leg-curl",
       2
      ],
      [
@@ -1091,7 +1091,7 @@
      ],
      [
       "curl-halteres",
-      3
+      2
      ]
     ]
    ],
@@ -1104,15 +1104,15 @@
       3
      ],
      [
-      "leg-curl",
-      3
-     ],
-     [
       "squat",
       3
      ],
      [
       "mollets",
+      2
+     ],
+     [
+      "leg-curl",
       2
      ],
      [
@@ -1126,7 +1126,7 @@
    "Pectoraux": 8,
    "Dos": 8,
    "Épaules": 4,
-   "Biceps": 6,
+   "Biceps": 4,
    "Triceps": 4,
    "Jambes": 20,
    "Abdos": 8

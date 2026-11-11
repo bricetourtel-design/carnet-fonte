@@ -38,6 +38,13 @@ Ajoutées automatiquement (marquées « É ») seulement quand c'est utile :
 - Elles ne comptent ni dans le volume, ni pour le coach, ni pour le Gymon, et ne lancent pas le minuteur. Toucher « É » la retransforme en série normale.
 - Pourquoi : un échauffement spécifique et léger prépare la charge lourde sans fatiguer (les séries d'approche courtes, loin de l'échec, ne réduisent pas la performance des séries de travail). Ribeiro et al. 2020, *J Strength Cond Res* ; recommandations NSCA.
 
+## Place de l'exercice dans la séance (fatigue, v2.3)
+Un exercice fait après d'autres pour le même muscle donne moins de reps : ce n'est pas un recul.
+- **Charge déjà encaissée** avant l'exercice : séries du même muscle (×1) + séries de polyarticulaires d'un muscle qui l'aide (×0,5, ex. développé → triceps).
+- **Baisse de performance par série, propre à chaque utilisateur** : pour chaque exercice, on compare les séances à moins de 28 jours d'écart où il a été placé plus ou moins tard (au moins 2 séries d'écart), et on prend la pente médiane (1RM estimé). Elle est ramenée vers 1 % par série tant qu'il y a peu de mesures (8 mesures « fictives » à 1 %), et bornée entre 0,3 % et 2,5 % par série ; baisse totale plafonnée à −15 %.
+- **Coach** : l'historique est d'abord ramené à un début de séance (« à frais »), les règles s'appliquent, puis l'objectif est adapté à la place du jour (moins de reps ; charge baissée seulement s'il manquerait plus d'1 rep pour atteindre le bas de la fourchette). « Pourquoi ? » l'explique et l'objectif affiche « fatigue −x % ».
+- **Note de fin de séance** et **décharge** comparent les performances à frais : faire moins en fin de séance n'est pas compté comme un recul.
+
 ## Ressenti → reps en réserve
 | Barre | Signification | RIR utilisé |
 |---|---|---|
@@ -72,7 +79,7 @@ Sans ressenti noté : « Idéal ».
 | Entraîner un muscle 2 fois/semaine fait mieux qu'1 fois | Organisations proposées pour 1 à 6 séances, la « conseillée » vise 2 passages par muscle ; note si un muscle n'est vu qu'une fois | Schoenfeld et al. 2016, *Sports Medicine* 46(11) |
 | À volume égal, full body et haut/bas donnent une hypertrophie similaire | Plusieurs organisations au choix, aucune imposée | Études full body vs split à volume égal (ex. BMC Sports Sci Med Rehabil 2022) |
 | ≥ 48 h entre deux séances d'un même muscle | Alerte rouge si un même muscle est travaillé deux jours d'affilée (abdos exclus), orange s'il a été sollicité indirectement la veille (ex. triceps après les pecs) | Recommandation ACSM (position stand 2009) |
-| L'ordre des exercices ne change pas l'hypertrophie, mais la force progresse surtout sur les premiers | Polyarticulaires en tête, gros muscles avant petits, abdos à la fin : la progression en charge se fait là où on est le plus frais | Nunes et al. 2021, *Eur J Sport Sci* 21(2) |
+| L'ordre des exercices ne change pas l'hypertrophie, mais la force progresse surtout sur les premiers, et un exercice placé tard donne moins de reps (Simão et al. 2012) | Polyarticulaires en tête, gros muscles avant petits, abdos à la fin : la progression en charge se fait là où on est le plus frais | Nunes et al. 2021, *Eur J Sport Sci* 21(2) |
 | 10–20 séries par muscle et par semaine | Séries ajustées (2 à 4 par exercice) pour viser au moins 10 et au plus 20 | Pelland et al. 2025 |
 
 Choix des exercices : pour chaque muscle, les exercices les plus pratiqués dans l'historique d'abord (un polyarticulaire en premier pour pecs, dos, jambes, épaules), en alternant d'une séance à l'autre. Une nouveauté au plus tous les 30 jours, à la place d'un exercice d'isolation. ↻ propose un autre exercice.

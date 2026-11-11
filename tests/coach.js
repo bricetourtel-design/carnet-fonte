@@ -55,6 +55,26 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(wu.btn && wu.forced === 1, "bouton « + Échauffement » sur un exercice sans échauffement (curls) : ajoute une série légère", wu);
   ok(wu.warm.join() === "2,0,0,2", "échauffement : 2 séries avant le 1er exercice lourd de chaque muscle (développé, squat), aucune sur le 2e exercice pecs ni sur les curls", wu.warm);
   ok(wu.ph[0][0] === "45" && wu.ph[0][1] === "8" && wu.ph[1][0] === "65" && wu.ph[1][1] === "3", "échauffement proposé : ~50 % × 8 puis ~75 % × 3 de la charge de travail (87,5 kg)", wu.ph);
+  // Fatigue liée à la place dans la séance, calibrée sur l'historique de l'utilisateur
+  const F = await p.evaluate(() => { const D = 864e5, n = Date.now(), set = (w, r, k) => Array.from({length:k}, () => ({w:String(w), r:String(r), done:true}));
+    const mk = (d, exs) => ({id:"f"+d+Math.random(), name:"x", start:n - d*D, end:n - d*D, exercises:exs.map(([id, w, r, k]) => ({exId:id, feel:3, sets:set(w, r, k)}))});
+    S.workouts = []; const k0 = fatigueK().k;
+    // historique : développé incliné tantôt en 1er (26 × 10), tantôt après 9 séries de pecs (26 × 6)
+    const hist = []; for(let i = 0; i < 12; i++){ const d = 80 - i*6;
+      hist.push(i % 2 ? mk(d, [["dc-barre", 80, 8, 3], ["dc-halteres", 30, 8, 3], ["ecarte-poulie", 20, 10, 3], ["di-halteres", 26, 6, 3]]) : mk(d, [["di-halteres", 26, 10, 3]])); }
+    S.workouts = hist; const cal = fatigueK();
+    // dernière séance : incliné en 4e position (26 × 6) ; aujourd'hui en 1er → pas de baisse de charge
+    S.workouts = [mk(3, [["dc-barre", 80, 8, 3], ["dc-halteres", 30, 8, 3], ["ecarte-poulie", 20, 10, 3], ["di-halteres", 26, 6, 3]])];
+    const fresh = coach("di-halteres", n, undefined, 0), late = coach("di-halteres", n, undefined, 9);
+    // note de fin de séance : 26 × 6 en 4e position après 26 × 9 en 1re position = pas un recul
+    S.workouts = [mk(10, [["di-halteres", 26, 9, 3]])]; const w = mk(1, [["dc-barre", 80, 8, 3], ["dc-halteres", 30, 8, 3], ["ecarte-poulie", 20, 10, 3], ["di-halteres", 26, 7, 3]]);
+    const rate = rateWorkout(w);
+    S.workouts = []; return {k0, cal, fresh:[fresh.w, fresh.r, fresh.fatigue||0], late:[late.w, late.r, late.fatigue], rate:rate.why[0]}; });
+  ok(F.k0 === 0.01, "sans historique : −1 % de performance par série déjà faite pour le muscle", F.k0);
+  ok(F.cal.n >= 8 && Math.abs(F.cal.raw - 0.0111) < 0.001 && F.cal.k > 0.0105 && F.cal.k < F.cal.raw, "avec historique : pente mesurée sur l'utilisateur (26 × 10 en 1er, 26 × 6 après 9 séries = −1,1 % par série), ramenée vers 1 % selon le nombre de mesures", F.cal);
+  ok(F.fresh[0] >= 26 && F.fresh[2] === 0, "dernière fois en 4e position (26 × 6), aujourd'hui en 1er : on ne baisse pas la charge", F.fresh);
+  ok(F.late[2] > 0 && (F.late[0] < F.fresh[0] || F.late[1] < F.fresh[1]), "aujourd'hui en 4e position : objectif adapté à la fatigue, affichée", F.late);
+  ok(/0 en recul/.test(F.rate), "note de fin de séance : faire moins en fin de séance n'est pas compté comme un recul", F.rate);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);

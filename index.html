@@ -319,6 +319,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .chip.sm{padding:5px 10px;font-size:13px}
 .tsel{gap:6px}
 .wu-hint{margin:6px 2px 0;font-size:13px;color:var(--muted);line-height:1.35}
+.coach .fat{font-weight:500;color:var(--muted);font-size:12px}
 .adapt{background:var(--fill);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;font-size:14px}
 .adapt .ch.up{color:var(--ok)} .adapt .ch.down{color:var(--warm)}
 .tagx.warnx{background:var(--warm)}
@@ -563,7 +564,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-11 a";
+const APP_VERSION = "2026-11-11 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -716,8 +717,10 @@ function isHeavySess(s, dup){
   return top.reduce((t,x) => t + num(x.r), 0) / top.length <= dup.lourd[1] + 1;
 }
 function repRange(e){
-  const o = S.profile.ranges && S.profile.ranges[e.id]; if(o) return o;
-  const n = e.name.toLowerCase();
+  const o = S.profile.ranges && S.profile.ranges[e.id]; return o || defaultRange(e);
+}
+function defaultRange(e){
+  const n = (e.name || "").toLowerCase();
   if(/crunch|relev|roue|gainage/.test(n)) return [12,20];
   if(/élévation|elévation|elevation|face|oiseau|mollet|abduct|adduct|poignet|y sur|haussement|trapèze|inverse|postérieur|rowing vertical|rowing menton/.test(n)) return [10,15];
   if(/curl|extension|écart|ecart|pull-over|pullover|pushdown|leg |bras tendu|kickback|pec deck|au front|skull/.test(n)) return [8,12];
@@ -734,10 +737,46 @@ function sessionsFor(exId, beforeTs){
   const out = [];
   for(const w of sortW(S.workouts.slice())){
     if(beforeTs && w.start >= beforeTs) continue;
-    for(const ex of w.exercises){ if(ex.exId!==exId) continue;
-      const sets = workSets(ex).filter(s => num(s.r)>0); if(sets.length) out.push({ts:w.start, sets, feel:ex.feel||0}); }
+    w.exercises.forEach((ex, i) => { if(ex.exId!==exId) return;
+      const sets = workSets(ex).filter(s => num(s.r)>0); if(sets.length) out.push({ts:w.start, sets, feel:ex.feel||0, pre:preLoad(w.exercises, i)}); });
   }
   return out;
+}
+
+/* ---------- Fatigue liée à la place de l'exercice dans la séance ----------
+   Charge déjà encaissée avant un exercice : séries du même muscle (×1) et séries de polyarticulaires d'un muscle qui l'aide (×0,5).
+   Baisse de performance par série = pente mesurée sur l'historique de l'utilisateur (même exercice, séances à moins de 28 jours,
+   placé plus ou moins tard), ramenée vers 1 % par série tant qu'il y a peu de mesures. Plafond : −15 %. */
+const FATIGUE = {defaultK:0.01, minK:0.003, maxK:0.025, floor:0.85, prior:8, synergy:0.5, pairDays:28, minDiff:2};
+function preLoad(exercises, i, planned){
+  const m = exById(exercises[i].exId).muscle; let P = 0;
+  for(let j = 0; j < i; j++){ const e = exById(exercises[j].exId), n = planned ? exercises[j].sets.filter(s => !s.warm).length : workSets(exercises[j]).length; if(!n) continue;
+    if(e.muscle===m) P += n; else if((SYN[e.muscle]||[]).includes(m) && isCompound(e)) P += n * FATIGUE.synergy; }
+  return P;
+}
+let fatigueMemo = null;
+function fatigueK(){
+  const key = S.workouts.length + ":" + S.workouts.reduce((t,w) => Math.max(t, w.start), 0);
+  if(fatigueMemo && fatigueMemo.key===key) return fatigueMemo;
+  const by = {};
+  S.workouts.forEach(w => w.exercises.forEach((ex, i) => { const s = workSets(ex).filter(x => num(x.r) > 0 && num(x.w) > 0); if(!s.length) return;
+    (by[ex.exId] = by[ex.exId] || []).push({ts:w.start, P:preLoad(w.exercises, i), E:Math.max(...s.map(x => e1rm(num(x.w), num(x.r))))}); }));
+  const slopes = [];
+  Object.values(by).forEach(h => { h.sort((a,b) => a.ts - b.ts);
+    for(let i = 1; i < h.length; i++){ const a = h[i-1], b = h[i], dP = b.P - a.P;
+      if(b.ts - a.ts > FATIGUE.pairDays*86400000 || Math.abs(dP) < FATIGUE.minDiff) continue;
+      slopes.push(-(b.E / a.E - 1) / dP); } });
+  const n = slopes.length; let k = FATIGUE.defaultK, raw = null;
+  if(n){ slopes.sort((a,b) => a - b); raw = n % 2 ? slopes[(n-1)/2] : (slopes[n/2-1] + slopes[n/2]) / 2;
+    const r = Math.min(FATIGUE.maxK, Math.max(FATIGUE.minK, raw)); k = (n*r + FATIGUE.prior*FATIGUE.defaultK) / (n + FATIGUE.prior); }
+  fatigueMemo = {key, k, n, raw}; return fatigueMemo;
+}
+const fatigueFactor = P => Math.max(FATIGUE.floor, 1 - fatigueK().k * (P || 0));
+// Séance passée ramenée à un état « frais » : reps qu'on aurait faites en début de séance
+function freshSess(sess){
+  const f = fatigueFactor(sess.pre); if(f >= 0.999) return sess;
+  return {...sess, fatigued:f, sets:sess.sets.map(x => { const W = num(x.w), R = num(x.r);
+    return {...x, r:String(W ? Math.round((30 + R) / f - 30) : Math.round(R / f))}; })};
 }
 // Ressenti non noté : « Idéal » par défaut (les reps sous la fourchette sont traitées à part, avec une tolérance)
 function inferFeel(sess, lo){ return 3; }
@@ -747,8 +786,23 @@ function muscleSetsThisWeek(muscle, untilTs){
   return n;
 }
 // Proposition pour la prochaine séance de cet exercice
-function coach(exId, beforeTs, planned){
-  const e = exById(exId), hist = sessionsFor(exId, beforeTs), dup = dupRanges(e);
+// Proposition à la place du jour dans la séance (pre = séries déjà faites pour ce muscle, voir preLoad)
+function coach(exId, beforeTs, planned, pre){
+  const c = coachFresh(exId, beforeTs, planned), f = fatigueFactor(pre);
+  if(f >= 0.999 || !c.r || c.deload) return c;
+  const e = exById(exId), W = num(c.w), pct = Math.round((1 - f) * 100), {k} = fatigueK();
+  let w = W, r;
+  if(W){ const E = W * (1 + (c.r + 1.5)/30) * f, repsAt = x => Math.floor(30*(E/x - 1) - 1.5 + 1e-9);
+    r = repsAt(W);
+    if(r < c.lo - 1){ const st = stepFor(e, W); let x = W; while(repsAt(x) < c.lo && x - st >= Math.max(st, W*0.8)) x -= st; w = Math.max(st, x); r = repsAt(w); }
+    r = Math.max(1, Math.min(c.hi, r)); }
+  else r = Math.max(1, Math.floor(c.r * f));
+  return {...c, w: W ? +w.toFixed(2) : c.w, r, fatigue:pct,
+    why: c.why + ` Place dans la séance : ${fmtN(pre, 1)} série${pre > 1 ? "s" : ""} déjà faite${pre > 1 ? "s" : ""} pour ce muscle, objectif adapté (−${pct} %, d'après votre historique : −${fmtN(k*100, 1)} % par série). Faire un peu moins qu'en début de séance est normal.`};
+}
+// Proposition « à frais » : l'historique est ramené à un début de séance avant d'appliquer les règles
+function coachFresh(exId, beforeTs, planned){
+  const e = exById(exId), hist = sessionsFor(exId, beforeTs).map(freshSess), dup = dupRanges(e);
   let [lo,hi] = repRange(e), mode = null, ref = hist[0], fromEst = false;
   if(dup && hist.length){   // on alterne : après une séance lourde, une séance volume, et inversement
     const heavy = s => isHeavySess(s, dup), now = beforeTs || Date.now();
@@ -937,7 +991,8 @@ function exStats(){
     const s = st[ex.exId] || (st[ex.exId] = {n:0, last:0}); s.n++; s.last = Math.max(s.last, w.start); }));
   return st;
 }
-const isCompound = e => repRange(e)[0] <= 8;
+// Polyarticulaire : classement par défaut de l'exercice (fourchette 5–8 ou 6–10), indépendant d'une fourchette choisie à la main
+const isCompound = e => defaultRange(e)[0] <= 6;
 function candidatesFor(m, st){
   return allEx().filter(e => e.muscle===m).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
     .sort((a,b) => b.n-a.n || b.comp-a.comp || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
@@ -2115,11 +2170,12 @@ function rateWorkout(w){
   const before = S.workouts.filter(x => x.start < w.start && x.id!==w.id);
   if(!before.length) return {e:"🙂", label:"Première référence", why:["Les prochaines séances seront comparées à celle-ci."]};
   let up = 0, down = 0, cmp = 0, reprise = 0;
-  w.exercises.forEach(ex => {
+  w.exercises.forEach((ex, i) => {
     const prev = sessionsFor(ex.exId, w.start)[0]; const cur = workSets(ex).filter(s=>num(s.r)>0); if(!prev || !cur.length) return;
     if(w.start - prev.ts > 21*86400000) reprise++;
     const b = s => Math.max(...s.map(x => e1rm(num(x.w)||1, num(x.r))));
-    const d = b(cur)/b(prev.sets) - 1; cmp++; if(d > 0.01) up++; else if(d < -0.02) down++;
+    const d = (b(cur) / fatigueFactor(preLoad(w.exercises, i))) / (b(prev.sets) / fatigueFactor(prev.pre)) - 1;   // fatigue de la place dans la séance retirée
+    cmp++; if(d > 0.01) up++; else if(d < -0.02) down++;
   });
   const last5 = sortW(before.slice()).slice(0,5), avgV = last5.reduce((t,x)=>t+wVolume(x),0)/last5.length, ratio = avgV ? wVolume(w)/avgV : 1;
   const prs = (w.prs||[]).length;
@@ -2351,7 +2407,7 @@ function viewHome(){
 function viewActive(){
   const a = S.profile.active;
   const exs = a.exercises.map((ex,i) => {
-    const e = exById(ex.exId), prev = lastSetsFor(ex.exId, a.start), c = coach(ex.exId, a.start, ex.plan);
+    const e = exById(ex.exId), prev = lastSetsFor(ex.exId, a.start), c = coach(ex.exId, a.start, ex.plan, preLoad(a.exercises, i, true));
     const hasWarm = ex.sets.some(s => s.warm), wu = hasWarm ? warmupFor(ex.exId, a.start, ex.plan, !a.exercises.slice(0, i).some(x => exById(x.exId).muscle===e.muscle), ex.wuForce) : [];
     const prevWork = (sessionsFor(ex.exId, a.start)[0] || {sets:[]}).sets, prevWarm = prev.filter(x => x.warm);
     let nw = 0;
@@ -2371,7 +2427,7 @@ function viewActive(){
         <button class="icon-btn" data-act="ex-menu" data-i="${i}" aria-label="Options de l'exercice">⋯</button></div>
       <button class="coach ${c.deload?"deload":""}" data-act="coach-why" data-i="${i}">
         <span class="ctag">${esc(c.tag)}</span>
-        <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:"reps"}` : `Objectif ${c.lo}–${c.hi} reps`}</span>
+        <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:"reps"}` : `Objectif ${c.lo}–${c.hi} reps`}${c.fatigue ? `<small class="fat"> · fatigue −${c.fatigue} %</small>` : ""}</span>
         <span class="cwhy">pourquoi ?</span></button>
       ${wu.length ? `<p class="wu-hint">🔥 Échauffement d'abord (séries « É ») : ${wu.map(x => `${fmtN(x.w)} kg × ${x.r}`).join(" puis ")}. Sans minuteur, ne compte pas dans le volume.</p>` : ""}
       <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>kg</th><th>Reps</th><th></th></tr></thead><tbody>${rows}</tbody></table>
@@ -2800,7 +2856,7 @@ const ACT = {
     };
   },
   feel: b => { const ex = A().exercises[+b.dataset.i], v = +b.dataset.v; ex.feel = ex.feel===v ? 0 : v; touchProfile(); render(); },
-  "coach-why": b => { const ex = A().exercises[+b.dataset.i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan);
+  "coach-why": b => { const ex = A().exercises[+b.dataset.i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan, preLoad(A().exercises, +b.dataset.i, true));
     openSheet(`<h3>${esc(e.name)}</h3>
       <div class="tiles"><div class="tile"><span>Objectif</span><strong>${c.w||c.r ? `${c.sets} × ${c.r||c.lo}` : `${c.lo}–${c.hi}`}</strong><small>${c.w?fmtN(c.w)+" kg":"reps"}</small></div>
         <div class="tile"><span>Fourchette</span><strong>${c.lo}–${c.hi}</strong><small>reps, à 1–2 en réserve</small></div></div>
