@@ -47,7 +47,7 @@ Données : tout est dans `localStorage` sous la clé `carnet-fonte.v1`, objet `S
 5. **Lire avant d'écrire.** `index.html` est long : chercher la fonction, lire le bloc entier et ses commentaires, puis modifier. Pas de réécriture de bloc « pour faire propre ».
 6. **Style du code existant** : français dans les commentaires et les textes, fonctions courtes et denses, templates HTML dans les fonctions `view*`, actions dans `ACT` déclenchées par `data-act`. Échapper toute chaîne avec `esc()`.
 7. **iPhone d'abord.** Tout rendu différé passe par `softRender`/`flushPending` (jamais de re-rendu sous le doigt), le minuteur ne reconstruit pas ses boutons, les saisies sélectionnent leur valeur au focus.
-8. **Textes en français**, tutoiement dans les tutos et les bulles du Gymon, vouvoiement dans le coach et les réglages (c'est l'existant, on ne mélange pas dans une même zone). Exception existante à trancher par le propriétaire : sur la page Gymon, la phrase du jour (`GYM_QUOTES`) et la célébration vouvoient alors que les bulles tutoient.
+8. **Textes en français**, tutoiement pour tout ce qui touche au Gymon (page Gymon, bulles, phrase du jour, célébration, partage, alertes de santé, repas de fin de séance) et dans les tutos ; vouvoiement dans le coach, la séance et les réglages. On ne mélange pas dans une même zone (décidé le 11 novembre 2026).
 
 ## Avant de livrer une modification
 

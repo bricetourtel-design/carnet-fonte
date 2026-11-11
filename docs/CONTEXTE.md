@@ -175,6 +175,7 @@ Export : `{app:"carnet-fonte", exported, profile (sans active), workouts}`. L'im
 | Ambiances Aesthetic / Compétition : expression du Gymon seulement | Le corps et les muscles restent ceux gagnés par l'entraînement ; la tête de mascotte suit le modèle d'image fourni par le propriétaire | 4 nov. |
 | Planche visuelle avant tout changement de dessin | Le dessin du Gymon est l'actif le plus visible ; le propriétaire valide sur captures avant intégration | 3 nov. |
 | Aucune donnée personnelle commitée (CSV Gravl, poids, captures) | Une capture contenant le poids du propriétaire a dû être retirée par réécriture d'historique | 29 oct. |
+| Tutoiement pour tout l'univers du Gymon, vouvoiement pour le coach et les réglages | Le Gymon est un compagnon qui parle à l'utilisateur ; le coach garde un ton d'expert | 11 nov. |
 | Déploiement direct par Claude après demande ou validation | Rythme d'itération rapide ; exceptions listées dans `CLAUDE.md` (règles du jeu, données, dessin, force push) | 11 nov. (écrit) |
 
 ### Choix refusés (à ne pas re-proposer sans nouvel élément)
@@ -253,7 +254,6 @@ Avant toute valorisation commerciale : vérifier ses engagements contractuels (e
 Questions ouvertes (à trancher par le propriétaire) :
 - Barre EZ ou barre droite par défaut pour « Barre au front » ? (aujourd'hui : barre droite, 20 kg)
 - Afficher dans « pourquoi ? » le nombre de mesures de l'historique personnel utilisées pour la fatigue (« calculé sur 23 mesures » ou « valeur par défaut ») ?
-- Tutoiement ou vouvoiement sur la page Gymon : les bulles tutoient, la phrase du jour (`GYM_QUOTES`) et la célébration vouvoient (« Votre futur vous dit merci »).
 - Détail des disques à mettre sur la barre : forme et place dans l'interface.
 
 ## 11. Points à renseigner lors de la migration

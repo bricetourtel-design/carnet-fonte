@@ -578,7 +578,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-11 i";
+const APP_VERSION = "2026-11-11 j";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1826,51 +1826,51 @@ const GYM_QUOTES = [
   "Le plus dur, c'est de passer la porte. Le reste suit.",
   "Aujourd'hui, une rep de plus qu'hier.",
   "La régularité bat le talent.",
-  "Votre futur vous dit merci.",
+  "Ton futur toi te dit merci.",
   "Petit progrès, grand résultat.",
   "On ne lâche rien, surtout pas la barre.",
   "Les muscles se construisent au repos, le mental à l'entraînement.",
   "Pas besoin d'être parfait, juste présent.",
   "Une séance de faite, c'est une séance de gagnée.",
-  "La motivation vous lance, l'habitude vous garde.",
-  "Votre seule concurrence : vous d'hier.",
+  "La motivation te lance, l'habitude te garde.",
+  "Ta seule concurrence : toi d'hier.",
   "Les excuses ne soulèvent rien.",
-  "Respirez, contractez, poussez.",
+  "Respire, contracte, pousse.",
   "Le sérieux d'aujourd'hui, c'est la fierté de demain.",
-  "Un jour ou jour un : à vous de choisir.",
+  "Un jour ou jour un : à toi de choisir.",
   "Lourd, c'est relatif. Fort, c'est mérité.",
   "Les résultats aiment les gens patients.",
-  "Faites-le pour la sensation après.",
-  "La sueur, c'est votre progrès qui s'en va… dans le bon sens.",
+  "Fais-le pour la sensation après.",
+  "La sueur, c'est ton progrès qui s'en va… dans le bon sens.",
   "On n'a jamais regretté une séance.",
   "Aujourd'hui, on construit.",
   "Doucement, mais sûrement.",
   "Le corps suit là où le mental décide.",
-  "Chaque kilo soulevé raconte votre histoire.",
+  "Chaque kilo soulevé raconte ton histoire.",
   "Discipline aujourd'hui, liberté demain.",
-  "Visez la technique, la charge suivra.",
-  "Vous êtes plus fort que la semaine dernière.",
+  "Vise la technique, la charge suivra.",
+  "Tu es plus fort que la semaine dernière.",
   "Un pas, une rep, une séance à la fois.",
   "Les champions s'entraînent aussi les jours sans envie.",
-  "Faites-vous confiance : vous l'avez déjà fait.",
+  "Fais-toi confiance : tu l'as déjà fait.",
   "Le meilleur moment pour s'entraîner, c'est aujourd'hui.",
   "Rien ne change si rien ne change.",
   "La fatigue passe, la fierté reste.",
-  "Concentrez-vous sur ce que vous contrôlez : votre séance.",
+  "Concentre-toi sur ce que tu contrôles : ta séance.",
   "Il faut forger le fer pendant qu'il est chaud.",
   "Une rep propre vaut mieux que trois bâclées.",
-  "Vous ne serez jamais aussi jeune qu'aujourd'hui : profitez-en.",
+  "Tu ne seras jamais aussi jeune qu'aujourd'hui : profites-en.",
   "Avancer lentement, c'est quand même avancer.",
   "La constance fait les miracles.",
-  "Ce qui vous challenge vous change.",
-  "Dans un mois, vous serez content d'avoir commencé aujourd'hui.",
+  "Ce qui te challenge te change.",
+  "Dans un mois, tu seras content d'avoir commencé aujourd'hui.",
   "Plus fort, un jour à la fois.",
   "Le progrès ne fait pas de bruit, mais il se voit.",
-  "Gardez le rythme, le reste viendra.",
-  "Ne comptez pas les jours, faites que les jours comptent.",
-  "Votre Gymon croit en vous.",
-  "Soyez la raison pour laquelle votre Gymon sourit.",
-  "Bougez aujourd'hui, remerciez-vous demain.",
+  "Garde le rythme, le reste viendra.",
+  "Ne compte pas les jours, fais que les jours comptent.",
+  "Ton Gymon croit en toi.",
+  "Sois la raison pour laquelle ton Gymon sourit.",
+  "Bouge aujourd'hui, remercie-toi demain.",
   "Allez, une petite séance et on en parle plus."
 ];
 // Une phrase par jour, différente chaque jour : les 50 défilent toutes avant de revenir (17 et 50 sont premiers entre eux)
@@ -1886,13 +1886,13 @@ function gymonHint(c){
   if(c.fidelity || c.stage){
     if(vit <= 30) return `Il est mourant ! Plus que ${left} jour${left>1?"s":""} pour le sauver avec une séance.`;
     if(vit <= 50) return "Il est malade… il a besoin d'une séance.";
-    if(vit <= 70) return "Il s'affaiblit sans vous.";
+    if(vit <= 70) return "Il s'affaiblit sans toi.";
   }else if(vit <= 30) return `L'œuf refroidit… plus que ${left} jour${left>1?"s":""} pour le réchauffer.`;
   if(c.stage===0){
-    if(!c.fidelity) return "Votre Gymon dort au chaud. Une première séance pour le réveiller ?";
-    return near >= 0.85 ? pick(["La coquille craque par endroits…", "On entend toquer de l'intérieur."]) : pick(["Il a senti votre séance.", "Quelque chose remue à l'intérieur."]);
+    if(!c.fidelity) return "Ton Gymon dort au chaud. Une première séance pour le réveiller ?";
+    return near >= 0.85 ? pick(["La coquille craque par endroits…", "On entend toquer de l'intérieur."]) : pick(["Il a senti ta séance.", "Quelque chose remue à l'intérieur."]);
   }
-  if(vit < 60) return pick(["Il s'ennuie de vous.", "Il guette la porte de la salle."]);
+  if(vit < 60) return pick(["Il s'ennuie de toi.", "Il guette la porte de la salle."]);
   if(near >= 0.85 && c.stage < CREATURE_CFG.stages.length - 1) return pick(["Il se passe quelque chose d'étrange…", "Il ne tient plus en place."]);
   return gymQuote(c);
 }
@@ -1908,8 +1908,8 @@ function viewCreature(){
     <section class="gy gy-dead">
       <div class="gy-stage">${creatureSVG(c)}</div>
       <p class="gy-form">Repose en paix</p>
-      <p class="gy-hint">${c.stage ? "Votre Gymon est mort" : "L'œuf a refroidi"} : sa vitalité est tombée sous ${CREATURE_CFG.vitality.deathBelow} %.</p>
-      <p class="small muted" style="margin:0;text-align:center">${n ? `${n} séance${n>1?"s":""} faite${n>1?"s":""} depuis l'attend${n>1?"ent":""} pour le nourrir. ` : ""}Ressuscitez-le pour garder son stade et ses muscles (il aura un peu maigri), ou repartez d'un nouvel œuf.</p>
+      <p class="gy-hint">${c.stage ? "Ton Gymon est mort" : "L'œuf a refroidi"} : sa vitalité est tombée sous ${CREATURE_CFG.vitality.deathBelow} %.</p>
+      <p class="small muted" style="margin:0;text-align:center">${n ? `${n} séance${n>1?"s":""} faite${n>1?"s":""} depuis l'attend${n>1?"ent":""} pour le nourrir. ` : ""}Ressuscite-le pour garder son stade et ses muscles (il aura un peu maigri), ou repars d'un nouvel œuf.</p>
       <button class="btn primary gy-cta" data-act="gy-resurrect">✨ Ressusciter mon Gymon</button>
       <button class="btn gy-cta" data-act="gy-restart">Recommencer avec un nouvel œuf</button>
     </section>`;
@@ -1938,14 +1938,14 @@ function viewCreature(){
 
 function nameSheet(){
   const c = creatureState();
-  openSheet(`<h3>${c.name ? "Renommer votre Gymon" : "Donnez un nom à votre Gymon"}</h3>
+  openSheet(`<h3>${c.name ? "Renommer ton Gymon" : "Donne un nom à ton Gymon"}</h3>
     <div class="row"><input id="gy-name-in" class="name-input" maxlength="16" value="${esc(c.name||"")}" placeholder="Son nom" aria-label="Nom du Gymon" style="flex:1">
       <button class="btn" data-act="gy-name-rand" aria-label="Nom au hasard">🎲</button></div>
     <button class="btn primary" data-act="gy-name-ok">Valider</button><button class="btn" data-act="close">Plus tard</button>`);
   setTimeout(() => { const i = document.getElementById("gy-name-in"); if(i && !c.name) i.focus(); }, 50);
 }
 
-/* ---------- Partage : carte image du Gymon et de vos perfs, créée dans le téléphone (aucun serveur) ---------- */
+/* ---------- Partage : carte image du Gymon et de tes perfs, créée dans le téléphone (aucun serveur) ---------- */
 let shareFile = null;
 function bestSets(W){
   const m = new Map();
@@ -1988,7 +1988,7 @@ function shareSheet(kind, wid){
   shareFile = null;
   openSheet(`<h3>${kind==="session" ? "Partager ma séance" : "Partager mon Gymon"}</h3>
     <div class="share-prev"><img id="share-img" alt="Aperçu de l'image à partager"></div>
-    <p class="small muted" style="margin:0">L'image montre votre Gymon et vos performances. Elle est créée sur votre téléphone ; vous choisissez à qui l'envoyer.</p>
+    <p class="small muted" style="margin:0">L'image montre ton Gymon et tes performances. Elle est créée sur ton téléphone ; tu choisis à qui l'envoyer.</p>
     <button class="btn primary" id="share-go" data-act="share-go" disabled>Préparation…</button><button class="btn" data-act="close">Annuler</button>`);
   cardPNG(cardSVG(kind, wid)).then(blob => {
     shareFile = new File([blob], "gymon.png", {type:"image/png"});
@@ -2015,7 +2015,7 @@ function celebrate(w, cr){
   const main = () => { celebState.timers.forEach(clearTimeout); el.className = "celeb"; el.innerHTML = celebHTML(w, cr, hatch); };
   celebState.main = main;
   if(cr.evolved){
-    const nm = c.name || "Votre Gymon";
+    const nm = c.name || "Ton Gymon";
     el.className = "celeb evo";
     el.innerHTML = `<div class="evo-stage"><div class="evo-old">${creatureSVG({...c, stage:cr.from}, false, false, {noFx:true})}</div><div class="evo-new">${creatureSVG(c, false, false, {noFx:true})}</div></div>
       <div class="evo-flash"></div>
@@ -2026,13 +2026,13 @@ function celebrate(w, cr){
   } else main();
 }
 function celebHTML(w, cr, hatch){
-  const c = creatureState(), nm = c.name || "Votre Gymon", dl = (c.lastMeal && c.lastMeal.dl) || {}, cols = ["#ff5a5f","#ffd23f","#3bd16f","#4a9de0","#c86bff", gymColor(c).h];
+  const c = creatureState(), nm = c.name || "Ton Gymon", dl = (c.lastMeal && c.lastMeal.dl) || {}, cols = ["#ff5a5f","#ffd23f","#3bd16f","#4a9de0","#c86bff", gymColor(c).h];
   return `<div class="confetti" aria-hidden="true">${Array.from({length:30}, (_, i) => `<i style="--x:${(i*37)%100}%;--d:${((i*0.23)%2.2).toFixed(2)}s;--c:${cols[i%cols.length]};--r:${(i*47)%360}deg"></i>`).join("")}</div>
     <div class="celeb-in">
       <p class="celeb-k">Séance terminée !</p>
       <div class="celeb-gy">${creatureSVG(c, false, false, {noSteam:true})}</div>
       <h2>${esc(nm)} a avalé ${fmtVol(cr.vol)}</h2>
-      ${hatch ? `<div class="row celeb-name"><input id="celeb-name" class="name-input" maxlength="16" placeholder="Donnez-lui un nom" aria-label="Nom du Gymon"><button class="btn" data-act="celeb-rand" aria-label="Nom au hasard">🎲</button></div>` : ""}
+      ${hatch ? `<div class="row celeb-name"><input id="celeb-name" class="name-input" maxlength="16" placeholder="Donne-lui un nom" aria-label="Nom du Gymon"><button class="btn" data-act="celeb-rand" aria-label="Nom au hasard">🎲</button></div>` : ""}
       ${Object.keys(dl).length ? `<div class="celeb-ups">${Object.entries(dl).map(([m,d]) => `<span>💪 ${esc(m)} +${fmtN(d,2)}</span>`).join("")}</div>` : `<p class="celeb-sub">Il reprend des forces.</p>`}
       ${w.prs.length ? `<p class="celeb-sub">🏆 Record : ${w.prs.map(id => esc(exById(id).name)).join(", ")}</p>` : ""}
       <div class="celeb-btns"><button class="btn" data-act="celeb-share">📸 Partager</button><button class="btn primary" data-act="celeb-close">Continuer</button></div>
@@ -2218,9 +2218,9 @@ function maybeAppGuide(){ if(tab==="seance" && !S.profile.active && S.profile.tu
 // Alerte de santé sur l'accueil quand le Gymon est malade ou mort
 function gymonHealthAlert(){
   const c = creatureState(); if(!c.fidelity && !c.stage && !c.dead) return "";
-  if(c.dead) return `<button class="alert danger gy-alert" data-act="goto" data-tab="creature">💀 Votre Gymon est mort. Touchez ici pour le ressusciter.</button>`;
+  if(c.dead) return `<button class="alert danger gy-alert" data-act="goto" data-tab="creature">💀 Ton Gymon est mort. Touche ici pour le ressusciter.</button>`;
   const vit = creatureVitality(c); if(vit > 50) return "";
-  return `<button class="alert ${vit <= 30 ? "danger" : "warn"} gy-alert" data-act="goto" data-tab="creature">${vit <= 30 ? "⚠️ Votre Gymon est mourant : une séance vite !" : "🤒 Votre Gymon est malade, il a besoin d'une séance."}</button>`;
+  return `<button class="alert ${vit <= 30 ? "danger" : "warn"} gy-alert" data-act="goto" data-tab="creature">${vit <= 30 ? "⚠️ Ton Gymon est mourant : une séance vite !" : "🤒 Ton Gymon est malade, il a besoin d'une séance."}</button>`;
 }
 
 /* ---------- Boîte à idées : brouillon gardé sur le téléphone ---------- */
@@ -2786,9 +2786,9 @@ function finishWorkout(){
       <div class="tile"><span>Séries</span><strong>${wSetCount(w)}</strong></div>
       <div class="tile"><span>Records</span><strong>${w.prs.length}</strong></div>
     </div>
-    ${cr && cr.dead ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>Votre Gymon est mort…</b>
-      Cette séance l'attend : ressuscitez-le pour qu'il la mange.</span></button>`
-    : cr ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>${cr.evolved ? `Votre Gymon a évolué ! ${esc(CREATURE_CFG.stages[cr.stage])}` : "Votre Gymon a mangé"}</b>
+    ${cr && cr.dead ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>Ton Gymon est mort…</b>
+      Cette séance l'attend : ressuscite-le pour qu'il la mange.</span></button>`
+    : cr ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>${cr.evolved ? `Ton Gymon a évolué ! ${esc(CREATURE_CFG.stages[cr.stage])}` : "Ton Gymon a mangé"}</b>
       ${fmtVol(cr.vol)} soulevés · ${cr.gain>0 ? "+"+fmtWeight(cr.gain) : "il reprend des forces"}${cr.ups.length ? ` · plus musclé : ${cr.ups.join(", ").toLowerCase()}` : ""}</span></button>` : ""}
     ${w.prs.length ? `<p style="margin:0">Nouveau record sur ${w.prs.map(id=>"<b>"+esc(exById(id).name)+"</b>").join(", ")}.</p>` : ""}
     <button class="btn primary" data-act="close">Fermer</button>`);
@@ -2839,15 +2839,15 @@ const ACT = {
   "tuto-next": () => showTuto(tutoI + 1),
   "tuto-prev": () => showTuto(tutoI - 1),
   "tuto-end": () => endTuto(),
-  "gy-resurrect": () => { creatureResurrect(); render(); window.scrollTo(0,0); toast("✨ Votre Gymon est revenu à la vie !"); },
-  "gy-restart": () => confirmSheet("Recommencer avec un nouvel œuf ?", "Votre Gymon actuel restera dans vos souvenirs, mais vous repartez d'un œuf. Vos séances et votre historique ne changent pas.", "Nouvel œuf",
+  "gy-resurrect": () => { creatureResurrect(); render(); window.scrollTo(0,0); toast("✨ Ton Gymon est revenu à la vie !"); },
+  "gy-restart": () => confirmSheet("Recommencer avec un nouvel œuf ?", "Ton Gymon actuel restera dans tes souvenirs, mais tu repars d'un œuf. Tes séances et ton historique ne changent pas.", "Nouvel œuf",
     () => { creatureRestart(); render(); window.scrollTo(0,0); toast("🥚 Un nouvel œuf est arrivé"); }),
   "gy-more": () => { const c = creatureState();
     openSheet(`<h3>Mon Gymon</h3>
-      <p class="muted" style="margin:-4px 0 0">${c.lastMeal ? `Dernier repas : ${fmtVol(c.lastMeal.vol)} soulevés.` : "Il attend son premier repas."} Il a partagé ${c.fidelity} séance${c.fidelity>1?"s":""} avec vous.</p>
+      <p class="muted" style="margin:-4px 0 0">${c.lastMeal ? `Dernier repas : ${fmtVol(c.lastMeal.vol)} soulevés.` : "Il attend son premier repas."} Il a partagé ${c.fidelity} séance${c.fidelity>1?"s":""} avec toi.</p>
       <div class="vol">${MUSCLES.map(m => { const l = muscleLevel(c, m); return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${Math.max(3, Math.min(100, l/4.5*100))}%;${mc(m)}"></i></div><b class="num">${fmtN(l, 1)}</b></div>`; }).join("")}</div>
       <div class="seg" role="group" aria-label="Ambiance">${[["aesthetic","😏 Aesthetic"],["competition","😉 Compétition"]].map(([k,l]) => `<button data-act="gy-style" data-k="${k}" aria-pressed="${(S.profile.gymonStyle||"aesthetic")===k}">${l}</button>`).join("")}</div>
-      <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) peut se développer, jusqu'à votre niveau de force. Le volume soulevé le nourrit, votre fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
+      <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) peut se développer, jusqu'à ton niveau de force. Le volume soulevé le nourrit, ta fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
       <button class="btn" data-act="close">Fermer</button>`); },
   "gy-flip": (b, e) => { e.stopPropagation(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; },
   "ba-ok": () => { const c = creatureState(); c.ref = snapNow(c); touchProfile(); render(); },
@@ -2855,7 +2855,7 @@ const ACT = {
   "gy-name": () => nameSheet(),
   "gy-name-rand": () => { const i = document.getElementById("gy-name-in"); if(i) i.value = GYM_NAMES[Math.floor(Math.random()*GYM_NAMES.length)]; },
   "gy-name-ok": () => { const i = document.getElementById("gy-name-in"), v = (i ? i.value : "").trim().slice(0, 16);
-    if(!v){ toast("Écrivez un nom"); return; } creatureState().name = v; touchProfile(); closeSheet(); render(); toast(`Bienvenue ${v} !`); },
+    if(!v){ toast("Écris un nom"); return; } creatureState().name = v; touchProfile(); closeSheet(); render(); toast(`Bienvenue ${v} !`); },
   share: b => shareSheet(b.dataset.k || "week"),
   "share-go": () => shareSend(),
   "celeb-close": () => celebClose(),
