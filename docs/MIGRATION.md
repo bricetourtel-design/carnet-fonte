@@ -27,7 +27,7 @@ Autrement dit : **tout ce qui a de la valeur est dans le dépôt GitHub**, et le
    git push origin main
    ```
 2. **Vider les conversations de ce qui n'est pas dans le dépôt.** Relire les conversations Gymon de l'ancien compte et noter dans `docs/CONTEXTE.md` (sections 6 « Décisions » et 10 « Pistes ») toute décision ou idée qui n'y figure pas encore. Dix lignes suffisent. Commit, push.
-3. **Confirmer l'URL exacte** dans la section 11 de `docs/CONTEXTE.md`. L'hébergeur est connu (GitHub Pages depuis ce dépôt) ; l'adresse vue par les testeurs reste à confirmer. Rappel : GitHub Pages déploie `main`, donc toute fusion dans `main` est en ligne quelques minutes plus tard ; sans changement de `index.html` ou `sw.js`, les téléphones ne voient rien.
+3. **URL et hébergeur** : déjà renseignés dans la section 11 de `docs/CONTEXTE.md` (GitHub Pages, `https://bricetourtel-design.github.io/carnet-fonte/`). Rien à faire. Rappel : GitHub Pages déploie `main`, donc toute fusion dans `main` est en ligne quelques minutes plus tard ; sans changement de `index.html` ou `sw.js`, les téléphones ne voient rien.
 4. **Supprimer la branche obsolète** `claude/accueil-premier-lancement` sur GitHub (historique du 29 octobre, réécrit depuis), pour que le nouveau compte ne la prenne pas pour du travail en cours. Supprimer aussi `claude/nice-gauss-e06uu4` une fois fusionnée.
 5. Vérifier que `main` est vert : `node tests/regression.js` et les cinq autres suites.
 
@@ -50,7 +50,7 @@ Rien de tout cela ne touche à l'app ni aux testeurs.
 
 - [ ] Branche de documentation fusionnée dans `main`
 - [ ] Décisions et idées des anciennes conversations reportées dans `docs/CONTEXTE.md`
-- [ ] Section 11 de `docs/CONTEXTE.md` renseignée (URL, hébergeur)
+- [x] Section 11 de `docs/CONTEXTE.md` renseignée (URL, hébergeur)
 - [ ] Branches obsolètes supprimées sur GitHub
 - [ ] Tests verts sur `main`
 - [ ] GitHub connecté sur le nouveau compte Claude, dépôt autorisé

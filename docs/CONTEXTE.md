@@ -17,7 +17,7 @@ Aucune donnée personnelle ne figure ici. Les testeurs sont anonymes.
 | Plateforme | PWA (web installable), testée sur iPhone, compatible Android via Chrome |
 | Langue | Français uniquement |
 | Dépôt | `github.com/bricetourtel-design/carnet-fonte`, branche `main` |
-| Hébergement | **GitHub Pages**, depuis ce dépôt (confirmé par le propriétaire le 11 novembre 2026). Adresse standard d'un dépôt de compte personnel : `https://bricetourtel-design.github.io/carnet-fonte/`, à confirmer. Conséquence : **tout push sur `main` est déployé** chez les testeurs |
+| Hébergement | **GitHub Pages**, depuis ce dépôt (confirmé par le propriétaire le 11 novembre 2026). URL de production : `https://bricetourtel-design.github.io/carnet-fonte/` (confirmée). Conséquence : **tout push sur `main` est déployé** chez les testeurs |
 | Modèle économique | Gratuit pour l'utilisateur. Pistes B2B et abonnement en section 10 |
 | Statistiques | GoatCounter, compte `gymon` (`gymon.goatcounter.com`), deux événements seulement |
 | Licence | Aucun fichier de licence dans le dépôt. Par défaut, tous droits réservés au propriétaire |
@@ -240,7 +240,7 @@ Idées retenues lors des conversations de conception (novembre 2026), non planif
 ## 11. Points à renseigner lors de la migration
 
 À compléter par le propriétaire, ils ne sont pas dans le dépôt :
-- Hébergeur : GitHub Pages depuis ce dépôt (renseigné le 11 novembre 2026). URL exacte vue par les testeurs : à confirmer (`https://bricetourtel-design.github.io/carnet-fonte/` si configuration standard).
+- Hébergeur et URL : GitHub Pages depuis ce dépôt, `https://bricetourtel-design.github.io/carnet-fonte/` (renseignés et confirmés le 11 novembre 2026). Pas de domaine à soi : l'adresse dépend du nom du compte GitHub, qui ne doit donc pas changer.
 - Comptes liés (sans identifiants ni mots de passe, juste « lequel ») : GoatCounter `gymon`, hébergeur : ____________________
 - Liste des testeurs : hors dépôt, à garder dans un espace privé.
 - Décisions prises à l'oral ou dans d'autres conversations Claude et non reflétées dans la section 6 : à reporter avant de changer de compte Claude (voir `docs/MIGRATION.md`, section 2).
