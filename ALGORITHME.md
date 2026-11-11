@@ -48,10 +48,16 @@ Un exercice fait après d'autres pour le même muscle donne moins de reps : ce n
 ## Séance moins bonne : la raison (v2.4)
 Quand la note de fin de séance est « Séance correcte » ou « En dessous de vos habitudes », l'app propose (facultatif) d'indiquer une ou plusieurs raisons. On peut aussi le faire plus tard depuis le détail d'une séance dans l'historique.
 
-| Raison | Conséquence |
+| Catégorie (exemples) | Conséquence |
 |---|---|
-| 😴 Manque de sommeil, 🥱 fatigue générale, 🤒 malade, 🤕 douleur ou blessure, 🩸 règles (affiché avec la référence Femmes), 😣 stress, 🍽️ mal mangé ou mal hydraté, 🍻 lendemain de soirée, 🥵 chaleur, 🎯 travail technique | **Séance « hors forme »** : elle compte pour le Gymon, le volume et la récupération, mais le coach ne s'en sert pas pour les prochaines charges (ni baisse, ni décharge), ni pour mesurer la fatigue selon la place des exercices. Douleur : conseil de prudence. |
-| 😶 Baisse de motivation, ⏱️ manque de temps, 🏋️ salle bondée | **Comptée normalement** (rien ne change). |
+| 🩸 **Règles** (règles, douleurs ou fatigue liées au cycle) — proposée en premier, mise en avant, aux utilisatrices qui ont choisi « Une femme » | Séance « hors forme » |
+| 😴 **Fatigue** (manque de sommeil, fatigue générale, stress) | Séance « hors forme » |
+| 🤒 **Santé** (malade, douleur, petite blessure) | Séance « hors forme » + conseil de prudence |
+| 🍽️ **Hygiène de vie** (mal mangé, mal hydraté, lendemain de soirée, chaleur) | Séance « hors forme » |
+| 🎯 **Séance allégée exprès** (technique, nouvelle méthode, reprise en douceur) | Séance « hors forme » |
+| 😶 **Motivation ou contexte** (motivation, manque de temps, salle bondée) | Comptée normalement |
+
+Séance « hors forme » : elle compte pour le Gymon, le volume et la récupération, mais le coach ne s'en sert pas pour les prochaines charges (ni baisse, ni décharge), ni pour mesurer la fatigue selon la place des exercices.
 
 Ces informations (dont santé et cycle) restent dans le téléphone : jamais envoyées, jamais sur les images partagées.
 
