@@ -170,6 +170,11 @@ Export : `{app:"carnet-fonte", exported, profile (sans active), workouts}`. L'im
 | Tests Playwright sur Chromium, valeurs de référence figées | Détecter toute dérive de calcul ; Safari iOS réel non couvert | 29 oct. |
 | Gymon en 2D détaillée plutôt qu'en 3D | Le rendu 3D essayé donnait un effet « ballon » ; la 2D permet des muscles lisibles et un style affirmé | 4 nov. |
 | App gratuite, hébergée sur GitHub Pages | Coût nul, déploiement par simple push | 29 oct. |
+| Algorithmes basés sur l'historique de chaque utilisateur | L'historique Gravl du propriétaire n'a servi qu'aux simulations ; aucune valeur personnelle codée en dur | 25 oct. |
+| Ambiances Aesthetic / Compétition : expression du Gymon seulement | Le corps et les muscles restent ceux gagnés par l'entraînement ; la tête de mascotte suit le modèle d'image fourni par le propriétaire | 4 nov. |
+| Planche visuelle avant tout changement de dessin | Le dessin du Gymon est l'actif le plus visible ; le propriétaire valide sur captures avant intégration | 3 nov. |
+| Aucune donnée personnelle commitée (CSV Gravl, poids, captures) | Une capture contenant le poids du propriétaire a dû être retirée par réécriture d'historique | 29 oct. |
+| Déploiement direct par Claude après demande ou validation | Rythme d'itération rapide ; exceptions listées dans `CLAUDE.md` (règles du jeu, données, dessin, force push) | 11 nov. (écrit) |
 
 ### Choix refusés (à ne pas re-proposer sans nouvel élément)
 - Une app qui dépend de Claude ou d'une IA à l'exécution.
@@ -181,6 +186,8 @@ Export : `{app:"carnet-fonte", exported, profile (sans active), workouts}`. L'im
 ## 7. Logique de développement (comment le projet avance)
 
 - Itérations courtes, une fonctionnalité par commit, message en français décrivant ce que voit l'utilisateur.
+- Travail dans Claude Code cloud (claude.ai/code). Du 24 octobre au 11 novembre 2026, Claude poussait directement sur `main` (déploiement chez les testeurs) dès que la fonctionnalité était demandée ou validée, sans pull request. Sur le nouveau compte, les sessions peuvent imposer une branche `claude/…` : le déploiement passe alors par une pull request fusionnée dans `main`. Règle complète dans `CLAUDE.md`, section « Hébergement et déploiement ».
+- Contrôle visuel par capture Playwright au format iPhone (serveur local), captures gardées hors du dépôt.
 - Chaque règle métier a sa justification écrite (`ALGORITHME.md` avec sources, `CREATURE.md` avec versions) : la documentation fait partie du produit.
 - Audit par simulation sur historique réel avant de changer le coach (novembre 2026).
 - Tests de non-régression figés **avant** une modification volontaire (`--update`), puis comparés.
@@ -235,7 +242,15 @@ Idées retenues lors des conversations de conception (novembre 2026), non planif
 - **Bilan du mois** façon « Wrapped ».
 - **Branches d'évolution** selon le style d'entraînement.
 - **Détail des disques** à mettre sur la barre (prolongement de la charge par côté).
+- **Comptage des utilisateurs par salle** (option étudiée pour les clans) : recherche de salle via OpenStreetMap, consentement explicite, politique de confidentialité, hébergement en Europe. Demande un serveur : même réserve que Gymon+.
 - **Suivi du cycle menstruel**, à traiter avec précaution : donnée de santé, à garder dans le téléphone, jamais partagée ni envoyée. La raison « Règles » de séance en est le premier pas.
+
+Objectif business indiqué par le propriétaire : un revenu complémentaire de l'ordre de 1 000 € par mois au bout d'un an. Scepticisme sur le modèle grand public ; la piste des salles de sport était recommandée.
+
+Questions ouvertes (à trancher par le propriétaire) :
+- Barre EZ ou barre droite par défaut pour « Barre au front » ?
+- Afficher dans « pourquoi ? » le nombre de mesures de l'historique personnel sur lesquelles repose la proposition ?
+- Détail des disques à mettre sur la barre : forme et place dans l'interface.
 
 ## 11. Points à renseigner lors de la migration
 
