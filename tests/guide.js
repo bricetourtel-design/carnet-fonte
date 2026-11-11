@@ -30,13 +30,22 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.click('#tuto .tu-skip');
   // Quoi de neuf : nouvel utilisateur → rien ; testeur d'avant → les nouveautés depuis sa dernière séance, une seule fois
   const wn = await p.evaluate(() => { closeSheet();
-    const fresh = S.profile.seenVersion === versionDate(APP_VERSION);
-    S.profile.seenVersion = undefined; S.workouts = [{id:"old", name:"x", start:new Date(2026, 10, 5, 18).getTime(), end:new Date(2026, 10, 5, 19).getTime(), exercises:[{exId:"squat", sets:[{w:"100", r:"5", done:true}]}]}];
+    const fresh = S.profile.wnSeen === versionDate(APP_VERSION) && document.getElementById("sheet").hidden;
+    const born0 = S.profile.creature.born; S.profile.creature.born = new Date(2026, 10, 1).getTime();
+    S.profile.wnSeen = undefined; S.workouts = [{id:"old", name:"x", start:new Date(2026, 10, 5, 18).getTime(), end:new Date(2026, 10, 5, 19).getTime(), exercises:[{exId:"squat", sets:[{w:"100", r:"5", done:true}]}]}];
     maybeWhatsNew(); const shown = !document.getElementById("sheet").hidden, items = document.querySelectorAll(".wn-i").length, oldest = [...document.querySelectorAll(".wn-d")].pop().textContent;
+    // rechargement (mise à jour) avant de fermer : la fenêtre revient
+    document.getElementById("sheet").hidden = true; maybeWhatsNew(); const back = !document.getElementById("sheet").hidden;
     closeSheet(); maybeWhatsNew(); const again = !document.getElementById("sheet").hidden;
-    return {fresh, shown, items, oldest, again, total:WHATS_NEW.length, after:WHATS_NEW.filter(x => x.d > "2026-11-05").length}; });
+    // testeur sans séance, Gymon né il y a 10 jours : nouveautés depuis sa naissance
+    S.profile.wnSeen = undefined; S.workouts = []; const keep = S.profile.creature.born; S.profile.creature.born = Date.now() - 10*864e5; const fid = S.profile.creature.fidelity; S.profile.creature.fidelity = 0;
+    maybeWhatsNew(); const noSession = !document.getElementById("sheet").hidden; closeSheet(); S.profile.creature.born = keep; S.profile.creature.fidelity = fid;
+    S.profile.creature.born = born0;
+    return {fresh, shown, items, oldest, back, again, noSession, after:WHATS_NEW.filter(x => x.d > "2026-11-05").length}; });
   ok(wn.fresh, "nouvel utilisateur : pas de fenêtre « Quoi de neuf »", wn);
-  ok(wn.shown && wn.items === wn.after && /6 novembre/.test(wn.oldest) && !wn.again, "testeur dont la dernière séance date du 5 nov. : nouveautés depuis le 6 nov., affichées une seule fois", wn);
+  ok(wn.shown && wn.items === wn.after && /6 novembre/.test(wn.oldest), "testeur dont la dernière séance date du 5 nov. : nouveautés depuis le 6 nov.", wn);
+  ok(wn.back && !wn.again, "marquée « vue » seulement à la fermeture : un rechargement de mise à jour ne la fait plus disparaître", wn);
+  ok(wn.noSession, "testeur sans séance : nouveautés depuis la naissance de son Gymon", wn);
   await p.click('.tabs [data-tab="exercices"]'); await p.click('[data-act="whats-new"]');
   ok(await p.evaluate(() => document.querySelectorAll(".wn-i").length === WHATS_NEW.length), "Réglages : « Les nouveautés » rouvre la liste complète");
   ok(errs.length === 0, "aucune erreur JavaScript", errs);

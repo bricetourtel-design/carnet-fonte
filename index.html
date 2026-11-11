@@ -578,7 +578,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-11 h";
+const APP_VERSION = "2026-11-11 i";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2180,27 +2180,34 @@ const WHATS_NEW = [
 ];
 const versionDate = v => String(v || "").slice(0, 10);
 function whatsNewSince(since){ return WHATS_NEW.filter(x => x.d > since); }
-function whatsNewSheet(list, all){
+function whatsNewSheet(list, all, onClose){
   const by = {}; list.forEach(x => (by[x.d] = by[x.d] || []).push(x));
   openSheet(`<h3>${all ? "Les nouveautés" : "Quoi de neuf depuis votre dernière visite ?"}</h3>
     <div class="wn">${Object.keys(by).sort().reverse().map(d => `<p class="wn-d">${esc(fmtDate(new Date(d + "T12:00").getTime(), {day:"numeric", month:"long"}))}</p>
       ${by[d].map(x => `<div class="wn-i"><b>${esc(x.t)}</b><span>${esc(x.x)}</span></div>`).join("")}`).join("")}</div>
-    <button class="btn primary" data-act="close">C'est parti !</button>`);
+    <button class="btn primary" data-act="close">C'est parti !</button>`, onClose);
 }
+const isoDay = ts => new Date(ts - new Date(ts).getTimezoneOffset()*60000).toISOString().slice(0, 10);
 function maybeWhatsNew(){
   const latest = versionDate(APP_VERSION);
-  if(!S.profile.seenVersion){
-    // Testeur d'avant cette fonction : on part de sa dernière séance ; nouvel utilisateur : rien à montrer
-    const lastW = S.workouts.reduce((t,w) => Math.max(t, w.start), 0);
-    if(!lastW && !(S.profile.creature && S.profile.creature.fidelity)){ S.profile.seenVersion = latest; saveLocal(); return; }
-    S.profile.seenVersion = lastW ? new Date(lastW - new Date(lastW).getTimezoneOffset()*60000).toISOString().slice(0, 10) : "2026-11-03";
+  if(!S.profile.wnSeen){
+    // Point de départ : dernière séance, sinon naissance du Gymon. Un tout nouvel utilisateur ne voit rien.
+    const lastW = S.workouts.reduce((t,w) => Math.max(t, w.start), 0), cr = S.profile.creature, born = cr && cr.born || 0;
+    const fresh = !lastW && !(cr && cr.fidelity) && (!born || Date.now() - born < 86400000);
+    S.profile.wnSeen = fresh ? latest : isoDay(Math.max(lastW, born)); saveLocal();
   }
-  const list = whatsNewSince(S.profile.seenVersion);
-  if(!list.length){ if(S.profile.seenVersion < latest){ S.profile.seenVersion = latest; saveLocal(); } return; }
-  // pas par-dessus l'accueil, un tuto ou une fenêtre déjà ouverte : on réessaiera à la prochaine ouverture
-  if(!S.profile.onboarded || !S.profile.tutoDone || !document.getElementById("tuto").hidden || !document.getElementById("sheet").hidden){ saveLocal(); return; }
-  whatsNewSheet(list); S.profile.seenVersion = latest; saveLocal();
+  const list = whatsNewSince(S.profile.wnSeen); if(!list.length) return;
+  // pas par-dessus l'accueil, un tuto ou une autre fenêtre : on réessaiera plus tard
+  if(!S.profile.onboarded || !S.profile.tutoDone || !document.getElementById("tuto").hidden || !document.getElementById("sheet").hidden) return;
+  // « vu » seulement quand on ferme la fenêtre : un rechargement de mise à jour ne la fait plus disparaître
+  whatsNewSheet(list, false, () => { S.profile.wnSeen = latest; saveLocal(); });
 }
+// Retour dans l'app (iPhone : elle reste souvent ouverte en arrière-plan) : on cherche une mise à jour et on montre les nouveautés
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState !== "visible") return;
+  if(navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
+  setTimeout(maybeWhatsNew, 600);
+});
 
 function maybeAppGuide(){ if(tab==="seance" && !S.profile.active && S.profile.tutoDone && !S.profile.tutoAppDone && document.getElementById("tuto").hidden) showTuto(0, "app"); }
 (() => { let x0 = null;   // glisser pour changer d'écran
