@@ -85,7 +85,7 @@ Backlog et idées : `docs/CONTEXTE.md`, section « Pistes ».
 
 ## Hébergement et déploiement
 
-L'app est un dossier statique. `LISEZMOI.txt` décrit l'installation : hébergement de fichiers statiques (Netlify Drop ou GitHub Pages), puis « Sur l'écran d'accueil » dans Safari. L'URL de production n'est pas dans le dépôt : la demander au propriétaire avant toute opération qui en dépend. Changer d'URL fait perdre les données des utilisateurs installés (le `localStorage` est lié à l'origine) : voir `docs/MIGRATION.md`.
+L'app est un dossier statique servi par **GitHub Pages depuis ce dépôt**. Conséquence directe : **un push sur `main` est un déploiement chez les testeurs**. On ne pousse sur `main` qu'avec `APP_VERSION` et `CACHE` incrémentés, les tests verts et l'accord du propriétaire. Les fichiers Markdown et `docs/` ne sont pas chargés par l'app : les modifier sur `main` est sans effet pour les utilisateurs. URL standard : `https://bricetourtel-design.github.io/carnet-fonte/` (à confirmer dans `docs/CONTEXTE.md`). Changer d'URL fait perdre les données des utilisateurs installés (le `localStorage` est lié à l'origine) : voir `docs/MIGRATION.md`.
 
 ---
 *Assisté par IA. Le collaborateur reste responsable et vérifie.*

@@ -17,7 +17,8 @@ Aucune donnée personnelle ne figure ici. Les testeurs sont anonymes.
 | Plateforme | PWA (web installable), testée sur iPhone, compatible Android via Chrome |
 | Langue | Français uniquement |
 | Dépôt | `github.com/bricetourtel-design/carnet-fonte`, branche `main` |
-| Hébergement | Hébergement statique (Netlify Drop ou GitHub Pages selon `LISEZMOI.txt`). URL de production non versionnée : à documenter ici lors de la migration |
+| Hébergement | **GitHub Pages**, depuis ce dépôt (confirmé par le propriétaire le 11 novembre 2026). Adresse standard d'un dépôt de compte personnel : `https://bricetourtel-design.github.io/carnet-fonte/`, à confirmer. Conséquence : **tout push sur `main` est déployé** chez les testeurs |
+| Modèle économique | Gratuit pour l'utilisateur. Pistes B2B et abonnement en section 10 |
 | Statistiques | GoatCounter, compte `gymon` (`gymon.goatcounter.com`), deux événements seulement |
 | Licence | Aucun fichier de licence dans le dépôt. Par défaut, tous droits réservés au propriétaire |
 
@@ -167,6 +168,15 @@ Export : `{app:"carnet-fonte", exported, profile (sans active), workouts}`. L'im
 | Statistiques limitées à installations et ouvertures | Mesurer l'adoption sans cookie ni donnée de séance | 9 nov. |
 | « Quoi de neuf » marqué vu à la fermeture | Un rechargement de mise à jour ne doit pas faire disparaître la fenêtre | 11 nov. |
 | Tests Playwright sur Chromium, valeurs de référence figées | Détecter toute dérive de calcul ; Safari iOS réel non couvert | 29 oct. |
+| Gymon en 2D détaillée plutôt qu'en 3D | Le rendu 3D essayé donnait un effet « ballon » ; la 2D permet des muscles lisibles et un style affirmé | 4 nov. |
+| App gratuite, hébergée sur GitHub Pages | Coût nul, déploiement par simple push | 29 oct. |
+
+### Choix refusés (à ne pas re-proposer sans nouvel élément)
+- Une app qui dépend de Claude ou d'une IA à l'exécution.
+- La 3D pour le Gymon (le prototype `proto-3d/` reste une exploration).
+- Les outils payants pour les statistiques (Plausible, par exemple) : GoatCounter gratuit suffit.
+- Les achats pour gagner (« pay to win »), la publicité, les classements publics de charges.
+- Les retouches mineures dans « Quoi de neuf ? » : réservé aux nouveautés qui changent l'usage.
 
 ## 7. Logique de développement (comment le projet avance)
 
@@ -218,10 +228,19 @@ Issues de `CREATURE.md`, des retours et du brainstorming du 6 novembre :
 - Sauvegarde plus simple que le copier-coller de texte (fichier, iCloud…) sans serveur.
 - Version Android testée sur appareil réel.
 
+Idées retenues lors des conversations de conception (novembre 2026), non planifiées :
+- **Clans de salle** : choisir sa salle de sport, puis un « clan de salle ». Piste business B2B envisagée : de l'ordre de 20 salles à 50 € par mois pour viser 1 000 € par mois. À valider avec des salles.
+- **Gymon+** : abonnement avec sauvegarde cloud et cosmétiques. Nécessiterait un serveur : contraire à la promesse actuelle, donc décision produit à part entière, pas une fonctionnalité de plus.
+- **Duels de Gymon** par code entre amis.
+- **Bilan du mois** façon « Wrapped ».
+- **Branches d'évolution** selon le style d'entraînement.
+- **Détail des disques** à mettre sur la barre (prolongement de la charge par côté).
+- **Suivi du cycle menstruel**, à traiter avec précaution : donnée de santé, à garder dans le téléphone, jamais partagée ni envoyée. La raison « Règles » de séance en est le premier pas.
+
 ## 11. Points à renseigner lors de la migration
 
 À compléter par le propriétaire, ils ne sont pas dans le dépôt :
-- URL de production et hébergeur réel (Netlify ? GitHub Pages ? domaine ?) : ____________________
+- Hébergeur : GitHub Pages depuis ce dépôt (renseigné le 11 novembre 2026). URL exacte vue par les testeurs : à confirmer (`https://bricetourtel-design.github.io/carnet-fonte/` si configuration standard).
 - Comptes liés (sans identifiants ni mots de passe, juste « lequel ») : GoatCounter `gymon`, hébergeur : ____________________
 - Liste des testeurs : hors dépôt, à garder dans un espace privé.
 - Décisions prises à l'oral ou dans d'autres conversations Claude et non reflétées dans la section 6 : à reporter avant de changer de compte Claude (voir `docs/MIGRATION.md`, section 2).
