@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#eef1f8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#090a10" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#140F24">
+<script>/* Apparence choisie dans Réglages, appliquée avant l'affichage (pas de flash) : sombre par défaut */
+try{ var gp = (JSON.parse(localStorage.getItem("carnet-fonte.v1")) || {}).profile || {}; if(gp.theme === "light") document.documentElement.dataset.theme = "light"; else if(gp.theme === "auto") document.documentElement.removeAttribute("data-theme"); }catch(e){}</script>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
@@ -235,7 +236,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .feel-bar button[aria-pressed="true"]{background:var(--fc);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--fc)}
 .feel-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 .vol{display:flex;flex-direction:column;gap:7px}
-.vol-row{display:grid;grid-template-columns:78px 1fr 26px;gap:10px;align-items:center;font-size:14px}
+.vol-row{display:grid;grid-template-columns:78px 1fr 40px;gap:10px;align-items:center;font-size:14px}
 .vol-row b{text-align:right;font-weight:600}
 .vol-bar{position:relative;height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
 .vol-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--mc)}
@@ -551,6 +552,24 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .tu-dots{display:flex;justify-content:center;gap:7px}
 .tu-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 .tu-dots i.on{width:20px;border-radius:4px;background:var(--accent)}
+/* ---------- Identité Arcade (choisie le 12 novembre 2026) : violet et rose, sombre par défaut, clair possible dans Réglages ---------- */
+:root{--accent:#7C3AED;--bg:#F5F1FF;--blob1:#DCCBFF;--blob2:#FFD3EA;--blob3:#D3E6FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--accent:#8B5CF6;--bg:#140F24;--blob1:#3B1F7A;--blob2:#0E5160;--blob3:#5A1B4F;--bar:rgba(34,24,60,.55);
+  --glass:rgba(46,34,78,.46);--glass-strong:rgba(50,38,86,.72);--glass-line:rgba(255,255,255,.12);--surface:#1d1630;--surface-2:#2a2142}}
+:root[data-theme="dark"]{--accent:#8B5CF6;--bg:#140F24;--blob1:#3B1F7A;--blob2:#0E5160;--blob3:#5A1B4F;--bar:rgba(34,24,60,.55);
+  --glass:rgba(46,34,78,.46);--glass-strong:rgba(50,38,86,.72);--glass-line:rgba(255,255,255,.12);--surface:#1d1630;--surface-2:#2a2142}
+.btn.primary,.btn.ok{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 55%),linear-gradient(135deg,#8B5CF6,#EC4899);border-color:rgba(236,72,153,.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 24px rgba(139,92,246,.35)}
+/* Page Gymon : titre discret, créature plus grande, niveaux par muscle */
+body[data-tab="creature"] .top h1{font-size:20px;letter-spacing:-.01em}
+.gy-stage{height:calc(100dvh - 325px);max-height:680px}
+.gy-egg .gy-stage{height:calc(100dvh - 285px)}
+.gy-stage .creature{height:96%;max-width:100%}
+.gy-lv{display:flex;align-items:flex-end;gap:3px;height:26px;margin-top:3px}
+.gy-lv i{display:block;width:7px;border-radius:3px;min-height:3px;background:var(--mc)}
+.gy-share{margin-left:6px}
+/* Titre collé en haut : fond de verre dépoli, pour que le contenu qui défile dessous ne se mélange pas au titre */
+.top{background:color-mix(in srgb,var(--bg) 96%,transparent);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
 </style>
 </head>
 <body>
@@ -560,6 +579,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
   <h1 id="title">Séance</h1>
   <div class="top-r">
     <div class="status" id="status"><i></i><span>Sur cet iPhone</span></div>
+    <button class="idea-btn" data-act="settings" aria-label="Réglages"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     <button class="idea-btn" data-act="idea" aria-label="Boîte à idées"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg></button>
   </div>
 </header>
@@ -578,7 +598,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 d";
+const APP_VERSION = "2026-11-12 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1916,7 +1936,20 @@ function gymonHint(c){
   if(near >= 0.85 && c.stage < CREATURE_CFG.stages.length - 1) return pick(["Il se passe quelque chose d'étrange…", "Il ne tient plus en place."]);
   return gymQuote(c);
 }
-let gyBack = false, gyFlipAnim = false;   // vue de dos du Gymon (non sauvegardée : on revient de face à l'ouverture)
+let gyBack = false, gyFlipAnim = false, gySwiped = 0, gyTouch = null;
+// Glisser à gauche ou à droite sur le Gymon : le retourner (face ⇄ dos), sans ouvrir sa fiche
+document.addEventListener("touchstart", e => { const st = e.target.closest && e.target.closest(".gy-stage"); gyTouch = st && e.touches.length === 1 ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : null; }, {passive:true});
+document.addEventListener("touchend", e => { if(!gyTouch) return; const t = e.changedTouches[0], dx = t.clientX - gyTouch.x, dy = t.clientY - gyTouch.y; gyTouch = null;
+  if(Math.abs(dx) > 50 && Math.abs(dy) < 50 && creatureState().stage >= 2 && !creatureState().dead){ gySwiped = Date.now(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; } }, {passive:true});   // vue de dos du Gymon (non sauvegardée : on revient de face à l'ouverture)
+/* On le voit grandir, comme un Tamagotchi : sa hauteur à l'écran suit sa taille en cm (6 cm l'œuf → 350 cm le dragon, échelle logarithmique),
+   de 30 % de la zone pour l'œuf à toute la zone pour le dragon ; il grandit un peu à chaque séance, pas seulement aux changements de forme.
+   GY_FILL : part de la hauteur du dessin occupée par chaque forme (mesurée) ; le dessin reste posé au sol. */
+const GY_FILL = [0.49, 0.49, 0.65, 0.74, 0.86, 0.95, 0.97, 0.83, 0.89, 0.96, 0.98, 0.98, 1.02];
+function gyZoom(svg, c){
+  const cm = Math.max(6, creatureHeight(c)), f = 0.30 + 0.70 * Math.min(1, Math.log(cm / 6) / Math.log(350 / 6));
+  const z = f / (0.96 * (GY_FILL[c.stage] || 1)), h = 344 / z, w = 240 / z;
+  return svg.replace('viewBox="0 -24 240 344"', `viewBox="${(120 - w/2).toFixed(1)} ${(320 - h).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}"`);
+}
 function viewCreature(){
   const c = creatureState(), vit = creatureVitality(c);
   const lvAvg = MUSCLES.reduce((t,m) => t + muscleLevel(c, m), 0) / MUSCLES.length, force = Math.min(5, Math.round(lvAvg) + 1);
@@ -1935,24 +1968,23 @@ function viewCreature(){
     </section>`;
   }
   return `
-    <section class="gy">
+    <section class="gy ${c.stage < 2 ? "gy-egg" : ""}">
       ${beforeAfterHTML(c)}
-      <div class="gy-stage" data-act="gy-more" role="button" aria-label="Voir mon Gymon de plus près">
+      <div class="gy-stage" data-act="gy-more-tap" role="button" aria-label="Voir mon Gymon de plus près">
         <div class="gy-aura"></div>
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
         <i class="gy-spark" style="--x:72%;--y:72%;--d:2.1s"></i><i class="gy-spark" style="--x:24%;--y:66%;--d:.7s"></i>
-        ${creatureSVG(c, false, gyBack && c.stage >= 2).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}`)}
+        ${gyZoom(creatureSVG(c, false, gyBack && c.stage >= 2), c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}`)}
         ${(() => { const L = gymonLines(c); return L.length ? `<button class="gy-bubble" data-act="gy-talk">${esc(L[L.prio ? gyTalk % L.length : (gyTalk + dayNum()) % L.length])}</button>` : ""; })()}
         <span class="gy-chip tl"><small>Poids</small>${fmtWeight(c.weight)}</span>
         <span class="gy-chip tr"><small>Taille</small>${fmtN(creatureHeight(c), 0)} cm</span>
         <span class="gy-chip bl"><small>Vitalité</small>${vit} %</span>
-        <span class="gy-chip br"><small>Force</small><span class="gy-dots">${"●".repeat(force)}<em>${"●".repeat(5-force)}</em></span></span>
+        <span class="gy-chip br" aria-label="Niveau de chaque muscle"><small>Muscles</small><span class="gy-lv">${MUSCLES.map(m => `<i style="height:${Math.max(3, Math.round(muscleLevel(c, m)/4.5*26))}px;${mc(m)}"></i>`).join("")}</span></span>
       </div>
       ${c.stage >= 2 ? `<button class="gy-name" data-act="gy-name">${c.name ? esc(c.name) : "✏️ Donner un nom"}</button>` : ""}
-      <p class="gy-form">${esc(CREATURE_CFG.stages[c.stage])} <button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button>` : ""}</p>
+      <p class="gy-form">${esc(CREATURE_CFG.stages[c.stage])} <button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button><button class="gy-flip gy-share" data-act="share" data-k="week" aria-label="Partager mon Gymon">↗ Partager</button>` : ""}</p>
       <p class="gy-hint">${esc(gymonHint(c))}</p>
       <button class="btn primary gy-cta" data-act="goto" data-tab="seance">${esc(cta)}</button>
-      ${c.stage >= 2 ? `<button class="btn gy-cta" data-act="share" data-k="week">📸 Partager mon Gymon</button>` : ""}
     </section>`;
 }
 
@@ -2186,6 +2218,9 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-12", t:"🟣 Nouveau look", x:"Gymon passe en violet et rose, en sombre par défaut. Vous préférez le clair ? Réglages › Apparence (sombre, clair ou comme l'iPhone). Nouvelle icône aussi : si elle ne change pas sur votre écran d'accueil, supprimez le raccourci et réinstallez l'app depuis Safari, vos données restent."},
+  {d:"2026-11-12", t:"🥚 Le Gymon grandit à l'écran", x:"Comme un Tamagotchi : petit au début, il grandit un peu à chaque séance jusqu'à remplir l'écran. Glissez sur lui pour voir son dos, et la case « Muscles » montre le niveau de chacun."},
+  {d:"2026-11-12", t:"↻ Changer d'exercice en séance", x:"Machine prise ou pas envie ? Le bouton ↻ propose un autre exercice pour le même muscle, un nouveau à chaque toucher. Et l'engrenage en haut ouvre les réglages."},
   {d:"2026-11-12", t:"🎯 Charge proposée sur un nouvel exercice", x:"Sur un exercice jamais fait, le coach propose une charge de départ d'après votre niveau sur ce muscle et votre poids de corps, marquée « Estimé ». Elle est volontairement prudente : ajustez dès la 2e série."},
   {d:"2026-11-12", t:"💬 Des explications plus claires", x:"Le bouton « pourquoi ? » montre l'objectif du jour à côté de ce que vous avez fait la dernière fois, avec la raison en mots simples."},
   {d:"2026-11-12", t:"💾 Sauvegarde dans un fichier", x:"Réglages › « Sauvegarder mes données » crée un fichier à garder dans Fichiers, iCloud Drive ou vos e-mails. « Restaurer une sauvegarde » le reprend sur un autre téléphone, Gymon compris."},
@@ -2434,7 +2469,7 @@ const setTxt = s => (num(s.w) ? fmtN(num(s.w))+" kg × " : "") + (num(s.r)||"–
 /* ---------- Rendu ---------- */
 const TITLES = {creature:"Mon Gymon", seance:"Séance", routine:"Routine", historique:"Historique", progres:"Progrès", exercices:"Exercices"};
 function render(){
-  document.getElementById("title").textContent = TITLES[tab];
+  document.getElementById("title").textContent = TITLES[tab]; document.body.dataset.tab = tab;
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===tab ? "page" : "false"));
   const v = document.getElementById("view");
   const gc = creatureState(), sick = gc.dead || ((gc.fidelity || gc.stage) && creatureVitality(gc) <= 50);
@@ -2545,6 +2580,7 @@ function viewActive(){
     }).join("");
     return `<article class="card ex" data-i="${i}">
       <div class="ex-head">${thumb(e,"ex-info")}<div class="tt"><h3>${esc(e.name)}</h3><span class="tag"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(e.muscle)} · ${esc(e.equip)}</span></div>
+        ${ex.sets.some(s => s.done && !s.warm) ? "" : `<button class="icon-btn" data-act="ex-swap" data-i="${i}" aria-label="Remplacer par un autre exercice du même muscle">↻</button>`}
         <button class="icon-btn" data-act="ex-menu" data-i="${i}" aria-label="Options de l'exercice">⋯</button></div>
       <button class="coach ${c.deload?"deload":""}" data-act="coach-why" data-i="${i}">
         <span class="ctag">${esc(c.tag)}</span>
@@ -2705,8 +2741,10 @@ function viewExercises(){
     ${chipsHTML()}
     <div class="list" id="ex-list">${exListHTML(null,"browse")}</div>
     <button class="btn ghost wide" data-act="new-ex">+ Créer un exercice</button>
-    <h2>Réglages</h2>
+    <h2 id="reglages">Réglages</h2>
     <section class="card" style="display:flex;flex-direction:column;gap:12px">
+      <label class="field">Apparence
+        <select id="theme">${[["dark","Sombre (par défaut)"],["light","Clair"],["auto","Automatique, comme l'iPhone"]].map(([v,l]) => `<option value="${v}" ${(S.profile.theme||"dark")===v?"selected":""}>${l}</option>`).join("")}</select></label>
       <label class="field">Repos par défaut après une série
         <select id="rest-default">${[-1,0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s<0?"Auto selon l'exercice (1 min 30 à 3 min)":s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
       <div class="row wrap">
@@ -2869,10 +2907,11 @@ const ACT = {
   "gy-more": () => { const c = creatureState();
     openSheet(`<h3>Mon Gymon</h3>
       <p class="muted" style="margin:-4px 0 0">${c.lastMeal ? `Dernier repas : ${fmtVol(c.lastMeal.vol)} soulevés.` : "Il attend son premier repas."} Il a partagé ${c.fidelity} séance${c.fidelity>1?"s":""} avec toi.</p>
-      <div class="vol">${MUSCLES.map(m => { const l = muscleLevel(c, m); return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${Math.max(3, Math.min(100, l/4.5*100))}%;${mc(m)}"></i></div><b class="num">${fmtN(l, 1)}</b></div>`; }).join("")}</div>
+      <div class="vol">${MUSCLES.map(m => { const l = muscleLevel(c, m); return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${Math.max(3, Math.min(100, l/4.5*100))}%;${mc(m)}"></i></div><b class="num">${Math.round(l/4.5*10)}/10</b></div>`; }).join("")}</div>
       <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) grossit, et fond s'il est oublié plus de 14 jours. Le volume soulevé le nourrit, ta fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
       <button class="btn" data-act="close">Fermer</button>`); },
   "gy-flip": (b, e) => { e.stopPropagation(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; },
+  "gy-more-tap": () => { if(Date.now() - gySwiped < 400) return; ACT["gy-more"](); },
   "ba-ok": () => { const c = creatureState(); c.ref = snapNow(c); touchProfile(); render(); },
   "gy-talk": (b, e) => { e.stopPropagation(); gyTalk++; render(); },
   "gy-name": () => nameSheet(),
@@ -3038,6 +3077,17 @@ const ACT = {
     const n = warmupFor(ex.exId, a.start, ex.plan, true, true).length || 1;
     ex.wuForce = true; ex.sets.unshift(...Array.from({length:n}, () => ({...blankSet(), warm:true}))); touchProfile(); render(); },
   "del-set": b => { const ex = A().exercises[+b.dataset.i]; if(ex.sets.length>1){ ex.sets.pop(); touchProfile(); render(); } },
+  // Machine prise ou pas envie : un autre exercice du même muscle (même type d'abord), un nouveau à chaque toucher
+  "ex-swap": b => { const a = A(), ex = a.exercises[+b.dataset.i], cur = exById(ex.exId);
+    if(ex.sets.some(s => s.done && !s.warm)){ toast("Des séries sont déjà validées : ajoutez plutôt un autre exercice"); return; }
+    const used = new Set(a.exercises.map(x => x.exId)); ex.tried = (ex.tried || []).concat(ex.exId);
+    let list = candidatesFor(cur.muscle, exStats()).filter(c => !used.has(c.e.id));
+    if(!list.length){ toast("Pas d'autre exercice pour ce muscle"); return; }
+    let fresh = list.filter(c => !ex.tried.includes(c.e.id)); if(!fresh.length){ ex.tried = [ex.exId]; fresh = list; }   // tous essayés : on recommence le tour
+    const comp = isCompound(cur), next = (fresh.filter(c => c.comp === comp)[0] || fresh[0]).e;
+    ex.exId = next.id; ex.feel = 0; ex.wuForce = false; ex.sets = ex.sets.filter(s => !s.warm).map(() => blankSet());
+    touchProfile(); render(); toast(`Remplacé par ${next.name}`); },
+  settings: () => { closeSheet(); tab = "exercices"; render(); requestAnimationFrame(() => { const h = document.getElementById("reglages"); if(h) h.scrollIntoView({block:"start"}); }); },
   "ex-menu": b => { const i = +b.dataset.i, n = A().exercises.length, e = exById(A().exercises[i].exId);
     openSheet(`<h3>${esc(e.name)}</h3>
       ${i>0?`<button class="btn" data-act="ex-move" data-i="${i}" data-d="-1">Monter</button>`:""}
@@ -3211,6 +3261,7 @@ document.addEventListener("change", e => {
   else if(e.target.id==="bar-ez"){ S.profile.barEz = +e.target.value; touchProfile(); }
   else if(e.target.id==="height"){ S.profile.height = num(e.target.value) || ""; touchProfile(); }
   else if(e.target.id==="sex"){ S.profile.sex = e.target.value; touchProfile(); }
+  else if(e.target.id==="theme"){ S.profile.theme = e.target.value; touchProfile(); applyTheme(); }
   else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
 });
 
@@ -3267,8 +3318,15 @@ ACT["ob-save"] = () => {
   closeSheet(); render(); toast("Profil enregistré");
 };
 
+/* Apparence : sombre (par défaut), clair, ou automatique comme l'iPhone */
+function applyTheme(){
+  const t = S.profile.theme || "dark", el = document.documentElement;
+  if(t === "auto") el.removeAttribute("data-theme"); else el.dataset.theme = t;
+  const dark = t === "dark" || (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches), m = document.querySelector('meta[name="theme-color"]');
+  if(m) m.content = dark ? "#140F24" : "#F5F1FF";
+}
 /* ---------- Démarrage ---------- */
-loadLocal();
+loadLocal(); applyTheme();
 const h = (location.hash||"").slice(1); if(TITLES[h]) tab = h; else if(h==="historique"){ tab = "progres"; progSub = "hist"; }
 /* ---------- Statistiques anonymes (GoatCounter, gratuit, sans cookie) ----------
    Installations sur l'écran d'accueil, ouvertures de l'app, et deux indicateurs de validation du MVP (voir gcRetention, shareSend).

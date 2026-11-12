@@ -74,6 +74,24 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   const ord = await p.evaluate(() => A().exercises[0].sets.map(x => x.warm ? "É" : "S").join(""));
   ok(/^É+S+$/.test(ord) && (ord.match(/É/g) || []).length === nWarm0 + 1, "échauffement marqué sur la dernière série : placé avant les séries de travail", ord);
   await p.evaluate(() => { stopRest(); flash(null); S.profile.active = null; render(); });
+  // Apparence : sombre par défaut, clair ou automatique dans Réglages, gardé au rechargement
+  await p.evaluate(() => { closeSheet(); tab = "exercices"; render(); });
+  const th0 = await p.evaluate(() => document.documentElement.dataset.theme);
+  await p.selectOption("#theme", "light"); const th1 = await p.evaluate(() => [document.documentElement.dataset.theme, S.profile.theme]);
+  await p.selectOption("#theme", "auto"); const th2 = await p.evaluate(() => document.documentElement.hasAttribute("data-theme"));
+  await p.selectOption("#theme", "light"); await p.reload(); await p.waitForTimeout(300); const th3 = await p.evaluate(() => document.documentElement.dataset.theme);
+  await p.evaluate(() => { S.profile.theme = "dark"; saveLocal(); applyTheme(); });
+  ok(th0 === "dark" && th1[0] === "light" && th1[1] === "light" && th2 === false && th3 === "light", "apparence : sombre par défaut, clair et automatique au choix, gardé au rechargement", {th0, th1, th2, th3});
+  // Séance : ↻ remplace l'exercice par un autre du même muscle, un nouveau à chaque toucher ; l'engrenage ouvre les réglages
+  await p.evaluate(() => { closeSheet(); stopRest(); flash(null); S.profile.active = null; startWorkout("Swap", [{exId:"dc-barre", sets:[blankSet(), blankSet(), blankSet()]}, {exId:"curl-halteres", sets:[blankSet()]}]); tab = "seance"; render(); });
+  const seen = [];
+  for(let k = 0; k < 3; k++){ await p.locator('[data-act="ex-swap"][data-i="0"]').click(); seen.push(await p.evaluate(() => { const e = exById(A().exercises[0].exId); return [e.id, e.muscle, A().exercises[0].sets.filter(s => !s.warm).length]; })); }
+  ok(seen.every(x => x[1] === "Pectoraux" && x[2] === 3) && new Set(seen.map(x => x[0])).size === 3 && !seen.some(x => x[0] === "dc-barre"), "↻ : un autre exercice de pectoraux à chaque toucher, même nombre de séries", seen);
+  const locked = await p.evaluate(() => { const s = A().exercises[0].sets.find(x => !x.warm); s.w = "20"; s.r = "10"; s.done = true; render(); const has = !!document.querySelector('[data-act="ex-swap"][data-i="0"]'); stopRest(); flash(null); S.profile.active = null; render(); return has; });
+  ok(!locked, "↻ disparaît dès qu'une série est validée", locked);
+  await p.locator('.top [data-act="settings"]').click(); await p.waitForTimeout(150);
+  const set = await p.evaluate(() => ({tab, seen:!!document.getElementById("reglages") && document.getElementById("reglages").getBoundingClientRect().top < innerHeight}));
+  ok(set.tab === "exercices" && set.seen, "engrenage en haut : ouvre les réglages", set);
   // Sauvegarde en fichier et restauration depuis un fichier
   const exp = await p.evaluate(() => { closeSheet(); ACT.export(); const f = expFile; return {name:f && f.name, type:f && f.type, btn:!!document.querySelector('[data-act="exp-file"]')}; });
   ok(/^gymon-sauvegarde-\d{4}-\d{2}-\d{2}\.json$/.test(exp.name) && exp.type === "application/json" && exp.btn, "sauvegarde : fichier JSON daté prêt à enregistrer", exp);

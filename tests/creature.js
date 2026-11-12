@@ -191,8 +191,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return {differs: thin !== big, veinsBig: /stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/.test(big), veinsThin: /opacity=".9"\/>/.test(thin) && /stroke-linecap="round" opacity=".9"/.test(thin), legsThin: /scale\(0\.2 1\)/.test(legs)}; });
   ok(draw.differs && draw.veinsBig && !draw.veinsThin, "veines seulement aux niveaux élevés");
   ok(draw.legsThin, "retard en jambes : jambes en allumettes");
+  // Glisser sur le Gymon : face ⇄ dos, sans ouvrir sa fiche
+  const sw = await p.evaluate(() => { const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); gyBack = false; tab = "creature"; render();
+    const el = document.querySelector(".gy-stage"), r = el.getBoundingClientRect(), y = r.top + r.height/2;
+    const tc = x => new Touch({identifier:1, target:el, clientX:x, clientY:y});
+    el.dispatchEvent(new TouchEvent("touchstart", {bubbles:true, touches:[tc(r.left + 60)], changedTouches:[tc(r.left + 60)]}));
+    el.dispatchEvent(new TouchEvent("touchend", {bubbles:true, touches:[], changedTouches:[tc(r.left + 220)]}));
+    const back = gyBack; ACT["gy-more-tap"](); const sheet = !document.getElementById("sheet").hidden;
+    gyBack = false; gySwiped = 0; c.stage = st0; closeSheet(); render(); return {back, sheet}; });
+  ok(sw.back && !sw.sheet, "glisser sur le Gymon le retourne (dos), sans ouvrir sa fiche", sw);
   // Réglage d'expression retiré (12 nov. 2026) : plus de choix dans la fiche, mais un clin d'œil déjà choisi est gardé
-  await p.evaluate(() => render()); await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-more"]');
+  await p.evaluate(() => render()); await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-more-tap"]');
   const noSeg = await p.evaluate(() => !document.querySelector('[data-act="gy-style"]'));
   await p.click('[data-act="close"]');
   const style = await p.evaluate(() => { S.profile.gymonStyle = "competition"; render(); const w = /Q\d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)?" stroke="#2a1a14" stroke-width="3.4"/.test(document.querySelector(".gy-stage .creature").outerHTML); S.profile.gymonStyle = "aesthetic"; render(); return w; });
