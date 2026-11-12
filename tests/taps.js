@@ -67,6 +67,13 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(ret.none && ret.both, "rétention : rien sans séance récente ; actif à 7 et 30 jours avec une séance récente", ret);
   ok(ret.refused, "statistiques refusées : l'indicateur n'est ni envoyé ni marqué", ret);
   ok(await p.evaluate(() => S.profile.noStats === false) && gc.length === 0, "aucune statistique envoyée pendant les tests", gc);
+  // Toucher le numéro de la dernière série : elle devient un échauffement placé en tête, pas en dernier
+  await p.evaluate(() => { closeSheet(); stopRest(); flash(null); S.profile.active = null; startWorkout("Ordre", [{exId:"curl-halteres", sets:[blankSet(), blankSet(), blankSet()]}]); tab = "seance"; render(); });
+  const nWarm0 = await p.evaluate(() => A().exercises[0].sets.filter(x => x.warm).length);
+  await p.locator('tr[data-i="0"] [data-act="toggle-warm"]').last().click();
+  const ord = await p.evaluate(() => A().exercises[0].sets.map(x => x.warm ? "É" : "S").join(""));
+  ok(/^É+S+$/.test(ord) && (ord.match(/É/g) || []).length === nWarm0 + 1, "échauffement marqué sur la dernière série : placé avant les séries de travail", ord);
+  await p.evaluate(() => { stopRest(); flash(null); S.profile.active = null; render(); });
   // Sauvegarde en fichier et restauration depuis un fichier
   const exp = await p.evaluate(() => { closeSheet(); ACT.export(); const f = expFile; return {name:f && f.name, type:f && f.type, btn:!!document.querySelector('[data-act="exp-file"]')}; });
   ok(/^gymon-sauvegarde-\d{4}-\d{2}-\d{2}\.json$/.test(exp.name) && exp.type === "application/json" && exp.btn, "sauvegarde : fichier JSON daté prêt à enregistrer", exp);

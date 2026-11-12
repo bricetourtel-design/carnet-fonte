@@ -578,7 +578,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 b";
+const APP_VERSION = "2026-11-12 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -3005,7 +3005,10 @@ const ACT = {
     } else s.done = false;
     touchProfile(); render();
   },
-  "toggle-warm": b => { const tr = b.closest("tr"), s = A().exercises[+tr.dataset.i].sets[+tr.dataset.j]; s.warm = !s.warm; touchProfile(); render(); },
+  // Toucher le numéro d'une série la passe en échauffement, placée en tête (un échauffement après les séries de travail n'a pas de sens) ; toucher « É » l'annule
+  "toggle-warm": b => { const tr = b.closest("tr"), ex = A().exercises[+tr.dataset.i], j = +tr.dataset.j, s = ex.sets[j]; s.warm = !s.warm;
+    if(s.warm){ ex.sets.splice(j, 1); const k = ex.sets.findIndex(x => !x.warm); ex.sets.splice(k < 0 ? ex.sets.length : k, 0, s); toast("Passée en échauffement, en tête de l'exercice · touchez « É » pour annuler"); }
+    touchProfile(); render(); },
   "add-set": b => { const ex = A().exercises[+b.dataset.i], last = ex.sets[ex.sets.length-1];
     ex.sets.push(last ? {w:last.w, r:last.r, done:false, warm:false} : blankSet()); touchProfile(); render(); },
   "add-warm": b => { const a = A(), i = +b.dataset.i, ex = a.exercises[i];
