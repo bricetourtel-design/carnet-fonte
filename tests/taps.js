@@ -67,6 +67,16 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(ret.none && ret.both, "rétention : rien sans séance récente ; actif à 7 et 30 jours avec une séance récente", ret);
   ok(ret.refused, "statistiques refusées : l'indicateur n'est ni envoyé ni marqué", ret);
   ok(await p.evaluate(() => S.profile.noStats === false) && gc.length === 0, "aucune statistique envoyée pendant les tests", gc);
+  // Sauvegarde en fichier et restauration depuis un fichier
+  const exp = await p.evaluate(() => { closeSheet(); ACT.export(); const f = expFile; return {name:f && f.name, type:f && f.type, btn:!!document.querySelector('[data-act="exp-file"]')}; });
+  ok(/^gymon-sauvegarde-\d{4}-\d{2}-\d{2}\.json$/.test(exp.name) && exp.type === "application/json" && exp.btn, "sauvegarde : fichier JSON daté prêt à enregistrer", exp);
+  const backup = await p.evaluate(() => { const d = JSON.parse(exportText()); d.workouts = d.workouts.concat({id:"wsauv1", name:"Séance restaurée", start:Date.now() - 2*86400000, end:Date.now() - 2*86400000 + 3600000, prs:[], exercises:[]}); closeSheet(); ACT.import(); return JSON.stringify(d); });
+  const before = await p.evaluate(() => S.workouts.length);
+  await p.setInputFiles("#imp-file", {name:"gymon-sauvegarde.json", mimeType:"application/json", buffer:Buffer.from(backup)});
+  await p.waitForFunction(n => S.workouts.length > n, before, {timeout:3000}).catch(() => {});
+  const rest = await p.evaluate(() => ({n:S.workouts.filter(w => w.id === "wsauv1").length, total:S.workouts.length}));
+  ok(rest.n === 1 && rest.total === before + 1, "restauration depuis un fichier : la séance manquante est ajoutée, sans doublon", rest);
+  await p.evaluate(() => { S.workouts = S.workouts.filter(w => w.id !== "wsauv1"); saveLocal(); closeSheet(); });
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de touchers passent"); process.exit(fails ? 1 : 0);
