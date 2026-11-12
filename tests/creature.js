@@ -191,10 +191,12 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return {differs: thin !== big, veinsBig: /stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/.test(big), veinsThin: /opacity=".9"\/>/.test(thin) && /stroke-linecap="round" opacity=".9"/.test(thin), legsThin: /scale\(0\.2 1\)/.test(legs)}; });
   ok(draw.differs && draw.veinsBig && !draw.veinsThin, "veines seulement aux niveaux élevés");
   ok(draw.legsThin, "retard en jambes : jambes en allumettes");
-  await p.evaluate(() => render()); await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-more"]'); await p.click('[data-act="gy-style"][data-k="competition"]');
-  const style = await p.evaluate(() => ({s:S.profile.gymonStyle, svg:/Q\d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)?" stroke="#2a1a14" stroke-width="3.4"/.test(document.querySelector(".gy-stage .creature").outerHTML)}));
-  ok(style.s === "competition" && style.svg, "ambiance Compétition choisie et appliquée (clin d'œil)");
-  await p.click('[data-act="gy-style"][data-k="aesthetic"]'); await p.click('[data-act="close"]');
+  // Réglage d'expression retiré (12 nov. 2026) : plus de choix dans la fiche, mais un clin d'œil déjà choisi est gardé
+  await p.evaluate(() => render()); await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-more"]');
+  const noSeg = await p.evaluate(() => !document.querySelector('[data-act="gy-style"]'));
+  await p.click('[data-act="close"]');
+  const style = await p.evaluate(() => { S.profile.gymonStyle = "competition"; render(); const w = /Q\d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)?" stroke="#2a1a14" stroke-width="3.4"/.test(document.querySelector(".gy-stage .creature").outerHTML); S.profile.gymonStyle = "aesthetic"; render(); return w; });
+  ok(noSeg && style, "plus de réglage d'expression dans la fiche ; un clin d'œil déjà choisi reste appliqué", {noSeg, style});
   // Phrase du jour : tirée parmi 50, différente d'un jour à l'autre
   const q = await p.evaluate(() => { const c = creatureState(), real = Date; const at = d => { const t0 = new real(2026, 10, d, 12).getTime();
       window.Date = class extends real { constructor(...a){ a.length ? super(...a) : super(t0); } static now(){ return t0; } }; const r = gymQuote(c); window.Date = real; return r; };
