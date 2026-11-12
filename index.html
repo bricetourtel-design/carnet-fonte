@@ -2867,8 +2867,6 @@ const ACT = {
     openSheet(`<h3>Mon Gymon</h3>
       <p class="muted" style="margin:-4px 0 0">${c.lastMeal ? `Dernier repas : ${fmtVol(c.lastMeal.vol)} soulevés.` : "Il attend son premier repas."} Il a partagé ${c.fidelity} séance${c.fidelity>1?"s":""} avec toi.</p>
       <div class="vol">${MUSCLES.map(m => { const l = muscleLevel(c, m); return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${Math.max(3, Math.min(100, l/4.5*100))}%;${mc(m)}"></i></div><b class="num">${fmtN(l, 1)}</b></div>`; }).join("")}</div>
-      <p class="small" style="margin:0"><b>Son expression</b> · ne change que son visage</p>
-      <div class="seg" role="group" aria-label="Expression du Gymon">${[["aesthetic","😏 Sûr de lui"],["competition","😉 Clin d'œil"]].map(([k,l]) => `<button data-act="gy-style" data-k="${k}" aria-pressed="${(S.profile.gymonStyle||"aesthetic")===k}">${l}</button>`).join("")}</div>
       <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) grossit, et fond s'il est oublié plus de 14 jours. Le volume soulevé le nourrit, ta fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
       <button class="btn" data-act="close">Fermer</button>`); },
   "gy-flip": (b, e) => { e.stopPropagation(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; },
@@ -2884,7 +2882,6 @@ const ACT = {
   "evo-skip": () => { if(celebState && celebState.main) celebState.main(); },
   "celeb-rand": () => { const i = document.getElementById("celeb-name"); if(i) i.value = GYM_NAMES[Math.floor(Math.random()*GYM_NAMES.length)]; },
   "celeb-share": () => { const id = (celebState||{}).w; celebClose(); shareSheet("session", id); },
-  "gy-style": b => { S.profile.gymonStyle = b.dataset.k; touchProfile(); closeSheet(); render(); ACT["gy-more"](); },
   // Boîte à idées : le message est préparé puis envoyé par le partage de l'iPhone (aucun serveur)
   idea: () => {
     let draft = {kind:"idee", txt:""}; try{ draft = {...draft, ...JSON.parse(localStorage.getItem("gymon.idea")||"{}")}; }catch(e){}
