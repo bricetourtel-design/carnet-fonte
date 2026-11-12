@@ -612,7 +612,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 h";
+const APP_VERSION = "2026-11-12 i";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2079,7 +2079,7 @@ function viewCreature(){
         <span class="gy-chip br" aria-label="Niveau de chaque muscle"><small>Muscles</small><span class="gy-lv">${MUSCLES.map(m => `<i style="height:${Math.max(3, Math.round(muscleLevel(c, m)/4.5*26))}px;${mc(m)}"></i>`).join("")}</span></span>
       </div>
       ${c.stage >= 2 ? `<button class="gy-name" data-act="gy-name">${c.name ? esc(c.name) : "✏️ Donner un nom"}</button>` : ""}
-      <p class="gy-form">${esc(CREATURE_CFG.stages[c.stage])} <button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button><button class="gy-flip gy-share" data-act="share" data-k="week" aria-label="Partager mon Gymon">↗ Partager</button>` : ""}</p>
+      <p class="gy-form"><button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button><button class="gy-flip gy-share" data-act="share" data-k="week" aria-label="Partager mon Gymon">↗ Partager</button>` : ""}</p>
       <p class="gy-hint">${esc(gymonHint(c))}</p>
       <button class="btn primary gy-cta" data-act="goto" data-tab="seance">${esc(cta)}</button>
     </section>`;
