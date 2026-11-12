@@ -578,7 +578,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 a";
+const APP_VERSION = "2026-11-12 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -3058,7 +3058,7 @@ const ACT = {
   export: () => {
     const name = `gymon-sauvegarde-${new Date().toISOString().slice(0,10)}.json`;
     expFile = new File([exportText()], name, {type:"application/json"});
-    openSheet(`<h3>Sauvegarder mes données</h3><p class="small muted" style="margin:0">Le fichier contient vos séances et vos programmes. Enregistrez-le dans Fichiers ou iCloud Drive, ou envoyez-le-vous par e-mail : il ne quitte le téléphone que là où vous l'envoyez.</p>
+    openSheet(`<h3>Sauvegarder mes données</h3><p class="small muted" style="margin:0">Le fichier contient vos séances, vos programmes et votre Gymon. Enregistrez-le dans Fichiers ou iCloud Drive, ou envoyez-le-vous par e-mail : il ne quitte le téléphone que là où vous l'envoyez.</p>
       ${S.profile.lastExport ? `<p class="small muted" style="margin:0">Dernière sauvegarde : ${esc(fmtDate(S.profile.lastExport, {day:"numeric", month:"long", year:"numeric"}))}</p>` : ""}
       <button class="btn primary" data-act="exp-file">Enregistrer le fichier</button>
       <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Fermer</button><button class="btn" style="flex:1" data-act="copy-exp">Copier en texte</button></div>`); },
@@ -3069,7 +3069,7 @@ const ACT = {
   "copy-exp": () => { const t = exportText();
     if(navigator.clipboard) navigator.clipboard.writeText(t).then(() => { S.profile.lastExport = Date.now(); touchProfile(); toast("Copié"); }, () => toast("Copie impossible : enregistrez le fichier"));
     else toast("Copie impossible : enregistrez le fichier"); },
-  import: () => openSheet(`<h3>Restaurer une sauvegarde</h3><p class="small muted" style="margin:0">Choisissez un fichier de sauvegarde de Gymon (ou de l'ancien Carnet de Fonte), ou collez son texte. Les séances déjà présentes sont conservées ; les doublons sont ignorés.</p>
+  import: () => openSheet(`<h3>Restaurer une sauvegarde</h3><p class="small muted" style="margin:0">Choisissez un fichier de sauvegarde de Gymon (ou de l'ancien Carnet de Fonte), ou collez son texte. Les séances déjà présentes sont conservées ; les doublons sont ignorés. Le Gymon de la sauvegarde remplace celui du téléphone seulement s'il est plus avancé (l'autre part dans vos souvenirs).</p>
       <label class="btn primary" for="imp-file">Choisir un fichier</label><input id="imp-file" class="vh" type="file" accept=".json,application/json,text/plain">
       <textarea id="imp-txt" placeholder='Ou collez le texte : {"app":"carnet-fonte", …}'></textarea>
       <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Annuler</button><button class="btn" style="flex:1" data-act="do-import">Importer le texte</button></div>`),
@@ -3083,9 +3083,45 @@ async function importText(txt){
     const c = cleanImport(d), known = new Set(S.workouts.map(w=>w.id)), fresh = c.workouts.filter(w => !known.has(w.id));
     c.custom.forEach(e => { if(!S.profile.custom.some(x=>x.id===e.id)) S.profile.custom.push(e); });
     c.routines.forEach(r => { if(!S.profile.routines.some(x=>x.id===r.id)) S.profile.routines.push(r); });
-    S.workouts.push(...fresh); touchProfile(); closeSheet(); render();
+    S.workouts.push(...fresh);
+    const p = d.profile || {};   // poids, taille, sexe : repris seulement si ce téléphone ne les a pas encore
+    if(!S.profile.bw && num(p.bw) > 0 && num(p.bw) < 400){ S.profile.bw = num(p.bw); if(p.sex === "h" || p.sex === "f") S.profile.sex = p.sex; }
+    if(!S.profile.height && num(p.height) > 0 && num(p.height) < 260) S.profile.height = num(p.height);
+    const gy = importCreature(p.creature);
+    touchProfile(); closeSheet(); render();
     for(const w of fresh) await saveWorkout(w);
-    toast(`${fresh.length} séance${fresh.length>1?"s":""} importée${fresh.length>1?"s":""}` + (c.skipped ? ` · ${c.skipped} élément${c.skipped>1?"s":""} invalide${c.skipped>1?"s":""} ignoré${c.skipped>1?"s":""}` : ""));
+    toast(`${fresh.length} séance${fresh.length>1?"s":""} importée${fresh.length>1?"s":""}` + (gy ? " · Gymon restauré" : "") + (c.skipped ? ` · ${c.skipped} élément${c.skipped>1?"s":""} invalide${c.skipped>1?"s":""} ignoré${c.skipped>1?"s":""}` : ""));
+}
+/* Gymon d'une sauvegarde (décidé le 12 novembre 2026) : il remplace celui du téléphone seulement si celui-ci est moins avancé
+   (moins de séances partagées). Le Gymon remplacé part dans les souvenirs ; un œuf jamais nourri n'y laisse rien. */
+function importCreature(x){
+  const g = cleanCreature(x); if(!g) return false;
+  const cur = S.profile.creature;
+  if(cur && (cur.fidelity || 0) >= g.fidelity) return false;   // le Gymon du téléphone est au moins aussi avancé : on le garde
+  if(cur && (cur.fidelity || cur.stage)) g.graves = (g.graves || []).concat({stage:cur.stage, fidelity:cur.fidelity, died:Date.now()});
+  S.profile.creature = g; creatureState(); creatureFixLevels();
+  return true;
+}
+// Seuls des champs connus, aux types et bornes attendus : rien d'un fichier ne finit tel quel dans l'affichage
+function cleanCreature(x){
+  if(!x || typeof x !== "object" || !isTime(x.born)) return null;
+  const n = (v, lo, hi, d) => typeof v === "number" && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d, now = Date.now();
+  const N = CREATURE_CFG.stages.length, stage = Math.round(n(x.stage, 0, N - 1, 0));
+  const byMuscle = (o, lo, hi) => Object.fromEntries(MUSCLES.filter(m => o && typeof o[m] === "number" && isFinite(o[m])).map(m => [m, Math.min(hi, Math.max(lo, o[m]))]));
+  const ids = a => (Array.isArray(a) ? a : []).filter(safeId);
+  const look = x.look && Number.isInteger(x.look.col) && x.look.col >= 0 && x.look.col < GYM_COLORS.length
+    ? {col:x.look.col, shorts:Number.isInteger(x.look.shorts) && x.look.shorts >= 0 && x.look.shorts < GYM_SHORTS.length ? x.look.shorts : 0} : null;
+  const ref = x.ref && isTime(x.ref.ts) ? {ts:x.ref.ts, stage:Math.round(n(x.ref.stage, 0, N - 1, 0)), weight:n(x.ref.weight, 0, 1e6, 0), levels:byMuscle(x.ref.levels, 0, 4.5)} : null;
+  const c = {v:4, born:x.born, fed:ids(x.fed).slice(-1000), pending:ids(x.pending), fidelity:Math.round(n(x.fidelity, 0, 1e5, 0)), food:n(x.food, 0, 1e9, 0),
+    weight:n(x.weight, 0, 1e6, CREATURE_CFG.minWeight[stage]), stage, levels:byMuscle(x.levels, 0, 4.5), lastWorked:byMuscle(x.lastWorked, 0, now), peak:byMuscle(x.peak, 0, 4.5),
+    last:n(x.last, 0, now, 0), lastMeal:null, vit:n(x.vit, 0, 100, 100), mv:Math.round(n(x.mv, 0, 99, 0)), resurrections:Math.round(n(x.resurrections, 0, 1e4, 0)),
+    dead:x.dead && isTime(x.dead.ts) ? {ts:x.dead.ts, since:isTime(x.dead.since) ? x.dead.since : x.dead.ts} : null,
+    graves:(Array.isArray(x.graves) ? x.graves : []).filter(t => t && typeof t === "object").slice(-50).map(t => ({stage:Math.round(n(t.stage, 0, N - 1, 0)), fidelity:Math.round(n(t.fidelity, 0, 1e5, 0)), died:n(t.died, 0, now, now)}))};
+  if(Array.isArray(x.at) && x.at.length === N && x.at.every(v => typeof v === "number" && isFinite(v))) c.at = x.at.map(v => Math.max(0, Math.round(v)));
+  if(look) c.look = look;
+  if(ref) c.ref = ref;
+  if(typeof x.name === "string" && x.name.trim()) c.name = x.name.trim().slice(0, 16);
+  return c;
 }
 
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if(b && ACT[b.dataset.act]) ACT[b.dataset.act](b, e); });
