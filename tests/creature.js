@@ -8,6 +8,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
 (async () => {
   const b = await chromium.launch(), ctx = await b.newContext({...devices["iPhone 13"]}), p = await ctx.newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message));
+  await p.addInitScript(() => addEventListener("DOMContentLoaded", () => { gyHourFix = 12; }));   // midi : le Gymon est réveillé, quelle que soit l'heure du test
   await p.goto(URL); await p.waitForTimeout(300);
   // Premier lancement : bienvenue, puis tuto du Gymon (5 écrans)
   await p.click('.sheet [data-act="close"]').catch(()=>{});
@@ -20,7 +21,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(await p.isHidden("#tuto"), "le tuto ne revient pas au lancement suivant");
   await p.click('.gy-help'); ok(await p.isVisible("#tuto .tu-card"), "« ? » permet de revoir le tuto");
   await p.click('#tuto .tu-skip'); ok(await p.isHidden("#tuto"), "« Passer » ferme le tuto");
-  await p.evaluate(() => { S.profile.tutoAppDone = true; saveLocal(); });   // guide de l'app : testé dans tests/guide.js
+  await p.evaluate(() => { S.profile.tutoAppDone = true; saveLocal(); });   // guide de l'app : testé dans tests/guide.js ; midi : le Gymon est réveillé
   await p.click('#sheet-in [data-act="close"]', {timeout:1000}).catch(()=>{});   // accueil du premier lancement (déjà fermé plus haut)
   ok(await p.evaluate(() => tab) === "creature", "la page Créature s'ouvre en premier");
   ok(await p.evaluate(() => document.querySelector(".tabs button").dataset.tab) === "creature", "Créature en première position de la navigation");
@@ -324,6 +325,67 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(rs.r2.fid === 40, "sauvegarde : un Gymon du téléphone plus avancé est gardé", rs.r2);
   ok(rs.r3.fid === 25 && rs.r3.graves === 2 && rs.r3.last === 10, "sauvegarde : le Gymon remplacé part dans les souvenirs", rs.r3);
   ok(rs.r4.stage === 12 && rs.r4.look === undefined && rs.r4.biceps === 0 && rs.bad === null, "sauvegarde : valeurs hors bornes ramenées, Gymon sans date de naissance refusé", rs);
+
+  // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
+  const g1 = await p.evaluate(async () => {
+    const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;
+    S.profile.active = null; startWorkout("G", [{exId:"squat", sets:[blankSet(), blankSet(), blankSet(), blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm); render();
+    const row = j => document.querySelector(`tr[data-i="0"][data-j="${j}"]`), val = (j, w, r) => { const a = A().exercises[0].sets[j]; a.w = w; a.r = r; render(); ACT.check(row(j).querySelector(".check")); };
+    const r0 = CRIT.roll; CRIT.roll = () => true;   // les dés tombent toujours sur « critique »
+    val(0, "60", "10"); const pop1 = document.getElementById("gy-pop"), p1 = pop1 && pop1.textContent, viewSame = !!document.getElementById("w-name");
+    const pill1 = document.getElementById("meal").textContent;
+    val(1, "60", "10"); const crit2 = !!A().exercises[0].sets[1].crit;
+    val(2, "60", "10"); const crit3 = !!A().exercises[0].sets[2].crit, p3 = document.getElementById("gy-pop").textContent;
+    val(3, "60", "10"); const crit4 = !!A().exercises[0].sets[3].crit;
+    ACT.check(row(3).querySelector(".check")); const undo = !A().exercises[0].sets[3].crit;   // dévalider retire le critique
+    val(3, "60", "10"); const crit5 = A().exercises[0].sets.filter(x => x.crit).length;
+    const pill = document.getElementById("meal"), pct = pill.textContent, crow = !!document.querySelector("tr.set.crit");
+    CRIT.roll = r0;
+    finishWorkout(); const w = S.workouts[S.workouts.length-1], lm = creatureState().lastMeal;
+    const res = {p1, viewSame, pill1, crit2, crit3, p3, crit4, undo, crit5, pct, crow, saved:w.exercises[0].sets.filter(x => x.crit).length, vol:wVolume(w), lm:{vol:lm.vol, bonus:lm.bonus}};
+    celebClose(true); closeSheet(); S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return res; });
+  ok(g1.p1 && g1.viewSame, "le Gymon réagit à chaque série validée, dans une bulle hors de la page", g1.p1);
+  ok(!g1.crit2 && g1.crit3 && /CRITIQUE/.test(g1.p3), "coup critique possible à partir de la 3e série de travail, annoncé", g1);
+  ok(g1.crit4 && g1.undo && g1.crit5 === 2 && g1.crow, "au plus 2 coups critiques par séance ; dévalider une série retire le sien", g1);
+  ok(g1.saved === 2 && g1.vol === 2400 && g1.lm.vol === 2400 && g1.lm.bonus === 1200, "le critique nourrit double le Gymon sans changer le volume de la séance", g1);
+  ok(/%/.test(g1.pct) && /%|kg|t/.test(g1.pill1), "pastille du repas du Gymon à côté du chrono", g1.pct);
+  const g1b = await p.evaluate(() => {   // record battu en pleine séance : bulle spéciale, une fois par exercice
+    const c = creatureState(), saved = JSON.stringify(c); c.stage = Math.max(2, c.stage); c.dead = false; const r0 = CRIT.roll; CRIT.roll = () => false;
+    S.profile.active = null; startWorkout("P", [{exId:"dc-barre", sets:[blankSet(), blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm); render(); document.getElementById("gy-pop")?.remove();
+    const row = j => document.querySelector(`tr[data-i="0"][data-j="${j}"]`), val = (j, w, r) => { const a = A().exercises[0].sets[j]; a.w = w; a.r = r; render(); ACT.check(row(j).querySelector(".check")); };
+    val(0, "200", "5"); const a = document.getElementById("gy-pop"); const pr = a.className, t = a.textContent;
+    val(1, "205", "5"); const pr2 = document.getElementById("gy-pop").className;
+    CRIT.roll = r0; S.profile.active = null; S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {pr, t, pr2}; });
+  ok(/pop-pr/.test(g1b.pr) && /RECORD/.test(g1b.t) && !/pop-pr/.test(g1b.pr2), "record pendant la séance : bulle « RECORD », une seule fois par exercice", g1b);
+
+  // Idées gaming 4 : saute de joie après un repas, dort la nuit, repas donné à la main
+  const g4 = await p.evaluate(async () => {
+    const c = creatureState(), saved = JSON.stringify(c); c.stage = Math.max(5, c.stage); c.dead = false; c.last = Date.now();
+    c.lastMeal = {w:"x", vol:1000, gain:.1, ts:Date.now(), ups:[], dl:{}}; tab = "creature"; render();
+    const hop1 = !!document.querySelector(".gy-stage .creature.gy-hop"), happy = /Q[\d.]+ [\d.]+ [\d.]+ [\d.]+" stroke="#2a1a14" stroke-width="3.4"/.test(document.querySelector(".gy-stage .creature").outerHTML);
+    render(); const hop2 = !!document.querySelector(".gy-stage .creature.gy-hop");
+    gyHourFix = 2; render(); const zzz = !!document.querySelector(".gy-zzz"), night = /Zzz/.test(document.querySelector(".gy-bubble").textContent);
+    ACT["gy-more-tap"](); const sheet = !document.getElementById("sheet").hidden, woke = !document.querySelector(".gy-zzz") && /Hein/.test(document.querySelector(".gy-bubble").textContent);
+    gyWake = 0; gyHourFix = 12; render();
+    // Fin de séance : le repas attend qu'on le donne
+    celebrate({id:"z", prs:[], exercises:[]}, {vol:1500, bonus:500, gain:.2, evolved:false, ups:[]});
+    const hid = document.getElementById("celeb-rev").hidden, food = document.getElementById("celeb-food").textContent;
+    document.getElementById("celeb-food").click(); await new Promise(r => setTimeout(r, 600));
+    const shown = !document.getElementById("celeb-rev").hidden && /Coup critique/.test(document.getElementById("celeb-rev").textContent), chomp = document.getElementById("celeb-gy").classList.contains("chomp");
+    celebClose(true); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {hop1, hop2, happy, zzz, night, sheet, woke, hid, food, shown, chomp}; });
+  ok(g4.hop1 && !g4.hop2 && g4.happy, "après un repas : yeux rieurs, et il saute de joie une seule fois à l'ouverture", g4);
+  ok(g4.zzz && g4.night && !g4.sheet && g4.woke, "la nuit il dort (Zzz) ; le toucher le réveille au lieu d'ouvrir sa fiche", g4);
+  ok(g4.hid && /2 t|2 000|2000/.test(g4.food.replace(/\s/g, " ")) && g4.shown && g4.chomp, "fin de séance : on lui donne le repas (bonus compris), puis ses gains s'affichent", g4);
+  // Glisser le repas jusqu'au Gymon
+  await p.evaluate(() => { celebrate({id:"z2", prs:[], exercises:[]}, {vol:900, gain:.1, evolved:false, ups:[]}); });
+  const fb = await p.locator("#celeb-food").boundingBox(), gb = await p.locator("#celeb-gy").boundingBox();
+  await p.mouse.move(fb.x + fb.width/2, fb.y + fb.height/2); await p.mouse.down();
+  for(let i = 1; i <= 8; i++) await p.mouse.move(fb.x + fb.width/2 + (gb.x + gb.width/2 - fb.x - fb.width/2)*i/8, fb.y + fb.height/2 + (gb.y + gb.height/2 - fb.y - fb.height/2)*i/8);
+  await p.mouse.up(); await p.waitForTimeout(600);
+  ok(await p.evaluate(() => { const r = !document.getElementById("celeb-rev").hidden; celebClose(true); return r; }), "glisser le repas sur le Gymon le nourrit");
 
   // Rendu des 4 stades avec muscles faibles puis forts
   if(SHOTS){ for(const st of [5,9,12]) for(const lv of [0,4]){
