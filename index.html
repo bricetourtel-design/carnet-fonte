@@ -813,7 +813,7 @@ function coach(exId, beforeTs, planned, pre){
     r = Math.max(1, Math.min(c.hi, r)); }
   else r = Math.max(1, Math.floor(c.r * f));
   return {...c, w: W ? +w.toFixed(2) : c.w, r, fatigue:pct,
-    why: c.why + ` Place dans la séance : ${fmtN(pre, 1)} série${pre > 1 ? "s" : ""} déjà faite${pre > 1 ? "s" : ""} pour ce muscle, objectif adapté (−${pct} %, d'après votre historique : −${fmtN(k*100, 1)} % par série). Faire un peu moins qu'en début de séance est normal.`};
+    notes:(c.notes || []).concat(`Vous avez déjà fait ${fmtN(pre, 1)} série${pre > 1 ? "s" : ""} pour ce muscle aujourd'hui : l'objectif passe de ${W ? fmtN(W)+" kg × " : ""}${c.r} à ${W ? fmtN(w)+" kg × " : ""}${r} reps (environ −${pct} % ; chez vous, la performance baisse d'environ ${fmtN(k*100, 1)} % par série déjà faite). Faire un peu moins en fin de séance est normal, ce n'est pas un recul.`)};
 }
 // Proposition « à frais » : l'historique est ramené à un début de séance avant d'appliquer les règles
 function coachFresh(exId, beforeTs, planned){
@@ -826,12 +826,12 @@ function coachFresh(exId, beforeTs, planned){
     if(same) ref = same; else fromEst = true;
   }
   const rest = REST_BY_RANGE[lo] || 120, ML = mode==="lourd" ? "Lourd · " : mode ? "Volume · " : "";
-  const MW = mode==="lourd" ? "Séance lourde : peu de reps, grosse charge, pour la force. " : mode ? "Séance volume : plus de reps, pour la masse. " : "";
+  const MW = mode==="lourd" ? "Cet exercice alterne une séance lourde (peu de reps, grosse charge, pour la force) et une séance volume (plus de reps, pour le muscle). Aujourd'hui : séance lourde. " : mode ? "Cet exercice alterne une séance lourde (peu de reps, grosse charge, pour la force) et une séance volume (plus de reps, pour le muscle). Aujourd'hui : séance volume. " : "";
   if(!hist.length){ const est = estimateNew(e, lo);
     if(est) return {lo, hi, rest, w:est.w, r:lo, sets:planned||3, tag:"Estimé", est:true,
-      why:`Nouvel exercice : charge estimée, pas encore mesurée. ${est.txt} Visez ${lo} reps en gardant 2 à 3 reps en réserve ; ajustez dès la 2e série si c'est trop facile ou trop dur, et notez le ressenti : la prochaine proposition partira de votre vraie performance.`};
+      why:`Vous n'avez jamais fait cet exercice : la charge est une estimation, volontairement prudente. ${est.txt} Arrêtez chaque série 2 ou 3 reps avant de ne plus pouvoir. Trop facile ou trop dur ? Ajustez dès la 2e série : la prochaine fois, le coach partira de ce que vous aurez vraiment fait.`};
     return {lo, hi, rest, w:"", r:"", sets:planned||3, tag:"Nouveau",
-      why:`Première fois : prenez une charge qui permet ${lo} à ${hi} reps en gardant 1 à 2 reps en réserve.`}; }
+      why:`Première fois sur cet exercice : choisissez une charge avec laquelle vous faites ${lo} à ${hi} reps, en vous arrêtant 1 ou 2 reps avant de ne plus pouvoir. Le coach calculera la suite à partir de ce que vous aurez noté.`}; }
   const last = hist[0];
   let feel = last.feel || inferFeel(last, lo), f = FEEL[feel-1];
   let W = Math.max(...last.sets.map(s => num(s.w))), top = last.sets.filter(s => num(s.w)===W);
@@ -844,7 +844,7 @@ function coachFresh(exId, beforeTs, planned){
     let r = Math.max(1, minR + ({1:3,2:2,3:1,4:0,5:-1})[feel]);
     if(gapDays > 21) r = Math.max(1, minR - 1);
     return {lo, hi, rest, w: W || "", r, sets, tag: gapDays > 21 ? "Reprise" : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider",
-      why: (gapDays > 21 ? `Dernière séance il y a ${Math.round(gapDays/7)} semaines : on reprend avec une rep de moins. ` : `Dernière fois ${minR} reps minimum, ressenti « ${f.label} ». `) + (r>hi+5 ? "Vous dépassez largement la fourchette : ajoutez du lest." : r<lo ? `Objectif à terme : ${lo} reps et plus.` : "")};
+      why: (gapDays > 21 ? `Vous n'avez pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend avec une rep de moins. ` : r > minR ? `Exercice au poids du corps : on progresse en reps. On vise ${r} reps, ${r-minR} de plus que la dernière fois. ` : `Exercice au poids du corps : on garde ${r} reps pour les rendre plus faciles avant d'en ajouter. `) + (r>hi+5 ? "Vous dépassez largement l'objectif : ajoutez du lest (gilet, ceinture, haltère)." : r<lo ? `À terme, l'objectif est ${lo} reps et plus.` : "")};
   }
   let st = stepFor(e, W);
   // 1RM estimé corrigé par les reps en réserve (Epley)
@@ -854,7 +854,7 @@ function coachFresh(exId, beforeTs, planned){
   if(gapDays > 21){
     const w = Math.max(st, roundTo(W*0.9, st)), r = Math.max(lo, Math.min(hi, repsAt(w)));
     return {lo, hi, rest, w, r, sets:Math.max(2, Math.min(sets, 3)), tag:"Reprise", deload:true,
-      why:`Dernière séance il y a ${Math.round(gapDays/7)} semaines : on reprend à environ -10 % de charge, en gardant 1 à 2 reps en réserve. La progression normale repart dès la séance suivante.`};
+      why:`Vous n'avez pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend un peu plus léger (environ −10 %) pour réhabituer le corps sans risque. La progression normale repart dès la séance suivante.`};
   }
   // Décharge : 3 séances d'affilée notées « Dur/Trop dur » ou 1RM estimé en baisse sur 3 séances
   const e1 = s => { const ww = Math.max(...s.sets.map(x=>num(x.w))), rr = num(s.sets.filter(x=>num(x.w)===ww).slice(-1)[0].r);
@@ -864,63 +864,65 @@ function coachFresh(exId, beforeTs, planned){
   if(close3 && (hist.slice(0,3).every(s => s.feel>=4) || (e1(hist[0]) < e1(hist[1]) && e1(hist[1]) < e1(hist[2]) && e1(hist[0]) < e1(hist[2])*0.95))){
     const w = Math.max(st, roundTo(W*0.9, st));
     return {lo, hi, rest, w, r:lo, sets:Math.max(2, sets-1), tag:"Décharge", deload:true,
-      why:"Performances en baisse ou séances trop dures 3 fois de suite : on allège (-10 % de charge, une série de moins) pour récupérer, puis on repart."};
+      why:"Vos 3 dernières séances sur cet exercice étaient trop dures ou en baisse : c'est un signe de fatigue accumulée. On allège cette fois (environ −10 % et une série de moins) pour récupérer, puis on repart plus fort."};
   }
   // Lourd / Volume : charge calée sur la force la plus récente (1RM estimé de la dernière séance, corrigé par le ressenti),
   // sans jamais reculer par rapport à la dernière séance du même type réussie
   if(mode){
     const target = mode==="lourd" ? lo : lo + 2;   // lourd : on vise le bas de la fourchette avec la charge la plus haute possible
     let x = Math.max(st, roundTo(E / (1 + (target + 1.5)/30), st)); while(repsAt(x) < target && x - st >= st) x -= st;
-    let note = `Charge calculée depuis votre dernière séance (1RM estimé ${fmtN(E,0)} kg).`, ref0 = null, minRep = 0;
+    let note = `Charge calculée d'après votre force mesurée la dernière fois (vous pourriez soulever environ ${fmtN(E,0)} kg une seule fois).`, ref0 = null, minRep = 0;
     if(!fromEst){
       const rW = Math.max(...ref.sets.map(s => num(s.w))), rTop = ref.sets.filter(s => num(s.w)===rW), rMin = Math.min(...rTop.map(s => num(s.r))), rFeel = ref.feel || 3;
       ref0 = rW;
-      if(rFeel <= 3 && rMin >= hi && x <= rW){ x = rW + stepFor(e, rW); note = `Dernière séance ${mode==="lourd"?"lourde":"volume"} : ${rMin} reps à ${fmtN(rW)} kg, haut de fourchette atteint, on monte.`; }
+      if(rFeel <= 3 && rMin >= hi && x <= rW){ x = rW + stepFor(e, rW); note = `Votre dernière séance ${mode==="lourd"?"lourde":"volume"} : ${rMin} reps à ${fmtN(rW)} kg, le haut de l'objectif est atteint : on monte la charge.`; }
       else if(rFeel <= 3 && rMin >= lo && x <= rW){ x = rW; minRep = Math.min(hi, rMin + 1);
         note = `Même charge que votre dernière séance ${mode==="lourd"?"lourde":"volume"} (${fmtN(rW)} kg × ${rMin}) : on vise une rep de plus.`; }
     }
     const wk = muscleSetsThisWeek(e.muscle, last.ts + 1);
-    if(!planned && feel <= 3 && wk < 10 && sets < 4){ sets++; note += ` ${e.muscle} : ${wk} séries sur 7 jours, sous les 10 conseillées, une série de plus.`; }
+    const notes = [];
+    if(!planned && feel <= 3 && wk < 10 && sets < 4){ sets++; notes.push(`Vous avez fait ${wk} série${wk>1?"s":""} de ${e.muscle.toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
     const r0 = Math.max(lo, minRep, Math.min(hi, repsAt(x))), d = ref0 === null ? null : x - ref0;
     return {lo, hi, rest, w:+x.toFixed(2), r:r0, sets, mode,
       tag: ML.replace(" · ", "") + (d === null ? "" : d > 0 ? ` · +${fmtN(d)} kg` : d < 0 ? ` · ${fmtN(d)} kg` : minRep ? " · +1 rep" : " · même charge"),
-      why: MW + note + ` Objectif ${r0} reps en gardant 1 à 2 reps en réserve.`, from:{W, minR, feel}};
+      why: MW + note + ` Objectif : ${r0} reps, en vous arrêtant 1 ou 2 reps avant de ne plus pouvoir.`, notes, from:{W, minR, feel}};
   }
   let w = W, r, why;
   // Baisse jusqu'à retrouver le bas de la fourchette, 15 % maximum
   const lower = () => { let x = W - st; while(repsAt(x) < lo && x - st >= Math.max(st, W*0.85)) x -= st; return Math.max(st, x); };
   if(minR < lo && feel <= 3 && minR >= lo - 2){
     // Juste sous la fourchette sans difficulté : on garde la charge lourde et on va chercher les reps
-    r = lo; why = `${minR} reps à ${fmtN(W)} kg sans difficulté : on garde la charge et on vise ${lo} reps.`;
+    r = lo; why = `La dernière fois : ${minR} reps à ${fmtN(W)} kg, sans difficulté. C'est juste sous l'objectif (${lo} à ${hi} reps) : on garde la même charge et on va chercher ${lo} reps.`;
   }else if(minR < lo && feel === 4 && minR >= lo - 1){
-    r = minR; why = `Dur, juste sous la fourchette : on garde ${fmtN(W)} kg et on consolide.`;
+    r = minR; why = `La dernière fois : ${minR} reps à ${fmtN(W)} kg, et c'était dur. On garde la même charge et les mêmes reps pour les rendre plus faciles avant d'aller plus loin.`;
   }else if(minR < lo){
     w = lower(); r = Math.max(lo, Math.min(hi, repsAt(w)));
-    why = `Reps nettement sous la fourchette (${minR} < ${lo}) : on baisse un peu la charge pour revenir à ${lo} reps minimum.`;
+    why = `La dernière fois : ${minR} reps à ${fmtN(W)} kg, loin de l'objectif (${lo} reps minimum). On baisse un peu la charge pour revenir dans l'objectif.`;
   }else if(feel===5){
-    if(minR < lo){ w = lower(); r = Math.max(lo, Math.min(hi, repsAt(w))); why = `Reps sous la fourchette (${minR} < ${lo}) : on baisse la charge pour revenir à ${lo} reps minimum.`; }
-    else { r = Math.max(lo, minR - 1); why = "Trop dur : même charge, une rep de moins pour revenir à 1–2 reps en réserve."; }
+    if(minR < lo){ w = lower(); r = Math.max(lo, Math.min(hi, repsAt(w))); why = `La dernière fois : ${minR} reps, sous l'objectif (${lo} reps minimum), et c'était trop dur. On baisse la charge pour revenir dans l'objectif.`; }
+    else { r = Math.max(lo, minR - 1); why = "La dernière fois, c'était trop dur. Même charge, une rep de moins, pour finir chaque série en ayant encore 1 ou 2 reps dans les bras."; }
   }else if(feel===4){
-    if(minR < lo){ w = lower(); r = Math.max(lo, Math.min(hi, repsAt(w))); why = `Reps sous la fourchette (${minR} < ${lo}) : on baisse un peu la charge.`; }
-    else { r = minR; why = "Dur : on garde charge et reps pour les consolider."; }
+    if(minR < lo){ w = lower(); r = Math.max(lo, Math.min(hi, repsAt(w))); why = `La dernière fois : ${minR} reps, sous l'objectif (${lo} reps minimum), et c'était dur. On baisse un peu la charge.`; }
+    else { r = minR; why = "La dernière fois, c'était dur. On garde la même charge et les mêmes reps : on les consolide avant d'aller plus loin."; }
   }else{
     const need = feel===3 ? hi : feel===2 ? hi-1 : lo;   // seuil de reps pour monter la charge
     if(minR >= need){
       w = W + st * (feel===1 ? 2 : 1);
       while(repsAt(w) < lo && w - st > W) w -= st;
       r = Math.max(lo, Math.min(hi, repsAt(w)));
-      why = feel===1 ? "Trop facile : on monte nettement la charge." : `Haut de fourchette atteint (${minR} reps) : on monte la charge.`;
+      why = feel===1 ? "La dernière fois, c'était trop facile : on monte nettement la charge." : `La dernière fois : ${minR} reps à ${fmtN(W)} kg, le haut de l'objectif (${hi} reps) est atteint. On monte la charge ; les reps baissent un peu, puis on remontera vers ${hi}.`;
     }else{
       r = Math.min(hi, minR + (feel===2 ? 2 : 1));
-      why = `On garde ${fmtN(W)} kg et on vise ${r} reps (double progression jusqu'à ${hi}).`;
+      why = `On garde ${fmtN(W)} kg et on vise ${r} reps, ${r-minR > 1 ? `${r-minR} de plus` : "une de plus"} que la dernière fois. Le principe : on ajoute des reps jusqu'à ${hi}, puis on monte la charge.`;
     }
   }
   // Volume hebdo du muscle : en dessous de 10 séries, une série de plus si la récupération suit
   const wk = muscleSetsThisWeek(e.muscle, last.ts + 1);
-  if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; why += ` ${e.muscle} : ${wk} séries sur les 7 jours précédant la dernière séance, sous les 10 conseillées, on ajoute une série.`; }
-  if(feel===5 && hist[1] && (hist[1].feel||0)===5 && sets > 2){ sets--; why += " Une série de moins pour récupérer."; }
+  const notes = [];
+  if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; notes.push(`Vous avez fait ${wk} série${wk>1?"s":""} de ${e.muscle.toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
+  if(feel===5 && hist[1] && (hist[1].feel||0)===5 && sets > 2){ sets--; notes.push("Deux séances trop dures de suite : une série de moins pour récupérer."); }
   const dW = w - W, tag = ML + (dW>0 ? `+${fmtN(dW)} kg` : dW<0 ? `${fmtN(dW)} kg` : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider");
-  return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, mode, from:{W, minR, feel}};
+  return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, notes, mode, from:{W, minR, feel}};
 }
 
 /* ---------- Séries d'échauffement ----------
@@ -1188,7 +1190,7 @@ function estimateNew(e, lo){
   const st = stepFor(e, oneRM), w = Math.floor(oneRM / (1 + (lo + 2.5)/30) * 0.9 / st + 1e-9) * st;
   if(w < st) return null;
   const lv = LEVELS[Math.min(4, Math.floor(L))] || LEVELS[0];
-  return {w:+w.toFixed(2), oneRM, txt:`D'après votre niveau ${own ? `en ${e.muscle.toLowerCase()}` : "moyen tous muscles"} (${lv.toLowerCase()}) et votre poids de corps (${fmtN(bw)} kg), votre 1RM est estimé vers ${fmtN(oneRM, 1)} kg ; la charge proposée garde une marge de prudence de 10 %.`};
+  return {w:+w.toFixed(2), oneRM, txt:`Elle part de votre niveau ${own ? `en ${e.muscle.toLowerCase()}, mesuré sur vos autres exercices` : "moyen, mesuré sur vos autres exercices"} (${lv.toLowerCase()}), et de votre poids de corps (${fmtN(bw)} kg) : vous pourriez soulever environ ${fmtN(oneRM, 1)} kg une seule fois, et on retire 10 % par prudence.`};
 }
 function strengthByMuscle(){
   const bw = bodyweight(), female = S.profile.sex==="f", now = Date.now(), res = {};
@@ -2977,11 +2979,13 @@ const ACT = {
   },
   feel: b => { const ex = A().exercises[+b.dataset.i], v = +b.dataset.v; ex.feel = ex.feel===v ? 0 : v; touchProfile(); render(); },
   "coach-why": b => { const ex = A().exercises[+b.dataset.i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan, preLoad(A().exercises, +b.dataset.i, true));
+    const fr = c.from, lastTxt = fr ? (fr.W ? `${fmtN(fr.W)} kg × ${fr.minR}` : `${fr.minR} reps`) : "—";
     openSheet(`<h3>${esc(e.name)}</h3>
-      <div class="tiles"><div class="tile"><span>Objectif</span><strong>${c.w||c.r ? `${c.sets} × ${c.r||c.lo}` : `${c.lo}–${c.hi}`}</strong><small>${c.w?fmtN(c.w)+" kg":"reps"}</small></div>
-        <div class="tile"><span>Fourchette</span><strong>${c.lo}–${c.hi}</strong><small>reps, à 1–2 en réserve</small></div></div>
+      <div class="tiles"><div class="tile"><span>Aujourd'hui</span><strong>${c.w||c.r ? `${c.sets} × ${c.r||c.lo}` : `${c.lo}–${c.hi}`}</strong><small>${c.w ? fmtN(c.w)+" kg" : "reps"}</small></div>
+        <div class="tile"><span>La dernière fois</span><strong>${lastTxt}</strong><small>${fr ? `ressenti : ${esc(FEEL[fr.feel-1].label.toLowerCase())}` : "jamais fait"}</small></div></div>
       <p style="margin:0">${esc(c.why)}</p>
-      <p class="small muted" style="margin:0">Repos conseillé : ${fmtClock(c.rest*1000)}. Les valeurs grises dans les cases sont la proposition : touchez ✓ pour la valider telle quelle, ou tapez ce que vous avez réellement fait.</p>
+      ${(c.notes || []).map(n => `<p class="small" style="margin:0">• ${esc(n)}</p>`).join("")}
+      <p class="small muted" style="margin:0">Sur cet exercice, on vise ${c.lo} à ${c.hi} reps par série. Repos conseillé : ${fmtClock(c.rest*1000)}. Les chiffres en gris dans les cases sont la proposition : touchez ✓ pour la valider, ou tapez ce que vous avez vraiment fait.</p>
       <button class="btn" data-act="close">Compris</button>`); },
   "set-range": b => { const id = b.dataset.id, v = b.dataset.v; S.profile.ranges = S.profile.ranges || {};
     if(v==="auto") delete S.profile.ranges[id]; else S.profile.ranges[id] = v.split("-").map(Number);
@@ -2995,7 +2999,7 @@ const ACT = {
         return `<section class="card" style="display:flex;flex-direction:column;gap:8px">
           <div class="row"><b style="flex:1">Prochaine séance</b><span class="ctag">${esc(c.tag)}</span></div>
           <div style="font-size:22px;font-weight:700">${c.w||c.r ? `${c.sets} × ${c.r||c.lo} ${c.w?"à "+fmtN(c.w)+" kg":"reps"}` : `${c.lo}–${c.hi} reps`}</div>
-          <p class="small muted" style="margin:0">${esc(c.why)}</p>
+          <p class="small muted" style="margin:0">${esc([c.why].concat(c.notes || []).join(" "))}</p>
           <div class="small muted">Fourchette de reps</div>
           <div class="chips">${[["auto","Auto"],...RANGES.map(r=>[r.join("-"),r.join("–")])].map(([v,l]) => `<button class="chip" data-act="set-range" data-id="${e.id}" data-v="${v}" aria-pressed="${v==="auto"?auto:!auto&&c.lo+"-"+c.hi===v}">${l}</button>`).join("")}</div>
         </section>`; })()}
