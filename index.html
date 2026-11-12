@@ -562,8 +562,11 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
   box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 24px rgba(139,92,246,.35)}
 /* Page Gymon : titre discret, créature plus grande, niveaux par muscle */
 body[data-tab="creature"] .top h1{font-size:20px;letter-spacing:-.01em}
-.gy-stage{height:calc(100dvh - 325px);max-height:680px}
-.gy-egg .gy-stage{height:calc(100dvh - 285px)}
+/* La page Gymon tient dans l'écran, sans défilement : la zone du Gymon prend la place restante (hauteur posée par fitGymon) */
+.gy-fit .gy-stage{flex:1 1 0;height:auto;min-height:170px;max-height:none}
+body[data-tab="creature"]{overscroll-behavior:none}
+body[data-fit="1"] main{padding-bottom:0}
+.gy-aura,.gy-spark{pointer-events:none}
 .gy-stage .creature{height:96%;max-width:100%}
 .gy-lv{display:flex;align-items:flex-end;gap:3px;height:26px;margin-top:3px}
 .gy-lv i{display:block;width:7px;border-radius:3px;min-height:3px;background:var(--mc)}
@@ -609,7 +612,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 g";
+const APP_VERSION = "2026-11-12 h";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2036,6 +2039,14 @@ function gyZoom(svg, c){
   const z = f / (0.96 * (GY_FILL[c.stage] || 1)), h = 344 / z, w = 240 / z;
   return svg.replace('viewBox="0 -24 240 344"', `viewBox="${(120 - w/2).toFixed(1)} ${(320 - h).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}"`);
 }
+function fitGymon(){
+  const g = document.querySelector(".gy:not(.gy-dead)"), nav = document.getElementById("tabs"); if(!g || !nav) return;
+  window.scrollTo(0, 0); g.classList.add("gy-fit"); document.body.dataset.fit = "1";
+  g.style.height = Math.max(360, nav.getBoundingClientRect().top - g.getBoundingClientRect().top - 8) + "px";
+  const over = document.documentElement.scrollHeight - innerHeight;   // ce qui dépasse encore (marges) : on le reprend sur la zone du Gymon
+  if(over > 0) g.style.height = Math.max(360, parseFloat(g.style.height) - over) + "px";
+}
+addEventListener("resize", () => { if(tab === "creature") fitGymon(); });
 function viewCreature(){
   const c = creatureState(), vit = creatureVitality(c); creatureLog(c);
   const lvAvg = MUSCLES.reduce((t,m) => t + muscleLevel(c, m), 0) / MUSCLES.length, force = Math.min(5, Math.round(lvAvg) + 1);
@@ -2555,7 +2566,7 @@ function fmtClock(ms){ const s = Math.max(0, Math.floor(ms/1000)); const h=Math.
 const setTxt = s => (num(s.w) ? fmtN(num(s.w))+" kg × " : "") + (num(s.r)||"–") + (num(s.w) ? "" : " reps");
 
 /* ---------- Rendu ---------- */
-const TITLES = {creature:"Mon Gymon", seance:"Séance", routine:"Routine", historique:"Historique", progres:"Progrès", exercices:"Exercices"};
+const TITLES = {creature:"Mon Gymon", seance:"Séance", routine:"Routine", historique:"Historique", progres:"Progrès", exercices:"Exercices", reglages:"Réglages"};
 function render(){
   document.getElementById("title").textContent = TITLES[tab]; document.body.dataset.tab = tab;
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===tab ? "page" : "false"));
@@ -2563,7 +2574,8 @@ function render(){
   const gc = creatureState(), sick = gc.dead || ((gc.fidelity || gc.stage) && creatureVitality(gc) <= 50);
   document.querySelector('.tabs [data-tab="creature"]').classList.toggle("sick", !!sick);
   v.innerHTML = installHint() + (tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : gymonHealthAlert() + viewHome())
-    : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : viewExercises());
+    : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : tab==="reglages" ? viewSettings() : viewExercises());
+  delete document.body.dataset.fit; if(tab === "creature") fitGymon();
   tickClock(); wakeLock();
 }
 
@@ -2825,12 +2837,15 @@ function chipsHTML(){
 }
 function viewExercises(){
   return `
+    <button class="btn ghost wide" data-act="new-ex" style="margin-bottom:12px">+ Créer un exercice</button>
     <input id="ex-q" class="search" type="search" placeholder="Rechercher un exercice" value="${esc(exFilter.q)}" aria-label="Rechercher un exercice">
     ${chipsHTML()}
-    <div class="list" id="ex-list">${exListHTML(null,"browse")}</div>
-    <button class="btn ghost wide" data-act="new-ex">+ Créer un exercice</button>
-    <h2 id="reglages">Réglages</h2>
-    <section class="card" style="display:flex;flex-direction:column;gap:12px">
+    <div class="list" id="ex-list">${exListHTML(null,"browse")}</div>`;
+}
+// Page Réglages, ouverte par l'engrenage en haut (séparée de la page Exercices depuis le 12 nov. 2026)
+function viewSettings(){
+  return `
+    <section class="card" id="reglages" style="display:flex;flex-direction:column;gap:12px">
       <label class="field">Apparence
         <select id="theme">${[["dark","Sombre (par défaut)"],["light","Clair"],["auto","Automatique, comme l'iPhone"]].map(([v,l]) => `<option value="${v}" ${(S.profile.theme||"dark")===v?"selected":""}>${l}</option>`).join("")}</select></label>
       <label class="field">Repos par défaut après une série
@@ -3185,7 +3200,7 @@ const ACT = {
     const comp = isCompound(cur), next = (fresh.filter(c => c.comp === comp)[0] || fresh[0]).e;
     ex.exId = next.id; ex.feel = 0; ex.wuForce = false; ex.sets = ex.sets.filter(s => !s.warm).map(() => blankSet());
     touchProfile(); render(); toast(`Remplacé par ${next.name}`); },
-  settings: () => { closeSheet(); tab = "exercices"; render(); requestAnimationFrame(() => { const h = document.getElementById("reglages"); if(h) h.scrollIntoView({block:"start"}); }); },
+  settings: () => { closeSheet(); tab = "reglages"; render(); window.scrollTo(0, 0); },
   "ex-menu": b => { const i = +b.dataset.i, n = A().exercises.length, e = exById(A().exercises[i].exId);
     openSheet(`<h3>${esc(e.name)}</h3>
       ${i>0?`<button class="btn" data-act="ex-move" data-i="${i}" data-d="-1">Monter</button>`:""}
@@ -3391,7 +3406,7 @@ function installHint(){
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), android = /Android/.test(navigator.userAgent);
   if(isInstalled() || S.profile.installHintOff || !(ios || android)) return "";
   return `<div class="alert warn row" style="align-items:flex-start;gap:8px;margin-bottom:12px"><span style="flex:1">ⓘ Pour ne pas perdre vos séances, ajoutez l'app à l'écran d'accueil : ${ios
-    ? "bouton Partager de Safari › « Sur l'écran d'accueil »" : "menu ⋮ de Chrome › « Ajouter à l'écran d'accueil »"}. Pensez aussi à sauvegarder vos données de temps en temps (Exercices › Réglages).</span>
+    ? "bouton Partager de Safari › « Sur l'écran d'accueil »" : "menu ⋮ de Chrome › « Ajouter à l'écran d'accueil »"}. Pensez aussi à sauvegarder vos données de temps en temps (Réglages, l'engrenage en haut de l'écran).</span>
     <button class="tbtn" data-act="install-off" aria-label="Masquer">✕</button></div>`;
 }
 ACT["install-off"] = () => { S.profile.installHintOff = true; touchProfile(); render(); };
@@ -3399,7 +3414,7 @@ ACT["install-off"] = () => { S.profile.installHintOff = true; touchProfile(); re
 /* ---------- Premier lancement : poids, taille, référence de force ---------- */
 function onboarding(){
   openSheet(`<h3>Bienvenue sur Gymon</h3>
-    <p class="small muted" style="margin:0">Trois informations pour comparer vos charges aux niveaux de référence. Elles restent uniquement dans ce téléphone et se modifient dans Exercices › Réglages.</p>
+    <p class="small muted" style="margin:0">Trois informations pour comparer vos charges aux niveaux de référence. Elles restent uniquement dans ce téléphone et se modifient dans Réglages, l'engrenage en haut de l'écran.</p>
     <div class="row wrap">
       <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="ob-bw" inputmode="decimal" placeholder="Ex. 80"></label>
       <label class="field" style="flex:1;min-width:130px">Taille (cm)<input id="ob-height" inputmode="numeric" placeholder="Ex. 178"></label></div>

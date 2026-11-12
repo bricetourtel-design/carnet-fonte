@@ -214,6 +214,11 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts = saved; return {arms:[arm(100), arm(65), arm(40), arm(20)], eyes, sick}; });
   ok(ge.arms.join() === "0,1,2,3", "bras : levés à 80 % et plus, mi-hauteur, le long du corps, ballants sous 30 %", ge.arms);
   ok(ge.eyes[0] === "spark" && ge.eyes[1] === "tired" && ge.eyes[3] === "worn" && !ge.sick, "regard : étincelant si régulier et en progrès, fatigué puis épuisé sinon ; malade, les yeux restent mi-clos", ge);
+  // La page Gymon tient dans l'écran : pas de défilement, bouton de séance au-dessus de la barre d'onglets
+  const fit = await p.evaluate(() => { closeSheet(); const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); tab = "creature"; render();
+    const r = {scroll:document.documentElement.scrollHeight - innerHeight, cta:document.querySelector(".gy-cta").getBoundingClientRect().bottom <= document.getElementById("tabs").getBoundingClientRect().top};
+    c.stage = st0; render(); return r; });
+  ok(fit.scroll <= 1 && fit.cta, "page Gymon sans défilement, tout tient au-dessus des onglets", fit);
   // Glisser sur le Gymon : face ⇄ dos, sans ouvrir sa fiche
   const sw = await p.evaluate(() => { const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); gyBack = false; tab = "creature"; render();
     const el = document.querySelector(".gy-stage"), r = el.getBoundingClientRect(), y = r.top + r.height/2;

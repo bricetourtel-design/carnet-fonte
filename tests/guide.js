@@ -23,7 +23,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(await p.isHidden("#tuto"), "le guide ne revient pas ensuite");
   await p.reload(); await p.waitForTimeout(300); await p.click('.tabs [data-tab="seance"]');
   ok(await p.isHidden("#tuto"), "ni après rechargement");
-  await p.click('.tabs [data-tab="exercices"]'); await p.click('[data-act="tuto-app"]');
+  await p.click('.top [data-act="settings"]'); await p.click('[data-act="tuto-app"]');
   ok(await p.textContent("#tuto h3") === "Note tes séries", "« Revoir le guide de l'app » le rouvre depuis Exercices");
   await p.click('#tuto .tu-skip'); await p.click('[data-act="tuto"]');
   ok(await p.textContent("#tuto h3") === "Voici ton Gymon", "« Revoir le tuto du Gymon » rouvre l'autre tuto");
@@ -46,7 +46,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(wn.shown && wn.items === wn.after && /6 novembre/.test(wn.oldest), "testeur dont la dernière séance date du 5 nov. : nouveautés depuis le 6 nov.", wn);
   ok(wn.back && !wn.again, "marquée « vue » seulement à la fermeture : un rechargement de mise à jour ne la fait plus disparaître", wn);
   ok(wn.noSession, "testeur sans séance : nouveautés depuis la naissance de son Gymon", wn);
-  await p.click('.tabs [data-tab="exercices"]'); await p.click('[data-act="whats-new"]');
+  await p.click('.top [data-act="settings"]'); await p.click('[data-act="whats-new"]');
   ok(await p.evaluate(() => document.querySelectorAll(".wn-i").length === WHATS_NEW.length), "Réglages : « Les nouveautés » rouvre la liste complète");
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
