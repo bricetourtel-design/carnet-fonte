@@ -109,6 +109,20 @@ button.thumb{padding:0}
 .name-input:focus{outline:none}
 .clock{font-weight:600;font-size:17px;font-variant-numeric:tabular-nums;color:var(--accent);background:var(--fill);padding:6px 12px;border-radius:999px}
 .live-meta{font-size:15px;color:var(--muted);margin-top:-8px}
+/* Barre de repas du Gymon et réaction en direct (idées gaming 1, validées le 12 nov. 2026) */
+.meal{flex:none;display:flex;align-items:center;gap:4px;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;color:var(--fg);padding:6px 12px;border-radius:999px;
+  background:linear-gradient(90deg,rgba(139,92,246,.45) var(--p),var(--fill) var(--p));transition:background .5s}
+.meal.full{background:linear-gradient(90deg,#ffd23f,#ff8a3d);color:#1b1b1f}
+.gy-pop{position:fixed;left:50%;bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px));z-index:31;display:flex;align-items:center;gap:8px;
+  width:max-content;max-width:min(92vw,380px);padding:6px 14px 6px 6px;border-radius:22px;background:#fff;color:#1b1b1f;box-shadow:0 10px 30px rgba(0,0,0,.25);
+  transform:translateX(-50%);animation:popin .35s cubic-bezier(.2,1.4,.5,1);pointer-events:none}
+.gy-pop .creature{height:58px;width:auto;animation:hop .9s ease-in-out 2}
+.gy-pop p{margin:0;font-size:14px;font-weight:700;line-height:1.25}
+.gy-pop.pop-pr{background:linear-gradient(90deg,#ffe27a,#ffb347)}
+.gy-pop.pop-crit{background:linear-gradient(90deg,#8B5CF6,#ff5fa2);color:#fff}
+.gy-pop.out{opacity:0;transition:opacity .3s}
+@keyframes popin{from{transform:translateX(-50%) translateY(20px) scale(.8);opacity:0}to{transform:translateX(-50%) translateY(0) scale(1);opacity:1}}
+.set.crit .check{box-shadow:0 0 0 2px #ff5fa2}
 .ex{padding:12px 12px 10px}
 .ex-head{display:flex;align-items:center;gap:12px;padding:0 0 10px}
 .ex-head h3{margin:0;font-size:17px;font-weight:600;line-height:1.25}
@@ -512,6 +526,25 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 @keyframes flick{from{transform:scaleX(.9);opacity:.85}to{transform:scaleX(1.05);opacity:1}}
 @media (prefers-reduced-motion: reduce){.cr-blink,.cr-flame{animation:none}}
 @keyframes ghost{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+/* L'émotion (idées gaming 4) : sauts de joie après un repas, sommeil la nuit, repas donné à la main */
+.creature.gy-hop{animation:hop .9s ease-in-out 3}
+.gy-zzz{position:absolute;left:60%;top:34%;font-size:20px;z-index:3;pointer-events:none;font-weight:800;color:var(--accent)}
+.gy-zzz i{position:absolute;font-style:normal;opacity:0;animation:zzz 3s ease-in-out infinite}
+.gy-zzz i:nth-child(2){animation-delay:1s;font-size:1.3em}.gy-zzz i:nth-child(3){animation-delay:2s;font-size:1.6em}
+@keyframes zzz{0%{transform:translate(0,10px);opacity:0}30%{opacity:1}100%{transform:translate(26px,-40px);opacity:0}}
+.gy-night .gy-aura{filter:saturate(.4) brightness(.6)}
+.celeb-food{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 22px;border-radius:22px;font-size:40px;line-height:1;color:#fff;
+  background:rgba(255,255,255,.14);border:2px dashed rgba(255,255,255,.5);touch-action:none;cursor:grab;animation:bob 1.4s ease-in-out infinite}
+.celeb-food b{font-size:15px}
+.celeb-feed{display:flex;flex-direction:column;align-items:center;gap:8px}.celeb-feed[hidden]{display:none}
+.celeb-food.drag{animation:none;cursor:grabbing;transition:none}
+.celeb-food.fly{transition:transform .45s ease-in,opacity .45s ease-in;opacity:0;animation:none}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.celeb-rev[hidden]{display:none}.celeb-rev{display:flex;flex-direction:column;align-items:center;gap:10px;animation:pop .45s ease-out}
+.celeb-gy.chomp .creature{animation:chomp .5s ease-in-out 2}
+@keyframes chomp{0%,100%{transform:scale(1)}40%{transform:scale(1.12,.9)}70%{transform:scale(.95,1.06)}}
+.celeb-crit{margin:0;font-size:15px;font-weight:800;color:#ffd23f}
+@media (prefers-reduced-motion: reduce){.creature.gy-hop,.gy-pop .creature,.gy-zzz i,.celeb-food,.celeb-gy.chomp .creature{animation:none}.gy-zzz i{opacity:.8;position:static}}
 .tabs button.sick{position:relative}
 .tabs button.sick::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:9px;height:9px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 2px var(--glass-strong)}
 /* Tuto */
@@ -612,7 +645,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 i";
+const APP_VERSION = "2026-11-12 j";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1545,6 +1578,10 @@ function creatureFixLevels(){
   MUSCLES.forEach(m => { if(c.lastWorked[m]){ c.levels[m] = muscleLevel(c, m, now); c.lastWorked[m] = Math.max(c.lastWorked[m], grace); } });
   c.mv = 2; c.v = Math.max(c.v || 0, 2); saveLocal();
 }
+/* Coup critique (décidé le 12 nov. 2026) : à partir de la 3e série de travail, 12 % de chances qu'une série nourrisse double le Gymon,
+   2 fois au plus par séance. Le volume de la séance (historique, records, coach) ne change pas : seul le repas du Gymon compte le bonus. */
+const CRIT = {chance:0.12, fromSet:3, max:2, roll:() => Math.random() < CRIT.chance};
+function critVolume(w){ let v = 0; w.exercises.forEach(ex => workSets(ex).forEach(s => { if(s.crit) v += num(s.w)*num(s.r); })); return v; }
 // Appelée une fois à la validation d'une séance ; ne compte jamais deux fois la même séance
 function creatureFeed(w){
   const c = creatureState();
@@ -1556,16 +1593,16 @@ function creatureFeed(w){
   c.fidelity++;
   c.vit = creatureStreak(c, t) ? 100 : Math.min(100, vitBefore * (1 + (vitBefore < CREATURE_CFG.vitality.lowBelow ? CREATURE_CFG.vitality.lowGain : CREATURE_CFG.vitality.sessionGain)));
   c.last = Math.max(c.last || 0, t);
-  const vol = wVolume(w), reg = creatureRegularity(c), freqFactor = 0.7 + 0.6 * reg.pct;   // 0,7 à 1,3 selon la régularité
+  const vol = wVolume(w), bonus = critVolume(w), reg = creatureRegularity(c), freqFactor = 0.7 + 0.6 * reg.pct;   // 0,7 à 1,3 selon la régularité
   c.food += vol;
   c.stage = Math.max(c.stage, stageFor(c.fidelity, c));              // un stade acquis ne se perd jamais
-  const gain = vol/1000 * CREATURE_CFG.foodPerTonne[c.stage] * freqFactor;
+  const gain = (vol + bonus)/1000 * CREATURE_CFG.foodPerTonne[c.stage] * freqFactor;   // une série en coup critique nourrit double
   c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + gain);
   growMuscles(c, w); creatureLog(c);
   const ups = MUSCLES.filter(m => (c.levels[m]||0) > (before.levels[m]||0));
-  c.lastMeal = {w:w.id, vol, gain:c.weight - before.weight, ts:Date.now(), ups, dl:Object.fromEntries(ups.map(m => [m, Math.round(((c.levels[m]||0) - (before.levels[m]||0))*100)/100]))};
+  c.lastMeal = {w:w.id, vol, bonus, gain:c.weight - before.weight, ts:Date.now(), ups, dl:Object.fromEntries(ups.map(m => [m, Math.round(((c.levels[m]||0) - (before.levels[m]||0))*100)/100]))};
   touchProfile();
-  return {vol, gain:c.weight - before.weight, evolved:c.stage > before.stage, stage:c.stage, from:before.stage, ups};
+  return {vol, bonus, gain:c.weight - before.weight, evolved:c.stage > before.stage, stage:c.stage, from:before.stage, ups};
 }
 /* Historique pour les courbes (décidé le 12 novembre 2026) : un point par jour [jour, poids kg, taille cm, vitalité %, reconstitué ?],
    enregistré dans le téléphone à chaque ouverture et après chaque repas ; le passé (poids et taille) est reconstitué une fois
@@ -1673,6 +1710,12 @@ function gymonForme(c){
   const prog = Math.min(1, ws.filter(w => now - w.start < 28*D).reduce((t, w) => t + (w.prs || []).length, 0) / 3);
   return 0.6 * reg + 0.4 * prog;
 }
+// Le Gymon dort de 23 h à 6 h (toucher le réveille une minute) ; il est aux anges dans les 3 h qui suivent un repas
+let gyWake = 0, gyHourFix = null;   // gyHourFix : heure imposée par les tests
+function gymonAsleep(c, at){ const h = gyHourFix ?? new Date(at || Date.now()).getHours();
+  return !!c && !c.dead && c.stage >= 2 && (h >= 23 || h < 6) && Date.now() - gyWake > 60000; }
+function gymonMood(c){ if(!c || c.dead || c.stage < 2) return null; if(gymonAsleep(c)) return "sleep";
+  return c.lastMeal && Date.now() - c.lastMeal.ts < 3*3600000 ? "happy" : null; }
 function gymonEyes(c){ if(!c.fed || !c.fed.length) return null; const f = gymonForme(c); return f >= 0.75 ? "spark" : f >= 0.45 ? null : f >= 0.2 ? "tired" : "worn"; }
 function creatureSVG(c, small, back, opt){
   opt = opt || {};
@@ -1869,7 +1912,8 @@ function gymonHead(sp, lk, P, skin, uid, o){
   const eye = (x, side) => {
     const ey = y + 2;
     if(o.dead) return `<path d="M${x-7} ${ey-7} L${x+7} ${ey+7} M${x+7} ${ey-7} L${x-7} ${ey+7}" stroke="${ink}" stroke-width="3" stroke-linecap="round"/>`;
-    if(o.sleepy) return `<path d="M${x-9} ${ey+2} Q${x} ${ey+8} ${x+9} ${ey+2}" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    if(o.sleepy || o.eyeState === "sleep") return `<path d="M${x-9} ${ey+2} Q${x} ${ey+8} ${x+9} ${ey+2}" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    if(o.eyeState === "happy") return `<path d="M${x-9} ${ey+4} Q${x} ${ey-9} ${x+9} ${ey+4}" stroke="${ink}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`;
     if(o.mode==="wink" && side===1 && !lk.kid) return `<path d="M${x-9} ${ey+3} Q${x} ${ey-7} ${x+9} ${ey+3}" stroke="${ink}" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M${x+8} ${ey} l4 -3 M${x+7} ${ey-3} l3 -5" stroke="${ink}" stroke-width="2" stroke-linecap="round"/>`;
     const ix = x - side*1.5, slit = sp==="henmut" || sp==="dinomut" || sp==="dragon";
     let e = `<ellipse cx="${x}" cy="${ey}" rx="11" ry="12.5" fill="#fff" stroke="${ink}" stroke-width="2.4"/>
@@ -2064,15 +2108,18 @@ function viewCreature(){
       <button class="btn gy-cta" data-act="gy-restart">Recommencer avec un nouvel œuf</button>
     </section>`;
   }
+  const mood = gymonMood(c), hop = !!(c.lastMeal && !c.lastMeal.seen && Date.now() - c.lastMeal.ts < 24*3600000 && c.stage >= 2 && mood !== "sleep");
+  if(hop){ c.lastMeal.seen = 1; saveLocal(); }   // saute de joie une fois, à la première ouverture après le repas
+  const sv = creatureSVG(c, false, gyBack && c.stage >= 2, mood ? {eyeState:mood, ...(mood === "sleep" ? {armLevel:2} : {})} : undefined);
   return `
-    <section class="gy ${c.stage < 2 ? "gy-egg" : ""}">
+    <section class="gy ${c.stage < 2 ? "gy-egg" : ""} ${mood === "sleep" ? "gy-night" : ""}">
       ${beforeAfterHTML(c)}
       <div class="gy-stage" data-act="gy-more-tap" role="button" aria-label="Voir mon Gymon de plus près">
         <div class="gy-aura"></div>
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
         <i class="gy-spark" style="--x:72%;--y:72%;--d:2.1s"></i><i class="gy-spark" style="--x:24%;--y:66%;--d:.7s"></i>
-        ${gyZoom(creatureSVG(c, false, gyBack && c.stage >= 2), c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}`)}
-        ${(() => { const L = gymonLines(c); return L.length ? `<button class="gy-bubble" data-act="gy-talk">${esc(L[L.prio ? gyTalk % L.length : (gyTalk + dayNum()) % L.length])}</button>` : ""; })()}
+        ${gyZoom(sv, c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}${hop ? " gy-hop" : ""}`)}
+        ${mood === "sleep" ? `<span class="gy-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><button class="gy-bubble" data-act="gy-wake">Zzz… 💤</button>` : (() => { const L = gyWake && Date.now() - gyWake < 60000 ? ["Hein ? Quoi ? … Ah, c'est toi 😴 Je me rendors vite."] : gymonLines(c); return L.length ? `<button class="gy-bubble" data-act="gy-talk">${esc(L[L.prio ? gyTalk % L.length : (gyTalk + dayNum()) % L.length])}</button>` : ""; })()}
         <button class="gy-chip tl" data-act="gy-curve" data-k="1" aria-label="Courbe du poids"><small>Poids</small>${fmtWeight(c.weight)}</button>
         <button class="gy-chip tr" data-act="gy-curve" data-k="2" aria-label="Courbe de la taille"><small>Taille</small>${fmtN(creatureHeight(c), 0)} cm</button>
         <button class="gy-chip bl" data-act="gy-curve" data-k="3" aria-label="Courbe de la vitalité"><small>Vitalité</small>${vit} %</button>
@@ -2162,7 +2209,7 @@ function celebrate(w, cr){
   const el = document.createElement("div"); el.id = "celebrate"; el.className = "celeb"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Célébration");
   document.body.appendChild(el);
   celebState = {w:w.id, hatch, timers:[]};
-  const main = () => { celebState.timers.forEach(clearTimeout); el.className = "celeb"; el.innerHTML = celebHTML(w, cr, hatch); };
+  const main = () => { celebState.timers.forEach(clearTimeout); el.className = "celeb"; el.innerHTML = celebHTML(w, cr, hatch); celebDrag(); };
   celebState.main = main;
   if(cr.evolved){
     const nm = c.name || "Ton Gymon";
@@ -2180,13 +2227,44 @@ function celebHTML(w, cr, hatch){
   return `<div class="confetti" aria-hidden="true">${Array.from({length:30}, (_, i) => `<i style="--x:${(i*37)%100}%;--d:${((i*0.23)%2.2).toFixed(2)}s;--c:${cols[i%cols.length]};--r:${(i*47)%360}deg"></i>`).join("")}</div>
     <div class="celeb-in">
       <p class="celeb-k">Séance terminée !</p>
-      <div class="celeb-gy">${creatureSVG(c, false, false, {noSteam:true})}</div>
+      <div class="celeb-gy" id="celeb-gy">${creatureSVG(c, false, false, {noSteam:true, eyeState:"happy"})}</div>
+      <div class="celeb-feed" id="celeb-feed"><button class="celeb-food" id="celeb-food" data-act="celeb-feed" aria-label="Donner le repas à ${esc(nm)}">🍗<b>${fmtVol(cr.vol + (cr.bonus||0))}</b></button>
+        <p class="celeb-sub">Fais glisser le repas vers ${esc(nm)}, ou touche-le</p></div>
+      <div class="celeb-rev" id="celeb-rev" hidden>
       <h2>${esc(nm)} a avalé ${fmtVol(cr.vol)}</h2>
-      ${hatch ? `<div class="row celeb-name"><input id="celeb-name" class="name-input" maxlength="16" placeholder="Donne-lui un nom" aria-label="Nom du Gymon"><button class="btn" data-act="celeb-rand" aria-label="Nom au hasard">🎲</button></div>` : ""}
+      ${cr.bonus ? `<p class="celeb-crit">⚡ Coup critique : +${fmtVol(cr.bonus)} en bonus</p>` : ""}
+      ${cr.gain > 0 ? `<p class="celeb-sub">+${fmtWeight(cr.gain)} sur la balance</p>` : ""}
       ${Object.keys(dl).length ? `<div class="celeb-ups">${Object.entries(dl).map(([m,d]) => `<span>💪 ${esc(m)} +${fmtN(d,2)}</span>`).join("")}</div>` : `<p class="celeb-sub">Il reprend des forces.</p>`}
       ${w.prs.length ? `<p class="celeb-sub">🏆 Record : ${w.prs.map(id => esc(exById(id).name)).join(", ")}</p>` : ""}
+      </div>
+      ${hatch ? `<div class="row celeb-name"><input id="celeb-name" class="name-input" maxlength="16" placeholder="Donne-lui un nom" aria-label="Nom du Gymon"><button class="btn" data-act="celeb-rand" aria-label="Nom au hasard">🎲</button></div>` : ""}
       <div class="celeb-btns"><button class="btn" data-act="celeb-share">📸 Partager</button><button class="btn primary" data-act="celeb-close">Continuer</button></div>
     </div>`;
+}
+// Faire glisser le repas jusqu'au Gymon (ou le toucher) révèle ce qu'il a gagné
+function celebFeed(){
+  if(!celebState || celebState.fed) return; celebState.fed = true;
+  const f = document.getElementById("celeb-food"), g = document.getElementById("celeb-gy"), done = () => {
+    const fd = document.getElementById("celeb-feed"), rv = document.getElementById("celeb-rev"); if(fd) fd.hidden = true; if(rv) rv.hidden = false;
+    if(g){ g.classList.add("chomp"); } };
+  if(!f || !g || matchMedia("(prefers-reduced-motion: reduce)").matches){ done(); return; }
+  const a = f.getBoundingClientRect(), b = g.getBoundingClientRect();
+  f.classList.remove("drag"); f.classList.add("fly");
+  f.style.transform = `translate(${b.left + b.width/2 - a.left - a.width/2 + (celebState.dx||0)}px, ${b.top + b.height*0.4 - a.top - a.height/2 + (celebState.dy||0)}px) scale(.3)`;
+  celebState.timers.push(setTimeout(done, 450));
+}
+function celebDrag(){
+  const f = document.getElementById("celeb-food"); if(!f) return;
+  let st = null;
+  f.addEventListener("pointerdown", e => { st = {x:e.clientX, y:e.clientY}; f.classList.add("drag"); try{ f.setPointerCapture(e.pointerId); }catch(err){} });
+  f.addEventListener("pointermove", e => { if(!st) return; celebState.dx = e.clientX - st.x; celebState.dy = e.clientY - st.y;
+    f.style.transform = `translate(${celebState.dx}px, ${celebState.dy}px)`; });
+  const up = () => { if(!st) return; st = null;
+    const g = document.getElementById("celeb-gy"), r = g && g.getBoundingClientRect(), a = f.getBoundingClientRect(), cx = a.left + a.width/2, cy = a.top + a.height/2;
+    if(Math.hypot(celebState.dx||0, celebState.dy||0) < 8){ f.classList.remove("drag"); f.style.transform = ""; return; }   // simple toucher : le clic s'en charge
+    if(r && cx > r.left && cx < r.right && cy > r.top && cy < r.bottom + 40) celebFeed();
+    else { f.classList.remove("drag"); celebState.dx = celebState.dy = 0; f.style.transform = ""; celebState.dragged = Date.now(); } };
+  f.addEventListener("pointerup", up); f.addEventListener("pointercancel", up);
 }
 function celebClose(silent){
   const el = document.getElementById("celebrate");
@@ -2315,6 +2393,8 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-12", t:"⚡ Le Gymon vit votre séance", x:"Il réagit à chaque série validée et fête vos records en direct. À partir de la 3e série, une série peut tomber en coup critique et le nourrir double. La pastille 🍗 à côté du chrono montre son repas par rapport à votre moyenne."},
+  {d:"2026-11-12", t:"🍗 Nourrissez-le vous-même", x:"En fin de séance, faites glisser le repas vers votre Gymon (ou touchez-le) pour découvrir ce qu'il a gagné. Après un repas, il a les yeux rieurs et saute de joie. La nuit, de 23 h à 6 h, il dort : touchez-le pour le réveiller."},
   {d:"2026-11-12", t:"💪 Le Gymon montre sa forme", x:"En pleine vitalité, il fait le double biceps ; quand elle baisse, ses bras descendent. Son regard pétille si vous êtes régulier et que vos charges montent, et se fatigue sinon."},
   {d:"2026-11-12", t:"📈 Les courbes du Gymon", x:"Touchez son poids, sa taille ou sa vitalité sur la page Gymon : une courbe montre leur évolution jour après jour. Le passé est reconstitué à partir de vos séances (en pointillés)."},
   {d:"2026-11-12", t:"🟣 Nouveau look", x:"Gymon passe en violet et rose, en sombre par défaut. Vous préférez le clair ? Réglages › Apparence (sombre, clair ou comme l'iPhone). Nouvelle icône aussi : si elle ne change pas sur votre écran d'accueil, supprimez le raccourci et réinstallez l'app depuis Safari, vos données restent."},
@@ -2670,7 +2750,7 @@ function viewActive(){
     let n = 0;
     const rows = ex.sets.map((s,j) => {
       const label = s.warm ? "É" : String(++n), p = (s.warm ? prevWarm[nw++] : prevWork[n-1]) || null;
-      return `<tr class="set ${s.done?"done":""} ${s.warm?"warm":""}" data-i="${i}" data-j="${j}">
+      return `<tr class="set ${s.done?"done":""} ${s.warm?"warm":""} ${s.crit?"crit":""}" data-i="${i}" data-j="${j}">
         <td><button class="setno ${s.warm?"warm":""}" data-act="toggle-warm" aria-label="Série ${label}, toucher pour marquer en échauffement">${label}</button></td>
         <td class="prev">${p ? esc(setTxt(p)) : "—"}</td>
         <td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (wu[nw-1] ? fmtN(wu[nw-1].w) : p&&num(p.w)?fmtN(num(p.w)):"kg") : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg">${e.equip==="Barre" ? `<small class="plates" id="pl-${i}-${j}">${plateText(e, num(s.w) || num(s.warm ? (wu[nw-1]||{}).w : c.w))}</small>` : ""}</td>
@@ -2700,13 +2780,48 @@ function viewActive(){
   return `
     <section class="live-head">
       <input id="w-name" class="name-input" value="${esc(a.name)}" aria-label="Nom de la séance">
-      <div class="clock" id="clock">0:00</div>
+      ${mealBar()}<div class="clock" id="clock">0:00</div>
     </section>
     <div class="live-meta" id="live-meta">${liveMeta()}</div>
     ${exs || `<div class="card empty"><b>Séance vide</b><span class="muted">Ajoutez votre premier exercice pour commencer à noter vos séries.</span></div>`}
     <button class="btn wide" data-act="pick-ex">+ Ajouter des exercices</button>
     <div class="row"><button class="btn ghost danger" data-act="cancel-w">Abandonner</button>
       <button class="btn ok" style="flex:1" data-act="finish-w">Terminer la séance</button></div>`;
+}
+/* Pendant la séance : le Gymon réagit à chaque série de travail validée (bulle en bas d'écran, hors du rendu de la page) */
+let popT = null, popN = 0;
+const POP_LINES = ["Miam ! +{v} au menu 🍗", "Encore une ! 💪", "Ça pousse, je le sens !", "Je digère, continue !", "Belle série ! +{v}", "Mmh, du solide 😋"];
+function setReaction(ex, s){
+  const a = A(), c = creatureState(), v = num(s.w)*num(s.r); if(!v) return;
+  let kind = "", msg;
+  const prev = exHistory(ex.exId), done = a.exercises.reduce((t, x) => t + x.sets.filter(y => y.done && !y.warm).length, 0);
+  if(prev.length && !(a.prShown||[]).includes(ex.exId)){ const e = e1rm(num(s.w), num(s.r));
+    if(e > Math.max(...prev.map(x => x.best)) + 0.01 || num(s.w) > Math.max(...prev.map(x => x.maxW)) + 0.01){ kind = "pr"; (a.prShown = a.prShown || []).push(ex.exId); } }
+  if(!c.dead && done >= CRIT.fromSet && a.exercises.reduce((t, x) => t + x.sets.filter(y => y.crit).length, 0) < CRIT.max && CRIT.roll()){ s.crit = 1; if(!kind) kind = "crit"; }
+  if(c.dead || c.stage < 2) msg = c.dead ? "Ton Gymon t'attend pour revenir à la vie…" : kind === "pr" ? "L'œuf tremble : RECORD ! 🏆" : "L'œuf frémit… +" + fmtVol(v);
+  else if(kind === "pr") msg = `RECORD ! 🏆 ${exById(ex.exId).name}, je le sens jusque dans mes plumes !`;
+  else if(kind === "crit") msg = "COUP CRITIQUE ! Cette série nourrit double 🍗×2";
+  else msg = POP_LINES[popN++ % POP_LINES.length].replace("{v}", fmtVol(v));
+  if(s.crit && kind === "pr") msg += " · Coup critique ×2 !";
+  gyPop(c, msg, kind);
+}
+function gyPop(c, msg, kind){
+  let el = document.getElementById("gy-pop"); if(el) el.remove();
+  el = document.createElement("div"); el.id = "gy-pop"; el.className = "gy-pop" + (kind ? " pop-" + kind : ""); el.setAttribute("role", "status");
+  el.innerHTML = creatureSVG(c, true, false, {noFx:true, eyeState:c.dead ? undefined : "happy"}) + `<p>${esc(msg)}</p>`;
+  document.body.appendChild(el); clearTimeout(popT);
+  popT = setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 320); }, kind ? 3200 : 2200);
+}
+// Repas du Gymon (pastille à côté du chrono, sans prendre de hauteur) : volume avec les coups critiques / moyenne des 5 dernières séances
+function mealInfo(){
+  const a = S.profile.active; if(!a) return null;
+  const v = wVolume(a) + critVolume(a), past = sortW(S.workouts.slice()).slice(0, 5).map(wVolume).filter(x => x > 0);
+  const goal = past.length ? past.reduce((t, x) => t + x, 0) / past.length : 0;
+  return {v, goal, pct: goal ? Math.round(v / goal * 100) : null, crit: critVolume(a)};
+}
+function mealBar(){
+  const m = mealInfo(); if(!m) return "";
+  return `<button class="meal${m.pct >= 100 ? " full" : ""}" id="meal" data-act="meal-info" style="--p:${Math.min(100, m.pct ?? 0)}%" aria-label="Repas du Gymon">${m.pct >= 100 ? "🎉" : "🍗"} ${m.pct === null ? fmtVol(m.v) : m.pct + " %"}</button>`;
 }
 function liveMeta(){
   const a = S.profile.active; if(!a) return "";
@@ -2929,7 +3044,7 @@ function startWorkout(name, exercises, routineId){
 }
 function finishWorkout(){
   const a = S.profile.active;
-  const exercises = a.exercises.map(ex => ({exId:ex.exId, feel:ex.feel||0, sets:ex.sets.filter(s=>s.done).map(s=>({w:s.w, r:s.r, done:true, warm:!!s.warm}))})).filter(ex => ex.sets.length);
+  const exercises = a.exercises.map(ex => ({exId:ex.exId, feel:ex.feel||0, sets:ex.sets.filter(s=>s.done).map(s=>({w:s.w, r:s.r, done:true, warm:!!s.warm, ...(s.crit && !s.warm ? {crit:1} : {})}))})).filter(ex => ex.sets.length);
   if(!exercises.length){ toast("Validez au moins une série avec ✓ avant de terminer"); return; }
   const w = {id:a.id, name:a.name.trim()||"Séance", start:a.start, end:Date.now(), routineId:a.routineId, exercises, prs:[]};
   exercises.forEach(ex => {
@@ -3024,7 +3139,8 @@ const ACT = {
       ${k === 3 && pts.length ? `<p class="small muted" style="margin:0">La vitalité est enregistrée depuis le 12 novembre 2026.</p>` : ""}
       <button class="btn" data-act="close">Fermer</button>`);
     curvePts = pts; curveFmt = L[1]; },
-  "gy-more-tap": () => { if(Date.now() - gySwiped < 400) return; ACT["gy-more"](); },
+  "gy-more-tap": () => { if(Date.now() - gySwiped < 400) return; if(gymonAsleep(creatureState())){ ACT["gy-wake"](); return; } ACT["gy-more"](); },
+  "gy-wake": (b, e) => { if(e) e.stopPropagation(); gyWake = Date.now(); render(); },
   "ba-ok": () => { const c = creatureState(); c.ref = snapNow(c); touchProfile(); render(); },
   "gy-talk": (b, e) => { e.stopPropagation(); gyTalk++; render(); },
   "gy-name": () => nameSheet(),
@@ -3034,6 +3150,9 @@ const ACT = {
   share: b => shareSheet(b.dataset.k || "week"),
   "share-go": () => shareSend(),
   "celeb-close": () => celebClose(),
+  "meal-info": () => { const m = mealInfo(); if(!m) return;
+    toast(m.goal ? `🍗 Repas du Gymon : ${fmtVol(m.v)} sur ${fmtVol(m.goal)} (ta moyenne)${m.crit ? ", coup critique compris" : ""}` : "🍗 Ta première séance fixera la taille de son assiette"); },
+  "celeb-feed": () => { if(celebState && Date.now() - (celebState.dragged||0) < 300) return; celebFeed(); },
   "evo-skip": () => { if(celebState && celebState.main) celebState.main(); },
   "celeb-rand": () => { const i = document.getElementById("celeb-name"); if(i) i.value = GYM_NAMES[Math.floor(Math.random()*GYM_NAMES.length)]; },
   "celeb-share": () => { const id = (celebState||{}).w; celebClose(); shareSheet("session", id); },
@@ -3177,7 +3296,8 @@ const ACT = {
       s.done = true; if(!s.warm) startRest(S.profile.rest<0 ? coach(ex.exId, A().start, ex.plan).rest : S.profile.rest);
       // Pré-remplit la série suivante si elle est vide
       const nx = ex.sets[j+1]; if(nx && !nx.done && !nx.warm && nx.w==="" && s.w!=="" && !s.warm) nx.w = s.w;
-    } else s.done = false;
+      if(!s.warm) setReaction(ex, s);
+    } else { s.done = false; delete s.crit; }
     touchProfile(); render();
   },
   // Toucher le numéro d'une série la passe en échauffement, placée en tête (un échauffement après les séries de travail n'a pas de sens) ; toucher « É » l'annule
@@ -3336,7 +3456,7 @@ document.addEventListener("input", e => {
   if(t.dataset.f && A()){ const tr = t.closest("tr"); A().exercises[+tr.dataset.i].sets[+tr.dataset.j][t.dataset.f] = t.value.replace(/[^\d.,]/g,"");
     const pl = t.dataset.f==="w" && document.getElementById(`pl-${tr.dataset.i}-${tr.dataset.j}`);
     if(pl) pl.textContent = plateText(exById(A().exercises[+tr.dataset.i].exId), num(t.value) || num(String(t.placeholder).replace(/\s/g,"")));
-    touchProfile(); const m = document.getElementById("live-meta"); if(m) m.textContent = liveMeta(); }
+    touchProfile(); const m = document.getElementById("live-meta"); if(m) m.textContent = liveMeta(); const mb = document.getElementById("meal"); if(mb) mb.outerHTML = mealBar(); }
   else if(t.id==="w-name" && A()){ A().name = t.value; touchProfile(); }
   else if(t.id==="r-name" && draft){ draft.name = t.value; }
   else if(t.id==="ex-q"){ exFilter.q = t.value; document.getElementById("ex-list").innerHTML = exListHTML(null,"browse"); }
