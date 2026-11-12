@@ -198,7 +198,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     el.dispatchEvent(new TouchEvent("touchstart", {bubbles:true, touches:[tc(r.left + 60)], changedTouches:[tc(r.left + 60)]}));
     el.dispatchEvent(new TouchEvent("touchend", {bubbles:true, touches:[], changedTouches:[tc(r.left + 220)]}));
     const back = gyBack; ACT["gy-more-tap"](); const sheet = !document.getElementById("sheet").hidden;
-    gyBack = false; c.stage = st0; closeSheet(); render(); return {back, sheet}; });
+    gyBack = false; gySwiped = 0; c.stage = st0; closeSheet(); render(); return {back, sheet}; });
   ok(sw.back && !sw.sheet, "glisser sur le Gymon le retourne (dos), sans ouvrir sa fiche", sw);
   // Réglage d'expression retiré (12 nov. 2026) : plus de choix dans la fiche, mais un clin d'œil déjà choisi est gardé
   await p.evaluate(() => render()); await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-more-tap"]');
