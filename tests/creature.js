@@ -263,6 +263,29 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.click('[data-act="gy-flip"]');
   ok(!/vu de dos/.test(await p.evaluate(() => document.querySelector(".gy-stage .creature").getAttribute("aria-label"))), "bouton Face : retour de face");
 
+  // Sauvegarde : le Gymon est restauré seulement s'il est plus avancé que celui du téléphone
+  const rs = await p.evaluate(async () => {
+    const saved = JSON.stringify(S.profile.creature), D = 86400000, now = Date.now();
+    const adv = {v:4, born:now - 40*D, fidelity:25, stage:7, weight:12, levels:{Pectoraux:3.2, Jambes:9}, look:{col:18, shorts:2}, name:"Rocky<b>", vit:90, last:now - D,
+      at:CREATURE_CFG.stages.map((_, i) => i * 3), fed:["w1", "bad id!"], hack:"<script>", mv:2, graves:[{stage:2, fidelity:5, died:now - 30*D}]};
+    const backup = s => JSON.stringify({app:"carnet-fonte", profile:{creature:s}, workouts:[]});
+    S.profile.creature = null; creatureState();   // téléphone neuf : un œuf
+    await importText(backup(adv)); const c1 = S.profile.creature;
+    const r1 = {stage:c1.stage, fid:c1.fidelity, name:c1.name, col:c1.look.col, jambes:c1.levels.Jambes, hack:"hack" in c1, fed:c1.fed, graves:c1.graves.length};
+    c1.fidelity = 40; c1.stage = 9;   // le téléphone est plus avancé : la sauvegarde ne le remplace pas
+    await importText(backup(adv)); const r2 = {fid:S.profile.creature.fidelity};
+    S.profile.creature.fidelity = 10; S.profile.creature.stage = 4;   // moins avancé : remplacé, l'ancien part dans les souvenirs
+    await importText(backup(adv)); const r3 = {fid:S.profile.creature.fidelity, graves:S.profile.creature.graves.length, last:S.profile.creature.graves.slice(-1)[0].fidelity};
+    const r4 = cleanCreature({born:now, stage:99, look:{col:999}, levels:{Biceps:-3}}); const bad = cleanCreature({stage:3});
+    S.profile.creature = JSON.parse(saved); saveLocal(); closeSheet(); render();
+    return {r1, r2, r3, r4:{stage:r4.stage, look:r4.look, biceps:r4.levels.Biceps}, bad};
+  });
+  ok(rs.r1.stage === 7 && rs.r1.fid === 25 && rs.r1.name === "Rocky<b>" && rs.r1.col === 18 && rs.r1.jambes === 4.5, "sauvegarde : un Gymon plus avancé remplace l'œuf (stade, séances, nom, couleur rare, muscles bornés)", rs.r1);
+  ok(!rs.r1.hack && rs.r1.fed.join() === "w1" && rs.r1.graves === 1, "sauvegarde : champs inconnus et identifiants douteux écartés ; l'œuf neuf ne laisse pas de souvenir", rs.r1);
+  ok(rs.r2.fid === 40, "sauvegarde : un Gymon du téléphone plus avancé est gardé", rs.r2);
+  ok(rs.r3.fid === 25 && rs.r3.graves === 2 && rs.r3.last === 10, "sauvegarde : le Gymon remplacé part dans les souvenirs", rs.r3);
+  ok(rs.r4.stage === 12 && rs.r4.look === undefined && rs.r4.biceps === 0 && rs.bad === null, "sauvegarde : valeurs hors bornes ramenées, Gymon sans date de naissance refusé", rs);
+
   // Rendu des 4 stades avec muscles faibles puis forts
   if(SHOTS){ for(const st of [5,9,12]) for(const lv of [0,4]){
     await p.evaluate(([st,lv]) => { const c = creatureState(); c.stage = st; MUSCLES.forEach(m => c.levels[m] = m==="Jambes" ? Math.min(lv,1) : lv); c.last = Date.now(); render(); }, [st,lv]);
