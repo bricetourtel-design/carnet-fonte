@@ -74,6 +74,14 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   const ord = await p.evaluate(() => A().exercises[0].sets.map(x => x.warm ? "É" : "S").join(""));
   ok(/^É+S+$/.test(ord) && (ord.match(/É/g) || []).length === nWarm0 + 1, "échauffement marqué sur la dernière série : placé avant les séries de travail", ord);
   await p.evaluate(() => { stopRest(); flash(null); S.profile.active = null; render(); });
+  // Apparence : sombre par défaut, clair ou automatique dans Réglages, gardé au rechargement
+  await p.evaluate(() => { closeSheet(); tab = "exercices"; render(); });
+  const th0 = await p.evaluate(() => document.documentElement.dataset.theme);
+  await p.selectOption("#theme", "light"); const th1 = await p.evaluate(() => [document.documentElement.dataset.theme, S.profile.theme]);
+  await p.selectOption("#theme", "auto"); const th2 = await p.evaluate(() => document.documentElement.hasAttribute("data-theme"));
+  await p.selectOption("#theme", "light"); await p.reload(); await p.waitForTimeout(300); const th3 = await p.evaluate(() => document.documentElement.dataset.theme);
+  await p.evaluate(() => { S.profile.theme = "dark"; saveLocal(); applyTheme(); });
+  ok(th0 === "dark" && th1[0] === "light" && th1[1] === "light" && th2 === false && th3 === "light", "apparence : sombre par défaut, clair et automatique au choix, gardé au rechargement", {th0, th1, th2, th3});
   // Sauvegarde en fichier et restauration depuis un fichier
   const exp = await p.evaluate(() => { closeSheet(); ACT.export(); const f = expFile; return {name:f && f.name, type:f && f.type, btn:!!document.querySelector('[data-act="exp-file"]')}; });
   ok(/^gymon-sauvegarde-\d{4}-\d{2}-\d{2}\.json$/.test(exp.name) && exp.type === "application/json" && exp.btn, "sauvegarde : fichier JSON daté prêt à enregistrer", exp);
