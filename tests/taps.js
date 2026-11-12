@@ -52,7 +52,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(pl.ez === "(10 kg / côté)" && !pl.db, "barre EZ de 10 kg (30 kg → 10 par côté) ; rien sur les haltères", pl);
   // Statistiques anonymes : rien n'est envoyé pendant les tests, réglage pour refuser
   const gc = []; p.on("request", r => { if(/goatcounter/.test(r.url())) gc.push(r.url()); });
-  await p.evaluate(() => { flash(null); stopRest(); S.profile.active = null; tab = "exercices"; render(); gcOpen(); });
+  await p.evaluate(() => { flash(null); stopRest(); S.profile.active = null; tab = "reglages"; render(); gcOpen(); });
   await p.locator("#stats-on").scrollIntoViewIfNeeded(); await p.click("#stats-on");
   ok(await p.evaluate(() => S.profile.noStats === true), "Réglages : décocher « Statistiques anonymes » les désactive");
   await p.click("#stats-on");
@@ -75,7 +75,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(/^É+S+$/.test(ord) && (ord.match(/É/g) || []).length === nWarm0 + 1, "échauffement marqué sur la dernière série : placé avant les séries de travail", ord);
   await p.evaluate(() => { stopRest(); flash(null); S.profile.active = null; render(); });
   // Apparence : sombre par défaut, clair ou automatique dans Réglages, gardé au rechargement
-  await p.evaluate(() => { closeSheet(); tab = "exercices"; render(); });
+  await p.evaluate(() => { closeSheet(); tab = "reglages"; render(); });
   const th0 = await p.evaluate(() => document.documentElement.dataset.theme);
   await p.selectOption("#theme", "light"); const th1 = await p.evaluate(() => [document.documentElement.dataset.theme, S.profile.theme]);
   await p.selectOption("#theme", "auto"); const th2 = await p.evaluate(() => document.documentElement.hasAttribute("data-theme"));
@@ -90,8 +90,8 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   const locked = await p.evaluate(() => { const s = A().exercises[0].sets.find(x => !x.warm); s.w = "20"; s.r = "10"; s.done = true; render(); const has = !!document.querySelector('[data-act="ex-swap"][data-i="0"]'); stopRest(); flash(null); S.profile.active = null; render(); return has; });
   ok(!locked, "↻ disparaît dès qu'une série est validée", locked);
   await p.locator('.top [data-act="settings"]').click(); await p.waitForTimeout(150);
-  const set = await p.evaluate(() => ({tab, seen:!!document.getElementById("reglages") && document.getElementById("reglages").getBoundingClientRect().top < innerHeight}));
-  ok(set.tab === "exercices" && set.seen, "engrenage en haut : ouvre les réglages", set);
+  const set = await p.evaluate(() => ({tab, seen:!!document.getElementById("theme"), title:document.getElementById("title").textContent, noEx:!document.getElementById("ex-list")}));
+  ok(set.tab === "reglages" && set.seen && set.title === "Réglages" && set.noEx, "engrenage en haut : ouvre la page Réglages, séparée des exercices", set);
   // Sauvegarde en fichier et restauration depuis un fichier
   const exp = await p.evaluate(() => { closeSheet(); ACT.export(); const f = expFile; return {name:f && f.name, type:f && f.type, btn:!!document.querySelector('[data-act="exp-file"]')}; });
   ok(/^gymon-sauvegarde-\d{4}-\d{2}-\d{2}\.json$/.test(exp.name) && exp.type === "application/json" && exp.btn, "sauvegarde : fichier JSON daté prêt à enregistrer", exp);
