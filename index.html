@@ -578,7 +578,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 c";
+const APP_VERSION = "2026-11-12 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -827,8 +827,11 @@ function coachFresh(exId, beforeTs, planned){
   }
   const rest = REST_BY_RANGE[lo] || 120, ML = mode==="lourd" ? "Lourd · " : mode ? "Volume · " : "";
   const MW = mode==="lourd" ? "Séance lourde : peu de reps, grosse charge, pour la force. " : mode ? "Séance volume : plus de reps, pour la masse. " : "";
-  if(!hist.length) return {lo, hi, rest, w:"", r:"", sets:planned||3, tag:"Nouveau",
-    why:`Première fois : prenez une charge qui permet ${lo} à ${hi} reps en gardant 1 à 2 reps en réserve.`};
+  if(!hist.length){ const est = estimateNew(e, lo);
+    if(est) return {lo, hi, rest, w:est.w, r:lo, sets:planned||3, tag:"Estimé", est:true,
+      why:`Nouvel exercice : charge estimée, pas encore mesurée. ${est.txt} Visez ${lo} reps en gardant 2 à 3 reps en réserve ; ajustez dès la 2e série si c'est trop facile ou trop dur, et notez le ressenti : la prochaine proposition partira de votre vraie performance.`};
+    return {lo, hi, rest, w:"", r:"", sets:planned||3, tag:"Nouveau",
+      why:`Première fois : prenez une charge qui permet ${lo} à ${hi} reps en gardant 1 à 2 reps en réserve.`}; }
   const last = hist[0];
   let feel = last.feel || inferFeel(last, lo), f = FEEL[feel-1];
   let W = Math.max(...last.sets.map(s => num(s.w))), top = last.sets.filter(s => num(s.w)===W);
@@ -1171,6 +1174,21 @@ function levelScore(v, ref){   // 0..5, continu entre les seuils
   if(v <= t[0]) return Math.max(0, v/t[0]);
   for(let i=1;i<t.length;i++) if(v <= t[i]) return i + (v-t[i-1])/(t[i]-t[i-1]);
   return 5;
+}
+/* Nouvel exercice sans historique : charge de départ estimée (décidé le 12 novembre 2026).
+   1RM estimé = poids de corps × repère de l'exercice (STD) × niveau de force de l'utilisateur sur ce muscle, mesuré sur ses autres exercices
+   (à défaut, sa moyenne tous muscles) ; charge = Epley pour le bas de la fourchette avec 2,5 reps en réserve, puis −10 % de prudence, arrondie au palier inférieur.
+   Rien si l'exercice n'a pas de repère (exercices perso, machines) ou si le poids de corps ou le niveau sont inconnus. */
+function estimateNew(e, lo){
+  const ref = STD[e.id], bw = bodyweight(); if(!ref || !bw) return null;
+  const sb = strengthByMuscle(), r = sb.res[e.muscle], own = !!(r && r.score !== null), L = own ? r.score : sb.avg;
+  if(L === null || L === undefined) return null;
+  const scale = S.profile.sex==="f" ? (e.muscle==="Jambes" ? 0.75 : 0.6) : 1, t = LMULT.map(m => m*ref*scale*bw), i = Math.min(4, Math.floor(L));
+  const oneRM = L < 1 ? L*t[0] : L >= 5 ? t[4] : t[i-1] + (L-i)*(t[i]-t[i-1]);
+  const st = stepFor(e, oneRM), w = Math.floor(oneRM / (1 + (lo + 2.5)/30) * 0.9 / st + 1e-9) * st;
+  if(w < st) return null;
+  const lv = LEVELS[Math.min(4, Math.floor(L))] || LEVELS[0];
+  return {w:+w.toFixed(2), oneRM, txt:`D'après votre niveau ${own ? `en ${e.muscle.toLowerCase()}` : "moyen tous muscles"} (${lv.toLowerCase()}) et votre poids de corps (${fmtN(bw)} kg), votre 1RM est estimé vers ${fmtN(oneRM, 1)} kg ; la charge proposée garde une marge de prudence de 10 %.`};
 }
 function strengthByMuscle(){
   const bw = bodyweight(), female = S.profile.sex==="f", now = Date.now(), res = {};

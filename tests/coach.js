@@ -96,6 +96,21 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(OFF.unmotivated[0] === OFF.before[0], "« Motivation ou contexte » : séance comptée normalement", OFF);
   ok(OFF.chips.join() === "fatigue,sante,vie,technique,contexte", "fin de séance « en dessous » : 5 catégories pour un homme", OFF.chips);
   ok(OFF.saved && OFF.saved.ignore && /mise de côté/.test(OFF.cons) && OFF.fem, "raison enregistrée sur la séance, conséquence expliquée ; « Règles » proposée en premier aux femmes", OFF.saved);
+  // Nouvel exercice : charge estimée depuis le niveau du même muscle, marquée « Estimé »
+  const EST = await p.evaluate(() => {
+    const D = 86400000, n = Date.now(), saved = {w:S.workouts, bw:S.profile.bw, sex:S.profile.sex, custom:S.profile.custom.slice()};
+    const set = (w, r) => Array.from({length:3}, () => ({w:String(w), r:String(r), done:true, warm:false}));
+    S.profile.bw = 80; S.profile.sex = "h";
+    S.workouts = [{id:"e1", name:"x", start:n - 3*D, end:n - 3*D, exercises:[{exId:"elev-lat", feel:3, sets:set(12, 12)}, {exId:"dm-halteres", feel:3, sets:set(22, 8)}]}];
+    const oiseau = coach("oiseau"), dm = coach("dm-barre");
+    S.profile.bw = ""; const noBw = coach("oiseau");
+    S.profile.bw = 80; S.profile.custom.push({id:"xperso", name:"Perso", muscle:"Épaules", equip:"Machine"}); const perso = coach("xperso");
+    S.workouts = saved.w; S.profile.bw = saved.bw; S.profile.sex = saved.sex; S.profile.custom = saved.custom;
+    return {oiseau:{tag:oiseau.tag, w:oiseau.w, r:oiseau.r, why:oiseau.why}, dm:{tag:dm.tag, w:dm.w}, noBw:noBw.tag, perso:perso.tag};
+  });
+  ok(EST.oiseau.tag === "Estimé" && EST.oiseau.w > 0 && EST.oiseau.w <= 12 && Number.isInteger(EST.oiseau.w) && EST.oiseau.r === 10 && /estimée/.test(EST.oiseau.why), "nouvel exercice : charge estimée depuis le niveau en épaules, au palier, au bas de la fourchette, « Estimé »", EST.oiseau);
+  ok(EST.dm.tag === "Estimé" && EST.dm.w % 2.5 === 0 && EST.dm.w >= 20 && EST.dm.w <= 60, "développé militaire barre : estimation au palier de 2,5 kg, plausible", EST.dm);
+  ok(EST.noBw === "Nouveau" && EST.perso === "Nouveau", "sans poids de corps, ou exercice sans repère : pas d'estimation (« Nouveau »)", EST);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);
