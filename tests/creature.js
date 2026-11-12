@@ -191,6 +191,18 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return {differs: thin !== big, veinsBig: /stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/.test(big), veinsThin: /opacity=".9"\/>/.test(thin) && /stroke-linecap="round" opacity=".9"/.test(thin), legsThin: /scale\(0\.2 1\)/.test(legs)}; });
   ok(draw.differs && draw.veinsBig && !draw.veinsThin, "veines seulement aux niveaux élevés");
   ok(draw.legsThin, "retard en jambes : jambes en allumettes");
+  // Courbes : passé reconstitué (poids, taille), un point par jour ensuite, gardé dans la sauvegarde
+  const cv = await p.evaluate(() => { const D = 86400000, n = Date.now(), saved = {c:JSON.stringify(S.profile.creature), w:S.workouts};
+    const set = (w, r) => Array.from({length:3}, () => ({w:String(w), r:String(r), done:true, warm:false}));
+    S.workouts = []; for(let i = 0; i < 12; i++){ const t = n - (40 - i*3)*D; S.workouts.push({id:"cv"+i, name:"x", start:t, end:t+3600000, prs:[], exercises:[{exId:"squat", feel:3, sets:set(80+i, 8)}]}); }
+    const c = creatureState(); c.born = n - 45*D; c.at = CREATURE_CFG.stageAt; c.fed = S.workouts.map(w => w.id); c.fidelity = 12; c.stage = stageFor(12, c); c.weight = 1.5; c.last = n - D; c.vit = 90; c.hist = null; c.histB = 0; c.dead = null;
+    creatureLog(c); const h = c.hist, est = h.filter(p => p[4]).length, last = h[h.length-1], up = h[0][2] <= last[2];
+    tab = "creature"; render(); ACT["gy-curve"](document.querySelector('[data-act="gy-curve"][data-k="1"]'), {stopPropagation(){}}); const svg = !!document.querySelector(".curve-box svg"); closeSheet();
+    const back = cleanCreature(JSON.parse(JSON.stringify(c))).hist.length === h.length;
+    S.profile.creature = JSON.parse(saved.c); S.workouts = saved.w; render();
+    return {n:h.length, est, lastReal:last[4] === 0 && last[3] === 90, endsAtWeight:Math.abs(last[1] - 1.5) < 1e-9, up, svg, back}; });
+  ok(cv.est === 12 && cv.lastReal && cv.endsAtWeight && cv.up, "courbes : 12 points reconstitués puis le point du jour, recalés sur le poids actuel, taille croissante", cv);
+  ok(cv.svg && cv.back, "courbe affichée au toucher du poids ; l'historique suit la sauvegarde", cv);
   // Glisser sur le Gymon : face ⇄ dos, sans ouvrir sa fiche
   const sw = await p.evaluate(() => { const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); gyBack = false; tab = "creature"; render();
     const el = document.querySelector(".gy-stage"), r = el.getBoundingClientRect(), y = r.top + r.height/2;
