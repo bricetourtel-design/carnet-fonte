@@ -564,6 +564,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 body[data-tab="creature"] .top h1{font-size:20px;letter-spacing:-.01em}
 .gy-stage{height:calc(100dvh - 325px);max-height:680px}
 .gy-egg .gy-stage{height:calc(100dvh - 285px)}
+.gy-stage .creature{height:96%;max-width:100%}
 .gy-lv{display:flex;align-items:flex-end;gap:3px;height:26px;margin-top:3px}
 .gy-lv i{display:block;width:7px;border-radius:3px;min-height:3px;background:var(--mc)}
 .gy-share{margin-left:6px}
@@ -578,6 +579,7 @@ body[data-tab="creature"] .top h1{font-size:20px;letter-spacing:-.01em}
   <h1 id="title">Séance</h1>
   <div class="top-r">
     <div class="status" id="status"><i></i><span>Sur cet iPhone</span></div>
+    <button class="idea-btn" data-act="settings" aria-label="Réglages"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     <button class="idea-btn" data-act="idea" aria-label="Boîte à idées"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg></button>
   </div>
 </header>
@@ -596,7 +598,7 @@ body[data-tab="creature"] .top h1{font-size:20px;letter-spacing:-.01em}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 d";
+const APP_VERSION = "2026-11-12 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1939,12 +1941,13 @@ let gyBack = false, gyFlipAnim = false, gySwiped = 0, gyTouch = null;
 document.addEventListener("touchstart", e => { const st = e.target.closest && e.target.closest(".gy-stage"); gyTouch = st && e.touches.length === 1 ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : null; }, {passive:true});
 document.addEventListener("touchend", e => { if(!gyTouch) return; const t = e.changedTouches[0], dx = t.clientX - gyTouch.x, dy = t.clientY - gyTouch.y; gyTouch = null;
   if(Math.abs(dx) > 50 && Math.abs(dy) < 50 && creatureState().stage >= 2 && !creatureState().dead){ gySwiped = Date.now(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; } }, {passive:true});   // vue de dos du Gymon (non sauvegardée : on revient de face à l'ouverture)
-/* Les premières formes sont petites dans leur cadre : on zoome pour que la créature occupe bien l'écran,
-   en gardant une croissance visible d'un stade à l'autre (part de la hauteur occupée : 72 % pour l'œuf → taille réelle dès la jeune poule) */
-const GY_FILL = [0.49, 0.49, 0.65, 0.74, 0.86], GY_TARGET = [0.72, 0.74, 0.80, 0.86, 0.86];
-function gyZoom(svg, st){
-  const z = st < GY_FILL.length ? Math.max(1, GY_TARGET[st] / GY_FILL[st]) : 1; if(z <= 1) return svg;
-  const h = 344 / z, w = 240 / z;
+/* On le voit grandir, comme un Tamagotchi : sa hauteur à l'écran suit sa taille en cm (6 cm l'œuf → 350 cm le dragon, échelle logarithmique),
+   de 30 % de la zone pour l'œuf à toute la zone pour le dragon ; il grandit un peu à chaque séance, pas seulement aux changements de forme.
+   GY_FILL : part de la hauteur du dessin occupée par chaque forme (mesurée) ; le dessin reste posé au sol. */
+const GY_FILL = [0.49, 0.49, 0.65, 0.74, 0.86, 0.95, 0.97, 0.83, 0.89, 0.96, 0.98, 0.98, 1.02];
+function gyZoom(svg, c){
+  const cm = Math.max(6, creatureHeight(c)), f = 0.30 + 0.70 * Math.min(1, Math.log(cm / 6) / Math.log(350 / 6));
+  const z = f / (0.96 * (GY_FILL[c.stage] || 1)), h = 344 / z, w = 240 / z;
   return svg.replace('viewBox="0 -24 240 344"', `viewBox="${(120 - w/2).toFixed(1)} ${(320 - h).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}"`);
 }
 function viewCreature(){
@@ -1971,7 +1974,7 @@ function viewCreature(){
         <div class="gy-aura"></div>
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
         <i class="gy-spark" style="--x:72%;--y:72%;--d:2.1s"></i><i class="gy-spark" style="--x:24%;--y:66%;--d:.7s"></i>
-        ${gyZoom(creatureSVG(c, false, gyBack && c.stage >= 2), c.stage).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}`)}
+        ${gyZoom(creatureSVG(c, false, gyBack && c.stage >= 2), c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}`)}
         ${(() => { const L = gymonLines(c); return L.length ? `<button class="gy-bubble" data-act="gy-talk">${esc(L[L.prio ? gyTalk % L.length : (gyTalk + dayNum()) % L.length])}</button>` : ""; })()}
         <span class="gy-chip tl"><small>Poids</small>${fmtWeight(c.weight)}</span>
         <span class="gy-chip tr"><small>Taille</small>${fmtN(creatureHeight(c), 0)} cm</span>
@@ -2574,6 +2577,7 @@ function viewActive(){
     }).join("");
     return `<article class="card ex" data-i="${i}">
       <div class="ex-head">${thumb(e,"ex-info")}<div class="tt"><h3>${esc(e.name)}</h3><span class="tag"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(e.muscle)} · ${esc(e.equip)}</span></div>
+        ${ex.sets.some(s => s.done && !s.warm) ? "" : `<button class="icon-btn" data-act="ex-swap" data-i="${i}" aria-label="Remplacer par un autre exercice du même muscle">↻</button>`}
         <button class="icon-btn" data-act="ex-menu" data-i="${i}" aria-label="Options de l'exercice">⋯</button></div>
       <button class="coach ${c.deload?"deload":""}" data-act="coach-why" data-i="${i}">
         <span class="ctag">${esc(c.tag)}</span>
@@ -2734,7 +2738,7 @@ function viewExercises(){
     ${chipsHTML()}
     <div class="list" id="ex-list">${exListHTML(null,"browse")}</div>
     <button class="btn ghost wide" data-act="new-ex">+ Créer un exercice</button>
-    <h2>Réglages</h2>
+    <h2 id="reglages">Réglages</h2>
     <section class="card" style="display:flex;flex-direction:column;gap:12px">
       <label class="field">Apparence
         <select id="theme">${[["dark","Sombre (par défaut)"],["light","Clair"],["auto","Automatique, comme l'iPhone"]].map(([v,l]) => `<option value="${v}" ${(S.profile.theme||"dark")===v?"selected":""}>${l}</option>`).join("")}</select></label>
@@ -3070,6 +3074,17 @@ const ACT = {
     const n = warmupFor(ex.exId, a.start, ex.plan, true, true).length || 1;
     ex.wuForce = true; ex.sets.unshift(...Array.from({length:n}, () => ({...blankSet(), warm:true}))); touchProfile(); render(); },
   "del-set": b => { const ex = A().exercises[+b.dataset.i]; if(ex.sets.length>1){ ex.sets.pop(); touchProfile(); render(); } },
+  // Machine prise ou pas envie : un autre exercice du même muscle (même type d'abord), un nouveau à chaque toucher
+  "ex-swap": b => { const a = A(), ex = a.exercises[+b.dataset.i], cur = exById(ex.exId);
+    if(ex.sets.some(s => s.done && !s.warm)){ toast("Des séries sont déjà validées : ajoutez plutôt un autre exercice"); return; }
+    const used = new Set(a.exercises.map(x => x.exId)); ex.tried = (ex.tried || []).concat(ex.exId);
+    let list = candidatesFor(cur.muscle, exStats()).filter(c => !used.has(c.e.id));
+    if(!list.length){ toast("Pas d'autre exercice pour ce muscle"); return; }
+    let fresh = list.filter(c => !ex.tried.includes(c.e.id)); if(!fresh.length){ ex.tried = [ex.exId]; fresh = list; }   // tous essayés : on recommence le tour
+    const comp = isCompound(cur), next = (fresh.filter(c => c.comp === comp)[0] || fresh[0]).e;
+    ex.exId = next.id; ex.feel = 0; ex.wuForce = false; ex.sets = ex.sets.filter(s => !s.warm).map(() => blankSet());
+    touchProfile(); render(); toast(`Remplacé par ${next.name}`); },
+  settings: () => { closeSheet(); tab = "exercices"; render(); requestAnimationFrame(() => { const h = document.getElementById("reglages"); if(h) h.scrollIntoView({block:"start"}); }); },
   "ex-menu": b => { const i = +b.dataset.i, n = A().exercises.length, e = exById(A().exercises[i].exId);
     openSheet(`<h3>${esc(e.name)}</h3>
       ${i>0?`<button class="btn" data-act="ex-move" data-i="${i}" data-d="-1">Monter</button>`:""}
