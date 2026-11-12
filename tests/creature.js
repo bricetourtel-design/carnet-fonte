@@ -203,6 +203,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return {n:h.length, est, lastReal:last[4] === 0 && last[3] === 90, endsAtWeight:Math.abs(last[1] - 1.5) < 1e-9, up, svg, back}; });
   ok(cv.est === 12 && cv.lastReal && cv.endsAtWeight && cv.up, "courbes : 12 points reconstitués puis le point du jour, recalés sur le poids actuel, taille croissante", cv);
   ok(cv.svg && cv.back, "courbe affichée au toucher du poids ; l'historique suit la sauvegarde", cv);
+  // Bras selon la vitalité, regard selon la forme (validés le 12 nov. 2026)
+  const ge = await p.evaluate(() => { const D = 86400000, n = Date.now(), lv = Object.fromEntries(MUSCLES.map(m => [m, 2]));
+    const mk = (vit, fed) => ({born:n - 60*D, last:n - D, vit, weight:3, fidelity:30, at:CREATURE_CFG.stageAt, look:{col:3, shorts:1}, stage:9, levels:lv, fed:fed || []});
+    const arm = v => { const svg = creatureSVG(mk(v), false, false, {noFx:true}); return svg.includes("rotate(-82 ") ? 3 : svg.includes("rotate(-72 ") ? 2 : svg.includes("rotate(-38 ") ? 1 : 0; };
+    const saved = S.workouts, set = Array.from({length:3}, () => ({w:"50", r:"8", done:true, warm:false}));
+    S.workouts = []; for(let i = 0; i < 7; i++) S.workouts.push({id:"ge"+i, name:"x", start:n - (1 + i*2)*D, end:n - (1 + i*2)*D, prs:i < 3 ? ["squat"] : [], exercises:[{exId:"squat", feel:3, sets:set}]});
+    const all = S.workouts.map(w => w.id), eyes = [gymonEyes(mk(100, all)), gymonEyes(mk(100, all.slice(3, 6))), gymonEyes(mk(100, all.slice(6))), gymonEyes(mk(100, ["x"]))];
+    const sick = creatureSVG(mk(40, all), false, false, {noFx:true}).includes('rx="8.2"');   // malade : yeux mi-clos, sans iris
+    S.workouts = saved; return {arms:[arm(100), arm(65), arm(40), arm(20)], eyes, sick}; });
+  ok(ge.arms.join() === "0,1,2,3", "bras : levés à 80 % et plus, mi-hauteur, le long du corps, ballants sous 30 %", ge.arms);
+  ok(ge.eyes[0] === "spark" && ge.eyes[1] === "tired" && ge.eyes[3] === "worn" && !ge.sick, "regard : étincelant si régulier et en progrès, fatigué puis épuisé sinon ; malade, les yeux restent mi-clos", ge);
   // Glisser sur le Gymon : face ⇄ dos, sans ouvrir sa fiche
   const sw = await p.evaluate(() => { const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); gyBack = false; tab = "creature"; render();
     const el = document.querySelector(".gy-stage"), r = el.getBoundingClientRect(), y = r.top + r.height/2;

@@ -609,7 +609,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 f";
+const APP_VERSION = "2026-11-12 g";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1660,9 +1660,22 @@ function hexMix(hex, f){   // f > 0 éclaircit, f < 0 assombrit
   const n = parseInt(hex.slice(1), 16), c = [n>>16, (n>>8)&255, n&255].map(v => Math.round(f >= 0 ? v + (255-v)*f : v*(1+f)));
   return "#" + c.map(v => v.toString(16).padStart(2,"0")).join("");
 }
+/* Forme du Gymon (0 à 1) = 60 % régularité + 40 % progression.
+   Régularité : séances mangées sur 14 jours / objectif 6, l'objectif étant réduit pendant les 14 premiers jours de vie.
+   Progression : records battus sur 4 semaines dans les séances mangées, 3 records = le maximum. */
+function gymonForme(c){
+  const D = 86400000, now = Date.now(), F = CREATURE_CFG.freq, fed = c.fed || [];
+  const ws = S.workouts.filter(w => fed.includes(w.id)), age = Math.max(1, (now - (c.born || now)) / D);
+  const reg = Math.min(1, ws.filter(w => now - w.start < F.window*D).length / (F.target * Math.min(1, age / F.window)));
+  const prog = Math.min(1, ws.filter(w => now - w.start < 28*D).reduce((t, w) => t + (w.prs || []).length, 0) / 3);
+  return 0.6 * reg + 0.4 * prog;
+}
+function gymonEyes(c){ if(!c.fed || !c.fed.length) return null; const f = gymonForme(c); return f >= 0.75 ? "spark" : f >= 0.45 ? null : f >= 0.2 ? "tired" : "worn"; }
 function creatureSVG(c, small, back, opt){
   opt = opt || {};
   const st = Math.min(c.stage, LOOKS.length-1), lk = LOOKS[st], vit = creatureVitality(c), sleepy = vit < 60, dead = !!c.dead;
+  // Bras selon la vitalité (0 levés, 1 mi-hauteur, 2 le long du corps, 3 ballants) et regard selon la forme (validés le 12 nov. 2026)
+  opt = {...opt, armLevel: opt.armLevel ?? (dead ? 3 : vit >= 80 ? 0 : vit >= 50 ? 1 : vit >= 30 ? 2 : 3), eyeState: opt.eyeState !== undefined ? opt.eyeState : gymonEyes(c)};
   const amb = AMB[S.profile.gymonStyle] ? S.profile.gymonStyle : "aesthetic", GC = gymColor(c);
   const shorts = GYM_SHORTS[(c.look||{}).shorts] || AMB[amb].shorts, A = {...AMB[amb], shorts, shoes:"#ffffff", sole: shorts==="#f2f2f2" || shorts==="#161616" ? "#ff6b35" : shorts};
   // Effets : muscles qui viennent de grossir en rouge (24 h), fumée sur les muscles en récupération
@@ -1710,7 +1723,7 @@ function creatureSVG(c, small, back, opt){
       if(lk.spade) tailS += `<path d="M${tx} ${ty} l4 -16 l12 12 Z M${tx} ${ty} l16 -2 l-8 14 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.35)}" stroke-width="1.2"/>`; }
     const legk = .2 + 1.0*kJ, torsoX = .82 + .38*kD, shoulderX = 120 - 40*torsoX;
     if(back && lk.wings) b += wingsS;   // de dos, les ailes partent des omoplates (racines dessinées sur le dos)
-    if(back) b += gymonBack({M, SC, HL, mirror, dark, mid, veinc, skin, fillM, A, uid, kD, kE, kB, kT, kJ, kF, avg, sp, P, legk, torsoX, shoulderX, wings:lk.wings}) + `<g transform="translate(240 0) scale(-1 1)">${tailS}</g>`;
+    if(back) b += gymonBack({M, SC, HL, mirror, dark, mid, veinc, skin, fillM, A, uid, kD, kE, kB, kT, kJ, kF, avg, sp, P, legk, torsoX, shoulderX, wings:lk.wings, armLevel:opt.armLevel}) + `<g transform="translate(240 0) scale(-1 1)">${tailS}</g>`;
     else {
     b += wingsS + tailS;
     // jambes : épaisseur = niveau des jambes (allumettes → poteaux)
@@ -1741,15 +1754,20 @@ function creatureSVG(c, small, back, opt){
     if(sp==="dragon") for(let i=0;i<4;i++) b += `<path d="M104 ${138+i*11} Q 120 ${142+i*11} 136 ${138+i*11}" stroke="#f3d27a" stroke-width="1.6" fill="none" opacity=".75"/>`;
     if(sp==="henmut") [[96,130],[146,140],[100,160],[140,112],[60,100],[180,96]].forEach(([x,y]) => b += `<ellipse cx="${x}" cy="${y}" rx="5" ry="4" fill="${P.scale}" opacity=".85"/>`);
     // bras en double biceps : chaque muscle a son épaisseur
-    const arm = `<g transform="translate(${shoulderX - 80} 0)">`
-      + M("M64 114 C 50 126 32 126 22 116 L 28 106 C 38 114 50 114 62 108 Z", SC(44,112,1,.25+1.05*kT), "Triceps")
-      + M("M22 112 C 12 94 14 78 22 64 L 38 64 C 38 80 38 96 34 112 Z", SC(28,88,.35+.85*kF,1))
+    // Pose des bras (planche en cours de validation, 12 nov. 2026) : 0 = double biceps ; 1 = mi-hauteur ; 2 = le long du corps ; 3 = ballants.
+    // L'avant-bras tourne autour du coude (tendu), puis tout le bras autour de l'épaule.
+    const AP = [[0,0],[38,0],[72,.85],[82,1.02]][opt.armLevel || 0], veins = kB > .7 || kF > .75;
+    const fore = M("M22 112 C 12 94 14 78 22 64 L 38 64 C 38 80 38 96 34 112 Z", SC(28,88,.35+.85*kF,1))
       + `<path d="M28 108 C 24 94 26 80 30 68" stroke="${mid}" stroke-width="1.6" fill="none" opacity="${kF}"/>`
-      + M("M66 104 C 60 82 42 76 30 88 C 24 96 24 104 28 110 C 42 114 56 112 66 108 Z", SC(46,110,1,.12+1.2*kB), "Biceps") + HL(44,110-18*(.12+1.2*kB),9*kB+2,4*kB+1,-15)
-      + M("M80 88 C 62 84 50 98 54 118 C 66 118 76 110 86 104 C 88 98 86 92 80 88 Z", SC(70,102,.38+.85*kE,.38+.85*kE), "Épaules") + HL(66,96,6*kE+1,3*kE+1,-30)
       + `<path d="M14 66 C 10 56 12 44 22 42 C 30 38 40 40 44 48 C 48 56 44 66 38 68 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"/>`
       + `<path d="M20 44 q2 6 0 10 M28 41 q2 6 0 11 M36 43 q2 6 0 11 M16 58 C 22 54 30 54 38 58" stroke="${dark}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
-      + (kB > .7 || kF > .75 ? `<path d="M58 96 C 50 92 44 94 36 98 M46 94 C 44 90 40 88 36 90 M30 104 C 26 92 26 82 30 70 M26 92 C 22 88 22 82 24 76" stroke="${veinc}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/>` : "")
+      + (veins ? `<path d="M30 104 C 26 92 26 82 30 70 M26 92 C 22 88 22 82 24 76" stroke="${veinc}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/>` : "");
+    const arm = `<g transform="translate(${shoulderX - 80} 0)${AP[0] ? ` rotate(${-AP[0]} 72 100)` : ""}">`
+      + (AP[1] ? `<g transform="rotate(${-90*AP[1]} 28 110)">${fore}</g>` : fore)
+      + M("M64 114 C 50 126 32 126 22 116 L 28 106 C 38 114 50 114 62 108 Z", SC(44,112,1,.25+1.05*kT), "Triceps")
+      + M("M66 104 C 60 82 42 76 30 88 C 24 96 24 104 28 110 C 42 114 56 112 66 108 Z", SC(46,110,1,.12+1.2*kB), "Biceps") + HL(44,110-18*(.12+1.2*kB),9*kB+2,4*kB+1,-15)
+      + M("M80 88 C 62 84 50 98 54 118 C 66 118 76 110 86 104 C 88 98 86 92 80 88 Z", SC(70,102,.38+.85*kE,.38+.85*kE), "Épaules") + HL(66,96,6*kE+1,3*kE+1,-30)
+      + (veins ? `<path d="M58 96 C 50 92 44 94 36 98 M46 94 C 44 90 40 88 36 90" stroke="${veinc}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/>` : "")
       + `</g>`;
     b += mirror(arm);
     if(kAb > .8) b += `<path d="M104 178 C 108 184 110 190 112 196 M136 178 C 132 184 130 190 128 196" stroke="${veinc}" stroke-width="1.4" fill="none" opacity=".8"/>`;
@@ -1758,7 +1776,7 @@ function creatureSVG(c, small, back, opt){
     b += `<path d="M112 64 h16 v26 q-8 6 -16 0 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.4"/>`;
     }
     // tête
-    b += `<g transform="${SC(120,46,lk.kid ? 1.15 : 1, lk.kid ? 1.15 : 1)}">${gymonHead(sp, lk, P, skin, uid, {dead, sleepy, mode:A.eyes, back})}</g>`;
+    b += `<g transform="${SC(120,46,lk.kid ? 1.15 : 1, lk.kid ? 1.15 : 1)}">${gymonHead(sp, lk, P, skin, uid, {dead, sleepy, mode:A.eyes, back, eyeState:opt.eyeState})}</g>`;
     if(steaming.size){
       const sx = shoulderX, mir = ([x,y]) => [[x,y],[240-x,y]];
       const SPOTS = back
@@ -1808,18 +1826,20 @@ function gymonBack(o){
   if(sp==="dino" || sp==="dinomut" || sp==="dragon") for(let i=0;i<5;i++) b += `<path d="M115 ${96+i*16} l5 -9 l5 9 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.3)}" stroke-width="1"/>`;
   if(sp==="henmut") [[96,120],[146,150],[104,160],[60,106],[180,100]].forEach(([x,y]) => b += `<ellipse cx="${x}" cy="${y}" rx="5" ry="4" fill="${P.scale}" opacity=".85"/>`);
   // bras de dos : triceps en fer à cheval dessous, pic du biceps dessus, deltoïde arrière
-  const arm = `<g transform="translate(${shoulderX - 80} 0)">`
-    + M("M62 100 C 54 88 40 86 30 94 L 30 104 C 42 104 54 104 62 100 Z", SC(46,100,1,.2+.95*kB), "Biceps")
-    + M("M22 112 C 12 94 14 78 22 64 L 38 64 C 38 80 38 96 34 112 Z", SC(28,88,.35+.85*kF,1))
+  const AP = [[0,0],[38,0],[72,.85],[82,1.02]][o.armLevel || 0];
+  const fore = M("M22 112 C 12 94 14 78 22 64 L 38 64 C 38 80 38 96 34 112 Z", SC(28,88,.35+.85*kF,1))
     + `<path d="M30 108 C 26 94 28 80 32 68" stroke="${mid}" stroke-width="1.6" fill="none" opacity="${kF}"/>`
+    + `<path d="M14 66 C 10 56 12 44 22 42 C 30 38 40 40 44 48 C 48 56 44 66 38 68 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"/>`
+    + `<path d="M16 50 q4 -4 8 0 M24 48 q4 -4 8 0 M32 48 q4 -4 8 0" stroke="${dark}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+  const arm = `<g transform="translate(${shoulderX - 80} 0)${AP[0] ? ` rotate(${-AP[0]} 72 100)` : ""}">`
+    + (AP[1] ? `<g transform="rotate(${-90*AP[1]} 28 110)">${fore}</g>` : fore)
+    + M("M62 100 C 54 88 40 86 30 94 L 30 104 C 42 104 54 104 62 100 Z", SC(46,100,1,.2+.95*kB), "Biceps")
     + M("M66 108 C 58 128 34 130 22 116 L 28 104 C 40 112 54 112 64 102 Z", SC(44,110,1,.25+1.1*kT), "Triceps") + HL(46,114+6*kT,8*kT+2,3*kT+1,-8)
     + `<path d="M58 112 C 50 122 38 122 30 114" stroke="${dark}" stroke-width="1.4" fill="none" opacity="${kT}" transform="${SC(44,110,1,.25+1.1*kT)}"/>`
     + `<ellipse cx="25" cy="112" rx="4" ry="3.4" fill="${fillM}" stroke="${dark}" stroke-width="1.2"/>`
     + M("M80 88 C 62 84 50 98 54 118 C 66 118 76 110 86 104 C 88 98 86 92 80 88 Z", SC(70,102,.38+.85*kE,.38+.85*kE), "Épaules") + HL(68,96,6*kE+1,3*kE+1,-30)
     + `<path d="M64 94 Q 70 100 76 98 M62 102 Q 70 108 78 104" stroke="${mid}" stroke-width="1.1" fill="none" opacity="${kE}"/>`
-    + `<path d="M14 66 C 10 56 12 44 22 42 C 30 38 40 40 44 48 C 48 56 44 66 38 68 Z" fill="${fillM}" stroke="${dark}" stroke-width="1.5" stroke-linejoin="round"/>`
-    + `<path d="M16 50 q4 -4 8 0 M24 48 q4 -4 8 0 M32 48 q4 -4 8 0" stroke="${dark}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
-    + (kT > .7 || kF > .75 ? `<path d="M60 116 C 52 122 44 122 36 118 M30 104 C 26 92 26 82 30 70" stroke="${veinc}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/>` : "")
+    + (kT > .7 || kF > .75 ? `<path d="M60 116 C 52 122 44 122 36 118" stroke="${veinc}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".9"/>` : "")
     + `</g>`;
   b += mirror(arm);
   if(avg > .45) b += [[100,96,5,2],[140,96,5,2],[96,138,2.5,6],[144,138,2.5,6],[96,232,2.5,6],[144,232,2.5,6]].map(([x,y,rx,ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" opacity="${(avg-.45)*1.4}"/>`).join("");
@@ -1854,6 +1874,11 @@ function gymonHead(sp, lk, P, skin, uid, o){
       + (slit ? `<ellipse cx="${ix}" cy="${ey+1.5}" rx="1.8" ry="6.4" fill="#120806"/>` : `<circle cx="${ix}" cy="${ey+.5}" r="4.4" fill="#120806"/>`)
       + `<circle cx="${ix+2.6}" cy="${ey-3}" r="2.9" fill="#fff"/><circle cx="${ix-2.6}" cy="${ey+5}" r="1.2" fill="#fff" opacity=".85"/>`;
     if(false) e += `<path d="M${x-10.5} ${ey-3} Q${x} ${ey-16} ${x+10.5} ${ey-3} Q${x} ${ey-8} ${x-10.5} ${ey-3} Z" fill="url(#${uid}hf)" stroke="${ink}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    // Regard selon la forme (planche en cours de validation) : étincelant, fatigué (paupière à moitié), épuisé (paupière basse + cernes)
+    if(o.eyeState === "spark") e += `<circle cx="${ix+3.2}" cy="${ey-3.4}" r="3.8" fill="#fff"/><path d="M${x+11} ${ey-13} l1.4 3.4 l3.4 1.4 l-3.4 1.4 l-1.4 3.4 l-1.4 -3.4 l-3.4 -1.4 l3.4 -1.4 Z" fill="#fff6c8"/>`;
+    if(o.eyeState === "tired" || o.eyeState === "worn"){ const k = o.eyeState === "worn" ? 3 : -1.5, xk = 11 * Math.sqrt(1 - (k/12.5)**2);
+      e += `<path d="M${(x-xk).toFixed(2)} ${ey+k} Q${x} ${ey+k+3.5} ${(x+xk).toFixed(2)} ${ey+k} A 11 12.5 0 0 0 ${(x-xk).toFixed(2)} ${ey+k} Z" fill="url(#${uid}hf)" stroke="${ink}" stroke-width="2.4" stroke-linejoin="round"/>`;
+      if(o.eyeState === "worn") e += `<path d="M${x-9} ${ey+14} Q${x} ${ey+18} ${x+9} ${ey+14}" stroke="#6b4a8a" stroke-width="2" fill="none" opacity=".7" stroke-linecap="round"/>`; }
     return e;
   };
   const brow = (x, s) => { const up = 0;
@@ -2279,6 +2304,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-12", t:"💪 Le Gymon montre sa forme", x:"En pleine vitalité, il fait le double biceps ; quand elle baisse, ses bras descendent. Son regard pétille si vous êtes régulier et que vos charges montent, et se fatigue sinon."},
   {d:"2026-11-12", t:"📈 Les courbes du Gymon", x:"Touchez son poids, sa taille ou sa vitalité sur la page Gymon : une courbe montre leur évolution jour après jour. Le passé est reconstitué à partir de vos séances (en pointillés)."},
   {d:"2026-11-12", t:"🟣 Nouveau look", x:"Gymon passe en violet et rose, en sombre par défaut. Vous préférez le clair ? Réglages › Apparence (sombre, clair ou comme l'iPhone). Nouvelle icône aussi : si elle ne change pas sur votre écran d'accueil, supprimez le raccourci et réinstallez l'app depuis Safari, vos données restent."},
   {d:"2026-11-12", t:"🥚 Le Gymon grandit à l'écran", x:"Comme un Tamagotchi : petit au début, il grandit un peu à chaque séance jusqu'à remplir l'écran. Glissez sur lui pour voir son dos, et la case « Muscles » montre le niveau de chacun."},
