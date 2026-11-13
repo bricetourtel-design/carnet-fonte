@@ -645,7 +645,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-12 j";
+const APP_VERSION = "2026-11-13 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1839,7 +1839,7 @@ function creatureSVG(c, small, back, opt){
   }
   const sat = Math.round(40 + vit*0.6);
   if(dead) g += `<ellipse cx="120" cy="${haloY}" rx="28" ry="7" fill="none" stroke="#f5c542" stroke-width="4"/>`;
-  return `<svg class="creature ${small?"sm":""} ${dead?"dead":""}" viewBox="${VB}" role="img" aria-label="${dead ? "Gymon mort" : CREATURE_CFG.stages[st] + (back ? ", vu de dos" : "")}" style="filter:${dead ? "grayscale(1) opacity(.75)" : `saturate(${sat}%)`}"><defs>${defs}</defs><g class="cr-breathe">${g}</g></svg>`;
+  return `<svg class="creature ${small?"sm":""} ${dead?"dead":""}" viewBox="${VB}" role="img" aria-label="${dead ? "Gymon mort" : lk.kind==="egg" ? "Œuf de Gymon" : "Gymon" + (back ? ", vu de dos" : "")}" style="filter:${dead ? "grayscale(1) opacity(.75)" : `saturate(${sat}%)`}"><defs>${defs}</defs><g class="cr-breathe">${g}</g></svg>`;
 }
 /* Vue de dos (pose double biceps de dos) : trapèzes, dorsaux, lombaires, fessiers, ischios, mollets, triceps.
    Chaque muscle suit son niveau, comme de face : Dos → trapèzes, dorsaux, lombaires ; Jambes → fessiers, ischios, mollets. */
@@ -2150,7 +2150,7 @@ function bestSets(W){
   return [...m.entries()].sort((a,b) => b[1].e - a[1].e).slice(0, 3).map(([id, v]) => ({name:exById(id).name, ...v}));
 }
 function cardSVG(kind, wid){
-  const c = creatureState(), GC = gymColor(c), name = c.name || "Mon Gymon", stage = CREATURE_CFG.stages[c.stage];
+  const c = creatureState(), GC = gymColor(c), name = c.name || "Mon Gymon", stage = `${c.fidelity} séance${c.fidelity > 1 ? "s" : ""} ensemble`;   // nom du stade retiré partout (13 nov. 2026)
   let title, stats, best;
   if(kind==="session"){ const w = S.workouts.find(x => x.id===wid) || sortW(S.workouts.slice())[0];
     title = "Séance du " + fmtDate(w.start, {day:"numeric", month:"long"});
@@ -2195,7 +2195,7 @@ function shareSheet(kind, wid){
 function shareSend(){
   if(!shareFile) return;
   gcCount("partage-image"); gcOnce("gymon.gc.partage", "partage-premier");   // statistiques anonymes : seulement le fait de partager
-  const c = creatureState(), text = `${c.name || "Mon Gymon"} (${CREATURE_CFG.stages[c.stage]}) sur Gymon 💪 ${location.origin + location.pathname}`;
+  const c = creatureState(), text = `${c.name || "Mon Gymon"} sur Gymon 💪 ${location.origin + location.pathname}`;
   if(navigator.canShare && navigator.canShare({files:[shareFile]})) navigator.share({files:[shareFile], text}).catch(() => {});
   else { const a = document.createElement("a"); a.href = URL.createObjectURL(shareFile); a.download = "gymon.png"; document.body.appendChild(a); a.click(); a.remove(); toast("Image enregistrée"); }
 }
@@ -2217,7 +2217,7 @@ function celebrate(w, cr){
     el.innerHTML = `<div class="evo-stage"><div class="evo-old">${creatureSVG({...c, stage:cr.from}, false, false, {noFx:true})}</div><div class="evo-new">${creatureSVG(c, false, false, {noFx:true})}</div></div>
       <div class="evo-flash"></div>
       <p class="evo-t1">${hatch ? "Quoi ? L'œuf bouge !" : `Quoi ? ${esc(nm)} évolue !`}</p>
-      <p class="evo-t2">${hatch ? "Il est né !" : `${esc(nm)} est devenu ${esc(CREATURE_CFG.stages[c.stage])} !`}</p>
+      <p class="evo-t2">${hatch ? "Il est né !" : `${esc(nm)} a évolué !`}</p>
       <button class="evo-skip" data-act="evo-skip">Passer</button>`;
     celebState.timers.push(setTimeout(() => el.classList.add("done"), 3500), setTimeout(main, 6200));
   } else main();
@@ -2289,7 +2289,7 @@ function beforeAfterHTML(c){
   const old = {...c, ...c.ref, lastWorked:null, peak:null, lastMeal:null, dead:null};
   return `<div class="card ba"><p class="ba-t">📸 Il y a ${ba.days} jours → aujourd'hui</p>
     <div class="ba-pair"><div>${creatureSVG(old, false, false, {noFx:true})}<small>Avant</small></div><span class="ba-arrow">→</span><div>${creatureSVG(c, false, false, {noFx:true})}<small>Aujourd'hui</small></div></div>
-    <p class="ba-d">${ba.d.length ? ba.d.slice(0, 5).map(([m,x]) => `<span class="${x > 0 ? "up" : "down"}">${esc(m)} ${x > 0 ? "+" : "−"}${fmtN(Math.abs(x), 1)}</span>`).join("") : "<span>Pas de changement : on reprend ?</span>"}${c.stage !== c.ref.stage ? `<span class="up">${esc(CREATURE_CFG.stages[c.ref.stage])} → ${esc(CREATURE_CFG.stages[c.stage])}</span>` : ""}</p>
+    <p class="ba-d">${ba.d.length ? ba.d.slice(0, 5).map(([m,x]) => `<span class="${x > 0 ? "up" : "down"}">${esc(m)} ${x > 0 ? "+" : "−"}${fmtN(Math.abs(x), 1)}</span>`).join("") : "<span>Pas de changement : on reprend ?</span>"}${c.stage !== c.ref.stage ? `<span class="up">✨ Il a évolué</span>` : ""}</p>
     <button class="btn sm" data-act="ba-ok">Super, on continue !</button></div>`;
 }
 
@@ -3068,7 +3068,7 @@ function finishWorkout(){
     </div>
     ${cr && cr.dead ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>Ton Gymon est mort…</b>
       Cette séance l'attend : ressuscite-le pour qu'il la mange.</span></button>`
-    : cr ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>${cr.evolved ? `Ton Gymon a évolué ! ${esc(CREATURE_CFG.stages[cr.stage])}` : "Ton Gymon a mangé"}</b>
+    : cr ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>${cr.evolved ? "Ton Gymon a évolué !" : "Ton Gymon a mangé"}</b>
       ${fmtVol(cr.vol)} soulevés · ${cr.gain>0 ? "+"+fmtWeight(cr.gain) : "il reprend des forces"}${cr.ups.length ? ` · plus musclé : ${cr.ups.join(", ").toLowerCase()}` : ""}</span></button>` : ""}
     ${w.prs.length ? `<p style="margin:0">Nouveau record sur ${w.prs.map(id=>"<b>"+esc(exById(id).name)+"</b>").join(", ")}.</p>` : ""}
     <button class="btn primary" data-act="close">Fermer</button>`);
