@@ -55,6 +55,19 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(wu.btn && wu.forced === 1, "bouton « + Échauffement » sur un exercice sans échauffement (curls) : ajoute une série légère", wu);
   ok(wu.warm.join() === "2,0,0,2", "échauffement : 2 séries avant le 1er exercice lourd de chaque muscle (développé, squat), aucune sur le 2e exercice pecs ni sur les curls", wu.warm);
   ok(wu.ph[0][0] === "45" && wu.ph[0][1] === "8" && wu.ph[1][0] === "65" && wu.ph[1][1] === "3", "échauffement proposé : ~50 % × 8 puis ~75 % × 3 de la charge de travail (87,5 kg)", wu.ph);
+  // « Trop dur » : fenêtre qui demande de vérifier la saisie (13 nov. 2026)
+  const td = await p.evaluate(() => { S.workouts = []; S.profile.active = null;
+    startWorkout("F", [{exId:"curl-halteres", sets:[blankSet(), blankSet()]}]); const ex = A().exercises[0]; ex.sets = ex.sets.filter(s => !s.warm);
+    Object.assign(ex.sets[0], {w:"14", r:"8", done:true}); closeSheet(); render();
+    const open = () => !document.getElementById("sheet").hidden;
+    document.querySelector('.ex[data-i="0"] [data-act="feel"][data-v="4"]').click(); const dur = open();
+    document.querySelector('.ex[data-i="0"] [data-act="feel"][data-v="5"]').click(); const sheet = open(), txt = document.getElementById("sheet-in").textContent;
+    document.querySelector('[data-act="feel-fix"]').click(); const closed = !open(), foc = document.activeElement && document.activeElement.id, hl = !!document.querySelector("tr.set.check-me");
+    document.querySelector('.ex[data-i="0"] [data-act="feel"][data-v="5"]').click(); const unsel = open();   // re-toucher « Trop dur » le retire, sans fenêtre
+    closeSheet(); S.profile.active = null; return {dur, sheet, txt, closed, foc, hl, unsel}; });
+  ok(!td.dur && td.sheet && /pas pu faire toutes vos reps ou la charge/.test(td.txt) && /Vérifiez que la saisie/.test(td.txt) && /14 kg × 8/.test(td.txt), "« Trop dur » ouvre une fenêtre qui demande de vérifier la saisie (séries rappelées) ; pas « Dur »", td);
+  ok(td.closed && td.foc === "r-0-0" && td.hl && !td.unsel, "« Corriger la saisie » ramène sur les séries (reps de la dernière série) ; retirer « Trop dur » n'ouvre rien", td);
+
   // Retirer une série d'échauffement (13 nov. 2026) : la plus légère part, la suivante garde sa charge
   const dw = await p.evaluate(() => { const D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true});
     S.workouts = [{id:"hw", name:"x", start:n-3*D, end:n-3*D, exercises:[{exId:"dc-barre", feel:3, sets:[set(80,8), set(80,8)]}]}];

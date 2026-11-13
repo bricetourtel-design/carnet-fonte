@@ -126,6 +126,10 @@ button.thumb{padding:0}
 .set.crit .check{box-shadow:0 0 0 2px #ff5fa2}
 .set.crit .setno{position:relative;background:linear-gradient(135deg,#8B5CF6,#ff5fa2);color:#fff}
 .set.crit .setno::after{content:"⚡";position:absolute;right:-7px;top:-8px;font-size:13px}
+.feel-check{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
+.feel-check li{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;background:var(--fill)}
+.set.check-me{animation:checkme 1s ease-in-out 4}
+@keyframes checkme{50%{background:rgba(255,90,95,.25)}}
 .crit-hint{margin:0 0 6px;font-size:13px;font-weight:600;color:#ff5fa2}
 .ex{padding:12px 12px 10px}
 .ex-head{display:flex;align-items:center;gap:12px;padding:0 0 10px}
@@ -649,7 +653,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 d";
+const APP_VERSION = "2026-11-13 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2431,6 +2435,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-13", t:"🔴 « Trop dur » : on vérifie", x:"Quand vous choisissez « Trop dur », Gymon vous rappelle vos séries pour vérifier que la saisie correspond à ce que vous avez vraiment fait : le coach s'en sert pour la séance suivante."},
   {d:"2026-11-13", t:"⚡ Coups critiques annoncés", x:"Les coups critiques sont tirés dès le début de la séance : les séries marquées ⚡ nourriront double votre Gymon. À vous de ne pas les rater !"},
   {d:"2026-11-13", t:"➖ Retirer un échauffement", x:"Pas besoin d'une série d'échauffement ? Touchez « − Échauffement » sous l'exercice : la plus légère est retirée, vos séries de travail ne bougent pas."},
   {d:"2026-11-13", t:"🔥 Échauffement par zone", x:"Aux jambes, chaque zone a son échauffement : après un hip thrust, le leg curl a aussi sa série légère pour les ischios, comme les mollets. Une zone déjà travaillée n'en a pas besoin. Et un exercice lourd fait après une isolation du même muscle garde sa série d'approche."},
@@ -3121,6 +3126,17 @@ function finishWorkout(){
   celebrate(w, cr);
 }
 
+function feelCheck(i){
+  const ex = A().exercises[i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan); let n = 0;
+  const rows = ex.sets.filter(s => !s.warm).map(s => { n++; return s.done ? `<li><span class="muted">Série ${n}</span> <b>${esc(setTxt(s))}</b></li>` : ""; }).join("");
+  openSheet(`<h3>Trop dur ?</h3>
+    <p style="margin:0">Vous n'avez pas pu faire toutes vos reps ou la charge prévue ? Vérifiez que la saisie correspond à ce que vous avez vraiment fait avant de passer à la suite : le coach s'en sert pour votre prochaine séance.</p>
+    <p class="small muted" style="margin:0">${esc(e.name)}${c.w || c.r ? ` · objectif ${c.sets} × ${c.r || c.lo}${c.w ? ` à ${fmtN(c.w)} kg` : ""}` : ""}</p>
+    <ul class="feel-check">${rows}</ul>
+    <button class="btn primary" data-act="feel-fix" data-i="${i}">Corriger la saisie</button>
+    <button class="btn" data-act="close">C'est juste</button>`);
+}
+
 /* Minuteur de repos */
 let audioCtx = null;
 function beep(){ try{ if(!audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain();
@@ -3294,7 +3310,12 @@ const ACT = {
       toast("Exercice créé");
     };
   },
-  feel: b => { const ex = A().exercises[+b.dataset.i], v = +b.dataset.v; ex.feel = ex.feel===v ? 0 : v; touchProfile(); render(); },
+  feel: b => { const i = +b.dataset.i, ex = A().exercises[i], v = +b.dataset.v; ex.feel = ex.feel===v ? 0 : v; touchProfile(); render();
+    if(ex.feel === 5) feelCheck(i); },
+  // « Trop dur » (13 nov. 2026) : faire vérifier la saisie, car le coach s'en sert pour la prochaine séance
+  "feel-fix": b => { const i = +b.dataset.i; closeSheet(); const rows = [...document.querySelectorAll(`.ex[data-i="${i}"] tr.set.done:not(.warm)`)];
+    rows.forEach(r => { r.classList.add("check-me"); setTimeout(() => r.classList.remove("check-me"), 4000); });
+    const last = rows[rows.length-1]; if(last){ last.scrollIntoView({block:"center", behavior:"smooth"}); const r = last.querySelector('[data-f="r"]'); if(r) r.focus(); } },
   "coach-why": b => { const ex = A().exercises[+b.dataset.i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan, preLoad(A().exercises, +b.dataset.i, true));
     const fr = c.from, lastTxt = fr ? (fr.W ? `${fmtN(fr.W)} kg × ${fr.minR}` : `${fr.minR} reps`) : "—";
     openSheet(`<h3>${esc(e.name)}</h3>
