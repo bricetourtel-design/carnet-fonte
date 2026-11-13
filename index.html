@@ -258,7 +258,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .feel-bar button[aria-pressed="true"]{background:var(--fc);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--fc)}
 .feel-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 .vol{display:flex;flex-direction:column;gap:7px}
-.vol-row{display:grid;grid-template-columns:78px 1fr 40px;gap:10px;align-items:center;font-size:14px}
+.vol-row{display:grid;grid-template-columns:118px 1fr 40px;gap:10px;align-items:center;font-size:14px}
 .vol-row b{text-align:right;font-weight:600}
 .vol-bar{position:relative;height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
 .vol-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--mc)}
@@ -294,7 +294,8 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .ctag.ok{background:var(--ok)} .ctag.soft{background:var(--muted)}
 .todaycard{box-shadow:0 0 0 2px var(--accent)}
 .rec{display:flex;flex-direction:column;gap:9px}
-.rec-row{display:grid;grid-template-columns:96px 1fr;grid-template-areas:"m b" "m s";column-gap:12px;row-gap:2px;align-items:center}
+.rec-row{display:grid;grid-template-columns:128px 1fr;grid-template-areas:"m b" "m s";column-gap:12px;row-gap:2px;align-items:center}
+.rec-row .rm{white-space:nowrap}
 .rec-row .rm{grid-area:m;font-size:15px}
 .rec-bar{grid-area:b;height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
 .rec-bar i{display:block;height:100%;border-radius:4px;background:var(--ok)}
@@ -500,6 +501,7 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 @media (prefers-reduced-motion: reduce){.celeb-gy .creature,.confetti i,.evo-old,.evo-new,.evo-stage::before{animation:none!important}.confetti{display:none}.evo-old{opacity:0}.evo-new{opacity:1}}
 .ba{width:100%;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center}
 .ba-t{margin:0;font-weight:700}
+.vol-g{margin:6px 0 -2px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .ba-pair{display:flex;align-items:flex-end;justify-content:center;gap:6px;width:100%}
 .ba-pair>div{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;max-width:150px}
 .ba-pair .creature{height:170px;width:auto;max-width:100%}
@@ -653,7 +655,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 e";
+const APP_VERSION = "2026-11-13 f";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -701,6 +703,89 @@ const EX = [
 ].map(([id,name,muscle,equip])=>({id,name,muscle,equip,img:true}));
 const MCOL = {"Pectoraux":"--m-pec","Dos":"--m-dos","Épaules":"--m-epa","Biceps":"--m-bic","Triceps":"--m-tri","Jambes":"--m-jam","Abdos":"--m-abd"};
 const mc = m => `--mc:var(${MCOL[m]||"--muted"})`;
+/* ---------- Muscles (décidé le 13 novembre 2026) ----------
+   17 muscles, rangés dans les 7 catégories d'avant (gardées pour l'affichage simple : couleurs, filtres, jours du programme).
+   Chaque exercice répartit son travail en pourcentages (muscle principal = 100 %) : le coach, la récupération,
+   le programme et le Gymon comptent chaque muscle au prorata. Repères : études EMG et usages en musculation, arrondis. */
+const FINE = {"Pectoraux":["Pectoraux"], "Dos":["Grand dorsal","Haut du dos","Lombaires"], "Épaules":["Deltoïde avant","Deltoïde latéral","Deltoïde arrière"],
+  "Biceps":["Biceps","Avant-bras"], "Triceps":["Triceps"], "Jambes":["Quadriceps","Ischios","Fessiers","Mollets","Adducteurs"], "Abdos":["Abdos","Obliques"]};
+const MUSC = Object.values(FINE).flat();
+const GROUP_OF = Object.fromEntries(Object.entries(FINE).flatMap(([g, l]) => l.map(m => [m, g])));
+const MINOR = new Set(["Avant-bras","Lombaires","Adducteurs","Obliques"]);   // surtout travaillés en indirect : pas d'objectif de volume propre
+const FINE_DEFAULT = {"Pectoraux":"Pectoraux", "Dos":"Grand dorsal", "Épaules":"Deltoïde avant", "Biceps":"Biceps", "Triceps":"Triceps", "Jambes":"Quadriceps", "Abdos":"Abdos"};
+const mcF = m => mc(GROUP_OF[m] || m);
+const WORK = {
+  "dc-barre":{"Pectoraux":1, "Triceps":.5, "Deltoïde avant":.5}, "dc-halteres":{"Pectoraux":1, "Triceps":.4, "Deltoïde avant":.5},
+  "di-barre":{"Pectoraux":1, "Deltoïde avant":.7, "Triceps":.5}, "di-halteres":{"Pectoraux":1, "Deltoïde avant":.7, "Triceps":.4},
+  "ecarte-poulie":{"Pectoraux":1, "Deltoïde avant":.3}, "ecarte-halteres":{"Pectoraux":1, "Deltoïde avant":.3},
+  "dips":{"Pectoraux":1, "Triceps":.8, "Deltoïde avant":.5}, "pompes":{"Pectoraux":1, "Triceps":.5, "Deltoïde avant":.5, "Abdos":.2},
+  "tractions":{"Grand dorsal":1, "Biceps":.6, "Haut du dos":.5, "Avant-bras":.4, "Deltoïde arrière":.3},
+  "tirage-vertical":{"Grand dorsal":1, "Biceps":.5, "Haut du dos":.4, "Avant-bras":.3, "Deltoïde arrière":.3},
+  "rowing-barre":{"Haut du dos":1, "Grand dorsal":.8, "Deltoïde arrière":.5, "Biceps":.5, "Lombaires":.5, "Avant-bras":.3},
+  "rowing-haltere":{"Grand dorsal":1, "Haut du dos":.8, "Deltoïde arrière":.4, "Biceps":.5, "Avant-bras":.3},
+  "tirage-horizontal":{"Haut du dos":1, "Grand dorsal":.8, "Deltoïde arrière":.5, "Biceps":.5, "Avant-bras":.3},
+  "souleve-terre":{"Lombaires":1, "Fessiers":.8, "Ischios":.7, "Haut du dos":.6, "Quadriceps":.5, "Avant-bras":.5, "Grand dorsal":.3},
+  "pullover":{"Grand dorsal":1, "Pectoraux":.3, "Triceps":.2},
+  "dm-barre":{"Deltoïde avant":1, "Deltoïde latéral":.5, "Triceps":.6, "Haut du dos":.3}, "dm-halteres":{"Deltoïde avant":1, "Deltoïde latéral":.5, "Triceps":.5},
+  "elev-lat":{"Deltoïde latéral":1, "Haut du dos":.3, "Deltoïde avant":.2}, "oiseau":{"Deltoïde arrière":1, "Haut du dos":.6},
+  "face-pull":{"Deltoïde arrière":1, "Haut du dos":.7, "Deltoïde latéral":.3},
+  "curl-barre":{"Biceps":1, "Avant-bras":.5}, "curl-halteres":{"Biceps":1, "Avant-bras":.4}, "curl-marteau":{"Biceps":1, "Avant-bras":.8}, "curl-pupitre":{"Biceps":1, "Avant-bras":.3},
+  "ext-poulie":{"Triceps":1}, "barre-front":{"Triceps":1}, "ext-nuque":{"Triceps":1},
+  "squat":{"Quadriceps":1, "Fessiers":.7, "Adducteurs":.5, "Lombaires":.3, "Ischios":.2}, "front-squat":{"Quadriceps":1, "Fessiers":.5, "Adducteurs":.4, "Haut du dos":.3, "Abdos":.2},
+  "presse":{"Quadriceps":1, "Fessiers":.6, "Adducteurs":.4}, "fentes":{"Quadriceps":1, "Fessiers":.8, "Adducteurs":.4, "Ischios":.2},
+  "bulgare":{"Quadriceps":1, "Fessiers":.8, "Adducteurs":.4}, "leg-ext":{"Quadriceps":1}, "leg-curl":{"Ischios":1, "Mollets":.2},
+  "sdt-roumain":{"Ischios":1, "Fessiers":.8, "Lombaires":.6, "Haut du dos":.3, "Avant-bras":.3}, "hip-thrust":{"Fessiers":1, "Ischios":.4, "Quadriceps":.2},
+  "mollets":{"Mollets":1},
+  "crunch":{"Abdos":1, "Obliques":.3}, "releve-jambes":{"Abdos":1, "Obliques":.4, "Avant-bras":.3}, "crunch-poulie":{"Abdos":1, "Obliques":.3},
+  "ab-wheel":{"Abdos":1, "Obliques":.4, "Grand dorsal":.3}
+};
+// Exercices importés ou créés : répartition devinée d'après le nom (premier motif reconnu), sinon muscle principal de la catégorie
+const GUESS_WORK = [
+  [/mollet|calf/, {"Mollets":1}], [/adduct/, {"Adducteurs":1}], [/abduct/, {"Fessiers":1}],
+  [/hip.?thrust|pont fessier|fessier|glute|kickback.*(jambe|cable|poulie)/, {"Fessiers":1, "Ischios":.4}],
+  [/curl.*(jambe|ischio)|leg.?curl|ischio|nordic/, {"Ischios":1, "Mollets":.2}],
+  [/roumain|jambes tendues|good.?morning|ghd|extensions? de hanche/, {"Ischios":1, "Fessiers":.8, "Lombaires":.5}],
+  [/triceps|extension.*(nuque|poulie|bras)|barre au front|skull|kickback/, {"Triceps":1}],
+  [/leg.?ext|extension.*(jambe|quadri)/, {"Quadriceps":1}],
+  [/squat|presse.*(cuisse|jambe)|leg press|fente|bulgare|hack|goblet|step.?up|sissy/, {"Quadriceps":1, "Fessiers":.6, "Adducteurs":.4}],
+  [/souleve|deadlift/, {"Lombaires":1, "Fessiers":.8, "Ischios":.7, "Haut du dos":.6, "Quadriceps":.4}],
+  [/lombaire|hyperext|extension.*dos/, {"Lombaires":1, "Fessiers":.4}],
+  [/oblique|rotation|russian|bucheron|woodchop/, {"Obliques":1, "Abdos":.4}],
+  [/crunch|abdo|releve|gainage|planche|roue|ab.?wheel/, {"Abdos":1, "Obliques":.3}],
+  [/haussement|shrug|trapez/, {"Haut du dos":1}],
+  [/face.?pull|oiseau|arriere|posterieur|reverse.?fly|rear/, {"Deltoïde arrière":1, "Haut du dos":.6}],
+  [/rowing vertical|rowing menton|upright/, {"Deltoïde latéral":1, "Haut du dos":.6}],
+  [/elevations? lat|laterale|lateral/, {"Deltoïde latéral":1}],
+  [/elevations? (front|avant)|frontale/, {"Deltoïde avant":1}],
+  [/developpe.*(epaule|militaire|arnold|nuque)|shoulder press|militaire|arnold/, {"Deltoïde avant":1, "Deltoïde latéral":.5, "Triceps":.5}],
+  [/poignet|wrist|avant.?bras|farmer/, {"Avant-bras":1}],
+  [/marteau|hammer/, {"Biceps":1, "Avant-bras":.8}],
+  [/chin.?up/, {"Grand dorsal":1, "Biceps":.7, "Haut du dos":.4, "Avant-bras":.4}],
+  [/curl|biceps/, {"Biceps":1, "Avant-bras":.4}],
+  [/traction|pull.?up|tirage (vertical|poitrine|nuque)|lat.?pull/, {"Grand dorsal":1, "Biceps":.5, "Haut du dos":.4, "Avant-bras":.3}],
+  [/rowing|tirage|row\b/, {"Haut du dos":1, "Grand dorsal":.8, "Deltoïde arrière":.4, "Biceps":.5}],
+  [/pull.?over/, {"Grand dorsal":1, "Pectoraux":.3}],
+  [/ecarte|fly|pec.?deck|butterfly|croise/, {"Pectoraux":1, "Deltoïde avant":.3}],
+  [/incline/, {"Pectoraux":1, "Deltoïde avant":.7, "Triceps":.4}],
+  [/developpe|couche|bench|pectoral|chest|pompe|dips/, {"Pectoraux":1, "Triceps":.5, "Deltoïde avant":.5}]
+];
+const workMemo = new Map();
+function exWork(e){
+  if(!e || !e.id) return {};
+  if(WORK[e.id]) return WORK[e.id];
+  const key = e.id + "|" + e.name + "|" + e.muscle + "|" + (e.prim || "");
+  if(workMemo.has(key)) return workMemo.get(key);
+  const n = (e.name || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  // d'abord un motif cohérent avec la catégorie choisie, sinon le premier motif reconnu (ex. haussements rangés dans « Épaules » → haut du dos)
+  const hit = GUESS_WORK.find(([r, o]) => r.test(n) && (!e.muscle || GROUP_OF[Object.keys(o)[0]] === e.muscle)) || GUESS_WORK.find(([r]) => r.test(n));
+  let w = hit ? {...hit[1]} : e.muscle ? {[FINE_DEFAULT[e.muscle] || e.muscle]:1} : {};
+  if(e.prim && MUSC.includes(e.prim) && w[e.prim] !== 1){   // muscle principal choisi à la création
+    Object.keys(w).forEach(k => w[k] = Math.min(w[k], .8)); w[e.prim] = 1; }
+  workMemo.set(key, w); return w;
+}
+// Muscle principal (100 %) d'un exercice
+const primOf = e => { const w = exWork(e), k = Object.keys(w); return k.length ? k.reduce((a, b) => w[b] > w[a] ? b : a) : (e && e.muscle) || ""; };
+const workPct = (e, m) => exWork(e)[m] || 0;
 function thumb(e, act){
   const tag = act ? `button data-act="${act}" data-id="${e.id}" aria-label="Voir ${esc(e.name)}"` : "span";
   const end = act ? "button" : "span";
@@ -834,15 +919,16 @@ function sessionsFor(exId, beforeTs){
 }
 
 /* ---------- Fatigue liée à la place de l'exercice dans la séance ----------
-   Charge déjà encaissée avant un exercice : séries du même muscle (×1) et séries de polyarticulaires d'un muscle qui l'aide (×0,5).
+   Charge déjà encaissée avant un exercice : séries des exercices précédents, comptées au prorata de leur travail sur le muscle principal
+   de cet exercice (13 nov. 2026 : ex. développé couché → triceps à 50 % ; squat → ischios à 20 %).
    Baisse de performance par série = pente mesurée sur l'historique de l'utilisateur (même exercice, séances à moins de 28 jours,
    placé plus ou moins tard), ramenée vers 1 % par série tant qu'il y a peu de mesures. Plafond : −15 %. */
 const FATIGUE = {defaultK:0.01, minK:0.003, maxK:0.025, floor:0.85, prior:8, synergy:0.5, pairDays:28, minDiff:2};
 function preLoad(exercises, i, planned){
-  const m = exById(exercises[i].exId).muscle; let P = 0;
+  const m = primOf(exById(exercises[i].exId)); let P = 0;
   for(let j = 0; j < i; j++){ const e = exById(exercises[j].exId), n = planned ? exercises[j].sets.filter(s => !s.warm).length : workSets(exercises[j]).length; if(!n) continue;
-    if(e.muscle===m) P += n; else if((SYN[e.muscle]||[]).includes(m) && isCompound(e)) P += n * FATIGUE.synergy; }
-  return P;
+    P += n * workPct(e, m); }
+  return Math.round(P * 100) / 100;
 }
 let fatigueMemo = null;
 function fatigueK(){
@@ -870,10 +956,11 @@ function freshSess(sess){
 }
 // Ressenti non noté : « Idéal » par défaut (les reps sous la fourchette sont traitées à part, avec une tolérance)
 function inferFeel(sess, lo){ return 3; }
+// Séries de la semaine pour un muscle, au prorata (un développé couché compte 0,5 série de triceps)
 function muscleSetsThisWeek(muscle, untilTs){
   const end = untilTs || Infinity, ws = untilTs ? untilTs - 7*86400000 : weekStart(Date.now()); let n = 0;
-  S.workouts.forEach(w => { if(w.start < ws || w.start >= end) return; w.exercises.forEach(ex => { if(exById(ex.exId).muscle===muscle) n += workSets(ex).length; }); });
-  return n;
+  S.workouts.forEach(w => { if(w.start < ws || w.start >= end) return; w.exercises.forEach(ex => { const p = workPct(exById(ex.exId), muscle); if(p) n += workSets(ex).length * p; }); });
+  return Math.round(n * 10) / 10;
 }
 // Proposition pour la prochaine séance de cet exercice
 // Proposition à la place du jour dans la séance (pre = séries déjà faites pour ce muscle, voir preLoad)
@@ -954,9 +1041,9 @@ function coachFresh(exId, beforeTs, planned){
       else if(rFeel <= 3 && rMin >= lo && x <= rW){ x = rW; minRep = Math.min(hi, rMin + 1);
         note = `Même charge que votre dernière séance ${mode==="lourd"?"lourde":"volume"} (${fmtN(rW)} kg × ${rMin}) : on vise une rep de plus.`; }
     }
-    const wk = muscleSetsThisWeek(e.muscle, last.ts + 1);
+    const wk = muscleSetsThisWeek(primOf(e), last.ts + 1);
     const notes = [];
-    if(!planned && feel <= 3 && wk < 10 && sets < 4){ sets++; notes.push(`Vous avez fait ${wk} série${wk>1?"s":""} de ${e.muscle.toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
+    if(!planned && feel <= 3 && wk < 10 && sets < 4){ sets++; notes.push(`Vous avez fait ${fmtN(wk, 1)} série${wk>1?"s":""} de ${primOf(e).toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
     const r0 = Math.max(lo, minRep, Math.min(hi, repsAt(x))), d = ref0 === null ? null : x - ref0;
     return {lo, hi, rest, w:+x.toFixed(2), r:r0, sets, mode,
       tag: ML.replace(" · ", "") + (d === null ? "" : d > 0 ? ` · +${fmtN(d)} kg` : d < 0 ? ` · ${fmtN(d)} kg` : minRep ? " · +1 rep" : " · même charge"),
@@ -992,9 +1079,9 @@ function coachFresh(exId, beforeTs, planned){
     }
   }
   // Volume hebdo du muscle : en dessous de 10 séries, une série de plus si la récupération suit
-  const wk = muscleSetsThisWeek(e.muscle, last.ts + 1);
+  const wk = muscleSetsThisWeek(primOf(e), last.ts + 1);
   const notes = [];
-  if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; notes.push(`Vous avez fait ${wk} série${wk>1?"s":""} de ${e.muscle.toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
+  if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; notes.push(`Vous avez fait ${fmtN(wk, 1)} série${wk>1?"s":""} de ${primOf(e).toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
   if(feel===5 && hist[1] && (hist[1].feel||0)===5 && sets > 2){ sets--; notes.push("Deux séances trop dures de suite : une série de moins pour récupérer."); }
   const dW = w - W, tag = ML + (dW>0 ? `+${fmtN(dW)} kg` : dW<0 ? `${fmtN(dW)} kg` : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider");
   return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, notes, mode, from:{W, minR, feel}};
@@ -1008,13 +1095,10 @@ function coachFresh(exId, beforeTs, planned){
    se préparent séparément. La 1re zone de la séance a l'échauffement complet ; une zone nouvelle alors que les jambes sont
    déjà chaudes a une seule série légère ; une zone déjà travaillée n'en a pas. Les autres muscles gardent une seule zone ;
    pour tous, un polyarticulaire après une simple isolation du même muscle garde une série d'approche. */
-const LEG_ZONES = [["mollets", /mollet|calf/], ["adducteurs", /adduct/], ["ischios", /curl|ischio|ghd|extensions? de hanche|roumain|jambes tendues|good.?morning|nordic|soulev/],
-  ["fessiers", /hip.?thrust|fessier|glute|pont|kickback|abduct/], ["quadriceps", /squat|presse|fente|bulgare|extension|leg.?ext|hack|goblet|step|sissy|press/]];
+// Zones = muscles travaillés à 60 % au moins par l'exercice, le principal d'abord (squat → quadriceps + fessiers ; leg curl → ischios)
 function warmZones(e){
-  if(e.muscle !== "Jambes") return [e.muscle];
-  const n = ((e.name || "") + " " + (e.id || "")).toLowerCase(), z = LEG_ZONES.find(([, r]) => r.test(n)), p = z ? z[0] : "Jambes";
-  // Les polyarticulaires préparent aussi les fessiers (squat, presse, fentes, soulevé de terre roumain)
-  return p === "quadriceps" && !/extension|leg.?ext|sissy/.test(n) || p === "ischios" && !/curl|nordic/.test(n) ? [p, "fessiers"] : [p];
+  const w = exWork(e), pm = primOf(e);
+  return [pm, ...Object.keys(w).filter(m => m !== pm && w[m] >= .6)];
 }
 const isPoly = e => !!(dupRanges(e) || repRange(e)[0] <= 6);
 // 2 = premier exercice du muscle, 1 = zone nouvelle d'un muscle déjà chaud, 0 = zone déjà échauffée
@@ -1032,7 +1116,7 @@ function warmupFor(exId, beforeTs, planned, first, force){
   const st = stepFor(e, W), min = e.equip==="Barre" ? 20 : st;
   const compound = isPoly(e), legs = e.muscle === "Jambes";
   // Muscle déjà chaud mais zone (ou charge lourde) pas encore préparée, ou isolation qui ouvre une zone des jambes : une série légère
-  if(need && !force && (need === 1 || legs && !compound)){
+  if(need && !force && ((need === 1 && (compound || legs)) || (legs && !compound))){   // hors jambes, une isolation n'a pas d'échauffement d'office
     const w = Math.max(min, roundTo(W * (compound ? 0.6 : 0.5), st));
     return w < W*0.9 ? [{w, r:compound ? 5 : 12}] : [];
   }
@@ -1118,6 +1202,8 @@ function candidatesFor(m, st){
   return allEx().filter(e => e.muscle===m).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
     .sort((a,b) => b.n-a.n || b.comp-a.comp || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
 }
+// Exercices dont le muscle principal est m (ex. quadriceps), dans le même ordre
+const candidatesPrim = (m, st) => candidatesFor(GROUP_OF[m] || m, st).filter(c => primOf(c.e) === m);
 function estMinutes(items){
   return 5 + items.reduce((t,it) => { const e = exById(it.exId), rest = S.profile.rest<0 ? (REST_BY_RANGE[repRange(e)[0]]||120) : (S.profile.rest||90);
     return t + (it.sets*(40 + rest) + 90)/60; }, 0);
@@ -1128,7 +1214,7 @@ function generatePlan(d){
     const ms = day.muscles.slice().sort((a,b) => PRIO.indexOf(a)-PRIO.indexOf(b));
     const mins = day.min || 60, sumW = ms.reduce((t,m) => t+WEIGHT[m], 0);
     const slots = Math.max(2, Math.min(9, Math.floor((mins - 5)/9.5 + 0.3)));   // ~9,5 min par exercice de 3 séries, 5 min d'échauffement
-    const items = [], used = new Set();
+    const items = [], used = new Set(), usedPrim = new Set();
     ms.forEach(m => {
       const k = seen[m] = (seen[m]||0) + 1;           // k-ième séance de la semaine pour ce muscle
       const cnt = m==="Abdos" ? (slots>=5 ? 1 : 0) : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
@@ -1139,10 +1225,15 @@ function generatePlan(d){
         let list = pool;
         if(j===0 && WEIGHT[m]>=1.5){ const comp = pool.filter(c => c.comp); if(comp.length) list = comp; }   // gros muscle : un polyarticulaire d'abord
         let c = null; const base = list===pool ? (k-1)*cnt + j : (k-1);   // d'une séance à l'autre on alterne les exercices
-        for(let t=0;t<list.length && !c;t++){ const x = list[(base + off + t) % list.length]; if(!used.has(x.e.id)) c = x; }
+        // Plusieurs exercices d'une même catégorie : d'abord un muscle principal pas encore travaillé ce jour (quadriceps, puis ischios…)
+        for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(!used.has(x.e.id) && !usedPrim.has(primOf(x.e))) c = x; }
+        for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(!used.has(x.e.id)) c = x; }
         if(!c) for(const x of all) if(!used.has(x.e.id)){ c = x; break; }
         if(!c) continue;
-        used.add(c.e.id); items.push({exId:c.e.id, muscle:m, slot:m+":"+j, comp:c.comp, n:c.n, sets:3});
+        // ↻ sur ce créneau : un autre exercice du même muscle principal (un quadriceps reste un quadriceps)
+        if(off){ const pm = primOf(c.e), same = [...pool, ...all].filter((x, i, l) => primOf(x.e) === pm && !used.has(x.e.id) && l.findIndex(y => y.e.id === x.e.id) === i);
+          const i0 = same.findIndex(x => x.e.id === c.e.id); if(same.length) c = same[(Math.max(0, i0) + off) % same.length]; }
+        used.add(c.e.id); usedPrim.add(primOf(c.e)); items.push({exId:c.e.id, muscle:m, slot:m+":"+j, comp:c.comp, n:c.n, sets:3});
       }
     });
     return {dow:day.dow, muscles:ms, name:dayName(ms), items, min:mins};
@@ -1197,7 +1288,13 @@ function generatePlan(d){
   const notes = [];
   const missing = MUSCLES.filter(m => !freq[m] && m!=="Abdos"); if(missing.length) notes.push(`Non travaillés cette semaine : ${missing.join(", ")}.`);
   const once = MUSCLES.filter(m => freq[m]===1 && m!=="Abdos"); if(once.length && out.length>=2) notes.push(`Une seule fois par semaine : ${once.join(", ")}. Deux fois est conseillé pour la prise de muscle.`);
-  return {days:out, weekly, alerts, notes, novelty, freq};
+  // Séries par muscle et par semaine, au prorata (un squat compte aussi 0,7 série de fessiers)
+  const weeklyFine = {}; MUSC.forEach(m => weeklyFine[m] = 0);
+  out.forEach(day => day.items.forEach(it => Object.entries(exWork(exById(it.exId))).forEach(([m, p]) => weeklyFine[m] += it.sets * p)));
+  MUSC.forEach(m => weeklyFine[m] = Math.round(weeklyFine[m] * 10) / 10);
+  const thin = MUSC.filter(m => !MINOR.has(m) && freq[GROUP_OF[m]] && weeklyFine[m] < 3 && m !== "Abdos");
+  if(thin.length) notes.push(`Peu ou pas travaillés : ${thin.join(", ").toLowerCase()}. Touchez ↻ sur un exercice ou ajoutez-en un qui les cible.`);
+  return {days:out, weekly, weeklyFine, alerts, notes, novelty, freq};
 }
 
 function viewPlan(){
@@ -1211,7 +1308,7 @@ function viewPlan(){
       <div class="chips wrapc">${MUSCLES.map(m => `<button class="chip" data-act="plan-muscle" data-k="${k}" data-m="${m}" aria-pressed="${day.muscles.includes(m)}" style="${mc(m)}"><span class="mdot"></span>${m}</button>`).join("")}</div>
       <details class="duos"><summary>Duos conseillés</summary><div class="duo-list">${DUOS.map((u,ui) => `<button class="duo" data-act="plan-duo" data-k="${k}" data-u="${ui}"><b>${esc(u.label)}</b><span>${esc(u.why)}</span></button>`).join("")}</div></details>
       ${day.items.length ? `<ol class="plist">${day.items.map(it => { const e = exById(it.exId);
-        return `<li>${thumb(e)}<span class="t"><b>${esc(e.name)}${it.novel?'<span class="new">Nouveau</span>':""}</b><span>${it.sets} séries · ${esc(e.muscle)}${it.comp?" · polyarticulaire":""}${it.n?` · fait ${it.n} fois`:""}</span></span>
+        return `<li>${thumb(e)}<span class="t"><b>${esc(e.name)}${it.novel?'<span class="new">Nouveau</span>':""}</b><span>${it.sets} séries · ${esc(primOf(e))}${it.comp?" · polyarticulaire":""}${it.n?` · fait ${it.n} fois`:""}</span></span>
           <button class="icon-btn" data-act="${it.novel?"plan-nov":"plan-swap"}" data-k="${k}" data-s="${it.slot}" aria-label="Proposer un autre exercice">↻</button></li>`; }).join("")}</ol>`
         : `<p class="small muted" style="margin:0">Choisissez les muscles de cette séance.</p>`}
     </section>`;
@@ -1229,9 +1326,9 @@ function viewPlan(){
     <h2>Vos séances</h2>
     ${dayCards}
     <h2>Volume par muscle et par semaine</h2>
-    <section class="card"><div class="vol">${MUSCLES.map(m => { const n = g.weekly[m], pct = Math.min(100, n/20*100);
-      return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${pct}%;${mc(m)}"></i><em></em></div><b class="num">${n}</b></div>`; }).join("")}</div>
-      <p class="small muted" style="margin:8px 0 0">Séries par semaine, cible 10 à 20 (trait pointillé : 10). ${g.days.length ? "Fréquence : " + MUSCLES.filter(m=>g.freq[m]).map(m => `${m} ${g.freq[m]}×`).join(", ") + "." : ""}</p></section>
+    <section class="card"><div class="vol">${MUSC.filter(m => !MINOR.has(m)).map(m => { const n = g.weeklyFine[m], pct = Math.min(100, n/20*100);
+      return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${pct}%;${mcF(m)}"></i><em></em></div><b class="num">${fmtN(n, 1)}</b></div>`; }).join("")}</div>
+      <p class="small muted" style="margin:8px 0 0">Séries par semaine et par muscle, travail indirect compté au prorata (un développé couché compte une demi-série de triceps). Cible 10 à 20 (trait pointillé : 10). ${g.days.length ? "Fréquence : " + MUSCLES.filter(m=>g.freq[m]).map(m => `${m} ${g.freq[m]}×`).join(", ") + "." : ""}</p></section>
     <button class="btn primary wide" data-act="plan-save" ${g.days.some(x=>x.items.length)?"":"disabled"}>Valider la routine</button>
     <p class="foot">Les exercices les plus pratiqués passent en premier, polyarticulaires en tête de séance.
       Une nouveauté au plus par mois. Touchez ↻ pour changer un exercice.<br>Assisté par IA · aide à la décision, à adapter à vos sensations.</p>`;
@@ -1284,19 +1381,22 @@ function levelScore(v, ref){   // 0..5, continu entre les seuils
    Rien si l'exercice n'a pas de repère (exercices perso, machines) ou si le poids de corps ou le niveau sont inconnus. */
 function estimateNew(e, lo){
   const ref = STD[e.id], bw = bodyweight(); if(!ref || !bw) return null;
-  const sb = strengthByMuscle(), r = sb.res[e.muscle], own = !!(r && r.score !== null), L = own ? r.score : sb.avg;
+  const sb = strengthByMuscle(), pm = primOf(e), rf = sb.res[pm], rg = sb.resG[e.muscle];
+  const own = !!(rf && rf.score !== null), grp = !own && !!(rg && rg.score !== null), L = own ? rf.score : grp ? rg.score : sb.avg;
   if(L === null || L === undefined) return null;
   const scale = S.profile.sex==="f" ? (e.muscle==="Jambes" ? 0.75 : 0.6) : 1, t = LMULT.map(m => m*ref*scale*bw), i = Math.min(4, Math.floor(L));
   const oneRM = L < 1 ? L*t[0] : L >= 5 ? t[4] : t[i-1] + (L-i)*(t[i]-t[i-1]);
   const st = stepFor(e, oneRM), w = Math.floor(oneRM / (1 + (lo + 2.5)/30) * 0.9 / st + 1e-9) * st;
   if(w < st) return null;
   const lv = LEVELS[Math.min(4, Math.floor(L))] || LEVELS[0];
-  return {w:+w.toFixed(2), oneRM, txt:`Elle part de votre niveau ${own ? `en ${e.muscle.toLowerCase()}, mesuré sur vos autres exercices` : "moyen, mesuré sur vos autres exercices"} (${lv.toLowerCase()}), et de votre poids de corps (${fmtN(bw)} kg) : vous pourriez soulever environ ${fmtN(oneRM, 1)} kg une seule fois, et on retire 10 % par prudence.`};
+  return {w:+w.toFixed(2), oneRM, txt:`Elle part de votre niveau ${own ? `en ${pm.toLowerCase()}, mesuré sur vos autres exercices` : grp ? `en ${e.muscle.toLowerCase()}, mesuré sur vos autres exercices` : "moyen, mesuré sur vos autres exercices"} (${lv.toLowerCase()}), et de votre poids de corps (${fmtN(bw)} kg) : vous pourriez soulever environ ${fmtN(oneRM, 1)} kg une seule fois, et on retire 10 % par prudence.`};
 }
 function strengthByMuscle(){
-  const bw = bodyweight(), female = S.profile.sex==="f", now = Date.now(), res = {};
-  MUSCLES.forEach(m => res[m] = {m, ex:[], score:null, trend:null});
-  if(!bw) return {bw, res, avg:null};
+  // Par muscle (13 nov. 2026) : chaque exercice compte pour son muscle principal ; resG = moyenne par catégorie (silhouette, choix de séance)
+  const bw = bodyweight(), female = S.profile.sex==="f", now = Date.now(), res = {}, resG = {};
+  MUSC.forEach(m => res[m] = {m, ex:[], score:null, trend:null});
+  MUSCLES.forEach(g => resG[g] = {m:g, score:null});
+  if(!bw) return {bw, res, resG, avg:null};
   allEx().forEach(e => {
     const ref0 = STD[e.id], refR = STD_REPS[e.id]; if(!ref0 && !refR) return;
     const h = exHistory(e.id); if(!h.length) return;
@@ -1309,16 +1409,18 @@ function strengthByMuscle(){
     const lastTs = h[h.length-1].ts, cut = lastTs - 42*86400000, cut2 = cut - 42*86400000;
     const a = h.filter(x => x.ts > cut), b = h.filter(x => x.ts <= cut && x.ts > cut2);
     const trend = (!refR && a.length && b.length) ? Math.max(...a.map(x=>x.best)) / Math.max(...b.map(x=>x.best)) - 1 : null;
-    res[e.muscle].ex.push({e, score, txt, trend, old:!recent.length, n:h.length});
+    const pm = primOf(e); if(res[pm]) res[pm].ex.push({e, score, txt, trend, old:!recent.length, n:h.length});
   });
-  MUSCLES.forEach(m => { const r = res[m]; if(!r.ex.length) return;
+  MUSC.forEach(m => { const r = res[m]; if(!r.ex.length) return;
     r.ex.sort((a,b) => b.n-a.n);
     const top = r.ex.slice(0,3); r.score = top.reduce((t,x)=>t+x.score,0)/top.length;
     const tr = top.filter(x => x.trend!==null); r.trend = tr.length ? tr.reduce((t,x)=>t+x.trend,0)/tr.length : null; });
-  const sc = MUSCLES.map(m => res[m].score).filter(x => x!==null), avg = sc.length ? sc.reduce((a,b)=>a+b,0)/sc.length : null;
-  MUSCLES.forEach(m => { const r = res[m]; if(r.score===null) return;
-    r.rel = r.score - avg; r.tag = r.rel >= 0.5 ? "fort" : r.rel <= -0.5 ? "faible" : "moyen"; });
-  return {bw, res, avg};
+  const sc = MUSC.map(m => res[m].score).filter(x => x!==null), avg = sc.length ? sc.reduce((a,b)=>a+b,0)/sc.length : null;
+  const tag = r => { r.rel = r.score - avg; r.tag = r.rel >= 0.5 ? "fort" : r.rel <= -0.5 ? "faible" : "moyen"; };
+  MUSC.forEach(m => { if(res[m].score!==null) tag(res[m]); });
+  MUSCLES.forEach(g => { const l = FINE[g].map(m => res[m]).filter(r => r.score!==null); if(!l.length) return;
+    resG[g].score = l.reduce((t,r) => t + r.score, 0) / l.length; tag(resG[g]); });
+  return {bw, res, resG, avg};
 }
 function bodySVG(res, sel){
   const col = m => { const r = res[m]; if(!r || r.score===null) return "var(--surface-2)"; return r.tag==="fort" ? "var(--ok)" : r.tag==="faible" ? "var(--danger)" : "var(--accent)"; };
@@ -1342,23 +1444,24 @@ function bodySVG(res, sel){
 }
 let bodySel = null;
 function viewStrength(){
-  const {bw, res} = strengthByMuscle();
+  const {bw, res, resG} = strengthByMuscle();
   if(!bw) return `<section class="card" style="display:flex;flex-direction:column;gap:10px"><b>Points forts et points faibles</b>
     <p class="small muted" style="margin:0">Indiquez votre poids de corps pour comparer vos charges aux niveaux de référence.</p>
     <label class="field">Poids de corps (kg)<input id="bw" inputmode="decimal" placeholder="Ex. 80"></label></section>`;
-  const rows = MUSCLES.filter(m => res[m].score!==null).sort((a,b) => res[b].score-res[a].score);
-  const sel = bodySel && res[bodySel].score!==null ? bodySel : null;
+  const rows = MUSC.filter(m => res[m].score!==null).sort((a,b) => res[b].score-res[a].score);
+  const sel = bodySel && ((res[bodySel] && res[bodySel].score!==null) || (resG[bodySel] && resG[bodySel].score!==null)) ? bodySel : null;
+  const open = m => sel===m || (FINE[sel] && FINE[sel].length > 1 && FINE[sel].includes(m));   // toucher « Jambes » sur la silhouette ouvre ses muscles
   return `<section class="card" style="display:flex;flex-direction:column;gap:10px">
     <div class="row"><b style="flex:1">Points forts et points faibles</b><span class="small muted">${fmtN(bw)} kg</span></div>
-    ${bodySVG(res, sel)}
+    ${bodySVG(resG, sel && (GROUP_OF[sel] || sel))}
     <div class="legend"><span><i style="background:var(--ok)"></i>Point fort</span><span><i style="background:var(--accent)"></i>Dans votre moyenne</span><span><i style="background:var(--danger)"></i>Point faible</span></div>
     <div class="list">${rows.map(m => { const r = res[m], lv = LEVELS[Math.min(4, Math.floor(r.score))] || LEVELS[0];
-      return `<button class="item" data-act="body-m" data-m="${m}"><span class="t"><b><span class="mdot" style="${mc(m)}"></span>${m}
+      return `<button class="item" data-act="body-m" data-m="${m}"><span class="t"><b><span class="mdot" style="${mcF(m)}"></span>${m}
         ${r.tag==="fort"?'<span class="tagx ok">Point fort</span>':r.tag==="faible"?'<span class="tagx bad">Point faible</span>':""}</b>
         <span>${lv}${r.trend!==null?` · ${r.trend>=0?"+":""}${fmtN(r.trend*100,0)} % sur 6 semaines`:""}</span></span>
         <span class="lvl">${"●".repeat(Math.max(1,Math.min(5,Math.ceil(r.score))))}<span class="muted">${"●".repeat(5-Math.max(1,Math.min(5,Math.ceil(r.score))))}</span></span></button>
-        ${sel===m ? `<div class="bdetail">${r.ex.map(x => `<div><b>${esc(x.e.name)}</b><span>${esc(x.txt)} · ${LEVELS[Math.min(4,Math.floor(x.score))]}${x.trend!==null?` · ${x.trend>=0?"+":""}${fmtN(x.trend*100,0)} %`:""}${x.old?" · ancien":""}</span></div>`).join("")}</div>` : ""}`; }).join("")}</div>
-    <p class="small muted" style="margin:0">Niveau = votre 1RM estimé rapporté au poids de corps, comparé à des niveaux de référence courants (débutant → élite). Point fort ou faible = écart d'au moins un demi-niveau avec votre moyenne. ${MUSCLES.filter(m=>res[m].score===null).length ? "Sans données comparables : " + MUSCLES.filter(m=>res[m].score===null).join(", ") + "." : ""} Repères indicatifs : poids de corps et référence se règlent dans Exercices.</p>
+        ${open(m) ? `<div class="bdetail">${r.ex.map(x => `<div><b>${esc(x.e.name)}</b><span>${esc(x.txt)} · ${LEVELS[Math.min(4,Math.floor(x.score))]}${x.trend!==null?` · ${x.trend>=0?"+":""}${fmtN(x.trend*100,0)} %`:""}${x.old?" · ancien":""}</span></div>`).join("")}</div>` : ""}`; }).join("")}</div>
+    <p class="small muted" style="margin:0">Niveau = votre 1RM estimé rapporté au poids de corps, comparé à des niveaux de référence courants (débutant → élite). Point fort ou faible = écart d'au moins un demi-niveau avec votre moyenne. ${MUSC.filter(m=>res[m].score===null && !MINOR.has(m)).length ? "Sans données comparables : " + MUSC.filter(m=>res[m].score===null && !MINOR.has(m)).join(", ").toLowerCase() + "." : ""} Repères indicatifs : poids de corps et référence se règlent dans Exercices.</p>
   </section>`;
 }
 
@@ -1367,21 +1470,22 @@ function viewStrength(){
    entre 50 et 90 % : une série de moins. Points faibles récupérés : une série de plus et placés en tête
    (principe de priorité), ou un exercice ajouté à la place d'un exercice retiré. */
 function adaptToday(r){
-  const {res} = strengthByMuscle(), rec = {}, changes = [];
+  const {resG:res} = strengthByMuscle(), rec = {}, changes = [];
   MUSCLES.forEach(m => rec[m] = recovery(m).pct);
+  MUSC.forEach(m => { if(!(m in rec)) rec[m] = recovery(m).pct; });
   const weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible" && rec[m] >= 0.9);
-  let items = r.items.map(it => { const e = exById(it.exId); return {exId:it.exId, sets:it.sets, muscle:e.muscle, comp:isCompound(e)}; });
+  let items = r.items.map(it => { const e = exById(it.exId); return {exId:it.exId, sets:it.sets, muscle:e.muscle, prim:primOf(e), comp:isCompound(e)}; });
   const removed = [];
   items = items.filter(it => {
-    const pc = rec[it.muscle];
+    const pc = rec[it.prim] ?? rec[it.muscle];   // récupération du muscle principal de l'exercice
     if(pc < 0.5){ removed.push(it); return false; }
     if(pc < 0.9){ if(it.sets > 2) it.sets--; it.flag = "rec"; }
     return true;
   });
-  const lowMs = [...new Set(removed.map(x => x.muscle))];
+  const lowMs = [...new Set(removed.map(x => x.prim || x.muscle))];
   if(lowMs.length) changes.push({k:"down", t:`Retiré : ${removed.map(x => exById(x.exId).name).join(", ")} (${lowMs.map(m => m.toLowerCase()+" à "+Math.round(rec[m]*100)+" %").join(", ")} de récupération)`});
   const lighter = items.filter(x => x.flag==="rec");
-  if(lighter.length) changes.push({k:"down", t:`En récupération, à alléger (séries réduites jusqu’à 2 minimum) : ${[...new Set(lighter.map(x=>x.muscle))].map(m => m.toLowerCase()+" à "+Math.round(rec[m]*100)+" %").join(", ")}`});
+  if(lighter.length) changes.push({k:"down", t:`En récupération, à alléger (séries réduites jusqu’à 2 minimum) : ${[...new Set(lighter.map(x=>x.prim || x.muscle))].map(m => m.toLowerCase()+" à "+Math.round(rec[m]*100)+" %").join(", ")}`});
   // Points faibles : renforcer ceux de la séance, ajouter les autres à la place des exercices retirés
   const st = exStats(); let budget = removed.length;
   weak.forEach(m => {
@@ -1390,7 +1494,7 @@ function adaptToday(r){
       changes.push({k:"up", t:`Point faible ${m.toLowerCase()} : placé en tête, une série de plus`}); }
     else if(budget > 0){
       const c = candidatesFor(m, st).find(c => c.n > 0 && !items.some(x => x.exId===c.e.id)) || candidatesFor(m, st)[0];
-      if(c){ items.push({exId:c.e.id, sets:3, muscle:m, comp:c.comp, weak:true, added:true}); budget--;
+      if(c){ items.push({exId:c.e.id, sets:3, muscle:m, prim:primOf(c.e), comp:c.comp, weak:true, added:true}); budget--;
         changes.push({k:"up", t:`Ajouté pour le point faible ${m.toLowerCase()} : ${c.e.name}`}); }
     }
   });
@@ -1401,13 +1505,13 @@ function adaptToday(r){
     for(const m of pool){ if(budget <= 0) break;
       const c = candidatesFor(m, st).find(c => c.n > 0 && !items.some(x => x.exId===c.e.id));
       if(!c) continue;
-      items.push({exId:c.e.id, sets:3, muscle:m, comp:c.comp, added:true, weak:weak.includes(m)}); budget--;
+      items.push({exId:c.e.id, sets:3, muscle:m, prim:primOf(c.e), comp:c.comp, added:true, weak:weak.includes(m)}); budget--;
       changes.push({k:"up", t:`Ajouté (${m.toLowerCase()} récupéré${weak.includes(m)?", point faible":""}) : ${c.e.name}`});
     }
   }
   // Séance vidée : on garde au moins 2 exercices des muscles les mieux récupérés
   if(items.length < 2 && removed.length){
-    removed.sort((a,b) => rec[b.muscle]-rec[a.muscle]).slice(0, 2-items.length).forEach(it => { items.push({...it, sets:2, flag:"rec"}); });
+    removed.sort((a,b) => rec[b.prim]-rec[a.prim]).slice(0, 2-items.length).forEach(it => { items.push({...it, sets:2, flag:"rec"}); });
     changes.push({k:"down", t:"Peu de muscles récupérés : séance courte et légère. Décaler la séance est aussi une bonne option."});
   }
   items.sort((a,b) => (a.muscle==="Abdos")-(b.muscle==="Abdos") || (b.weak?1:0)-(a.weak?1:0) || b.comp-a.comp || PRIO.indexOf(a.muscle)-PRIO.indexOf(b.muscle));
@@ -1429,7 +1533,7 @@ function routineForDuo(ui, mins){
 }
 function chooseToday(){
   const t = todayDow(), r0 = S.profile.routines.find(r => r.plan && r.dow===t); if(!r0) return null;
-  const {res} = strengthByMuscle(), weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible");
+  const {resG:res} = strengthByMuscle(), weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible");
   const rec = {}; MUSCLES.forEach(m => rec[m] = recovery(m).pct);
   const score = (ms, bonus) => { const main = ms.filter(m => m!=="Abdos"); if(!main.length) return -999;
     let w = 0, v = 0; main.forEach(m => { w += WEIGHT[m]; v += WEIGHT[m]*rec[m]; });
@@ -1502,7 +1606,7 @@ const CREATURE_CFG = {
 };
 const rollStages = () => CREATURE_CFG.stageRange.map(([a,b]) => a + Math.floor(Math.random()*(b-a+1)));
 function creatureState(){
-  if(!S.profile.creature) S.profile.creature = {v:4, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null, vit:100};
+  if(!S.profile.creature) S.profile.creature = {v:4, mv:3, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null, vit:100};
   const c = S.profile.creature;
   if((c.v||0) < 4){   // passage de 4 à 13 formes : l'ancien stade garde sa forme la plus proche
     if(c.at && c.at.length < CREATURE_CFG.stages.length){ c.stage = [0, 2, 5, 9][c.stage] ?? c.stage; c.at = null; }
@@ -1569,17 +1673,6 @@ function creatureRegularity(c){
   const f = CREATURE_CFG.freq, n = S.workouts.filter(w => c.fed.includes(w.id) && Date.now() - w.start < f.window*86400000).length;
   return {n, perWeek: n / (f.window/7), pct: Math.min(1, n / f.target)};
 }
-// Niveau visé par muscle (force existante, ou séries faites depuis la naissance de la créature)
-function muscleLevels(){
-  const {res} = strengthByMuscle(), out = {};
-  MUSCLES.forEach(m => {
-    const r = res[m];
-    if(r && r.score!==null){ const t = CREATURE_CFG.levelThresholds[m] || CREATURE_CFG.levelThresholds.default; out[m] = t.filter(x => r.score >= x).length; }
-    else { const c = creatureState(); let n = 0; S.workouts.forEach(w => { if(!c.fed.includes(w.id)) return; w.exercises.forEach(ex => { if(exById(ex.exId).muscle===m) n += workSets(ex).length; }); });
-      out[m] = CREATURE_CFG.setsThresholds.filter(x => n >= x).length; }
-  });
-  return out;
-}
 // Niveau réel d'un muscle à un instant donné : niveau acquis, moins la fonte s'il n'est plus travaillé depuis 14 jours
 function muscleLevel(c, m, at){
   const L = (c.levels||{})[m] || 0, lw = (c.lastWorked||{})[m]; if(!lw || !L) return L;
@@ -1587,15 +1680,20 @@ function muscleLevel(c, m, at){
   const floor = ((c.peak||{})[m] || L) * A.floorRatio;
   return Math.max(Math.min(L, floor), L - A.perDay * days);
 }
+// Niveau d'une catégorie (case « Muscles ») : moyenne de ses muscles, hors muscles surtout travaillés en indirect
+const groupLevel = (c, g, at) => { const l = (FINE[g] || [g]).filter(m => !MINOR.has(m)); return l.reduce((t, m) => t + muscleLevel(c, m, at), 0) / l.length; };
 const muscleMelting = (c, m, at) => muscleLevel(c, m, at) < ((c.levels||{})[m] || 0) - 0.01;
-function workedMuscles(w){ return new Set(w.exercises.filter(ex => workSets(ex).length).map(ex => exById(ex.exId).muscle)); }
 // Croissance v2 : chaque séance qui travaille un muscle le fait grossir selon ses séries (4 séries ≈ +0,16 au départ),
 // de moins en moins vite près du sommet, +0,15 de bonus sur un record. Plus de plafond lié à la force : tant qu'on s'entraîne, il grossit.
 function growMuscles(c, w){
   const G = CREATURE_CFG.growth, t = w.end || w.start, sets = {}, pr = new Set();
   c.levels = c.levels || {}; c.lastWorked = c.lastWorked || {}; c.peak = c.peak || {};
-  w.exercises.forEach(ex => { const n = workSets(ex).length; if(n){ const m = exById(ex.exId).muscle; if(!m) return; sets[m] = (sets[m]||0) + n; if((w.prs||[]).includes(ex.exId)) pr.add(m); } });
-  Object.entries(sets).forEach(([m, n]) => {
+  // 17 muscles (13 nov. 2026) : chaque série compte pour chaque muscle au prorata de l'exercice (squat : quadriceps 1, fessiers 0,7…) ;
+  // le bonus record va au muscle principal. Moins d'une demi-série équivalente : pas de croissance.
+  w.exercises.forEach(ex => { const n = workSets(ex).length; if(!n) return; const e = exById(ex.exId);
+    Object.entries(exWork(e)).forEach(([m, p]) => sets[m] = (sets[m]||0) + n * p);
+    if((w.prs||[]).includes(ex.exId)) pr.add(primOf(e)); });
+  Object.entries(sets).forEach(([m, n]) => { if(n < 0.5) return;
     const cur = muscleLevel(c, m, t);   // la fonte éventuelle est d'abord appliquée
     const gain = Math.min(G.maxSession, G.perSet * n) * Math.max(0.08, 1 - cur / G.ceiling) + (pr.has(m) ? G.prBonus : 0);
     c.levels[m] = Math.round(Math.min(G.max, cur + gain) * 100) / 100;
@@ -1604,13 +1702,17 @@ function growMuscles(c, w){
 }
 // Correctif : recalcule la musculature à partir des seules séances réellement faites depuis la naissance
 function creatureFixLevels(){
-  const c = S.profile.creature; if(!c || (c.mv || 0) >= 2) return;
-  // Musculature v2 : rejouée sur les séances déjà mangées, avec la nouvelle croissance et la fonte
+  const c = S.profile.creature; if(!c || (c.mv || 0) >= 3) return;
+  // Musculature v2 : rejouée sur les séances déjà mangées, avec la nouvelle croissance et la fonte.
+  // v3 (13 nov. 2026, 17 muscles) : rejouée de même, chaque muscle au prorata ; décision du propriétaire : les niveaux
+  // reflètent l'historique réel, quitte à baisser pour un muscle jamais travaillé (exception à « un niveau ne se perd jamais »).
   c.levels = {}; c.lastWorked = {}; c.peak = {};
   S.workouts.filter(w => c.fed.includes(w.id)).sort((a,b) => a.start-b.start).forEach(w => growMuscles(c, w));
   const now = Date.now(), grace = now - CREATURE_CFG.atrophy.afterDays * 86400000;   // la fonte démarre à partir d'aujourd'hui
-  MUSCLES.forEach(m => { if(c.lastWorked[m]){ c.levels[m] = muscleLevel(c, m, now); c.lastWorked[m] = Math.max(c.lastWorked[m], grace); } });
-  c.mv = 2; c.v = Math.max(c.v || 0, 2); saveLocal();
+  MUSC.forEach(m => { if(c.lastWorked[m]){ c.levels[m] = muscleLevel(c, m, now); c.lastWorked[m] = Math.max(c.lastWorked[m], grace); } });
+  if(c.ref) c.ref = snapNow(c);   // l'avant / après repart des nouveaux muscles
+  if(c.lastMeal) c.lastMeal = {...c.lastMeal, ups:[], dl:{}};
+  c.mv = 3; c.v = Math.max(c.v || 0, 2); saveLocal();
 }
 /* Coup critique (décidé le 12 nov. 2026) : à partir de la 3e série de travail, 12 % de chances qu'une série nourrisse double le Gymon,
    2 fois au plus par séance. Le volume de la séance (historique, records, coach) ne change pas : seul le repas du Gymon compte le bonus.
@@ -1629,7 +1731,7 @@ function creatureFeed(w){
   const c = creatureState();
   if(c.fed.includes(w.id) || (w.end || w.start) < c.born) return null;
   if(c.dead){ if(!(c.pending||[]).includes(w.id)) (c.pending = c.pending || []).push(w.id); touchProfile(); return {dead:true, vol:wVolume(w)}; }
-  const before = {stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSCLES.map(m => [m, muscleLevel(c, m, w.end || w.start)]))};
+  const before = {stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSC.map(m => [m, muscleLevel(c, m, w.end || w.start)]))};
   c.fed.push(w.id); if(c.fed.length > 1000) c.fed = c.fed.slice(-1000);
   const t = w.end || w.start, vitBefore = vitalityExact(c, t);
   c.fidelity++;
@@ -1641,7 +1743,7 @@ function creatureFeed(w){
   const gain = (vol + bonus)/1000 * CREATURE_CFG.foodPerTonne[c.stage] * freqFactor;   // une série en coup critique nourrit double
   c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + gain);
   growMuscles(c, w); creatureLog(c);
-  const ups = MUSCLES.filter(m => (c.levels[m]||0) > (before.levels[m]||0));
+  const ups = MUSC.filter(m => (c.levels[m]||0) - (before.levels[m]||0) >= 0.005);
   c.lastMeal = {w:w.id, vol, bonus, gain:c.weight - before.weight, ts:Date.now(), ups, dl:Object.fromEntries(ups.map(m => [m, Math.round(((c.levels[m]||0) - (before.levels[m]||0))*100)/100]))};
   touchProfile();
   return {vol, bonus, gain:c.weight - before.weight, evolved:c.stage > before.stage, stage:c.stage, from:before.stage, ups};
@@ -1767,10 +1869,12 @@ function creatureSVG(c, small, back, opt){
   const amb = AMB[S.profile.gymonStyle] ? S.profile.gymonStyle : "aesthetic", GC = gymColor(c);
   const shorts = GYM_SHORTS[(c.look||{}).shorts] || AMB[amb].shorts, A = {...AMB[amb], shorts, shoes:"#ffffff", sole: shorts==="#f2f2f2" || shorts==="#161616" ? "#ff6b35" : shorts};
   // Effets : muscles qui viennent de grossir en rouge (24 h), fumée sur les muscles en récupération
-  const lm = c.lastMeal, pumped = new Set(!dead && !opt.noFx && lm && lm.ups && Date.now() - lm.ts < 24*3600000 ? lm.ups : []);
-  const steaming = new Set(!dead && !small && !opt.noFx && !opt.noSteam ? MUSCLES.filter(m => recovery(m).pct < 0.9) : []);
+  // (un muscle « pompé » colore sa partie du dessin ; les parties encore étiquetées par catégorie suivent tous ses muscles)
+  const lm = c.lastMeal, ups = !dead && !opt.noFx && lm && lm.ups && Date.now() - lm.ts < 24*3600000 ? lm.ups : [], pumped = new Set([...ups, ...ups.map(m => GROUP_OF[m] || m)]);
+  const steaming = new Set(!dead && !small && !opt.noFx && !opt.noSteam ? MUSCLES.filter(g => recovery(g).pct < 0.9) : []);
   // Rendu exagéré : niveau réel (fonte comprise) + 80 % de l'écart à la moyenne, pour que forces et retards sautent aux yeux
-  const LV = Object.fromEntries(MUSCLES.map(m => [m, muscleLevel(c, m)])), LAVG = MUSCLES.reduce((t,m) => t + LV[m], 0) / MUSCLES.length;
+  // (17 muscles depuis le 13 nov. 2026 ; la moyenne ignore les muscles surtout travaillés en indirect)
+  const MAIN = MUSC.filter(m => !MINOR.has(m)), LV = Object.fromEntries(MUSC.map(m => [m, muscleLevel(c, m)])), LAVG = MAIN.reduce((t,m) => t + LV[m], 0) / MAIN.length;
   const uid = "g" + Math.random().toString(36).slice(2,8), lvl = m => Math.max(0, Math.min(1, (LV[m] + 0.8 * (LV[m] - LAVG)) / 4.5));
   const mw = CREATURE_CFG.minWeight, span = mw[Math.min(mw.length-1, st+1)] || 100, fat = Math.min(1, Math.max(0, (c.weight - mw[st]) / span));
   let defs = "", g = "", haloY = 8;
@@ -1790,8 +1894,10 @@ function creatureSVG(c, small, back, opt){
   }else{
     const sp = lk.sp, P = SKIN[sp], skin = c.look ? GC.h : P[amb], dark = hexMix(skin,-.42), mid = hexMix(skin,-.22), veinc = hexMix(skin,-.34);
     const pump = hexBlend(skin, "#ff2a2a", .42);
-    const kP = lvl("Pectoraux"), kD = lvl("Dos"), kE = lvl("Épaules"), kB = lvl("Biceps"), kT = lvl("Triceps"), kAb = lvl("Abdos"), kJ = lvl("Jambes"), kF = (kB+kT)/2;
-    const avg = (kP+kD+kE+kB+kT+kAb+kJ)/7;
+    const kP = lvl("Pectoraux"), kD = lvl("Grand dorsal"), kTr = lvl("Haut du dos"), kLo = lvl("Lombaires"), kB = lvl("Biceps"), kT = lvl("Triceps"), kF = lvl("Avant-bras");
+    const kE = (lvl("Deltoïde avant") + lvl("Deltoïde latéral")) / 2, kEb = (lvl("Deltoïde latéral") + lvl("Deltoïde arrière")) / 2, kAb = lvl("Abdos"), kOb = lvl("Obliques");
+    const kQ = lvl("Quadriceps"), kH = lvl("Ischios"), kG = lvl("Fessiers"), kM = lvl("Mollets"), kJ = (kQ + kH) / 2;
+    const avg = MAIN.reduce((t,m) => t + lvl(m), 0) / MAIN.length;
     defs += `<radialGradient id="${uid}m" cx=".32" cy=".25" r=".95"><stop offset="0" stop-color="${hexMix(skin,.45)}"/><stop offset=".45" stop-color="${skin}"/><stop offset="1" stop-color="${hexMix(skin,-.28)}"/></radialGradient>
       <linearGradient id="${uid}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hexMix(A.shorts,.18)}"/><stop offset="1" stop-color="${hexMix(A.shorts,-.25)}"/></linearGradient>
       <radialGradient id="${uid}p" cx=".32" cy=".25" r=".95"><stop offset="0" stop-color="${hexMix(pump,.4)}"/><stop offset=".45" stop-color="${pump}"/><stop offset="1" stop-color="${hexMix(pump,-.3)}"/></radialGradient>
@@ -1811,31 +1917,32 @@ function creatureSVG(c, small, back, opt){
       if(lk.spade) tailS += `<path d="M${tx} ${ty} l4 -16 l12 12 Z M${tx} ${ty} l16 -2 l-8 14 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.35)}" stroke-width="1.2"/>`; }
     const legk = .2 + 1.0*kJ, torsoX = .82 + .38*kD, shoulderX = 120 - 40*torsoX;
     if(back && lk.wings) b += wingsS;   // de dos, les ailes partent des omoplates (racines dessinées sur le dos)
-    if(back) b += gymonBack({M, SC, HL, mirror, dark, mid, veinc, skin, fillM, A, uid, kD, kE, kB, kT, kJ, kF, avg, sp, P, legk, torsoX, shoulderX, wings:lk.wings, armLevel:opt.armLevel}) + `<g transform="translate(240 0) scale(-1 1)">${tailS}</g>`;
+    if(back) b += gymonBack({M, SC, HL, mirror, dark, mid, veinc, skin, fillM, A, uid, kD, kE:kEb, kB, kT, kJ, kF, kH, kG, kM, kTr, kLo, avg, sp, P, legk, torsoX, shoulderX, wings:lk.wings, armLevel:opt.armLevel}) + `<g transform="translate(240 0) scale(-1 1)">${tailS}</g>`;
     else {
     b += wingsS + tailS;
-    // jambes : épaisseur = niveau des jambes (allumettes → poteaux)
+    // jambes : cuisses = quadriceps (de face) et ischios (de dos), mollets à part (allumettes → poteaux)
+    const calf = `<g transform="${SC(101,281,(.2 + 1.0*kM) / legk,1)}">` + M("M92 264 C 84 274 86 288 96 298 L 110 298 C 118 288 118 274 112 264 Z", "", "Mollets") + `</g>`;
     const leg = `<g transform="translate(-7 0) ${SC(106,0,legk,1)}">`
-      + M("M94 204 C 82 214 80 238 88 258 L 100 258 C 98 238 100 220 106 206 Z", "", "Jambes")
-      + M("M106 204 C 100 222 100 242 104 258 L 116 258 C 120 240 120 220 116 204 Z", "", "Jambes")
-      + (kJ > .25 ? M("M116 234 C 108 242 108 256 118 262 C 124 254 124 242 116 234 Z", "", "Jambes") : "")
-      + HL(108,226,3,12,-5) + M("M92 264 C 84 274 86 288 96 298 L 110 298 C 118 288 118 274 112 264 Z", "", "Jambes")
+      + M("M94 204 C 82 214 80 238 88 258 L 100 258 C 98 238 100 220 106 206 Z", "", "Quadriceps")
+      + M("M106 204 C 100 222 100 242 104 258 L 116 258 C 120 240 120 220 116 204 Z", "", "Quadriceps")
+      + (kQ > .25 ? M("M116 234 C 108 242 108 256 118 262 C 124 254 124 242 116 234 Z", "", "Quadriceps") : "")
+      + HL(108,226,3,12,-5) + calf
       + `<path d="M90 258 Q 104 266 118 260" stroke="${dark}" stroke-width="1.6" fill="none"/></g>`
       + `<g transform="translate(-6 0)"><path d="M86 298 h28 a5 5 0 0 1 5 5 v4 h-38 v-4 a5 5 0 0 1 5 -5 Z" fill="${A.shoes}"/><rect x="80" y="305" width="40" height="5" rx="2.5" fill="${A.sole}"/></g>`;
     b += mirror(leg);
     b += `<path d="M90 178 L150 178 L156 214 L126 216 L120 198 L114 216 L84 214 Z" fill="url(#${uid}s)"/><path d="M90 182 H150" stroke="${hexMix(A.shorts,.3)}" stroke-width="3"/>`;
     // tronc : largeur et dorsaux suivent le dos, pecs/abdos leur niveau
     const half = M("M120 92 L 120 182 L 100 186 C 92 176 86 160 86 146 C 84 128 84 112 88 102 Z")
-      + M("M90 104 C 76 118 76 142 88 164 L 96 156 C 90 140 88 122 94 110 Z", SC(92,132,.25+1.0*kD,1), "Dos")
-      + M("M92 146 C 90 160 94 174 104 182 L 108 168 C 100 162 96 154 92 146 Z", "", "Abdos")
-      + (kAb > .2 ? [[88,128],[89,137],[91,146]].map(([x,y]) => M(`M${x} ${y} q4 -3 8 0 l-2 6 q-3 2 -6 0 Z`, "", "Abdos")).join("") : "")
+      + M("M90 104 C 76 118 76 142 88 164 L 96 156 C 90 140 88 122 94 110 Z", SC(92,132,.25+1.0*kD,1), "Grand dorsal")
+      + M("M92 146 C 90 160 94 174 104 182 L 108 168 C 100 162 96 154 92 146 Z", SC(100,164,.6+.6*kOb,1), "Obliques")
+      + (kOb > .2 ? [[88,128],[89,137],[91,146]].map(([x,y]) => M(`M${x} ${y} q4 -3 8 0 l-2 6 q-3 2 -6 0 Z`, "", "Obliques")).join("") : "")
       + (kAb < 0.06 ? "" : `<g opacity="${Math.min(1, kAb*1.6)}">` + [134,148,162].map(y => M(`M106 ${y} Q 112 ${y-3} 118 ${y-1} L 118 ${y+10} Q 112 ${y+12} 106 ${y+10} Z`, SC(112,y+5,.75+.3*kAb,.75+.3*kAb), "Abdos") + HL(110,y+3,3,2)).join("") + `</g>`)
       + `<path d="M100 172 Q 108 186 118 192" stroke="${dark}" stroke-width="1.8" fill="none" opacity="${kAb}"/>`
       + M("M120 94 C 104 88 86 92 80 104 C 78 118 88 128 104 130 C 112 130 118 126 120 122 Z", SC(120,108,.4+.8*kP,.45+.75*kP), "Pectoraux")
       + `<path d="M86 104 Q 100 104 116 110 M84 112 Q 100 112 116 118" stroke="${mid}" stroke-width="1.2" fill="none" opacity="${kP*.9}" transform="${SC(120,108,.4+.8*kP,.45+.75*kP)}"/>`
       + `<path d="M82 120 C 92 130 108 132 120 124" stroke="${dark}" stroke-width="${1+2.4*kP}" fill="none" stroke-linecap="round" transform="${SC(120,108,.4+.8*kP,.45+.75*kP)}"/>`
       + HL(96,100,9*kP+2,4,-10)
-      + M("M110 72 Q 94 84 74 92 Q 92 94 112 90 Z", SC(110,84,1,.3+1.0*kD), "Dos");
+      + M("M110 72 Q 94 84 74 92 Q 92 94 112 90 Z", SC(110,84,1,.3+1.0*kTr), "Haut du dos");
     b += `<g transform="${SC(120,140,torsoX,1)}">${mirror(half)}<path d="M120 94 V 182" stroke="${dark}" stroke-width="1.6"/></g>`;
     if(fat > .15) b += `<ellipse cx="120" cy="${168-fat*4}" rx="${20+fat*12}" ry="${10+fat*8}" fill="${hexMix(skin,.1)}" opacity="${.5*fat+.2}"/>`;
     if(sp==="dino" || sp==="dinomut") b += `<ellipse cx="120" cy="156" rx="18" ry="22" fill="${P.belly || hexMix(skin,.4)}" opacity=".35"/>`;
@@ -1886,30 +1993,30 @@ function creatureSVG(c, small, back, opt){
 /* Vue de dos (pose double biceps de dos) : trapèzes, dorsaux, lombaires, fessiers, ischios, mollets, triceps.
    Chaque muscle suit son niveau, comme de face : Dos → trapèzes, dorsaux, lombaires ; Jambes → fessiers, ischios, mollets. */
 function gymonBack(o){
-  const {M, SC, HL, mirror, dark, mid, veinc, fillM, A, uid, kD, kE, kB, kT, kJ, kF, avg, sp, P, legk, torsoX, shoulderX, wings} = o;
+  const {M, SC, HL, mirror, dark, mid, veinc, fillM, A, uid, kD, kE, kB, kT, kJ, kF, kH, kG, kM, kTr, kLo, avg, sp, P, legk, torsoX, shoulderX, wings} = o;
   let b = "";
   const leg = `<g transform="translate(-7 0) ${SC(106,0,legk,1)}">`
-    + M("M92 212 C 84 226 84 244 92 258 L 104 258 C 100 240 102 226 106 214 Z", "", "Jambes")
-    + M("M106 214 C 102 228 102 244 106 258 L 116 258 C 120 240 120 224 116 212 Z", "", "Jambes") + HL(96,234,3,11,5)
-    + M("M94 286 C 94 292 96 298 98 300 L 108 300 C 108 296 106 292 106 286 Z", "", "Jambes")
-    + `<g transform="${SC(100,276,.4+.75*kJ,1)}">` + M("M90 262 C 82 270 84 286 98 290 L 102 266 Z", "", "Jambes") + M("M102 264 C 116 266 120 282 106 292 L 100 270 Z", "", "Jambes") + HL(93,272,2.5,6,10) + `</g>`
+    + M("M92 212 C 84 226 84 244 92 258 L 104 258 C 100 240 102 226 106 214 Z", SC(98,236,.5+.6*kH,1), "Ischios")
+    + M("M106 214 C 102 228 102 244 106 258 L 116 258 C 120 240 120 224 116 212 Z", SC(111,236,.5+.6*kH,1), "Ischios") + HL(96,234,3,11,5)
+    + M("M94 286 C 94 292 96 298 98 300 L 108 300 C 108 296 106 292 106 286 Z", "", "Mollets")
+    + `<g transform="${SC(100,276,.4+.75*kM,1)}">` + M("M90 262 C 82 270 84 286 98 290 L 102 266 Z", "", "Mollets") + M("M102 264 C 116 266 120 282 106 292 L 100 270 Z", "", "Mollets") + HL(93,272,2.5,6,10) + `</g>`
     + `<path d="M92 259 Q 104 263 116 259" stroke="${dark}" stroke-width="1.6" fill="none"/></g>`
     + `<g transform="translate(-6 0)"><path d="M84 298 h32 a6 6 0 0 1 6 6 v3 h-44 v-3 a6 6 0 0 1 6 -6 Z" fill="${A.shoes}"/><rect x="78" y="305" width="44" height="5" rx="2.5" fill="${A.sole}"/></g>`;
   b += mirror(leg);
   // short moulant : les fessiers se dessinent dans le tissu
-  const sd = hexMix(A.shorts,-.45), gk = .6 + .6*kJ;
+  const sd = hexMix(A.shorts,-.45), gk = .6 + .6*kG;   // fessiers
   b += `<path d="M88 176 L152 176 L156 214 L126 216 L120 206 L114 216 L84 214 Z" fill="url(#${uid}s)"/>`;
   b += mirror(`<g transform="${SC(120,200,gk,gk)}"><path d="M120 180 C 104 175 86 182 85 199 C 84 215 100 222 120 218 Z" fill="url(#${uid}s)" stroke="${sd}" stroke-width="1.6"/>`
     + `<path d="M90 206 C 96 216 108 219 118 217" stroke="${sd}" stroke-width="2" fill="none" opacity=".7"/><ellipse cx="98" cy="190" rx="8" ry="4.5" fill="#fff" opacity=".16" transform="rotate(-20 98 190)"/></g>`);
   b += `<path d="M120 182 V 210" stroke="${sd}" stroke-width="1.6"/><path d="M88 180 H152" stroke="${hexMix(A.shorts,.3)}" stroke-width="3"/>`;
   // dos : grand V des dorsaux, trapèzes en losange, sus-épineux, lombaires
   const half = M("M120 86 L 120 182 L 102 184 C 96 172 92 160 90 148 C 84 132 82 118 84 104 Z")
-    + M("M84 106 C 76 124 82 150 100 174 L 112 166 C 104 150 104 134 110 120 C 102 116 92 112 84 106 Z", SC(100,140,.25+1.0*kD,1), "Dos") + HL(92,134,3,12,-20,.25)
-    + `<g opacity="${.4 + .6*kD}">` + M("M112 136 C 107 152 107 168 111 182 L 119 182 L 119 136 Z", "", "Dos") + HL(114,158,1.6,8,0,.3) + `</g>`
-    + M("M88 98 C 98 94 110 102 112 114 C 106 122 92 120 86 110 Z", SC(98,108,.45+.7*kD,.45+.7*kD), "Dos")
-    + M("M86 112 C 92 120 102 122 108 120 C 104 126 94 128 88 122 Z", SC(98,120,.45+.7*kD,.45+.7*kD), "Dos")
-    + M("M120 64 C 116 76 104 84 82 90 C 94 96 106 108 112 124 L 120 138 Z", SC(120,100,.45+.7*kD,1), "Dos") + HL(110,92,7*kD+2,3,-25)
-    + (kD > .6 ? `<path d="M112 150 L 119 162 M110 160 L 119 172" stroke="${dark}" stroke-width="1.3" fill="none" opacity="${(kD-.6)*2.5}"/>` : "");
+    + M("M84 106 C 76 124 82 150 100 174 L 112 166 C 104 150 104 134 110 120 C 102 116 92 112 84 106 Z", SC(100,140,.25+1.0*kD,1), "Grand dorsal") + HL(92,134,3,12,-20,.25)
+    + `<g opacity="${.4 + .6*kLo}">` + M("M112 136 C 107 152 107 168 111 182 L 119 182 L 119 136 Z", SC(116,160,.6+.6*kLo,1), "Lombaires") + HL(114,158,1.6,8,0,.3) + `</g>`
+    + M("M88 98 C 98 94 110 102 112 114 C 106 122 92 120 86 110 Z", SC(98,108,.45+.7*kTr,.45+.7*kTr), "Haut du dos")
+    + M("M86 112 C 92 120 102 122 108 120 C 104 126 94 128 88 122 Z", SC(98,120,.45+.7*kTr,.45+.7*kTr), "Haut du dos")
+    + M("M120 64 C 116 76 104 84 82 90 C 94 96 106 108 112 124 L 120 138 Z", SC(120,100,.45+.7*kTr,1), "Haut du dos") + HL(110,92,7*kTr+2,3,-25)
+    + (kLo > .6 ? `<path d="M112 150 L 119 162 M110 160 L 119 172" stroke="${dark}" stroke-width="1.3" fill="none" opacity="${(kLo-.6)*2.5}"/>` : "");
   b += `<g transform="${SC(120,140,torsoX,1)}">${mirror(half)}<path d="M120 70 V 182" stroke="${dark}" stroke-width="1.8"/></g>`;
   if(sp==="dino" || sp==="dinomut" || sp==="dragon") for(let i=0;i<5;i++) b += `<path d="M115 ${96+i*16} l5 -9 l5 9 Z" fill="${P.spike}" stroke="${hexMix(P.spike,-.3)}" stroke-width="1"/>`;
   if(sp==="henmut") [[96,120],[146,150],[104,160],[60,106],[180,100]].forEach(([x,y]) => b += `<ellipse cx="${x}" cy="${y}" rx="5" ry="4" fill="${P.scale}" opacity=".85"/>`);
@@ -2135,7 +2242,7 @@ function fitGymon(){
 addEventListener("resize", () => { if(tab === "creature") fitGymon(); });
 function viewCreature(){
   const c = creatureState(), vit = creatureVitality(c); creatureLog(c);
-  const lvAvg = MUSCLES.reduce((t,m) => t + muscleLevel(c, m), 0) / MUSCLES.length, force = Math.min(5, Math.round(lvAvg) + 1);
+  const lvAvg = MUSCLES.reduce((t,g) => t + groupLevel(c, g), 0) / MUSCLES.length, force = Math.min(5, Math.round(lvAvg) + 1);
   const ch = S.profile.active ? null : (S.profile.routines.some(r => r.plan) ? chooseToday() : null);
   const cta = S.profile.active ? "Reprendre la séance" : ch ? `Séance du jour · ${ch.eff.name}` : "Aller à la séance";
   if(c.dead){
@@ -2165,7 +2272,7 @@ function viewCreature(){
         <button class="gy-chip tl" data-act="gy-curve" data-k="1" aria-label="Courbe du poids"><small>Poids</small>${fmtWeight(c.weight)}</button>
         <button class="gy-chip tr" data-act="gy-curve" data-k="2" aria-label="Courbe de la taille"><small>Taille</small>${fmtN(creatureHeight(c), 0)} cm</button>
         <button class="gy-chip bl" data-act="gy-curve" data-k="3" aria-label="Courbe de la vitalité"><small>Vitalité</small>${vit} %</button>
-        <span class="gy-chip br" aria-label="Niveau de chaque muscle"><small>Muscles</small><span class="gy-lv">${MUSCLES.map(m => `<i style="height:${Math.max(3, Math.round(muscleLevel(c, m)/4.5*26))}px;${mc(m)}"></i>`).join("")}</span></span>
+        <span class="gy-chip br" aria-label="Niveau de chaque muscle"><small>Muscles</small><span class="gy-lv">${MUSCLES.map(m => `<i style="height:${Math.max(3, Math.round(groupLevel(c, m)/4.5*26))}px;${mc(m)}"></i>`).join("")}</span></span>
       </div>
       ${c.stage >= 2 ? `<button class="gy-name" data-act="gy-name">${c.name ? esc(c.name) : "✏️ Donner un nom"}</button>` : ""}
       <p class="gy-form"><button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button><button class="gy-flip gy-share" data-act="share" data-k="week" aria-label="Partager mon Gymon">↗ Partager</button>` : ""}</p>
@@ -2319,10 +2426,10 @@ function celebClose(silent){
 }
 
 /* ---------- Avant / après : tous les 15 jours si l'évolution se voit, sinon tous les 30 jours ---------- */
-const snapNow = c => ({ts:Date.now(), stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSCLES.map(m => [m, Math.round(muscleLevel(c, m)*100)/100]))});
+const snapNow = c => ({ts:Date.now(), stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSC.map(m => [m, Math.round(muscleLevel(c, m)*100)/100]))});
 function beforeAfter(c){
   if(c.dead || c.stage < 2 || !c.ref) return null;
-  const days = (Date.now() - c.ref.ts) / 86400000, d = MUSCLES.map(m => [m, muscleLevel(c, m) - (c.ref.levels[m]||0)]);
+  const days = (Date.now() - c.ref.ts) / 86400000, d = MUSC.map(m => [m, muscleLevel(c, m) - (c.ref.levels[m]||0)]);
   const delta = d.reduce((t,[,x]) => t + Math.abs(x), 0) + (c.stage !== c.ref.stage ? 3 : 0);
   return (days >= 15 && delta >= 0.75) || days >= 30 ? {days:Math.round(days), d:d.filter(([,x]) => Math.abs(x) >= 0.05).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))} : null;
 }
@@ -2340,9 +2447,15 @@ let gyTalk = 0;
 const dayNum = () => { const d = new Date(); return Math.floor((d - d.getTimezoneOffset()*60000) / 86400000); };
 const GYM_NAMES = ["Rocky","Biscotto","Gainz","Pecto","Hulky","Nugget","Crunchy","Titan","Pumpkin","Brutus","Choupi","Médor","Kiwi","Bubba","Tornado","Muscu","Popeye","Rambo","Zeus","Flex"];
 const M_AUX = {Pectoraux:"aux pecs", Dos:"au dos", "Épaules":"aux épaules", Biceps:"aux biceps", Triceps:"aux triceps", Jambes:"aux jambes", Abdos:"aux abdos"};
-const M_SANS = {Pectoraux:"pecs", Dos:"dos", "Épaules":"épaules", Biceps:"biceps", Triceps:"triceps", Jambes:"jambes", Abdos:"abdos"};
-const M_LAG = {Jambes:"Mes jambes… on les oublie ? 🍗", Pectoraux:"Mes pecs se sentent un peu plats…", Dos:"Mon dos rêve d'ailes. Des tirages ?",
-  "Épaules":"Mes épaules tombent… un peu de développé ?", Biceps:"Mes biceps veulent briller eux aussi 💪", Triceps:"Mes triceps réclament de l'attention !", Abdos:"Mes abdos jouent à cache-cache…"};
+// Par muscle (13 nov. 2026)
+const M_SANS = {"Pectoraux":"pecs", "Grand dorsal":"dorsaux", "Haut du dos":"trapèzes", "Lombaires":"lombaires", "Deltoïde avant":"deltoïdes avant",
+  "Deltoïde latéral":"deltoïdes latéraux", "Deltoïde arrière":"deltoïdes arrière", "Biceps":"biceps", "Avant-bras":"avant-bras", "Triceps":"triceps",
+  "Quadriceps":"quadris", "Ischios":"ischios", "Fessiers":"fessiers", "Mollets":"mollets", "Adducteurs":"adducteurs", "Abdos":"abdos", "Obliques":"obliques"};
+const M_LAG = {"Pectoraux":"Mes pecs se sentent un peu plats…", "Grand dorsal":"Mes dorsaux rêvent d'ailes. Des tractions ?", "Haut du dos":"Mes trapèzes réclament du rowing !",
+  "Deltoïde avant":"Mes épaules avant veulent du développé !", "Deltoïde latéral":"Des élévations latérales ? Je veux des épaules larges !",
+  "Deltoïde arrière":"L'arrière de mes épaules est tout timide… un face pull ?", "Biceps":"Mes biceps veulent briller eux aussi 💪", "Triceps":"Mes triceps réclament de l'attention !",
+  "Quadriceps":"Mes cuisses… on les oublie ? 🍗", "Ischios":"L'arrière de mes cuisses est tout mou… un leg curl ?", "Fessiers":"Mes fessiers réclament du hip thrust !",
+  "Mollets":"Mes mollets ressemblent à des allumettes…", "Abdos":"Mes abdos jouent à cache-cache…"};
 const GYM_CHAT = ["On va à la salle ? 😏", "J'ai rêvé d'un squat parfait.", "Tu as vu mes muscles ? Touche pas, ça brille.", "Je m'échauffe en t'attendant.", "Aujourd'hui, on soulève l'ambiance !", "Je sens que c'est un jour à record."];
 function gymonLines(c){
   const L = [], now = Date.now(), D = 86400000;
@@ -2357,10 +2470,10 @@ function gymonLines(c){
     ? "Séance pendant tes règles : bravo d'être venue ! Elle ne compte pas contre toi 🩸💪" : "Pas en forme hier ? On ne compte pas cette séance contre toi. Repose-toi 💤");
   if(last){ const a = setsBy(last);
     Object.keys(a).forEach(m => { const prev = ws.slice(1).find(w => setsBy(w)[m]); if(prev){ const d = a[m] - setsBy(prev)[m]; if(d >= 2) L.push(`${d} séries de plus ${M_AUX[m]||""} que la dernière fois !`); } }); }
-  const lv = MUSCLES.map(m => [m, muscleLevel(c, m)]), avg = lv.reduce((t,[,l]) => t + l, 0) / lv.length;
+  const MAIN = MUSC.filter(m => !MINOR.has(m)), lv = MAIN.map(m => [m, muscleLevel(c, m)]), avg = lv.reduce((t,[,l]) => t + l, 0) / lv.length;
   const lag = lv.filter(([,l]) => avg - l >= 0.8).sort((x,y) => x[1] - y[1])[0]; if(lag) L.push(M_LAG[lag[0]]);
   const melt = [];
-  MUSCLES.forEach(m => { const r = recovery(m, now), lw = (c.lastWorked||{})[m], days = lw ? Math.floor((now - lw)/D) : 0;
+  MAIN.forEach(m => { const r = recoveryFine(m, now), lw = (c.lastWorked||{})[m], days = lw ? Math.floor((now - lw)/D) : 0;
     if(lw && muscleMelting(c, m)) melt.push(`Mes ${M_SANS[m]} fondent 💧 ${days} jours sans les travailler…`);
     else if(lw && days > 10 && m !== "Abdos") L.push(`${days} jours sans ${M_SANS[m]}… ils vont bientôt fondre !`);
     else if(r.pct < 0.6 && m !== "Abdos") L.push(`Mes ${M_SANS[m]} chauffent encore 🔥 Laisse-les souffler.`); });
@@ -2435,6 +2548,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-13", t:"💪 17 muscles au lieu de 7", x:"Gymon distingue maintenant quadriceps, ischios, fessiers, mollets, dorsaux, trapèzes, chaque deltoïde… Chaque exercice compte pour plusieurs muscles selon sa part de travail (un développé couché travaille aussi les triceps). Le coach, la récupération, le bouton ↻ (un quadriceps reste un quadriceps) et votre Gymon suivent ce détail. Les muscles du Gymon ont été recalculés d'après vos séances passées."},
   {d:"2026-11-13", t:"🔴 « Trop dur » : on vérifie", x:"Quand vous choisissez « Trop dur », Gymon vous rappelle vos séries pour vérifier que la saisie correspond à ce que vous avez vraiment fait : le coach s'en sert pour la séance suivante."},
   {d:"2026-11-13", t:"⚡ Coups critiques annoncés", x:"Les coups critiques sont tirés dès le début de la séance : les séries marquées ⚡ nourriront double votre Gymon. À vous de ne pas les rater !"},
   {d:"2026-11-13", t:"➖ Retirer un échauffement", x:"Pas besoin d'une série d'échauffement ? Touchez « − Échauffement » sous l'exercice : la plus légère est retirée, vos séries de travail ne bougent pas."},
@@ -2705,10 +2819,17 @@ function render(){
   tickClock(); wakeLock();
 }
 
-/* Récupération estimée par muscle : temps de base (48–72 h) modulé par le nombre de séries,
-   le ressenti et le travail indirect (ex. triceps dans les développés) */
-const REC_BASE = {Jambes:66, Dos:56, Pectoraux:56, "Épaules":44, Biceps:44, Triceps:44, Abdos:30};
+/* Récupération estimée par muscle : temps de base (30–66 h) modulé par le nombre de séries,
+   le ressenti et le travail indirect au prorata (ex. triceps à 50 % dans le développé couché).
+   Une catégorie (« Jambes ») = son muscle principal le moins récupéré, hors muscles surtout travaillés en indirect. */
+const REC_BASE = {"Quadriceps":66, "Ischios":66, "Fessiers":60, "Mollets":40, "Adducteurs":50, "Grand dorsal":56, "Haut du dos":50, "Lombaires":66,
+  "Pectoraux":56, "Deltoïde avant":44, "Deltoïde latéral":44, "Deltoïde arrière":44, "Biceps":44, "Avant-bras":36, "Triceps":44, "Abdos":30, "Obliques":30};
 function recovery(m, now){
+  const l = FINE[m];
+  if(l && l.length > 1) return l.filter(x => !MINOR.has(x)).map(x => recoveryFine(x, now)).reduce((a, b) => b.pct < a.pct ? b : a);
+  return recoveryFine(m, now);
+}
+function recoveryFine(m, now){
   now = now || Date.now();
   let pct = 1, readyIn = 0, last = 0;
   S.workouts.forEach(w => {
@@ -2716,10 +2837,9 @@ function recovery(m, now){
     let load = 0, hard = 1;
     w.exercises.forEach(ex => { const e = exById(ex.exId), n = workSets(ex).length; if(!n) return;
       const f = ex.feel>=5 ? 1.15 : ex.feel===4 ? 1.08 : ex.feel && ex.feel<=2 ? 0.9 : 1;
-      if(e.muscle===m){ load += n; hard = Math.max(hard, f); }
-      else if((SYN[e.muscle]||[]).includes(m) && isCompound(e)){ load += n*0.5; hard = Math.max(hard, f); } });
-    if(!load) return;
-    const need = Math.min(84, REC_BASE[m] * Math.min(1.2, 0.6 + load/14) * hard);   // heures, 84 h max
+      const p = workPct(e, m); if(!p) return; load += n * p; if(p >= .5) hard = Math.max(hard, f); });
+    if(load < 0.5) return;
+    const need = Math.min(84, (REC_BASE[m] || 50) * Math.min(1.2, 0.6 + load/14) * hard);   // heures, 84 h max
     const h = (now - end)/3600000;
     pct = Math.min(pct, h/need); readyIn = Math.max(readyIn, need - h); last = Math.max(last, end);
   });
@@ -2773,11 +2893,13 @@ function viewHome(){
     </section>
     <section class="card">
       <div class="row" style="margin-bottom:10px"><b style="flex:1">Récupération des muscles</b><span class="small muted">estimation</span></div>
-      <div class="rec">${MUSCLES.map(m => { const r = recovery(m), st = recState(r);
-        return `<div class="rec-row ${st.k}"><span class="rm"><span class="mdot" style="${mc(m)}"></span>${m}</span>
+      ${(() => { const R = Object.fromEntries(MUSC.map(m => [m, recoveryFine(m)])), worked = MUSC.filter(m => R[m].last && !MINOR.has(m)), rest = MUSC.filter(m => !MINOR.has(m) && !R[m].last);
+        return `<div class="rec">${worked.map(m => { const r = R[m], st = recState(r);
+        return `<div class="rec-row ${st.k}"><span class="rm"><span class="mdot" style="${mcF(m)}"></span>${m}</span>
           <div class="rec-bar"><i style="width:${Math.round(r.pct*100)}%"></i></div>
-          <span class="rs">${st.k==="ok" ? (r.last ? "Récupéré" : "Reposé") : `${st.label} · prêt dans ${fmtHours(r.readyIn)}`}</span></div>`; }).join("")}</div>
-      <p class="small muted" style="margin:10px 0 0">Calculé sur 48 à 72 h selon le muscle, ajusté au nombre de séries, au ressenti et au travail indirect.</p>
+          <span class="rs">${st.k==="ok" ? "Récupéré" : `${st.label} · prêt dans ${fmtHours(r.readyIn)}`}</span></div>`; }).join("")}</div>
+        ${rest.length ? `<p class="small muted" style="margin:${worked.length ? "8px" : "0"} 0 0">Reposés : ${rest.join(", ").toLowerCase()}.</p>` : ""}`; })()}
+      <p class="small muted" style="margin:10px 0 0">Calculé muscle par muscle sur 30 à 66 h, ajusté au nombre de séries, au ressenti et au travail indirect (ex. triceps dans les développés).</p>
     </section>
     <button class="btn primary wide" data-act="start-empty">Démarrer une séance libre</button>
     <h2 class="big">${ord.length ? "Ma semaine" : "Mes programmes"}</h2>
@@ -2805,7 +2927,7 @@ function viewActive(){
       </tr>`;
     }).join("");
     return `<article class="card ex" data-i="${i}">
-      <div class="ex-head">${thumb(e,"ex-info")}<div class="tt"><h3>${esc(e.name)}</h3><span class="tag"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(e.muscle)} · ${esc(e.equip)}</span></div>
+      <div class="ex-head">${thumb(e,"ex-info")}<div class="tt"><h3>${esc(e.name)}</h3><span class="tag"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(primOf(e))} · ${esc(e.equip)}</span></div>
         ${ex.sets.some(s => s.done && !s.warm) ? "" : `<button class="icon-btn" data-act="ex-swap" data-i="${i}" aria-label="Remplacer par un autre exercice du même muscle">↻</button>`}
         <button class="icon-btn" data-act="ex-menu" data-i="${i}" aria-label="Options de l'exercice">⋯</button></div>
       <button class="coach ${c.deload?"deload":""}" data-act="coach-why" data-i="${i}">
@@ -2989,11 +3111,11 @@ function exListHTML(sel, mode){
     .sort((a,b) => a.name.localeCompare(b.name,"fr"));
   if(!list.length) return `<div class="item"><span class="t muted">${only ? "Aucun exercice pratiqué ne correspond à ce filtre." : "Aucun exercice ne correspond. Créez-le avec le bouton ci-dessous."}</span></div>`;
   return list.map(e => {
-    if(only) return `<button class="item ${e.id===progEx?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(e.muscle)} · ${only[e.id]} séance${only[e.id]>1?"s":""}</span></span>${e.id===progEx?'<span class="tick">✓</span>':'<span class="chev">›</span>'}</button>`;
+    if(only) return `<button class="item ${e.id===progEx?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(primOf(e))} · ${only[e.id]} séance${only[e.id]>1?"s":""}</span></span>${e.id===progEx?'<span class="tick">✓</span>':'<span class="chev">›</span>'}</button>`;
     if(mode==="pick"){ const on = sel.has(e.id);
-      return `<button class="item ${on?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(e.muscle)} · ${esc(e.equip)}</span></span><span class="tick">${on?"✓":""}</span></button>`; }
+      return `<button class="item ${on?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(primOf(e))} · ${esc(e.equip)}</span></span><span class="tick">${on?"✓":""}</span></button>`; }
     const h = exHistory(e.id), best = h.length ? Math.max(...h.map(x=>x.best)) : 0;
-    return `<button class="item" data-act="ex-info" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(e.muscle)} · ${esc(e.equip)}${h.length?` · ${h.length} séance${h.length>1?"s":""}`:""}</span></span>${best?`<span class="small num muted">${fmtN(best)} kg</span>`:""}<span class="chev">›</span></button>`;
+    return `<button class="item" data-act="ex-info" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(primOf(e))} · ${esc(e.equip)}${h.length?` · ${h.length} séance${h.length>1?"s":""}`:""}</span></span>${best?`<span class="small num muted">${fmtN(best)} kg</span>`:""}<span class="chev">›</span></button>`;
   }).join("");
 }
 function chipsHTML(){
@@ -3187,7 +3309,7 @@ const ACT = {
   "gy-more": () => { const c = creatureState();
     openSheet(`<h3>Mon Gymon</h3>
       <p class="muted" style="margin:-4px 0 0">${c.lastMeal ? `Dernier repas : ${fmtVol(c.lastMeal.vol)} soulevés.` : "Il attend son premier repas."} Il a partagé ${c.fidelity} séance${c.fidelity>1?"s":""} avec toi.</p>
-      <div class="vol">${MUSCLES.map(m => { const l = muscleLevel(c, m); return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${Math.max(3, Math.min(100, l/4.5*100))}%;${mc(m)}"></i></div><b class="num">${Math.round(l/4.5*10)}/10</b></div>`; }).join("")}</div>
+      <div class="vol">${MUSCLES.map(g => `<p class="vol-g">${g}</p>` + FINE[g].map(m => { const l = muscleLevel(c, m); return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${Math.max(3, Math.min(100, l/4.5*100))}%;${mc(g)}"></i></div><b class="num">${Math.round(l/4.5*10)}/10</b></div>`; }).join("")).join("")}</div>
       <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) grossit, et fond s'il est oublié plus de 14 jours. Le volume soulevé le nourrit, ta fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
       <button class="btn" data-act="close">Fermer</button>`); },
   "gy-flip": (b, e) => { e.stopPropagation(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; },
@@ -3297,13 +3419,13 @@ const ACT = {
     const back = picker;
     openSheet(`<h3>Nouvel exercice</h3>
       <label class="field">Nom<input id="nx-name" placeholder="Ex. Développé couché à la Smith"></label>
-      <label class="field">Groupe musculaire<select id="nx-m">${MUSCLES.map(m=>`<option>${m}</option>`).join("")}</select></label>
+      <label class="field">Muscle principal<select id="nx-m">${MUSCLES.map(g => `<optgroup label="${g}">${FINE[g].map(m => `<option>${m}</option>`).join("")}</optgroup>`).join("")}</select></label>
       <label class="field">Matériel<select id="nx-e">${["Barre","Haltères","Poulie","Machine","Poids du corps","Autre"].map(m=>`<option>${m}</option>`).join("")}</select></label>
       <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Annuler</button><button class="btn primary" style="flex:1" data-act="nx-save">Créer</button></div>`);
     ACT["nx-save"] = () => {
       const name = document.getElementById("nx-name").value.trim();
       if(!name){ toast("Indiquez le nom de l'exercice"); return; }
-      const e = {id:uidGen("x"), name, muscle:document.getElementById("nx-m").value, equip:document.getElementById("nx-e").value};
+      const pm = document.getElementById("nx-m").value, e = {id:uidGen("x"), name, muscle:GROUP_OF[pm] || pm, prim:pm, equip:document.getElementById("nx-e").value};
       S.profile.custom.push(e); touchProfile();
       if(back){ back.sel.add(e.id); openPicker(back.onDone, back.only); picker.sel = back.sel; refreshPicker(); }
       else { closeSheet(); render(); }
@@ -3332,7 +3454,9 @@ const ACT = {
     const best = h.length ? h.reduce((a,x) => x.best>a.best ? x : a) : null;
     openSheet(`${e.img ? `<div class="demo"><img src="img/${e.id}-0.jpg" alt="Position de départ"><img src="img/${e.id}-1.jpg" alt="Position d'arrivée"><span class="cap">Départ ⇄ arrivée</span></div>` : ""}
       <h3>${esc(e.name)}</h3>
-      <p class="muted" style="margin:-6px 0 0"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(e.muscle)} · ${esc(e.equip)}</p>
+      <p class="muted" style="margin:-6px 0 0"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(primOf(e))} · ${esc(e.equip)}</p>
+      ${(() => { const w = exWork(e), o = Object.keys(w).filter(m => m !== primOf(e)).sort((a,b) => w[b]-w[a]);
+        return o.length ? `<p class="small muted" style="margin:0">Travaille aussi : ${o.map(m => `${esc(m.toLowerCase())} ${Math.round(w[m]*100)} %`).join(", ")}</p>` : ""; })()}
       ${(() => { const c = coach(e.id), auto = !(S.profile.ranges||{})[e.id];
         return `<section class="card" style="display:flex;flex-direction:column;gap:8px">
           <div class="row"><b style="flex:1">Prochaine séance</b><span class="ctag">${esc(c.tag)}</span></div>
@@ -3384,8 +3508,11 @@ const ACT = {
   "ex-swap": b => { const a = A(), ex = a.exercises[+b.dataset.i], cur = exById(ex.exId);
     if(ex.sets.some(s => s.done && !s.warm)){ toast("Des séries sont déjà validées : ajoutez plutôt un autre exercice"); return; }
     const used = new Set(a.exercises.map(x => x.exId)); ex.tried = (ex.tried || []).concat(ex.exId);
-    let list = candidatesFor(cur.muscle, exStats()).filter(c => !used.has(c.e.id));
-    if(!list.length){ toast("Pas d'autre exercice pour ce muscle"); return; }
+    // Même muscle principal d'abord (quadriceps → quadriceps), sinon un exercice de la catégorie qui le travaille à 50 % au moins
+    const pm = primOf(cur), st = exStats();
+    let list = candidatesPrim(pm, st).filter(c => !used.has(c.e.id));
+    if(!list.length) list = candidatesFor(cur.muscle, st).filter(c => !used.has(c.e.id) && workPct(c.e, pm) >= .5).sort((a,b) => workPct(b.e, pm) - workPct(a.e, pm));
+    if(!list.length){ toast(`Pas d'autre exercice pour ce muscle (${pm.toLowerCase()})`); return; }
     let fresh = list.filter(c => !ex.tried.includes(c.e.id)); if(!fresh.length){ ex.tried = [ex.exId]; fresh = list; }   // tous essayés : on recommence le tour
     const comp = isCompound(cur), next = (fresh.filter(c => c.comp === comp)[0] || fresh[0]).e;
     ex.exId = next.id; ex.feel = 0; ex.wuForce = false; ex.sets = ex.sets.filter(s => !s.warm).map(s => ({...blankSet(), ...(s.rl ? {rl:1} : {}), ...(s.crit ? {crit:1} : {})}));   // le coup critique reste sur la même série
@@ -3486,7 +3613,7 @@ function cleanCreature(x){
   if(!x || typeof x !== "object" || !isTime(x.born)) return null;
   const n = (v, lo, hi, d) => typeof v === "number" && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d, now = Date.now();
   const N = CREATURE_CFG.stages.length, stage = Math.round(n(x.stage, 0, N - 1, 0));
-  const byMuscle = (o, lo, hi) => Object.fromEntries(MUSCLES.filter(m => o && typeof o[m] === "number" && isFinite(o[m])).map(m => [m, Math.min(hi, Math.max(lo, o[m]))]));
+  const byMuscle = (o, lo, hi) => Object.fromEntries([...new Set([...MUSC, ...MUSCLES])].filter(m => o && typeof o[m] === "number" && isFinite(o[m])).map(m => [m, Math.min(hi, Math.max(lo, o[m]))]));
   const ids = a => (Array.isArray(a) ? a : []).filter(safeId);
   const look = x.look && Number.isInteger(x.look.col) && x.look.col >= 0 && x.look.col < GYM_COLORS.length
     ? {col:x.look.col, shorts:Number.isInteger(x.look.shorts) && x.look.shorts >= 0 && x.look.shorts < GYM_SHORTS.length ? x.look.shorts : 0} : null;
@@ -3578,7 +3705,7 @@ function cleanImport(d){
   let skipped = 0; const keep = (ok, make) => { if(!ok){ skipped++; return null; } return make(); };
   const p = d.profile || {};
   const custom = (Array.isArray(p.custom) ? p.custom : []).map(e => keep(e && safeId(e.id) && typeof e.name==="string" && e.name.trim() && MUSCLES.includes(e.muscle),
-    () => ({id:e.id, name:e.name.trim(), muscle:e.muscle, equip:typeof e.equip==="string" ? e.equip : "Autre"}))).filter(Boolean);
+    () => ({id:e.id, name:e.name.trim(), muscle:e.muscle, ...(MUSC.includes(e.prim) && GROUP_OF[e.prim] === e.muscle ? {prim:e.prim} : {}), equip:typeof e.equip==="string" ? e.equip : "Autre"}))).filter(Boolean);
   const routines = (Array.isArray(p.routines) ? p.routines : []).map(r => keep(r && safeId(r.id) && typeof r.name==="string" && Array.isArray(r.items),
     () => ({id:r.id, name:r.name, items:r.items.filter(it => it && safeId(it.exId)).map(it => ({exId:it.exId, sets:Math.min(10, Math.max(1, Math.round(num(it.sets)) || 3))}))}))).filter(Boolean);
   const workouts = d.workouts.map(w => keep(w && safeId(w.id) && isTime(w.start) && Array.isArray(w.exercises), () => ({...w,

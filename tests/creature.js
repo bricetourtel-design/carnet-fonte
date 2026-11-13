@@ -65,7 +65,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(c.weight > 0.06, "le poids augmente", c.weight);
   ok(meal1 === 1, "message de repas dans le résumé de séance");
   const lv1 = await p.evaluate(() => creatureState().levels);
-  ok(Object.keys(lv1).every(m => m==="Pectoraux"), "séance pecs : seuls les pectoraux peuvent évoluer", lv1);
+  ok(Object.keys(lv1).every(m => ["Pectoraux","Triceps","Deltoïde avant"].includes(m)) && lv1.Pectoraux > lv1.Triceps, "séance pecs (développé) : pecs surtout, triceps et deltoïde avant au prorata, rien d'autre", lv1);
   ok((lv1.Pectoraux||0) <= 1, "au plus un niveau gagné par séance", lv1.Pectoraux);
   // Un exercice prévu mais sans série validée ne fait pas évoluer son muscle
   const planned = await p.evaluate(() => { const c = creatureState(), before = JSON.stringify(c.levels);
@@ -271,15 +271,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.click('[data-act="ba-ok"]');
   ok(await p.evaluate(() => !document.querySelector(".ba") && Date.now() - creatureState().ref.ts < 60000), "« Super, on continue » : nouveau point de départ");
   const meltTalk = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify([c.levels, c.lastWorked, c.peak]);
-    c.levels.Jambes = 3; c.peak = {...(c.peak||{}), Jambes:3}; c.lastWorked = {...(c.lastWorked||{}), Jambes:Date.now() - 25*864e5}; const L = gymonLines(c);
+    c.levels.Quadriceps = 3; c.peak = {...(c.peak||{}), Quadriceps:3}; c.lastWorked = {...(c.lastWorked||{}), Quadriceps:Date.now() - 25*864e5}; const L = gymonLines(c);
     [c.levels, c.lastWorked, c.peak] = JSON.parse(keep); return L; });
-  ok(/Mes jambes fondent/.test(meltTalk[0]), "bulle : « Mes jambes fondent » en priorité", meltTalk[0]);
+  ok(/Mes quadris fondent/.test(meltTalk[0]), "bulle : « Mes quadris fondent » en priorité", meltTalk[0]);
   const bubMelt = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify([c.levels, c.lastWorked, c.peak]);
-    c.levels.Jambes = 3; c.peak = {...(c.peak||{}), Jambes:3}; c.lastWorked = {...(c.lastWorked||{}), Jambes:Date.now() - 25*864e5}; gyTalk = 0; tab = "creature"; render();
+    c.levels.Quadriceps = 3; c.peak = {...(c.peak||{}), Quadriceps:3}; c.lastWorked = {...(c.lastWorked||{}), Quadriceps:Date.now() - 25*864e5}; gyTalk = 0; tab = "creature"; render();
     const txt = document.querySelector(".gy-bubble").textContent; [c.levels, c.lastWorked, c.peak] = JSON.parse(keep); render(); return txt; });
-  ok(/jambes fondent/.test(bubMelt), "la bulle affiche d'abord la fonte", bubMelt);
-  const talk = await p.evaluate(() => { const c = creatureState(); MUSCLES.forEach(m => c.levels[m] = 3); c.levels.Jambes = 0.5; return gymonLines(c); });
-  ok(talk.some(x => /jambes… on les oublie/.test(x)), "bulle : un muscle en retard est signalé (jambes)", talk);
+  ok(/quadris fondent/.test(bubMelt), "la bulle affiche d'abord la fonte", bubMelt);
+  const talk = await p.evaluate(() => { const c = creatureState(); MUSC.forEach(m => c.levels[m] = 3); c.levels.Mollets = 0.5; return gymonLines(c); });
+  ok(talk.some(x => /mollets ressemblent à des allumettes/.test(x)), "bulle : un muscle en retard est signalé (mollets)", talk);
   const bub1 = await p.evaluate(() => { render(); return document.querySelector(".gy-bubble").textContent; });
   await p.click(".gy-bubble"); const bub2 = await p.evaluate(() => document.querySelector(".gy-bubble").textContent);
   ok(bub1 && bub2 && bub1 !== bub2, "toucher la bulle : il dit autre chose", [bub1, bub2]);
@@ -298,20 +298,20 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.click('[data-act="gy-flip"]');
   const backV = await p.evaluate(() => ({lbl:document.querySelector(".gy-stage .creature").getAttribute("aria-label"), btn:document.querySelector('[data-act="gy-flip"]').textContent, sheet:!!document.querySelector(".sheet.open, .sheet[open]")}));
   ok(/vu de dos/.test(backV.lbl) && /Face/.test(backV.btn), "bouton Dos : le Gymon se retourne", backV);
-  const glutes = await p.evaluate(() => { const c = creatureState(); const g = lv => { c.levels.Jambes = lv; return creatureSVG(c, false, true).match(/scale\(([\d.]+) [\d.]+\) translate\(-120 -200\)/)[1]; }; return [g(0), g(4.5)]; });
-  ok(+glutes[1] > +glutes[0], "de dos, les fessiers grossissent avec les jambes", glutes);
+  const glutes = await p.evaluate(() => { const c = creatureState(); const g = lv => { c.levels.Fessiers = lv; return creatureSVG(c, false, true).match(/scale\(([\d.]+) [\d.]+\) translate\(-120 -200\)/)[1]; }; return [g(0), g(4.5)]; });
+  ok(+glutes[1] > +glutes[0], "de dos, les fessiers suivent leur propre niveau", glutes);
   await p.click('[data-act="gy-flip"]');
   ok(!/vu de dos/.test(await p.evaluate(() => document.querySelector(".gy-stage .creature").getAttribute("aria-label"))), "bouton Face : retour de face");
 
   // Sauvegarde : le Gymon est restauré seulement s'il est plus avancé que celui du téléphone
   const rs = await p.evaluate(async () => {
     const saved = JSON.stringify(S.profile.creature), D = 86400000, now = Date.now();
-    const adv = {v:4, born:now - 40*D, fidelity:25, stage:7, weight:12, levels:{Pectoraux:3.2, Jambes:9}, look:{col:18, shorts:2}, name:"Rocky<b>", vit:90, last:now - D,
-      at:CREATURE_CFG.stages.map((_, i) => i * 3), fed:["w1", "bad id!"], hack:"<script>", mv:2, graves:[{stage:2, fidelity:5, died:now - 30*D}]};
+    const adv = {v:4, born:now - 40*D, fidelity:25, stage:7, weight:12, levels:{Pectoraux:3.2, Quadriceps:9}, look:{col:18, shorts:2}, name:"Rocky<b>", vit:90, last:now - D,
+      at:CREATURE_CFG.stages.map((_, i) => i * 3), fed:["w1", "bad id!"], hack:"<script>", mv:3, graves:[{stage:2, fidelity:5, died:now - 30*D}]};
     const backup = s => JSON.stringify({app:"carnet-fonte", profile:{creature:s}, workouts:[]});
     S.profile.creature = null; creatureState();   // téléphone neuf : un œuf
     await importText(backup(adv)); const c1 = S.profile.creature;
-    const r1 = {stage:c1.stage, fid:c1.fidelity, name:c1.name, col:c1.look.col, jambes:c1.levels.Jambes, hack:"hack" in c1, fed:c1.fed, graves:c1.graves.length};
+    const r1 = {stage:c1.stage, fid:c1.fidelity, name:c1.name, col:c1.look.col, jambes:c1.levels.Quadriceps, hack:"hack" in c1, fed:c1.fed, graves:c1.graves.length};
     c1.fidelity = 40; c1.stage = 9;   // le téléphone est plus avancé : la sauvegarde ne le remplace pas
     await importText(backup(adv)); const r2 = {fid:S.profile.creature.fidelity};
     S.profile.creature.fidelity = 10; S.profile.creature.stage = 4;   // moins avancé : remplacé, l'ancien part dans les souvenirs
@@ -325,6 +325,25 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(rs.r2.fid === 40, "sauvegarde : un Gymon du téléphone plus avancé est gardé", rs.r2);
   ok(rs.r3.fid === 25 && rs.r3.graves === 2 && rs.r3.last === 10, "sauvegarde : le Gymon remplacé part dans les souvenirs", rs.r3);
   ok(rs.r4.stage === 12 && rs.r4.look === undefined && rs.r4.biceps === 0 && rs.bad === null, "sauvegarde : valeurs hors bornes ramenées, Gymon sans date de naissance refusé", rs);
+
+  // 17 muscles (13 nov. 2026) : croissance au prorata, niveaux recalculés en rejouant l'historique (décision du propriétaire)
+  const g17 = await p.evaluate(() => {
+    const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts), D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true});
+    const t = {levels:{}, lastWorked:{}, peak:{}};
+    growMuscles(t, {id:"q", start:n, end:n, prs:[], exercises:[{exId:"squat", sets:[set(100,5), set(100,5), set(100,5), set(100,5)]}]});
+    const sq = t.levels;
+    // Gymon d'avant : niveaux par catégorie (Jambes 3) ; il n'a mangé que des squats
+    S.workouts = [1,2,3].map(i => ({id:"m"+i, name:"x", start:n - i*2*D, end:n - i*2*D, prs:[], exercises:[{exId:"squat", sets:[set(100,5), set(100,5), set(100,5)]}]}));
+    Object.assign(c, {mv:2, fed:["m1","m2","m3"], levels:{Jambes:3, Pectoraux:2}, lastWorked:{Jambes:n}, peak:{Jambes:3}, ref:{ts:n - 20*D, stage:c.stage, weight:c.weight, levels:{Jambes:2}}});
+    creatureFixLevels(); const mig = {mv:c.mv, keys:Object.keys(c.levels).sort(), q:c.levels.Quadriceps, m:c.levels.Mollets || 0, refQ:"Quadriceps" in c.ref.levels};
+    tab = "creature"; render(); const bars = document.querySelectorAll(".gy-lv i").length;
+    ACT["gy-more"](); const sheet = document.getElementById("sheet-in").textContent; closeSheet();
+    const svgOk = /Mollets|Quadriceps|creature/.test(creatureSVG(c, false, true));
+    S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {sq, mig, bars, sheet:/Quadriceps/.test(sheet) && /Ischios/.test(sheet) && /JAMBES|Jambes/.test(sheet), svgOk}; });
+  ok(g17.sq.Quadriceps > g17.sq.Fessiers && g17.sq.Fessiers > g17.sq.Adducteurs && !g17.sq.Mollets && !g17.sq.Jambes, "squat : quadriceps > fessiers > adducteurs, mollets intacts", g17.sq);
+  ok(g17.mig.mv === 3 && !g17.mig.keys.includes("Jambes") && g17.mig.q > 0 && g17.mig.m === 0 && g17.mig.refQ, "mise à jour : niveaux recalculés par muscle depuis l'historique (mollets jamais travaillés : 0), avant/après remis à zéro", g17.mig);
+  ok(g17.bars === 7 && g17.sheet && g17.svgOk, "page Gymon : case « Muscles » par catégorie, fiche détaillée par muscle", g17);
 
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {

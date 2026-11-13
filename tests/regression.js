@@ -47,8 +47,12 @@ async function snapshot(page){
     out.history = ["dc-barre","squat","tractions","curl-halteres"].map(id => exHistory(id).map(x => [Math.round(x.best*100)/100, x.maxW, x.vol, x.reps]));
     out.volumes = S.workouts.map(w => [w.id, wVolume(w), wSetCount(w)]);
     out.coach = ["dc-barre","squat","tractions","curl-halteres","rowing-barre","elev-lat","ext-poulie","leg-press-inexistant"].map(id => { const c = coach(id); return [id, c.w, c.r, c.sets, c.tag, c.lo, c.hi, c.rest]; });
-    const st = strengthByMuscle(); out.strength = MUSCLES.map(m => [m, st.res[m].score===null ? null : Math.round(st.res[m].score*1000)/1000, st.res[m].tag||null]);
+    const st = strengthByMuscle(); out.strength = MUSCLES.map(m => [m, st.resG[m].score===null ? null : Math.round(st.resG[m].score*1000)/1000, st.resG[m].tag||null]);
     out.recovery = MUSCLES.map(m => [m, Math.round(recovery(m).pct*1000)/1000]);
+    // Par muscle (17 muscles, 13 nov. 2026) : répartition du travail, force et récupération
+    out.work = Object.fromEntries(EX.map(e => [e.id, exWork(e)]));
+    out.strengthFine = MUSC.map(m => [m, st.res[m].score===null ? null : Math.round(st.res[m].score*1000)/1000, st.res[m].tag||null]);
+    out.recoveryFine = MUSC.map(m => [m, Math.round(recoveryFine(m).pct*1000)/1000]);
     const d = newDraft(4); d.days.forEach(x => x.min = 60);
     const g = generatePlan(d); out.plan = g.days.map(x => [x.dow, x.name, x.items.map(i => [i.exId, i.sets])]); out.planWeekly = g.weekly;
     out.estMinutes = Math.round(estMinutes([{exId:"dc-barre",sets:3},{exId:"curl-barre",sets:3}])*100)/100;
