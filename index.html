@@ -655,7 +655,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 g";
+const APP_VERSION = "2026-11-13 h";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1461,7 +1461,7 @@ function viewStrength(){
     ${bodySVG(res, sel)}
     <div class="legend"><span><i style="background:var(--ok)"></i>Point fort</span><span><i style="background:var(--accent)"></i>Dans votre moyenne</span><span><i style="background:var(--danger)"></i>Point faible</span></div>
     <div class="list">${rows.map(m => { const r = res[m], lv = LEVELS[Math.min(4, Math.floor(r.score))] || LEVELS[0];
-      return `<button class="item" data-act="body-m" data-m="${m}"><span class="t"><b><span class="mdot" style="${mcF(m)}"></span>${m}
+      return `<button class="item" data-act="body-m" data-m="${m}"><span class="t"><b><span class="mdot" style="--mc:${r.tag==="fort" ? "var(--ok)" : r.tag==="faible" ? "var(--danger)" : "var(--accent)"}"></span>${m}
         ${r.tag==="fort"?'<span class="tagx ok">Point fort</span>':r.tag==="faible"?'<span class="tagx bad">Point faible</span>':""}</b>
         <span>${lv}${r.trend!==null?` · ${r.trend>=0?"+":""}${fmtN(r.trend*100,0)} % sur 6 semaines`:""}</span></span>
         <span class="lvl">${"●".repeat(Math.max(1,Math.min(5,Math.ceil(r.score))))}<span class="muted">${"●".repeat(5-Math.max(1,Math.min(5,Math.ceil(r.score))))}</span></span></button>
