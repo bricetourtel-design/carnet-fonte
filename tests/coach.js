@@ -55,6 +55,19 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(wu.btn && wu.forced === 1, "bouton « + Échauffement » sur un exercice sans échauffement (curls) : ajoute une série légère", wu);
   ok(wu.warm.join() === "2,0,0,2", "échauffement : 2 séries avant le 1er exercice lourd de chaque muscle (développé, squat), aucune sur le 2e exercice pecs ni sur les curls", wu.warm);
   ok(wu.ph[0][0] === "45" && wu.ph[0][1] === "8" && wu.ph[1][0] === "65" && wu.ph[1][1] === "3", "échauffement proposé : ~50 % × 8 puis ~75 % × 3 de la charge de travail (87,5 kg)", wu.ph);
+  // Retirer une série d'échauffement (13 nov. 2026) : la plus légère part, la suivante garde sa charge
+  const dw = await p.evaluate(() => { const D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true});
+    S.workouts = [{id:"hw", name:"x", start:n-3*D, end:n-3*D, exercises:[{exId:"dc-barre", feel:3, sets:[set(80,8), set(80,8)]}]}];
+    S.profile.active = null; startWorkout("W", [{exId:"dc-barre", sets:[blankSet(), blankSet(), blankSet()]}]); render();
+    const n0 = A().exercises[0].sets.filter(s => s.warm).length; document.querySelector('[data-act="del-warm"][data-i="0"]').click();
+    const n1 = A().exercises[0].sets.filter(s => s.warm).length, ph = document.querySelector('.ex[data-i="0"] tr.set.warm [data-f="w"]').placeholder,
+      hint = document.querySelector('.ex[data-i="0"] .wu-hint').textContent, work = A().exercises[0].sets.filter(s => !s.warm).length;
+    document.querySelector('[data-act="del-warm"][data-i="0"]').click();
+    const n2 = A().exercises[0].sets.filter(s => s.warm).length, btn = !!document.querySelector('[data-act="del-warm"][data-i="0"]');
+    S.profile.active = null; S.workouts = []; return {n0, n1, n2, ph, hint, work, btn}; });
+  ok(dw.n0 === 2 && dw.n1 === 1 && dw.ph === "65" && /65 kg × 3/.test(dw.hint) && !/45 kg/.test(dw.hint) && dw.work === 3, "« − Échauffement » retire la série la plus légère ; la suivante garde sa charge, les séries de travail ne bougent pas", dw);
+  ok(dw.n2 === 0 && !dw.btn, "on peut retirer tous les échauffements ; le bouton disparaît ensuite", dw);
+
   // Échauffement par zone pour les jambes (13 nov. 2026) : quadriceps, ischios, fessiers, mollets se préparent séparément
   const lz = await p.evaluate(() => { const D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true});
     S.workouts = [{id:"hl", name:"x", start:n-3*D, end:n-3*D, exercises:[
