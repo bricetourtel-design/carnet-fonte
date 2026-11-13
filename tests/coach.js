@@ -55,6 +55,27 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(wu.btn && wu.forced === 1, "bouton « + Échauffement » sur un exercice sans échauffement (curls) : ajoute une série légère", wu);
   ok(wu.warm.join() === "2,0,0,2", "échauffement : 2 séries avant le 1er exercice lourd de chaque muscle (développé, squat), aucune sur le 2e exercice pecs ni sur les curls", wu.warm);
   ok(wu.ph[0][0] === "45" && wu.ph[0][1] === "8" && wu.ph[1][0] === "65" && wu.ph[1][1] === "3", "échauffement proposé : ~50 % × 8 puis ~75 % × 3 de la charge de travail (87,5 kg)", wu.ph);
+  // Échauffement par zone pour les jambes (13 nov. 2026) : quadriceps, ischios, fessiers, mollets se préparent séparément
+  const lz = await p.evaluate(() => { const D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true});
+    S.workouts = [{id:"hl", name:"x", start:n-3*D, end:n-3*D, exercises:[
+      {exId:"hip-thrust", feel:3, sets:[set(100,8)]}, {exId:"leg-curl", feel:3, sets:[set(50,10)]}, {exId:"squat", feel:3, sets:[set(100,6)]},
+      {exId:"presse", feel:3, sets:[set(180,10)]}, {exId:"sdt-roumain", feel:3, sets:[set(90,8)]}, {exId:"leg-ext", feel:3, sets:[set(60,12)]}, {exId:"mollets", feel:3, sets:[set(80,12)]}]}];
+    const run = ids => { S.profile.active = null; startWorkout("L", ids.map(id => ({exId:id, sets:[blankSet(), blankSet(), blankSet()]}))); render();
+      const r = S.profile.active.exercises.map(x => x.sets.filter(s => s.warm).length), ph = [...document.querySelectorAll('.ex[data-i="1"] tr.set.warm [data-f="w"]')].map(i => i.placeholder + "×" + i.closest("tr").querySelector('[data-f="r"]').placeholder);
+      S.profile.active = null; return {r:r.join(), ph}; };
+    const out = {a:run(["hip-thrust","leg-curl"]), b:run(["squat","presse","leg-curl","mollets"]), c:run(["squat","sdt-roumain","hip-thrust"]), d:run(["leg-ext","squat"])};
+    // ajouter un exercice en cours de séance tient compte des zones déjà faites
+    S.profile.active = null; startWorkout("M", [{exId:"squat", sets:[blankSet()]}]);
+    const added = addWarmups([{exId:"leg-curl", sets:[blankSet()]}, {exId:"presse", sets:[blankSet()]}], S.profile.active.start, S.profile.active.exercises).map(x => x.sets.filter(s => s.warm).length).join();
+    S.workouts.push({id:"hp", name:"x", start:n-2*D, end:n-2*D, exercises:[{exId:"dc-barre", feel:3, sets:[set(80,8)]}, {exId:"di-halteres", feel:3, sets:[set(26,9)]}]});
+    const pec = run(["dc-barre","di-halteres"]).r;
+    S.profile.active = null; S.workouts = []; return {...out, added, pec}; });
+  ok(/^[12],1$/.test(lz.a.r) && lz.a.ph.length === 1 && /×12/.test(lz.a.ph[0]), "jambes : hip thrust puis leg curl → les ischios ont aussi leur série légère (~50 % × 12)", lz.a);
+  ok(/^[12],0,1,1$/.test(lz.b.r), "jambes : squat échauffé, presse non (quadriceps déjà chauds), leg curl et mollets une série légère chacun", lz.b);
+  ok(/^[12],1,0$/.test(lz.c.r) && /×5/.test(lz.c.ph[0] || ""), "jambes : soulevé de terre roumain après squat → une série à ~60 % × 5 ; hip thrust non (fessiers déjà chauds)", lz.c);
+  ok(/^1,[12]$/.test(lz.d.r), "jambes : leg extension en premier → une série légère ; le squat garde sa série d'approche (la leg extension ne prépare pas une charge lourde)", lz.d);
+  ok(/^[12],0$/.test(lz.pec), "pecs inchangés : le 2e exercice pecs après un développé n'a pas d'échauffement", lz.pec);
+  ok(lz.added === "1,0", "exercices ajoutés en séance : zones déjà faites prises en compte", lz.added);
   // Fatigue liée à la place dans la séance, calibrée sur l'historique de l'utilisateur
   const F = await p.evaluate(() => { const D = 864e5, n = Date.now(), set = (w, r, k) => Array.from({length:k}, () => ({w:String(w), r:String(r), done:true}));
     const mk = (d, exs) => ({id:"f"+d+Math.random(), name:"x", start:n - d*D, end:n - d*D, exercises:exs.map(([id, w, r, k]) => ({exId:id, feel:3, sets:set(w, r, k)}))});
