@@ -198,6 +198,16 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(MU.wf.q >= 3 && MU.wf.f > 0, "volume hebdo par muscle, travail indirect au prorata (fessiers comptés via squat, presse…)", MU.wf);
   ok(MU.str.q.join() === "squat" && MU.str.i.join() === "leg-curl" && MU.str.g, "force par muscle : chaque exercice compte pour son muscle principal, moyenne par catégorie", MU.str);
   ok(MU.perso === "Mollets", "exercice créé : le muscle principal choisi est respecté", MU.perso);
+  // Points forts et faibles : la silhouette prend la couleur de chaque muscle, comme la liste (13 nov. 2026)
+  const BODY = await p.evaluate(() => {
+    const D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true}), saved = {w:S.workouts, bw:S.profile.bw};
+    S.profile.bw = 80; S.workouts = [{id:"b1", name:"x", start:n-2*D, end:n-2*D, exercises:[{exId:"squat", feel:3, sets:[set(170,5)]}, {exId:"hip-thrust", feel:3, sets:[set(40,8)]}, {exId:"dc-barre", feel:3, sets:[set(100,5)]}, {exId:"leg-curl", feel:3, sets:[set(45,10)]}]}];
+    const {res} = strengthByMuscle(), svg = new DOMParser().parseFromString(bodySVG(res, null), "image/svg+xml");
+    const want = t => t === "fort" ? "var(--ok)" : t === "faible" ? "var(--danger)" : "var(--accent)";
+    const rows = MUSC.filter(m => res[m].score !== null).map(m => [m, res[m].tag, [...svg.querySelectorAll(`g[data-m="${m}"]`)].map(g => g.getAttribute("fill"))]);
+    S.workouts = saved.w; S.profile.bw = saved.bw;
+    return {rows, glute:res.Fessiers.tag, quad:res.Quadriceps.tag, ok:rows.every(([m, t, f]) => f.length && f.every(x => x === want(t)))}; });
+  ok(BODY.glute === "faible" && BODY.quad === "fort" && BODY.ok, "points forts et faibles : chaque muscle de la liste a la même couleur sur la silhouette (fessiers faibles = rouges, quadriceps forts = verts)", BODY.rows);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);

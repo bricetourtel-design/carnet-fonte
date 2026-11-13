@@ -655,7 +655,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 f";
+const APP_VERSION = "2026-11-13 g";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1422,23 +1422,28 @@ function strengthByMuscle(){
     resG[g].score = l.reduce((t,r) => t + r.score, 0) / l.length; tag(resG[g]); });
   return {bw, res, resG, avg};
 }
+// Silhouette par muscle (13 nov. 2026) : chaque zone a la couleur de son muscle, comme la liste (fessiers faibles = fessiers rouges).
+// sel : un muscle, ou une catégorie (toutes ses zones en surbrillance)
 function bodySVG(res, sel){
   const col = m => { const r = res[m]; if(!r || r.score===null) return "var(--surface-2)"; return r.tag==="fort" ? "var(--ok)" : r.tag==="faible" ? "var(--danger)" : "var(--accent)"; };
-  const sh = (m, el) => `<g data-act="body-m" data-m="${m}" class="bm ${sel===m?"sel":""}" fill="${col(m)}">${el}</g>`;
+  const on = m => sel && (sel===m || ((FINE[sel] || []).length > 1 && FINE[sel].includes(m)));
+  const sh = (m, el) => `<g data-act="body-m" data-m="${m}" class="bm ${on(m)?"sel":""}" fill="${col(m)}"><title>${m}</title>${el}</g>`;
   const base = `fill="var(--fill)"`;
   const fig = (x0, front) => `<g transform="translate(${x0},0)">
     <circle cx="50" cy="16" r="10" ${base}/><rect x="45" y="25" width="10" height="7" ${base}/>
     <path d="M30 34 Q50 30 70 34 L68 92 Q50 98 32 92 Z" ${base}/>
     <ellipse cx="22" cy="86" rx="5" ry="12" ${base}/><ellipse cx="78" cy="86" rx="5" ry="12" ${base}/>
     <path d="M33 92 Q50 100 67 92 L66 104 Q50 110 34 104 Z" ${base}/>
-    ${sh("Épaules", `<circle cx="29" cy="40" r="8"/><circle cx="71" cy="40" r="8"/>`)}
+    ${front ? sh("Deltoïde avant", `<circle cx="29" cy="40" r="8"/><circle cx="71" cy="40" r="8"/>`) : sh("Deltoïde arrière", `<circle cx="29" cy="40" r="8"/><circle cx="71" cy="40" r="8"/>`)}
     ${front ? sh("Pectoraux", `<path d="M35 44 Q42 40 49 44 L49 58 Q41 61 35 56 Z"/><path d="M65 44 Q58 40 51 44 L51 58 Q59 61 65 56 Z"/>`)
-            : sh("Dos", `<path d="M38 34 Q50 31 62 34 L58 46 L42 46 Z"/><path d="M36 48 L49 48 L49 80 Q41 78 38 70 Z"/><path d="M64 48 L51 48 L51 80 Q59 78 62 70 Z"/>`)}
+            : sh("Haut du dos", `<path d="M38 34 Q50 31 62 34 L58 46 L42 46 Z"/>`) + sh("Grand dorsal", `<path d="M36 48 L49 48 L49 76 Q41 74 38 66 Z"/><path d="M64 48 L51 48 L51 76 Q59 74 62 66 Z"/>`)
+              + sh("Lombaires", `<path d="M43 79 L57 79 L56 90 Q50 92 44 90 Z"/>`)}
     ${front ? sh("Biceps", `<ellipse cx="24" cy="60" rx="5" ry="11"/><ellipse cx="76" cy="60" rx="5" ry="11"/>`)
             : sh("Triceps", `<ellipse cx="24" cy="60" rx="5" ry="11"/><ellipse cx="76" cy="60" rx="5" ry="11"/>`)}
     ${front ? sh("Abdos", `<rect x="43" y="62" width="14" height="28" rx="4"/>`) : ""}
-    ${sh("Jambes", front ? `<ellipse cx="42" cy="124" rx="8" ry="20"/><ellipse cx="58" cy="124" rx="8" ry="20"/><ellipse cx="42" cy="166" rx="5.5" ry="15"/><ellipse cx="58" cy="166" rx="5.5" ry="15"/>`
-      : `<ellipse cx="42" cy="104" rx="8" ry="8"/><ellipse cx="58" cy="104" rx="8" ry="8"/><ellipse cx="42" cy="132" rx="7.5" ry="16"/><ellipse cx="58" cy="132" rx="7.5" ry="16"/><ellipse cx="42" cy="168" rx="5.5" ry="14"/><ellipse cx="58" cy="168" rx="5.5" ry="14"/>`)}
+    ${front ? sh("Quadriceps", `<ellipse cx="42" cy="124" rx="8" ry="20"/><ellipse cx="58" cy="124" rx="8" ry="20"/>`) + sh("Mollets", `<ellipse cx="42" cy="166" rx="5.5" ry="15"/><ellipse cx="58" cy="166" rx="5.5" ry="15"/>`)
+      : sh("Fessiers", `<ellipse cx="42" cy="104" rx="8" ry="8"/><ellipse cx="58" cy="104" rx="8" ry="8"/>`) + sh("Ischios", `<ellipse cx="42" cy="132" rx="7.5" ry="16"/><ellipse cx="58" cy="132" rx="7.5" ry="16"/>`)
+        + sh("Mollets", `<ellipse cx="42" cy="168" rx="5.5" ry="14"/><ellipse cx="58" cy="168" rx="5.5" ry="14"/>`)}
     <text x="50" y="198" text-anchor="middle">${front?"Face":"Dos"}</text></g>`;
   return `<svg class="body" viewBox="0 0 210 205" role="img" aria-label="Points forts et faibles par muscle">${fig(0,true)}${fig(110,false)}</svg>`;
 }
@@ -1453,7 +1458,7 @@ function viewStrength(){
   const open = m => sel===m || (FINE[sel] && FINE[sel].length > 1 && FINE[sel].includes(m));   // toucher « Jambes » sur la silhouette ouvre ses muscles
   return `<section class="card" style="display:flex;flex-direction:column;gap:10px">
     <div class="row"><b style="flex:1">Points forts et points faibles</b><span class="small muted">${fmtN(bw)} kg</span></div>
-    ${bodySVG(resG, sel && (GROUP_OF[sel] || sel))}
+    ${bodySVG(res, sel)}
     <div class="legend"><span><i style="background:var(--ok)"></i>Point fort</span><span><i style="background:var(--accent)"></i>Dans votre moyenne</span><span><i style="background:var(--danger)"></i>Point faible</span></div>
     <div class="list">${rows.map(m => { const r = res[m], lv = LEVELS[Math.min(4, Math.floor(r.score))] || LEVELS[0];
       return `<button class="item" data-act="body-m" data-m="${m}"><span class="t"><b><span class="mdot" style="${mcF(m)}"></span>${m}
@@ -2508,7 +2513,7 @@ const mk = {
   today: `<div class="mk"><div><span class="ctag">Aujourd'hui</span> <span class="ctag soft">Changée</span></div>
     <div class="alert warn">Prévu : Épaules + Bras, épaules à 40 %. Plus adaptée : <b>Jambes</b> (100 %).</div>
     <div class="mk-steps"><span class="tagx ok">point faible</span><span>en tête de séance</span></div></div>`,
-  progress: () => { const r = {}; MUSCLES.forEach(m => r[m] = {score:2.5, tag:"moyen"}); r.Pectoraux = {score:3.5, tag:"fort"}; r["Épaules"] = {score:3.4, tag:"fort"}; r.Dos = {score:1.8, tag:"faible"}; r.Jambes = {score:1.9, tag:"faible"};
+  progress: () => { const r = {}; MUSC.forEach(m => r[m] = {score:2.5, tag:"moyen"}); r.Pectoraux = {score:3.5, tag:"fort"}; r["Deltoïde avant"] = r["Deltoïde arrière"] = {score:3.4, tag:"fort"}; ["Grand dorsal","Haut du dos"].forEach(m => r[m] = {score:1.8, tag:"faible"}); ["Ischios","Mollets"].forEach(m => r[m] = {score:1.9, tag:"faible"});
     return `<div class="mk mk-center">${bodySVG(r, null)}</div>`; },
   idea: `<div class="mk mk-center"><span class="idea-btn mk-big"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg></span>
     <div class="chips wrapc" style="justify-content:center"><span class="chip">💡 Une idée</span><span class="chip">🧩 Il manque…</span><span class="chip">🐞 Un bug</span></div></div>`
