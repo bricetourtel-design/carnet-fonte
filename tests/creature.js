@@ -329,25 +329,26 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
     const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;
-    S.profile.active = null; startWorkout("G", [{exId:"squat", sets:[blankSet(), blankSet(), blankSet(), blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm); render();
-    const row = j => document.querySelector(`tr[data-i="0"][data-j="${j}"]`), val = (j, w, r) => { const a = A().exercises[0].sets[j]; a.w = w; a.r = r; render(); ACT.check(row(j).querySelector(".check")); };
     const r0 = CRIT.roll; CRIT.roll = () => true;   // les dés tombent toujours sur « critique »
+    S.profile.active = null; startWorkout("G", [{exId:"squat", sets:[blankSet(), blankSet(), blankSet(), blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm); render();
+    const start = document.getElementById("gy-pop").textContent, marks = A().exercises[0].sets.map(x => x.crit ? 1 : 0).join(""), hint = (document.querySelector(".crit-hint")||{}).textContent || "", crow = document.querySelectorAll("tr.set.crit").length;
+    const row = j => document.querySelector(`tr[data-i="0"][data-j="${j}"]`), val = (j, w, r) => { const a = A().exercises[0].sets[j]; a.w = w; a.r = r; render(); ACT.check(row(j).querySelector(".check")); };
     val(0, "60", "10"); const pop1 = document.getElementById("gy-pop"), p1 = pop1 && pop1.textContent, viewSame = !!document.getElementById("w-name");
     const pill1 = document.getElementById("meal").textContent;
-    val(1, "60", "10"); const crit2 = !!A().exercises[0].sets[1].crit;
-    val(2, "60", "10"); const crit3 = !!A().exercises[0].sets[2].crit, p3 = document.getElementById("gy-pop").textContent;
-    val(3, "60", "10"); const crit4 = !!A().exercises[0].sets[3].crit;
-    ACT.check(row(3).querySelector(".check")); const undo = !A().exercises[0].sets[3].crit;   // dévalider retire le critique
-    val(3, "60", "10"); const crit5 = A().exercises[0].sets.filter(x => x.crit).length;
-    const pill = document.getElementById("meal"), pct = pill.textContent, crow = !!document.querySelector("tr.set.crit");
+    val(1, "60", "10"); val(2, "60", "10"); const p3 = document.getElementById("gy-pop").textContent;
+    val(3, "60", "10"); ACT.check(row(3).querySelector(".check")); const keep = !!A().exercises[0].sets[3].crit;   // dévalider ne change pas le tirage
+    val(3, "60", "10");
+    document.querySelector('[data-act="add-set"][data-i="0"]').click(); const added = !A().exercises[0].sets[4].crit;   // « + Série » n'est pas tirée
+    document.querySelector('[data-act="del-set"][data-i="0"]').click();
+    const pct = document.getElementById("meal").textContent;
     CRIT.roll = r0;
     finishWorkout(); const w = S.workouts[S.workouts.length-1], lm = creatureState().lastMeal;
-    const res = {p1, viewSame, pill1, crit2, crit3, p3, crit4, undo, crit5, pct, crow, saved:w.exercises[0].sets.filter(x => x.crit).length, vol:wVolume(w), lm:{vol:lm.vol, bonus:lm.bonus}};
+    const res = {start, marks, hint, crow, p1, viewSame, pill1, p3, keep, added, pct, saved:w.exercises[0].sets.filter(x => x.crit).length, vol:wVolume(w), lm:{vol:lm.vol, bonus:lm.bonus}};
     celebClose(true); closeSheet(); S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
     return res; });
   ok(g1.p1 && g1.viewSame, "le Gymon réagit à chaque série validée, dans une bulle hors de la page", g1.p1);
-  ok(!g1.crit2 && g1.crit3 && /CRITIQUE/.test(g1.p3), "coup critique possible à partir de la 3e série de travail, annoncé", g1);
-  ok(g1.crit4 && g1.undo && g1.crit5 === 2 && g1.crow, "au plus 2 coups critiques par séance ; dévalider une série retire le sien", g1);
+  ok(g1.marks === "0011" && g1.crow === 2 && /Séries 3 et 4/.test(g1.hint) && /2 coups critiques/.test(g1.start), "coups critiques tirés dès le début (à partir de la 3e série, 2 au plus), marqués ⚡ et annoncés", g1);
+  ok(/CRITIQUE/.test(g1.p3) && g1.keep && g1.added, "série critique validée : annoncée ; dévalider ne la change pas ; « + Série » n'est jamais tirée", g1);
   ok(g1.saved === 2 && g1.vol === 2400 && g1.lm.vol === 2400 && g1.lm.bonus === 1200, "le critique nourrit double le Gymon sans changer le volume de la séance", g1);
   ok(/%/.test(g1.pct) && /%|kg|t/.test(g1.pill1), "pastille du repas du Gymon à côté du chrono", g1.pct);
   const g1b = await p.evaluate(() => {   // record battu en pleine séance : bulle spéciale, une fois par exercice

@@ -122,7 +122,11 @@ button.thumb{padding:0}
 .gy-pop.pop-crit{background:linear-gradient(90deg,#8B5CF6,#ff5fa2);color:#fff}
 .gy-pop.out{opacity:0;transition:opacity .3s}
 @keyframes popin{from{transform:translateX(-50%) translateY(20px) scale(.8);opacity:0}to{transform:translateX(-50%) translateY(0) scale(1);opacity:1}}
+.set.crit{background:linear-gradient(90deg,rgba(139,92,246,.22),rgba(255,95,162,.18))}
 .set.crit .check{box-shadow:0 0 0 2px #ff5fa2}
+.set.crit .setno{position:relative;background:linear-gradient(135deg,#8B5CF6,#ff5fa2);color:#fff}
+.set.crit .setno::after{content:"⚡";position:absolute;right:-7px;top:-8px;font-size:13px}
+.crit-hint{margin:0 0 6px;font-size:13px;font-weight:600;color:#ff5fa2}
 .ex{padding:12px 12px 10px}
 .ex-head{display:flex;align-items:center;gap:12px;padding:0 0 10px}
 .ex-head h3{margin:0;font-size:17px;font-weight:600;line-height:1.25}
@@ -645,7 +649,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 c";
+const APP_VERSION = "2026-11-13 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1605,8 +1609,16 @@ function creatureFixLevels(){
   c.mv = 2; c.v = Math.max(c.v || 0, 2); saveLocal();
 }
 /* Coup critique (décidé le 12 nov. 2026) : à partir de la 3e série de travail, 12 % de chances qu'une série nourrisse double le Gymon,
-   2 fois au plus par séance. Le volume de la séance (historique, records, coach) ne change pas : seul le repas du Gymon compte le bonus. */
+   2 fois au plus par séance. Le volume de la séance (historique, records, coach) ne change pas : seul le repas du Gymon compte le bonus.
+   Tiré dès le début de la séance (13 nov. 2026) : les séries critiques sont marquées ⚡ à l'avance, pour motiver. Chaque série n'est tirée
+   qu'une fois (rl) ; les séries ajoutées avec « + Série » ne sont pas tirées (pas de pêche au critique en retirant/ajoutant). */
 const CRIT = {chance:0.12, fromSet:3, max:2, roll:() => Math.random() < CRIT.chance};
+function critPlan(a){
+  const c = creatureState(); let k = 0, n = a.exercises.reduce((t, x) => t + x.sets.filter(y => y.crit).length, 0), got = 0;
+  a.exercises.forEach(ex => ex.sets.forEach(s => { if(s.warm) return; k++; if(s.rl) return; s.rl = 1;
+    if(!c.dead && k >= CRIT.fromSet && n < CRIT.max && CRIT.roll()){ s.crit = 1; n++; got++; } }));
+  return got;
+}
 function critVolume(w){ let v = 0; w.exercises.forEach(ex => workSets(ex).forEach(s => { if(s.crit) v += num(s.w)*num(s.r); })); return v; }
 // Appelée une fois à la validation d'une séance ; ne compte jamais deux fois la même séance
 function creatureFeed(w){
@@ -2419,6 +2431,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-13", t:"⚡ Coups critiques annoncés", x:"Les coups critiques sont tirés dès le début de la séance : les séries marquées ⚡ nourriront double votre Gymon. À vous de ne pas les rater !"},
   {d:"2026-11-13", t:"➖ Retirer un échauffement", x:"Pas besoin d'une série d'échauffement ? Touchez « − Échauffement » sous l'exercice : la plus légère est retirée, vos séries de travail ne bougent pas."},
   {d:"2026-11-13", t:"🔥 Échauffement par zone", x:"Aux jambes, chaque zone a son échauffement : après un hip thrust, le leg curl a aussi sa série légère pour les ischios, comme les mollets. Une zone déjà travaillée n'en a pas besoin. Et un exercice lourd fait après une isolation du même muscle garde sa série d'approche."},
   {d:"2026-11-12", t:"⚡ Le Gymon vit votre séance", x:"Il réagit à chaque série validée et fête vos records en direct. À partir de la 3e série, une série peut tomber en coup critique et le nourrir double. La pastille 🍗 à côté du chrono montre son repas par rapport à votre moyenne."},
@@ -2778,8 +2791,8 @@ function viewActive(){
     let n = 0;
     const rows = ex.sets.map((s,j) => {
       const label = s.warm ? "É" : String(++n), p = (s.warm ? prevWarm[nw++] : prevWork[n-1]) || null;
-      return `<tr class="set ${s.done?"done":""} ${s.warm?"warm":""} ${s.crit?"crit":""}" data-i="${i}" data-j="${j}">
-        <td><button class="setno ${s.warm?"warm":""}" data-act="toggle-warm" aria-label="Série ${label}, toucher pour marquer en échauffement">${label}</button></td>
+      return `<tr class="set ${s.done?"done":""} ${s.warm?"warm":""} ${s.crit && !s.warm?"crit":""}" data-i="${i}" data-j="${j}">
+        <td><button class="setno ${s.warm?"warm":""}" data-act="toggle-warm" aria-label="Série ${label}${s.crit && !s.warm ? ", coup critique" : ""}, toucher pour marquer en échauffement">${label}</button></td>
         <td class="prev">${p ? esc(setTxt(p)) : "—"}</td>
         <td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (wu[nw-1] ? fmtN(wu[nw-1].w) : p&&num(p.w)?fmtN(num(p.w)):"kg") : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg">${e.equip==="Barre" ? `<small class="plates" id="pl-${i}-${j}">${plateText(e, num(s.w) || num(s.warm ? (wu[nw-1]||{}).w : c.w))}</small>` : ""}</td>
         <td><input id="r-${i}-${j}" data-f="r" inputmode="numeric" value="${esc(s.r)}" placeholder="${s.warm ? (wu[nw-1] ? wu[nw-1].r : p?num(p.r)||"":"reps") : c.r || (c.lo+"–"+c.hi)}" aria-label="Répétitions"></td>
@@ -2794,6 +2807,8 @@ function viewActive(){
         <span class="ctag">${esc(c.tag)}</span>
         <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:"reps"}` : `Objectif ${c.lo}–${c.hi} reps`}${c.fatigue ? `<small class="fat"> · fatigue −${c.fatigue} %</small>` : ""}</span>
         <span class="cwhy">pourquoi ?</span></button>
+      ${(() => { const nums = ex.sets.filter(x => !x.warm).map((x, k) => x.crit && !x.done ? k + 1 : 0).filter(Boolean);
+        return nums.length && !creatureState().dead ? `<p class="crit-hint">⚡ Série${nums.length > 1 ? "s" : ""} ${nums.join(" et ")} : coup critique, ${nums.length > 1 ? "elles nourrissent" : "elle nourrit"} double ton Gymon !</p>` : ""; })()}
       ${wu.length ? `<p class="wu-hint">🔥 Échauffement d'abord (séries « É ») : ${wu.map(x => `${fmtN(x.w)} kg × ${x.r}`).join(" puis ")}. Sans minuteur, ne compte pas dans le volume.</p>` : ""}
       <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>kg</th><th>Reps</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div class="ex-actions"><button class="btn sm" data-act="add-set" data-i="${i}">+ Série</button>
@@ -2823,13 +2838,13 @@ const POP_LINES = ["Miam ! +{v} au menu 🍗", "Encore une ! 💪", "Ça pousse,
 function setReaction(ex, s){
   const a = A(), c = creatureState(), v = num(s.w)*num(s.r); if(!v) return;
   let kind = "", msg;
-  const prev = exHistory(ex.exId), done = a.exercises.reduce((t, x) => t + x.sets.filter(y => y.done && !y.warm).length, 0);
+  const prev = exHistory(ex.exId);
   if(prev.length && !(a.prShown||[]).includes(ex.exId)){ const e = e1rm(num(s.w), num(s.r));
     if(e > Math.max(...prev.map(x => x.best)) + 0.01 || num(s.w) > Math.max(...prev.map(x => x.maxW)) + 0.01){ kind = "pr"; (a.prShown = a.prShown || []).push(ex.exId); } }
-  if(!c.dead && done >= CRIT.fromSet && a.exercises.reduce((t, x) => t + x.sets.filter(y => y.crit).length, 0) < CRIT.max && CRIT.roll()){ s.crit = 1; if(!kind) kind = "crit"; }
+  if(s.crit && !c.dead && !kind) kind = "crit";
   if(c.dead || c.stage < 2) msg = c.dead ? "Ton Gymon t'attend pour revenir à la vie…" : kind === "pr" ? "L'œuf tremble : RECORD ! 🏆" : "L'œuf frémit… +" + fmtVol(v);
   else if(kind === "pr") msg = `RECORD ! 🏆 ${exById(ex.exId).name}, je le sens jusque dans mes plumes !`;
-  else if(kind === "crit") msg = "COUP CRITIQUE ! Cette série nourrit double 🍗×2";
+  else if(kind === "crit") msg = `COUP CRITIQUE ! +${fmtVol(2*v)} avalés d'un coup 🍗×2`;
   else msg = POP_LINES[popN++ % POP_LINES.length].replace("{v}", fmtVol(v));
   if(s.crit && kind === "pr") msg += " · Coup critique ×2 !";
   gyPop(c, msg, kind);
@@ -3069,7 +3084,9 @@ function startWorkout(name, exercises, routineId){
   if(S.profile.active){ toast("Une séance est déjà en cours"); tab = "seance"; render(); return; }
   const start = Date.now();
   S.profile.active = {id:uidGen("w"), name, start, routineId:routineId||null, exercises:addWarmups(exercises, start)};
+  const nc = critPlan(S.profile.active);
   touchProfile(); tab = "seance"; render(); window.scrollTo(0,0);
+  if(nc){ const c = creatureState(); gyPop(c, nc > 1 ? `${nc} coups critiques t'attendent aujourd'hui ⚡ Repère les séries ⚡ : elles me nourrissent double !` : "Un coup critique t'attend aujourd'hui ⚡ Repère la série ⚡ : elle me nourrit double !", "crit"); }
 }
 function finishWorkout(){
   const a = S.profile.active;
@@ -3234,7 +3251,7 @@ const ACT = {
     S.profile.routines = S.profile.routines.filter(r=>r.id!==d.id); touchProfile(); render(); toast("Programme supprimé"); }); },
 
   "pick-ex": () => openPicker(ids => {
-    addWarmups(ids.map(id => ({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})), A().start, A().exercises).forEach(x => A().exercises.push(x)); touchProfile(); render(); }),
+    addWarmups(ids.map(id => ({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})), A().start, A().exercises).forEach(x => A().exercises.push(x)); critPlan(A()); touchProfile(); render(); }),
   "pick-toggle": b => { const id = b.dataset.id;
     if(picker.only){ const f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
   "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
@@ -3326,7 +3343,7 @@ const ACT = {
       // Pré-remplit la série suivante si elle est vide
       const nx = ex.sets[j+1]; if(nx && !nx.done && !nx.warm && nx.w==="" && s.w!=="" && !s.warm) nx.w = s.w;
       if(!s.warm) setReaction(ex, s);
-    } else { s.done = false; delete s.crit; }
+    } else s.done = false;
     touchProfile(); render();
   },
   // Toucher le numéro d'une série la passe en échauffement, placée en tête (un échauffement après les séries de travail n'a pas de sens) ; toucher « É » l'annule
@@ -3334,7 +3351,7 @@ const ACT = {
     if(s.warm){ ex.sets.splice(j, 1); const k = ex.sets.findIndex(x => !x.warm); ex.sets.splice(k < 0 ? ex.sets.length : k, 0, s); toast("Passée en échauffement, en tête de l'exercice · touchez « É » pour annuler"); }
     touchProfile(); render(); },
   "add-set": b => { const ex = A().exercises[+b.dataset.i], last = ex.sets[ex.sets.length-1];
-    ex.sets.push(last ? {w:last.w, r:last.r, done:false, warm:false} : blankSet()); touchProfile(); render(); },
+    ex.sets.push({...(last ? {w:last.w, r:last.r, done:false, warm:false} : blankSet()), rl:1}); touchProfile(); render(); },
   "add-warm": b => { const a = A(), i = +b.dataset.i, ex = a.exercises[i];
     const n = warmupFor(ex.exId, a.start, ex.plan, true, true).length || 1;
     ex.wuForce = true; ex.sets.unshift(...Array.from({length:n}, () => ({...blankSet(), warm:true}))); touchProfile(); render(); },
@@ -3350,7 +3367,7 @@ const ACT = {
     if(!list.length){ toast("Pas d'autre exercice pour ce muscle"); return; }
     let fresh = list.filter(c => !ex.tried.includes(c.e.id)); if(!fresh.length){ ex.tried = [ex.exId]; fresh = list; }   // tous essayés : on recommence le tour
     const comp = isCompound(cur), next = (fresh.filter(c => c.comp === comp)[0] || fresh[0]).e;
-    ex.exId = next.id; ex.feel = 0; ex.wuForce = false; ex.sets = ex.sets.filter(s => !s.warm).map(() => blankSet());
+    ex.exId = next.id; ex.feel = 0; ex.wuForce = false; ex.sets = ex.sets.filter(s => !s.warm).map(s => ({...blankSet(), ...(s.rl ? {rl:1} : {}), ...(s.crit ? {crit:1} : {})}));   // le coup critique reste sur la même série
     touchProfile(); render(); toast(`Remplacé par ${next.name}`); },
   settings: () => { closeSheet(); tab = "reglages"; render(); window.scrollTo(0, 0); },
   "ex-menu": b => { const i = +b.dataset.i, n = A().exercises.length, e = exById(A().exercises[i].exId);
