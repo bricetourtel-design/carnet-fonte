@@ -645,7 +645,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 b";
+const APP_VERSION = "2026-11-13 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2419,6 +2419,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-13", t:"➖ Retirer un échauffement", x:"Pas besoin d'une série d'échauffement ? Touchez « − Échauffement » sous l'exercice : la plus légère est retirée, vos séries de travail ne bougent pas."},
   {d:"2026-11-13", t:"🔥 Échauffement par zone", x:"Aux jambes, chaque zone a son échauffement : après un hip thrust, le leg curl a aussi sa série légère pour les ischios, comme les mollets. Une zone déjà travaillée n'en a pas besoin. Et un exercice lourd fait après une isolation du même muscle garde sa série d'approche."},
   {d:"2026-11-12", t:"⚡ Le Gymon vit votre séance", x:"Il réagit à chaque série validée et fête vos records en direct. À partir de la 3e série, une série peut tomber en coup critique et le nourrir double. La pastille 🍗 à côté du chrono montre son repas par rapport à votre moyenne."},
   {d:"2026-11-12", t:"🍗 Nourrissez-le vous-même", x:"En fin de séance, faites glisser le repas vers votre Gymon (ou touchez-le) pour découvrir ce qu'il a gagné. Après un repas, il a les yeux rieurs et saute de joie. La nuit, de 23 h à 6 h, il dort : touchez-le pour le réveiller."},
@@ -2771,7 +2772,7 @@ function viewActive(){
   const a = S.profile.active;
   const exs = a.exercises.map((ex,i) => {
     const e = exById(ex.exId), prev = lastSetsFor(ex.exId, a.start), c = coach(ex.exId, a.start, ex.plan, preLoad(a.exercises, i, true));
-    const hasWarm = ex.sets.some(s => s.warm), wu = hasWarm ? warmupFor(ex.exId, a.start, ex.plan, warmNeed(a.exercises.slice(0, i), ex.exId), ex.wuForce) : [];
+    const hasWarm = ex.sets.some(s => s.warm), wu = hasWarm ? warmupFor(ex.exId, a.start, ex.plan, warmNeed(a.exercises.slice(0, i), ex.exId), ex.wuForce).slice(-ex.sets.filter(s => s.warm).length) : [];   // séries retirées : on garde les plus proches de la charge
     const prevWork = (sessionsFor(ex.exId, a.start)[0] || {sets:[]}).sets, prevWarm = prev.filter(x => x.warm);
     let nw = 0;
     let n = 0;
@@ -2797,6 +2798,7 @@ function viewActive(){
       <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>kg</th><th>Reps</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div class="ex-actions"><button class="btn sm" data-act="add-set" data-i="${i}">+ Série</button>
         ${ex.sets.length>1?`<button class="btn sm ghost" data-act="del-set" data-i="${i}">− Série</button>`:""}
+        ${ex.sets.some(s => s.warm && !s.done) ? `<button class="btn sm ghost" data-act="del-warm" data-i="${i}">− Échauffement</button>` : ""}
         ${!hasWarm && c.w && !ex.sets.some(s => s.done) ? `<button class="btn sm ghost" data-act="add-warm" data-i="${i}">+ Échauffement</button>` : ""}</div>
       ${ex.sets.some(s=>s.done) ? `<div class="feel" role="group" aria-label="Ressenti sur cet exercice">
         <div class="feel-l"><span>Ressenti</span><b>${ex.feel ? esc(FEEL[ex.feel-1].label)+" · "+esc(FEEL[ex.feel-1].hint) : "Comment c'était ?"}</b></div>
@@ -3336,6 +3338,9 @@ const ACT = {
   "add-warm": b => { const a = A(), i = +b.dataset.i, ex = a.exercises[i];
     const n = warmupFor(ex.exId, a.start, ex.plan, true, true).length || 1;
     ex.wuForce = true; ex.sets.unshift(...Array.from({length:n}, () => ({...blankSet(), warm:true}))); touchProfile(); render(); },
+  // Retire une série d'échauffement non validée (la plus légère d'abord)
+  "del-warm": b => { const ex = A().exercises[+b.dataset.i], k = ex.sets.findIndex(s => s.warm && !s.done);
+    if(k >= 0){ ex.sets.splice(k, 1); if(!ex.sets.length) ex.sets.push(blankSet()); touchProfile(); render(); } },
   "del-set": b => { const ex = A().exercises[+b.dataset.i]; if(ex.sets.length>1){ ex.sets.pop(); touchProfile(); render(); } },
   // Machine prise ou pas envie : un autre exercice du même muscle (même type d'abord), un nouveau à chaque toucher
   "ex-swap": b => { const a = A(), ex = a.exercises[+b.dataset.i], cur = exById(ex.exId);
