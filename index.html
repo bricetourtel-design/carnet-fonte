@@ -546,6 +546,29 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .celeb-food{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 22px;border-radius:22px;font-size:40px;line-height:1;color:#fff;
   background:rgba(255,255,255,.14);border:2px dashed rgba(255,255,255,.5);touch-action:none;cursor:grab;animation:bob 1.4s ease-in-out infinite}
 .celeb-food b{font-size:15px}
+.celeb-btns[hidden]{display:none}
+.celeb{overflow-y:auto;justify-content:safe center}
+.celeb.fed .celeb-gy .creature{height:min(26vh,220px);transition:height .4s ease}
+.celeb-sat{margin:0;font-size:17px;font-weight:600}.celeb-sat b{color:#3bd16f}
+.celeb-fr{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.celeb-fr span{background:rgba(120,170,255,.2);border:1px solid rgba(150,190,255,.45);border-radius:14px;padding:5px 10px;font-size:14px;font-weight:700}
+.creature.gy-pet{animation:pet .8s ease-in-out 2}@keyframes pet{50%{transform:scale(1.04,.96)}}
+.creature.gy-tickle{animation:tickle .12s linear 8}@keyframes tickle{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+.creature.gy-stretch{transform-origin:50% 100%;animation:stretch 1.6s ease-in-out 1}@keyframes stretch{40%{transform:scale(.96,1.08)}70%{transform:scale(1,.98)}}
+.gy-heart{position:absolute;z-index:4;pointer-events:none;font-size:24px;animation:heart 1.4s ease-out forwards}@keyframes heart{to{transform:translateY(-80px) scale(1.3);opacity:0}}
+@media (prefers-reduced-motion: reduce){.creature.gy-pet,.creature.gy-tickle,.creature.gy-stretch{animation:none}.gy-heart{animation:none;opacity:.8}}
+.fest-table{font-size:40px;letter-spacing:4px;margin:-6px 0 0}
+.gy-sat{text-align:left}.sat-row{display:flex;align-items:center;gap:5px;margin-top:5px}.sat-row b{font-size:12px;font-weight:700;color:#ff8ac0}.sat-row i{font-style:normal;font-size:14px}
+.mini-fr{display:inline-block;width:12px;height:18px}.mini-fr svg,.fr-ico svg{width:100%;height:100%}
+.sat-bar{display:block;height:6px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden;width:92px;margin-top:4px}.sat-bar i{display:block;height:100%;border-radius:4px}
+.sat-bar.wide{width:100%}
+.fr-head{display:flex;gap:14px;align-items:center}.fr-head h3{margin:0}.fr-head>div{flex:1}.fr-ico{width:44px;height:66px;flex:none}
+.fr-list{display:flex;flex-direction:column;gap:8px}
+.fr-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--fill);text-align:left;width:100%;color:var(--fg)}
+.fr-row.peas{opacity:.85}.fr-e{font-size:26px}.fr-t{flex:1;display:flex;flex-direction:column;min-width:0}.fr-t b{font-size:15px}.fr-t span{font-size:12px;color:var(--muted)}
+.fr-d{font-size:12px;font-weight:700;padding:3px 8px;border-radius:10px;background:rgba(59,209,111,.18);color:#3bd16f;white-space:nowrap}.fr-d.w{background:rgba(255,159,67,.2);color:#ff9f43}
+.fr-throw{position:fixed;z-index:70;font-size:34px;transform:translate(-50%,-50%);transition:transform .6s cubic-bezier(.3,-.4,.6,1);pointer-events:none}
+.fr-throw.go{transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(540deg) scale(.6)}
+@media (prefers-reduced-motion: reduce){.fr-throw{transition:none}}
 .celeb-feed{display:flex;flex-direction:column;align-items:center;gap:8px}.celeb-feed[hidden]{display:none}
 .celeb-food.drag{animation:none;cursor:grabbing;transition:none}
 .celeb-food.fly{transition:transform .45s ease-in,opacity .45s ease-in;opacity:0;animation:none}
@@ -655,7 +678,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 h";
+const APP_VERSION = "2026-11-13 i";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1603,15 +1626,16 @@ const CREATURE_CFG = {
   levelThresholds: {default:[1.5, 2.5, 3.25, 4]},
   // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
   setsThresholds: [20, 60, 120, 200],
-  // Vitalité, toujours en proportion de la valeur actuelle : -20 % au 2e jour sans séance, puis -10 % par jour ;
-  // mort sous 10 %. Chaque séance : +20 % de la valeur actuelle (+50 % si elle est sous 30 %) ; 3 jours de suite avec une séance = retour à 100 %.
-  vitality: {firstDay:2, firstDrop:0.2, dailyDrop:0.1, deathBelow:10, sessionGain:0.2, lowBelow:30, lowGain:0.5, streakDays:3},
+  // Satiété (13 nov. 2026, remplace la vitalité) : voir le bloc « Satiété » plus bas
+  satiety: {plateauH:6, steakH:12, perRation:20, rationDays:30, rationStart:1000, rationMin:300, spoilDays:5,
+    peas:{afterDays:30, chance:1/40, below:5, to:50}, festinMin:50},
   resurrectWeightKeep: 0.7,                 // ressusciter garde tout, mais le Gymon a maigri (70 % du poids)
   freq: {window:14, target:6}               // régularité : séances sur 14 jours, objectif 6 (3/semaine)
 };
 const rollStages = () => CREATURE_CFG.stageRange.map(([a,b]) => a + Math.floor(Math.random()*(b-a+1)));
 function creatureState(){
-  if(!S.profile.creature) S.profile.creature = {v:4, mv:3, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null, vit:100};
+  if(!S.profile.creature) S.profile.creature = {v:4, mv:3, sv:1, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null,
+    sat:100, satT:Date.now(), full:0, fridge:[]};
   const c = S.profile.creature;
   if((c.v||0) < 4){   // passage de 4 à 13 formes : l'ancien stade garde sa forme la plus proche
     if(c.at && c.at.length < CREATURE_CFG.stages.length){ c.stage = [0, 2, 5, 9][c.stage] ?? c.stage; c.at = null; }
@@ -1623,11 +1647,10 @@ function creatureState(){
     c.at = rollStages().map((x,i) => i===0 ? 0 : c.stage >= i ? Math.min(x, c.fidelity) : Math.max(x, c.fidelity + 1));
     for(let i=1;i<c.at.length;i++) if(c.at[i] <= c.at[i-1]) c.at[i] = c.at[i-1] + 1;
   }
-  if(c.vit === undefined){   // passage à la nouvelle vitalité : personne ne meurt à cause de la mise à jour (au pire 60 %)
-    c.vit = 100; if(!c.dead) c.last = Math.max(c.last || c.born, Date.now() - 4*86400000);
-  }
-  // Mort quand la vitalité passe sous 10 % : rien n'est effacé, on peut le ressusciter ou repartir d'un œuf
-  if(!c.dead && vitalityExact(c) < CREATURE_CFG.vitality.deathBelow){ c.dead = {ts:Date.now(), since:c.last || c.born}; c.pending = []; saveLocal(); }
+  if(c.sv !== 1){   // passage de la vitalité à la satiété : on repart de la vitalité du moment (40 % au moins : personne ne meurt de la mise à jour)
+    c.sat = c.dead ? 0 : Math.max(40, Math.round(oldVitality(c))); c.satT = Date.now(); c.full = 0; c.fridge = c.fridge || []; c.sv = 1; delete c.vit; saveLocal(); }
+  // Pois chiches sous 5 %, mort à 0 % : rien n'est effacé, on peut le ressusciter ou repartir d'un œuf
+  satTick(c); fridgeTick(c);
   return c;
 }
 function creatureResurrect(){
@@ -1635,7 +1658,7 @@ function creatureResurrect(){
   const pending = (c.pending || []).slice();
   c.dead = null; c.pending = []; c.resurrections = (c.resurrections||0) + 1;
   c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight * CREATURE_CFG.resurrectWeightKeep);
-  c.last = Date.now(); c.vit = 100;
+  c.last = Date.now(); c.sat = 100; c.satT = Date.now(); c.full = Date.now() + SAT.plateauH * 3600000;
   // Les séances faites pendant qu'il était mort le nourrissent maintenant
   S.workouts.filter(w => pending.includes(w.id)).sort((a,b) => a.start-b.start).forEach(w => creatureFeed(w));
   c.last = Math.max(c.last, Date.now()); touchProfile();
@@ -1654,25 +1677,144 @@ function creatureHeight(c){
   return lo + (hi - lo) * Math.min(1, (c.fidelity - at[c.stage]) / (next - at[c.stage]));
 }
 const creatureIdleDays = c => (Date.now() - (c.last || c.born)) / 86400000;
-// Part de vitalité conservée après d jours pleins sans séance (ex. 2 j : ×0,8 ; 3 j : ×0,8×0,9)
-function vitalityKeep(d){ const v = CREATURE_CFG.vitality, n = Math.floor(d); return n < v.firstDay ? 1 : (1 - v.firstDrop) * Math.pow(1 - v.dailyDrop, n - v.firstDay); }
-function vitalityExact(c, at){
+// Ancienne vitalité (jusqu'au 13 nov. 2026), seulement pour la mise à jour vers la satiété
+function oldVitality(c){ const n = Math.floor((Date.now() - (c.last || c.born)) / 86400000); return Math.min(100, (c.vit ?? 100) * (n < 2 ? 1 : 0.8 * Math.pow(0.9, n - 2))); }
+/* ---------- Satiété (décidée le 13 novembre 2026, remplace la vitalité) ----------
+   Pour garder le Gymon en vie, il faut le nourrir ; pour avoir à manger, il faut soulever (1 kg soulevé = 1 kg de poulet).
+   100 % pendant 6 h après un repas (12 h après un steak ; après un repas partiel, 6 h au niveau atteint), puis −1 % par heure jusqu'à 50 %,
+   −1 % toutes les 2 h jusqu'à 10 %, −1 % par jour jusqu'à 0 % = mort (15,7 jours depuis 100 %). Rien ne touche à la récupération. */
+const SAT = CREATURE_CFG.satiety;
+function satDecay(v, h){   // valeur après h heures de baisse
+  if(h <= 0) return v;
+  if(v > 50){ const d = Math.min(h, v - 50); v -= d; h -= d; }
+  if(h > 0 && v > 10){ const d = Math.min(h / 2, v - 10); v -= d; h -= d * 2; }
+  if(h > 0 && v > 0) v = Math.max(0, v - h / 24);
+  return v;
+}
+function satHoursTo(v, target){   // heures de baisse pour descendre de v à target
+  let h = 0; if(v <= target) return 0;
+  if(v > 50){ const d = v - Math.max(50, target); h += d; v -= d; } if(v <= target) return h;
+  if(v > 10){ const d = v - Math.max(10, target); h += 2 * d; v -= d; } if(v <= target) return h;
+  return h + 24 * (v - target);
+}
+const satStart = c => Math.max(c.satT || c.born || 0, c.full || 0);
+function satExact(c, at){
   if(c.dead) return 0;
-  const days = ((at || Date.now()) - (c.last || c.born)) / 86400000;
-  return Math.min(100, (c.vit ?? 100) * vitalityKeep(Math.max(0, days)));
+  const t = at || Date.now();
+  if(t <= satStart(c)) return c.sat ?? 100;
+  return satDecay(c.sat ?? 100, (t - satStart(c)) / 3600000);
 }
-const creatureVitality = (c, at) => Math.round(vitalityExact(c, at));   // affichage, en % entier
-// Jours restants avant la mort si aucune séance n'est faite
+const creatureSatiety = (c, at) => Math.round(satExact(c, at));   // affichage, en % entier
+// Boîte de pois chiches (mangée toute seule sous 5 %, remonte à 50 %) et mort à 0 %, au moment exact où le seuil est franchi
+function satTick(c, now){
+  now = now || Date.now(); if(c.dead) return;
+  if(c.peas && satExact(c, now) < SAT.peas.below){
+    const t5 = satStart(c) + satHoursTo(c.sat ?? 100, SAT.peas.below) * 3600000;
+    c.sat = SAT.peas.to; c.satT = Math.min(now, t5); c.full = 0; c.peasUsed = {ts:c.satT}; c.peas = null; saveLocal(); }
+  if(satExact(c, now) <= 0){ const t0 = satStart(c) + satHoursTo(c.sat ?? 100, 0) * 3600000;
+    c.dead = {ts:Math.min(now, t0), since:c.last || c.born}; c.pending = []; saveLocal(); }
+}
+// Jours restants avant la mort sans manger (boîte de pois chiches comprise)
 function creatureDaysLeft(c){
-  const v = CREATURE_CFG.vitality, idle = creatureIdleDays(c);
-  let d = Math.floor(idle); while((c.vit ?? 100) * vitalityKeep(d) >= v.deathBelow && d < 400) d++;
-  return Math.max(1, Math.ceil(d - idle));
+  const now = Date.now(), v = satExact(c, now);
+  let h = c.peas ? satHoursTo(v, SAT.peas.below) + satHoursTo(SAT.peas.to, 0) : satHoursTo(v, 0);
+  if(now < (c.full || 0)) h += (c.full - now) / 3600000;
+  return Math.max(1, Math.ceil(h / 24));
 }
-// Une séance chaque jour sur les 3 derniers jours (celui de la séance compris) ?
-function creatureStreak(c, t){
-  const days = new Set(S.workouts.filter(w => c.fed.includes(w.id)).map(w => new Date(w.end || w.start).toDateString()));
-  for(let i=0;i<CREATURE_CFG.vitality.streakDays;i++){ const d = new Date(t); d.setDate(d.getDate() - i); if(!days.has(d.toDateString())) return false; }
-  return true;
+// Ration = volume moyen soulevé par jour sur 30 jours ; un nouveau joueur part de 1 000 kg par jour, sa moyenne prend le relais jour après jour
+function satRation(at){
+  const D = 86400000, t = at || Date.now(), N = SAT.rationDays; let sum = 0, first = Infinity;
+  S.workouts.forEach(w => { const e = w.end || w.start; first = Math.min(first, w.start); if(e < t && e >= t - N*D) sum += wVolume(w); });
+  const lived = first === Infinity ? 0 : Math.min(N, Math.max(0, (t - first) / D));
+  return Math.max(SAT.rationMin, (sum + SAT.rationStart * (N - lived)) / N);
+}
+// Manger kg (équivalent poulet) : 1 ration = +20 %, jusqu'à 100 % (whole : mangé en entier, comme un steak). Seul ce qui est mangé fait grossir.
+function satEat(c, kg, at, plateauH, whole){
+  at = Math.max(at || Date.now(), c.satT || 0);
+  const r = satRation(at), cur = satExact(c, at), need = Math.max(0, (100 - cur) / SAT.perRation * r);
+  const eat = whole ? kg : Math.min(kg, need); if(eat <= 0) return 0;
+  weekMinNote(c, cur, at);
+  c.sat = Math.min(100, cur + eat / r * SAT.perRation); c.satT = at; c.ateTs = Date.now(); c.full = Math.max(c.full || 0, at + (plateauH || SAT.plateauH) * 3600000);
+  const ff = 0.7 + 0.6 * creatureRegularity(c).pct;   // 0,7 à 1,3 selon la régularité
+  c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + eat / 1000 * CREATURE_CFG.foodPerTonne[c.stage] * ff);
+  return eat;
+}
+/* Frigo : ce qu'il ne peut pas manger y part ; périme en 5 jours (l'omelette jamais) ; il mange d'abord le plus ancien.
+   Aliments : 🍗 poulet (kg soulevés), ⭐ portion dorée (bonus du coup critique), 🥩 steak (record : 1 ration et 12 h à 100 %),
+   🥚 omelette (3e séance de la semaine : 1 ration, ne périme pas). La boîte de pois chiches est à part (c.peas). */
+const FOODS = {poulet:{e:"🍗", n:"Poulet"}, or:{e:"⭐", n:"Portion dorée"}, steak:{e:"🥩", n:"Steak du record"}, omelette:{e:"🥚", n:"Omelette de la régularité"}};
+const spoilAt = it => it.k === "omelette" ? Infinity : it.t + SAT.spoilDays * 86400000;
+function fridgeAdd(c, k, kg, t){ const it = {id:uidGen("f"), k, kg:Math.round(kg || 0), t:t || Date.now()}; (c.fridge = c.fridge || []).push(it); return it; }
+function fridgeTick(c, now){
+  now = now || Date.now(); const f = c.fridge || [], gone = f.filter(it => spoilAt(it) <= now); if(!gone.length) return;
+  c.fridge = f.filter(it => spoilAt(it) > now);
+  c.spoiled = {kg:gone.reduce((t, it) => t + (it.k === "poulet" || it.k === "or" ? it.kg : 0), 0), n:gone.length, ts:now}; saveLocal();
+}
+const fridgeKg = c => (c.fridge || []).reduce((t, it) => t + (it.k === "poulet" || it.k === "or" ? it.kg : 0), 0);
+// Manger un aliment du frigo (jusqu'à 100 %) ; renvoie {eaten, it} ou {full:true}
+function fridgeEat(c, id){
+  const at = Math.max(Date.now(), c.satT || 0), it = (c.fridge || []).find(x => x.id === id); if(!it || c.dead) return null;
+  if(satExact(c, at) >= 99.5) return {full:true, it};
+  if(it.k === "steak" || it.k === "omelette"){
+    const e = satEat(c, satRation(at), at, it.k === "steak" ? SAT.steakH : SAT.plateauH, true); c.fridge = c.fridge.filter(x => x !== it); return {eaten:e, it}; }
+  const e = satEat(c, it.kg, at); it.kg = Math.round(it.kg - e); if(it.kg < 1) c.fridge = c.fridge.filter(x => x !== it);
+  return {eaten:e, it};
+}
+/* Festin du dimanche : si la satiété n'est jamais passée sous 50 % de la semaine (lundi → dimanche), festin dimanche soir
+   (ou à la première ouverture de la semaine suivante) et un steak offert au frigo. La satiété ne fait que baisser entre deux repas :
+   le minimum de la semaine se lit juste avant chaque repas et à l'ouverture de la page. */
+function weekMinNote(c, v, at){
+  at = at || Date.now(); const k = weekStart(at);
+  if(c.wk && c.wk.k !== k && c.wk.k < k){
+    const endV = satExact(c, Math.min(at, c.wk.k + 7*86400000));
+    if(c.wk.full && Math.min(c.wk.min, endV) >= SAT.festinMin && c.festDone !== c.wk.k) c.festDue = c.wk.k;
+  }
+  if(!c.wk || c.wk.k !== k) c.wk = {k, min:v, full:at - k < 86400000}; else c.wk.min = Math.min(c.wk.min, v);   // full : suivie dès le lundi
+}
+function festinCheck(c, now){
+  now = now || Date.now(); if(c.dead) return false;
+  weekMinNote(c, satExact(c, now), now);
+  const d = new Date(now);
+  if(d.getDay() === 0 && d.getHours() >= 18 && c.wk.full && c.wk.min >= SAT.festinMin && c.festDone !== c.wk.k) c.festDue = c.wk.k;
+  if(!c.festDue || c.festDone === c.festDue) return false;
+  c.festDone = c.festDue; c.festDue = null; fridgeAdd(c, "steak", 0, now); saveLocal(); return true;
+}
+function festinShow(c){
+  celebClose(true);
+  const el = document.createElement("div"); el.id = "celebrate"; el.className = "celeb festin"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Festin du dimanche");
+  const cols = ["#ff5a5f","#ffd23f","#3bd16f","#4a9de0","#c86bff"], nm = c.name || "Ton Gymon";
+  el.innerHTML = `<div class="confetti" aria-hidden="true">${Array.from({length:30}, (_, i) => `<i style="--x:${(i*37)%100}%;--d:${((i*0.23)%2.2).toFixed(2)}s;--c:${cols[i%cols.length]};--r:${(i*47)%360}deg"></i>`).join("")}</div>
+    <div class="celeb-in"><p class="celeb-k">Festin du dimanche !</p>
+      <div class="celeb-gy">${creatureSVG(c, false, false, {noSteam:true, eyeState:"happy", armLevel:0})}</div>
+      <div class="fest-table" aria-hidden="true">🍗🥩🥚🥗🍰</div>
+      <h2>${esc(nm)} n'a jamais eu faim cette semaine</h2>
+      <p class="celeb-sub">Jamais sous 50 % de satiété. Cadeau : 🥩 un steak au frigo (1 ration et 12 h à 100 %).</p>
+      <div class="celeb-btns"><button class="btn primary" data-act="celeb-close">Continuer</button></div></div>`;
+  document.body.appendChild(el);
+}
+/* Boîte de pois chiches 🥫 (pause, vacances) : après 30 jours d'utilisation (depuis la première séance), chaque jour d'ouverture de l'app
+   1 chance sur 40 d'en recevoir une ; une seule à la fois ; rangée au frigo, ne périme pas ; ouverte toute seule sous 5 % (→ 50 %). */
+const PEAS = {roll:() => Math.random() < SAT.peas.chance};
+function peasDraw(c, now){
+  now = now || Date.now(); if(!c || c.dead || c.peas) return false;
+  const day = dayNum(); if(c.peasDay === day) return false; c.peasDay = day;
+  const first = S.workouts.reduce((m, w) => Math.min(m, w.start), Infinity);
+  if(!isFinite(first) || now - first < SAT.peas.afterDays * 86400000){ saveLocal(); return false; }
+  if(PEAS.roll()){ c.peas = {t:now}; c.peasNew = 1; }
+  saveLocal(); return !!c.peas;
+}
+function peasSheet(c){
+  c.peasNew = 0; saveLocal();
+  openSheet(`<div class="fr-head"><span class="fr-e" style="font-size:52px">🥫</span><div><h3>Une boîte de pois chiches !</h3></div></div>
+    <p style="margin:0">Elle est rangée dans le frigo et ne périme pas. Si un jour ${esc(c.name || "ton Gymon")} tombe sous 5 % de satiété (vacances, pause, blessure), il l'ouvre tout seul et remonte à 50 % : environ 8 jours de plus pour revenir le nourrir.</p>
+    <p class="small muted" style="margin:0">Une seule boîte à la fois : garde-la pour un vrai besoin.</p>
+    <button class="btn primary" data-act="close">Compris</button>`);
+}
+function fridgeEatOldest(c){
+  let tot = 0;
+  for(const it of (c.fridge || []).filter(x => x.k === "poulet" || x.k === "or").sort((a, b) => a.t - b.t)){
+    const r = fridgeEat(c, it.id); if(!r || r.full) break; tot += r.eaten; if(satExact(c) >= 99.5) break; }
+  return tot;
 }
 function creatureRegularity(c){
   const f = CREATURE_CFG.freq, n = S.workouts.filter(w => c.fed.includes(w.id) && Date.now() - w.start < f.window*86400000).length;
@@ -1731,27 +1873,34 @@ function critPlan(a){
   return got;
 }
 function critVolume(w){ let v = 0; w.exercises.forEach(ex => workSets(ex).forEach(s => { if(s.crit) v += num(s.w)*num(s.r); })); return v; }
-// Appelée une fois à la validation d'une séance ; ne compte jamais deux fois la même séance
+// Appelée une fois à la validation d'une séance ; ne compte jamais deux fois la même séance.
+// Repas de fin de séance (13 nov. 2026) : il mange le poulet de la séance (puis la portion dorée) jusqu'à 100 %, le reste part au frigo ;
+// un record rapporte un steak, la 3e séance de la semaine une omelette (rangés au frigo). Les muscles poussent avec les séries, comme avant.
 function creatureFeed(w){
   const c = creatureState();
   if(c.fed.includes(w.id) || (w.end || w.start) < c.born) return null;
   if(c.dead){ if(!(c.pending||[]).includes(w.id)) (c.pending = c.pending || []).push(w.id); touchProfile(); return {dead:true, vol:wVolume(w)}; }
   const before = {stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSC.map(m => [m, muscleLevel(c, m, w.end || w.start)]))};
   c.fed.push(w.id); if(c.fed.length > 1000) c.fed = c.fed.slice(-1000);
-  const t = w.end || w.start, vitBefore = vitalityExact(c, t);
+  const t = Math.max(w.end || w.start, c.satT || 0), satBefore = satExact(c, t);
   c.fidelity++;
-  c.vit = creatureStreak(c, t) ? 100 : Math.min(100, vitBefore * (1 + (vitBefore < CREATURE_CFG.vitality.lowBelow ? CREATURE_CFG.vitality.lowGain : CREATURE_CFG.vitality.sessionGain)));
-  c.last = Math.max(c.last || 0, t);
-  const vol = wVolume(w), bonus = critVolume(w), reg = creatureRegularity(c), freqFactor = 0.7 + 0.6 * reg.pct;   // 0,7 à 1,3 selon la régularité
+  c.last = Math.max(c.last || 0, w.end || w.start);
+  const vol = wVolume(w), bonus = critVolume(w);
   c.food += vol;
   c.stage = Math.max(c.stage, stageFor(c.fidelity, c));              // un stade acquis ne se perd jamais
-  const gain = (vol + bonus)/1000 * CREATURE_CFG.foodPerTonne[c.stage] * freqFactor;   // une série en coup critique nourrit double
-  c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + gain);
+  const ate = satEat(c, vol, t), ateB = bonus ? satEat(c, bonus, t) : 0, fr = [];
+  if(vol - ate >= 1) fr.push(fridgeAdd(c, "poulet", vol - ate, t));
+  if(bonus - ateB >= 1) fr.push(fridgeAdd(c, "or", bonus - ateB, t));
+  if((w.prs || []).length) fr.push(fridgeAdd(c, "steak", 0, t));
+  const ws = weekStart(w.end || w.start), nWeek = S.workouts.filter(x => c.fed.includes(x.id) && (x.end || x.start) >= ws && (x.end || x.start) <= (w.end || w.start)).length;
+  if(nWeek === 3) fr.push(fridgeAdd(c, "omelette", 0, t));
   growMuscles(c, w); creatureLog(c);
-  const ups = MUSC.filter(m => (c.levels[m]||0) - (before.levels[m]||0) >= 0.005);
-  c.lastMeal = {w:w.id, vol, bonus, gain:c.weight - before.weight, ts:Date.now(), ups, dl:Object.fromEntries(ups.map(m => [m, Math.round(((c.levels[m]||0) - (before.levels[m]||0))*100)/100]))};
+  const ups = MUSC.filter(m => (c.levels[m]||0) - (before.levels[m]||0) >= 0.005), satAfter = satExact(c, t);
+  const fridge = fr.map(x => ({k:x.k, kg:x.kg}));
+  c.lastMeal = {w:w.id, vol, bonus, eaten:ate + ateB, satBefore, satAfter, gain:c.weight - before.weight, ts:Date.now(), ups, fridge,
+    dl:Object.fromEntries(ups.map(m => [m, Math.round(((c.levels[m]||0) - (before.levels[m]||0))*100)/100]))};
   touchProfile();
-  return {vol, bonus, gain:c.weight - before.weight, evolved:c.stage > before.stage, stage:c.stage, from:before.stage, ups};
+  return {vol, bonus, eaten:ate + ateB, satBefore, satAfter, fridge, gain:c.weight - before.weight, evolved:c.stage > before.stage, stage:c.stage, from:before.stage, ups};
 }
 /* Historique pour les courbes (décidé le 12 novembre 2026) : un point par jour [jour, poids kg, taille cm, vitalité %, reconstitué ?],
    enregistré dans le téléphone à chaque ouverture et après chaque repas ; le passé (poids et taille) est reconstitué une fois
@@ -1775,7 +1924,7 @@ function creatureBackfill(c){
 function creatureLog(c){
   if(!c || c.dead) return;
   if(!c.histB) creatureBackfill(c);
-  const h = c.hist = c.hist || [], d = histDay(), pt = [d, c.weight, creatureHeight(c), creatureVitality(c), 0];
+  const h = c.hist = c.hist || [], d = histDay(), pt = [d, c.weight, creatureHeight(c), creatureSatiety(c), 0];   // 4e valeur : vitalité jusqu'au 13 nov. 2026, satiété ensuite
   if(h.length && h[h.length-1][0] === d) h[h.length-1] = pt; else { h.push(pt); if(h.length > 730) h.splice(0, h.length - 730); saveLocal(); }
 }
 // Courbe d'un indicateur (une seule série) : ligne de 2 px, passé reconstitué en pointillés, valeur au toucher
@@ -1864,13 +2013,14 @@ let gyWake = 0, gyHourFix = null;   // gyHourFix : heure imposée par les tests
 function gymonAsleep(c, at){ const h = gyHourFix ?? new Date(at || Date.now()).getHours();
   return !!c && !c.dead && c.stage >= 2 && (h >= 23 || h < 6) && Date.now() - gyWake > 60000; }
 function gymonMood(c){ if(!c || c.dead || c.stage < 2) return null; if(gymonAsleep(c)) return "sleep";
-  return c.lastMeal && Date.now() - c.lastMeal.ts < 3*3600000 ? "happy" : null; }
+  return (c.lastMeal && Date.now() - c.lastMeal.ts < 3*3600000) || (c.ateTs && Date.now() - c.ateTs < 3*3600000) ? "happy" : null; }
 function gymonEyes(c){ if(!c.fed || !c.fed.length) return null; const f = gymonForme(c); return f >= 0.75 ? "spark" : f >= 0.45 ? null : f >= 0.2 ? "tired" : "worn"; }
 function creatureSVG(c, small, back, opt){
   opt = opt || {};
-  const st = Math.min(c.stage, LOOKS.length-1), lk = LOOKS[st], vit = creatureVitality(c), sleepy = vit < 60, dead = !!c.dead;
-  // Bras selon la vitalité (0 levés, 1 mi-hauteur, 2 le long du corps, 3 ballants) et regard selon la forme (validés le 12 nov. 2026)
-  opt = {...opt, armLevel: opt.armLevel ?? (dead ? 3 : vit >= 80 ? 0 : vit >= 50 ? 1 : vit >= 30 ? 2 : 3), eyeState: opt.eyeState !== undefined ? opt.eyeState : gymonEyes(c)};
+  const st = Math.min(c.stage, LOOKS.length-1), lk = LOOKS[st], vit = creatureSatiety(c), sleepy = vit < 30, dead = !!c.dead;
+  // Bras selon la satiété (0 levés, 1 mi-hauteur, 2 le long du corps, 3 ballants) et regard selon la forme (validés le 12 nov. 2026 ;
+  // seuils abaissés le 13 nov. avec la satiété, qui oscille normalement entre 40 et 100 %)
+  opt = {...opt, armLevel: opt.armLevel ?? (dead ? 3 : vit >= 70 ? 0 : vit >= 45 ? 1 : vit >= 25 ? 2 : 3), eyeState: opt.eyeState !== undefined ? opt.eyeState : gymonEyes(c)};
   const amb = AMB[S.profile.gymonStyle] ? S.profile.gymonStyle : "aesthetic", GC = gymColor(c);
   const shorts = GYM_SHORTS[(c.look||{}).shorts] || AMB[amb].shorts, A = {...AMB[amb], shorts, shoes:"#ffffff", sole: shorts==="#f2f2f2" || shorts==="#161616" ? "#ff6b35" : shorts};
   // Effets : muscles qui viennent de grossir en rouge (24 h), fumée sur les muscles en récupération
@@ -2199,13 +2349,13 @@ function gymQuote(c){
 }
 // Un indice, jamais un compte à rebours : le moment de l'évolution reste une surprise
 function gymonHint(c){
-  const vit = creatureVitality(c), near = creatureNear(c), pick = l => l[c.fidelity % l.length];
-  // Alertes de santé : elles passent avant tout le reste
+  const vit = creatureSatiety(c), near = creatureNear(c), pick = l => l[c.fidelity % l.length], fk = fridgeKg(c) > 0 || (c.fridge || []).length;
+  // Alertes de faim : elles passent avant tout le reste
   const left = creatureDaysLeft(c);
   if(c.fidelity || c.stage){
-    if(vit <= 30) return `Il est mourant ! Plus que ${left} jour${left>1?"s":""} pour le sauver avec une séance.`;
-    if(vit <= 50) return "Il est malade… il a besoin d'une séance.";
-    if(vit <= 70) return "Il s'affaiblit sans toi.";
+    if(vit <= 30) return `Il meurt de faim ! Plus que ${left} jour${left>1?"s":""} pour le nourrir${fk ? " : le frigo ou une séance" : " avec une séance"}.`;
+    if(vit <= 50) return fk ? "Il a très faim… donne-lui à manger du frigo." : "Il a très faim… il a besoin d'une séance.";
+    if(vit <= 70) return "Il a un petit creux.";
   }else if(vit <= 30) return `L'œuf refroidit… plus que ${left} jour${left>1?"s":""} pour le réchauffer.`;
   if(c.stage===0){
     if(!c.fidelity) return "Ton Gymon dort au chaud. Une première séance pour le réveiller ?";
@@ -2245,8 +2395,65 @@ function fitGymon(){
   if(over > 0) g.style.height = Math.max(360, parseFloat(g.style.height) - over) + "px";
 }
 addEventListener("resize", () => { if(tab === "creature") fitGymon(); });
+/* Case « Satiété » (option C, 13 nov. 2026) : satiété, petit frigo et ce qu'il contient ; la toucher ouvre le frigo */
+const FRIDGE_SVG = open => `<svg viewBox="0 0 40 60" aria-hidden="true"><rect x="3" y="2" width="34" height="56" rx="6" fill="#dfe4f1" stroke="#7d86a3" stroke-width="2"/>
+  ${open ? `<rect x="7" y="6" width="26" height="48" rx="3" fill="#1d2440"/><rect x="7" y="22" width="26" height="2" fill="#8fa0c9"/><rect x="7" y="38" width="26" height="2" fill="#8fa0c9"/>`
+  : `<rect x="3" y="20" width="34" height="2" fill="#7d86a3"/><rect x="29" y="8" width="3" height="9" rx="1.5" fill="#7d86a3"/><rect x="29" y="26" width="3" height="14" rx="1.5" fill="#7d86a3"/>`}</svg>`;
+const satColor = v => v >= 70 ? "#3bd16f" : v >= 45 ? "#ffd23f" : v >= 25 ? "#ff9f43" : "#ff5a5f";
+function satChipHTML(c, v){
+  const kg = fridgeKg(c), sp = (c.fridge || []).filter(x => x.k !== "poulet" && x.k !== "or").length;
+  const t = kg >= 1000 ? `${fmtN(kg / 1000, 1)} t` : kg ? `${Math.round(kg)} kg` : "";
+  return `<button class="gy-chip bl gy-sat" data-act="fridge" aria-label="Satiété ${v} %, ouvrir le frigo"><small>Satiété</small>${v} %
+    <span class="sat-bar"><i style="width:${v}%;background:${satColor(v)}"></i></span>
+    <span class="sat-row"><span class="mini-fr">${FRIDGE_SVG(false)}</span><b>${t || (sp ? "" : "vide")}${sp ? `${t ? " " : ""}+${sp}` : ""}</b>${c.peas ? "<i>🥫</i>" : ""}</span></button>`;
+}
+function fridgeSheet(){
+  const c = creatureState(), now = Date.now(), v = creatureSatiety(c), r = satRation(), nm = c.name || "ton Gymon", D = 86400000;
+  const items = (c.fridge || []).slice().sort((a, b) => (a.k === "omelette") - (b.k === "omelette") || a.t - b.t);
+  const gain = kg => Math.min(100 - v, kg / r * SAT.perRation);
+  const row = it => { const f = FOODS[it.k], left = spoilAt(it) - now, d = Math.ceil(left / D);
+    const title = it.k === "poulet" || it.k === "or" ? `${f.n} · ${fmtVol(it.kg)}` : f.n;
+    const sub = it.k === "poulet" ? `≈ +${fmtN(gain(it.kg), 0)} % de satiété` : it.k === "or" ? `bonus du coup critique · ≈ +${fmtN(gain(it.kg), 0)} %`
+      : it.k === "steak" ? "1 ration (+20 %) et 12 h à 100 %" : "1 ration (+20 %)";
+    const badge = it.k === "omelette" ? `<span class="fr-d">ne périme pas</span>` : `<span class="fr-d ${d <= 1 ? "w" : ""}">${left < 12*3600000 ? "périme bientôt" : d <= 1 ? "périme demain" : d + " j"}</span>`;
+    return `<button class="fr-row" data-act="fr-eat" data-id="${it.id}"><span class="fr-e">${f.e}</span><span class="fr-t"><b>${esc(title)}</b><span>${esc(sub)}</span></span>${badge}</button>`; };
+  openSheet(`<div class="fr-head"><span class="fr-ico">${FRIDGE_SVG(true)}</span><div><h3>Le frigo de ${esc(nm)}</h3>
+      <p class="small muted" style="margin:2px 0 6px">Satiété ${v} % · 1 ration (≈ ${fmtVol(r)}) = +20 %</p><span class="sat-bar wide"><i style="width:${v}%;background:${satColor(v)}"></i></span></div></div>
+    ${v >= 99.5 ? `<p class="small" style="margin:0">Il n'a plus faim pour l'instant.</p>` : items.length ? `<p class="small muted" style="margin:0">Touche un aliment pour le lui donner : il mange jusqu'à 100 %.</p>` : ""}
+    ${items.length || c.peas ? `<div class="fr-list">${items.map(row).join("")}
+      ${c.peas ? `<div class="fr-row peas"><span class="fr-e">🥫</span><span class="fr-t"><b>Boîte de pois chiches</b><span>mangée toute seule sous 5 % : remonte à 50 %</span></span><span class="fr-d">réserve</span></div>` : ""}</div>`
+      : `<p class="small muted" style="margin:0">Le frigo est vide. Après chaque séance, ce que ${esc(nm)} ne peut pas manger y est rangé (5 jours avant de périmer).</p>`}
+    ${items.some(x => x.k === "poulet" || x.k === "or") && v < 99.5 ? `<button class="btn primary" data-act="fr-oldest">Nourrir avec le plus ancien</button>` : ""}
+    <button class="btn" data-act="gy-curve" data-k="3">Courbe de la satiété</button>`, null, "fr-sheet");
+}
+// Caresse (appui long) et chatouilles (double toucher) : une réaction, des cœurs, aucune règle touchée
+let gyMsg = null, gyTapAt = 0, gyTapT = null, gyPetAt = 0, gyPress = null;
+function gyGesture(k){
+  gyMsg = k === "pet" ? {ts:Date.now(), txt:"Rrrr… encore ! 💜", cls:"gy-pet", eye:"sleep"} : {ts:Date.now(), txt:"Hihi ! Arrête, ça chatouille ! 😆", cls:"gy-tickle", eye:"happy"};
+  render();
+  const st = document.querySelector(".gy-stage"); if(!st) return;
+  for(let i = 0; i < (k === "pet" ? 4 : 3); i++){ const h = document.createElement("span"); h.className = "gy-heart"; h.textContent = k === "pet" ? "💜" : "✨";
+    h.style.left = (38 + i * 9) + "%"; h.style.top = (30 + (i % 2) * 8) + "%"; h.style.animationDelay = (i * 0.15) + "s"; st.appendChild(h); setTimeout(() => h.remove(), 1800); }
+}
+document.addEventListener("pointerdown", e => { const st = e.target.closest && e.target.closest(".gy-stage");
+  if(!st || e.target.closest(".gy-chip,.gy-bubble,.gy-flip,button:not(.gy-stage)")) return;
+  const c = creatureState(); if(c.dead || c.stage < 2 || gymonAsleep(c)) return;
+  clearTimeout(gyPress && gyPress.t); gyPress = {x:e.clientX, y:e.clientY, t:setTimeout(() => { gyPress = null; gyPetAt = Date.now(); gyGesture("pet"); }, 550)}; });
+document.addEventListener("pointermove", e => { if(gyPress && Math.hypot(e.clientX - gyPress.x, e.clientY - gyPress.y) > 10){ clearTimeout(gyPress.t); gyPress = null; } });
+["pointerup","pointercancel"].forEach(t => document.addEventListener(t, () => { if(gyPress){ clearTimeout(gyPress.t); gyPress = null; } }));
+// La portion part de la case Satiété et il l'attrape au vol
+let gyAte = null;
+function feedThrow(emoji){
+  requestAnimationFrame(() => { const a = document.querySelector(".gy-sat"), cr = document.querySelector(".gy-stage .creature"); if(!a || !cr) return;
+    const p = a.getBoundingClientRect(), q = cr.getBoundingClientRect(), el = document.createElement("span");
+    el.className = "fr-throw"; el.textContent = emoji; el.style.left = (p.left + p.width/2) + "px"; el.style.top = (p.top + p.height/2) + "px"; document.body.appendChild(el);
+    el.style.setProperty("--dx", (q.left + q.width/2 - p.left - p.width/2) + "px"); el.style.setProperty("--dy", (q.top + q.height*0.3 - p.top - p.height/2) + "px");
+    requestAnimationFrame(() => el.classList.add("go"));
+    setTimeout(() => { el.remove(); cr.classList.remove("gy-hop"); void cr.getBoundingClientRect(); cr.classList.add("gy-hop"); }, 650); });
+}
 function viewCreature(){
-  const c = creatureState(), vit = creatureVitality(c); creatureLog(c);
+  const c = creatureState(), vit = creatureSatiety(c); creatureLog(c);
+  if(!c.dead){ if(festinCheck(c)) setTimeout(() => festinShow(creatureState()), 0); else if(c.peasNew) setTimeout(() => peasSheet(creatureState()), 0); }
   const lvAvg = MUSCLES.reduce((t,g) => t + groupLevel(c, g), 0) / MUSCLES.length, force = Math.min(5, Math.round(lvAvg) + 1);
   const ch = S.profile.active ? null : (S.profile.routines.some(r => r.plan) ? chooseToday() : null);
   const cta = S.profile.active ? "Reprendre la séance" : ch ? `Séance du jour · ${ch.eff.name}` : "Aller à la séance";
@@ -2256,27 +2463,32 @@ function viewCreature(){
     <section class="gy gy-dead">
       <div class="gy-stage">${creatureSVG(c)}</div>
       <p class="gy-form">Repose en paix</p>
-      <p class="gy-hint">${c.stage ? "Ton Gymon est mort" : "L'œuf a refroidi"} : sa vitalité est tombée sous ${CREATURE_CFG.vitality.deathBelow} %.</p>
+      <p class="gy-hint">${c.stage ? "Ton Gymon est mort de faim" : "L'œuf a refroidi"} : sa satiété est tombée à 0 %.</p>
       <p class="small muted" style="margin:0;text-align:center">${n ? `${n} séance${n>1?"s":""} faite${n>1?"s":""} depuis l'attend${n>1?"ent":""} pour le nourrir. ` : ""}Ressuscite-le pour garder son stade et ses muscles (il aura un peu maigri), ou repars d'un nouvel œuf.</p>
       <button class="btn primary gy-cta" data-act="gy-resurrect">✨ Ressusciter mon Gymon</button>
       <button class="btn gy-cta" data-act="gy-restart">Recommencer avec un nouvel œuf</button>
     </section>`;
   }
-  const mood = gymonMood(c), hop = !!(c.lastMeal && !c.lastMeal.seen && Date.now() - c.lastMeal.ts < 24*3600000 && c.stage >= 2 && mood !== "sleep");
+  // Gestes d'attachement (13 nov. 2026) : réveil du matin (il s'étire une fois par jour), caresse, chatouilles — sans effet sur les règles
+  const m0 = gymonMood(c), hr = gyHourFix ?? new Date().getHours();
+  if(!c.dead && c.stage >= 2 && m0 !== "sleep" && hr >= 6 && hr < 11 && c.stretchDay !== dayNum()){ c.stretchDay = dayNum(); saveLocal(); gyMsg = {ts:Date.now(), txt:"Bien dormi ! *il s'étire* 🥱", cls:"gy-stretch", eye:"happy", arm:0}; }
+  const fx = gyMsg && Date.now() - gyMsg.ts < 6000 && m0 !== "sleep" ? gyMsg : null;
+  const mood = fx && fx.eye ? fx.eye : m0, hop = !!(c.lastMeal && !c.lastMeal.seen && Date.now() - c.lastMeal.ts < 24*3600000 && c.stage >= 2 && m0 !== "sleep");
   if(hop){ c.lastMeal.seen = 1; saveLocal(); }   // saute de joie une fois, à la première ouverture après le repas
-  const sv = creatureSVG(c, false, gyBack && c.stage >= 2, mood ? {eyeState:mood, ...(mood === "sleep" ? {armLevel:2} : {})} : undefined);
+  const sv = creatureSVG(c, false, gyBack && c.stage >= 2, mood ? {eyeState:mood, ...(m0 === "sleep" ? {armLevel:2} : fx && fx.arm !== undefined ? {armLevel:fx.arm} : {})} : undefined);
   return `
-    <section class="gy ${c.stage < 2 ? "gy-egg" : ""} ${mood === "sleep" ? "gy-night" : ""}">
+    <section class="gy ${c.stage < 2 ? "gy-egg" : ""} ${m0 === "sleep" ? "gy-night" : ""}">
       ${beforeAfterHTML(c)}
       <div class="gy-stage" data-act="gy-more-tap" role="button" aria-label="Voir mon Gymon de plus près">
         <div class="gy-aura"></div>
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
         <i class="gy-spark" style="--x:72%;--y:72%;--d:2.1s"></i><i class="gy-spark" style="--x:24%;--y:66%;--d:.7s"></i>
-        ${gyZoom(sv, c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}${hop ? " gy-hop" : ""}`)}
-        ${mood === "sleep" ? `<span class="gy-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><button class="gy-bubble" data-act="gy-wake">Zzz… 💤</button>` : (() => { const L = gyWake && Date.now() - gyWake < 60000 ? ["Hein ? Quoi ? … Ah, c'est toi 😴 Je me rendors vite."] : gymonLines(c); return L.length ? `<button class="gy-bubble" data-act="gy-talk">${esc(L[L.prio ? gyTalk % L.length : (gyTalk + dayNum()) % L.length])}</button>` : ""; })()}
+        ${gyZoom(sv, c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}${hop ? " gy-hop" : ""}${fx && fx.cls && Date.now() - fx.ts < 1500 ? " " + fx.cls : ""}`)}
+        ${m0 === "sleep" ? `<span class="gy-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><button class="gy-bubble" data-act="gy-wake">Zzz… 💤</button>` : (() => { const L = fx ? [fx.txt] : gyAte && Date.now() - gyAte.ts < 6000 ? [gyAte.k === "steak" ? "Un steak ! Je suis calé pour 12 heures 🥩💪" : gyAte.k === "omelette" ? "Une omelette ! Miam 🥚" : `Miam ! 😋 Satiété ${vit} %`]
+          : gyWake && Date.now() - gyWake < 60000 ? ["Hein ? Quoi ? … Ah, c'est toi 😴 Je me rendors vite."] : gymonLines(c); return L.length ? `<button class="gy-bubble" data-act="gy-talk">${esc(L[L.prio ? gyTalk % L.length : (gyTalk + dayNum()) % L.length])}</button>` : ""; })()}
         <button class="gy-chip tl" data-act="gy-curve" data-k="1" aria-label="Courbe du poids"><small>Poids</small>${fmtWeight(c.weight)}</button>
         <button class="gy-chip tr" data-act="gy-curve" data-k="2" aria-label="Courbe de la taille"><small>Taille</small>${fmtN(creatureHeight(c), 0)} cm</button>
-        <button class="gy-chip bl" data-act="gy-curve" data-k="3" aria-label="Courbe de la vitalité"><small>Vitalité</small>${vit} %</button>
+        ${satChipHTML(c, vit)}
         <span class="gy-chip br" aria-label="Niveau de chaque muscle"><small>Muscles</small><span class="gy-lv">${MUSCLES.map(m => `<i style="height:${Math.max(3, Math.round(groupLevel(c, m)/4.5*26))}px;${mc(m)}"></i>`).join("")}</span></span>
       </div>
       ${c.stage >= 2 ? `<button class="gy-name" data-act="gy-name">${c.name ? esc(c.name) : "✏️ Donner un nom"}</button>` : ""}
@@ -2385,21 +2597,25 @@ function celebHTML(w, cr, hatch){
       <div class="celeb-feed" id="celeb-feed"><button class="celeb-food" id="celeb-food" data-act="celeb-feed" aria-label="Donner le repas à ${esc(nm)}">🍗<b>${fmtVol(cr.vol + (cr.bonus||0))}</b></button>
         <p class="celeb-sub">Fais glisser le repas vers ${esc(nm)}, ou touche-le</p></div>
       <div class="celeb-rev" id="celeb-rev" hidden>
-      <h2>${esc(nm)} a avalé ${fmtVol(cr.vol)}</h2>
+      <h2>${esc(nm)} a ${cr.eaten === undefined ? "avalé " + fmtVol(cr.vol) : cr.eaten >= 1 ? "mangé " + fmtVol(cr.eaten) : "le ventre plein"}</h2>
+      ${cr.satAfter !== undefined ? `<p class="celeb-sat">Satiété ${Math.round(cr.satBefore)} % → <b>${Math.round(cr.satAfter)} %</b></p>` : ""}
       ${cr.bonus ? `<p class="celeb-crit">⚡ Coup critique : +${fmtVol(cr.bonus)} en bonus</p>` : ""}
+      ${(cr.fridge || []).length ? `<div class="celeb-fr">${cr.fridge.map(x => `<span>${FOODS[x.k].e} ${x.k === "poulet" || x.k === "or" ? fmtVol(x.kg) : esc(FOODS[x.k].n)} au frigo</span>`).join("")}</div>` : ""}
       ${cr.gain > 0 ? `<p class="celeb-sub">+${fmtWeight(cr.gain)} sur la balance</p>` : ""}
       ${Object.keys(dl).length ? `<div class="celeb-ups">${Object.entries(dl).map(([m,d]) => `<span>💪 ${esc(m)} +${fmtN(d,2)}</span>`).join("")}</div>` : `<p class="celeb-sub">Il reprend des forces.</p>`}
       ${w.prs.length ? `<p class="celeb-sub">🏆 Record : ${w.prs.map(id => esc(exById(id).name)).join(", ")}</p>` : ""}
       </div>
       ${hatch ? `<div class="row celeb-name"><input id="celeb-name" class="name-input" maxlength="16" placeholder="Donne-lui un nom" aria-label="Nom du Gymon"><button class="btn" data-act="celeb-rand" aria-label="Nom au hasard">🎲</button></div>` : ""}
-      <div class="celeb-btns"><button class="btn" data-act="celeb-share">📸 Partager</button><button class="btn primary" data-act="celeb-close">Continuer</button></div>
+      <div class="celeb-btns" id="celeb-btns" hidden><button class="btn" data-act="celeb-share">📸 Partager</button><button class="btn primary" data-act="celeb-close">Continuer</button></div>
     </div>`;
 }
 // Faire glisser le repas jusqu'au Gymon (ou le toucher) révèle ce qu'il a gagné
 function celebFeed(){
   if(!celebState || celebState.fed) return; celebState.fed = true;
   const f = document.getElementById("celeb-food"), g = document.getElementById("celeb-gy"), done = () => {
-    const fd = document.getElementById("celeb-feed"), rv = document.getElementById("celeb-rev"); if(fd) fd.hidden = true; if(rv) rv.hidden = false;
+    const fd = document.getElementById("celeb-feed"), rv = document.getElementById("celeb-rev"), bt = document.getElementById("celeb-btns");
+    if(fd) fd.hidden = true; if(rv) rv.hidden = false; if(bt) bt.hidden = false;
+    const ce = document.getElementById("celebrate"); if(ce) ce.classList.add("fed");   // Gymon plus petit : gains et « Continuer » tiennent à l'écran   // nourrir est obligatoire : « Continuer » n'apparaît qu'après
     if(g){ g.classList.add("chomp"); } };
   if(!f || !g || matchMedia("(prefers-reduced-motion: reduce)").matches){ done(); return; }
   const a = f.getBoundingClientRect(), b = g.getBoundingClientRect();
@@ -2482,8 +2698,12 @@ function gymonLines(c){
     if(lw && muscleMelting(c, m)) melt.push(`Mes ${M_SANS[m]} fondent 💧 ${days} jours sans les travailler…`);
     else if(lw && days > 10 && m !== "Abdos") L.push(`${days} jours sans ${M_SANS[m]}… ils vont bientôt fondre !`);
     else if(r.pct < 0.6 && m !== "Abdos") L.push(`Mes ${M_SANS[m]} chauffent encore 🔥 Laisse-les souffler.`); });
-  L.unshift(...melt); L.prio = melt.length;   // la fonte est dite en premier
-  const v = creatureVitality(c); if(v < 50) L.push("J'ai un petit creux… une séance ?");
+  // Frigo (13 nov. 2026) : boîte de pois chiches ouverte, poulet périmé, poulet qui va périmer — dits en premier
+  if(c.peasUsed && now - c.peasUsed.ts < 3*D) melt.unshift("J'ai dû ouvrir la boîte de pois chiches… ouf ! Reviens vite me nourrir 🥫");
+  if(c.spoiled && now - c.spoiled.ts < 2*D) melt.unshift(c.spoiled.kg ? `Beurk ! ${fmtVol(c.spoiled.kg)} de poulet ont périmé au frigo 🤢` : "Beurk ! Quelque chose a périmé au frigo 🤢");
+  if((c.fridge || []).some(it => spoilAt(it) - now < D)) melt.push("Le frigo sent bizarre… donne-moi vite ce qui va périmer 🍗");
+  L.unshift(...melt); L.prio = melt.length;   // la fonte et le frigo sont dits en premier
+  const v = creatureSatiety(c); if(v < 50) L.push(fridgeKg(c) ? "Il reste du poulet au frigo… j'ai faim 🍗" : "J'ai faim… une séance ?");
   L.push(GYM_CHAT[(dayNum() + (c.born||0)) % GYM_CHAT.length]);
   return L;
 }
@@ -2495,7 +2715,7 @@ const TUTO = [
   {t:"Il mange ce que tu soulèves", d:"Le volume de ta séance devient sa nourriture : plus tu soulèves, plus il prend du poids.", c:{stage:0, fidelity:1}, badge:"+ 6,4 t avalées"},
   {t:"Il se muscle comme toi", d:"Seuls les muscles que tu travailles vraiment (séries validées ✓) se développent chez lui. Tes points faibles se verront aussi !", c:{stage:0, fidelity:1}, badge:"💪 Pectoraux +1"},
   {t:"Il évolue avec ta fidélité", d:"Plus tu viens régulièrement, plus il grandit. Quand évoluera-t-il ? Surprise…", mystery:true},
-  {t:"Prends soin de lui", d:"Sans séance, il perd de la vitalité. S'il tombe trop bas, il meurt… Chaque séance le requinque, et 3 jours d'affilée le remettent en pleine forme. Mort, tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
+  {t:"Nourris-le", d:"Il a faim : ce que tu soulèves devient son poulet. Rassasié, il garde le reste au frigo (5 jours avant de périmer) pour les jours de repos. S'il ne mange plus, il meurt… mais tu pourras le ressusciter, ou repartir d'un nouvel œuf.", c:{stage:0, fidelity:1, dead:{ts:0}}}
 ];
 /* Guide de prise en main : chaque écran est illustré par une mini-maquette de l'interface */
 const mk = {
@@ -2553,6 +2773,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-13", t:"🍗 Nourrissez votre Gymon", x:"La vitalité devient la satiété : votre Gymon a faim, et ce que vous soulevez devient son poulet. En fin de séance, faites glisser le repas vers lui : il mange jusqu'à 100 %, le reste va au frigo (touchez la case Satiété), où il périme en 5 jours. Un record rapporte un steak, la 3e séance de la semaine une omelette. Une semaine sans jamais passer sous 50 % : festin du dimanche ! Après un mois, une boîte de pois chiches peut le sauver pendant vos vacances. Et essayez de le caresser (appui long) ou de le chatouiller (double toucher)."},
   {d:"2026-11-13", t:"💪 17 muscles au lieu de 7", x:"Gymon distingue maintenant quadriceps, ischios, fessiers, mollets, dorsaux, trapèzes, chaque deltoïde… Chaque exercice compte pour plusieurs muscles selon sa part de travail (un développé couché travaille aussi les triceps). Le coach, la récupération, le bouton ↻ (un quadriceps reste un quadriceps) et votre Gymon suivent ce détail. Les muscles du Gymon ont été recalculés d'après vos séances passées."},
   {d:"2026-11-13", t:"🔴 « Trop dur » : on vérifie", x:"Quand vous choisissez « Trop dur », Gymon vous rappelle vos séries pour vérifier que la saisie correspond à ce que vous avez vraiment fait : le coach s'en sert pour la séance suivante."},
   {d:"2026-11-13", t:"⚡ Coups critiques annoncés", x:"Les coups critiques sont tirés dès le début de la séance : les séries marquées ⚡ nourriront double votre Gymon. À vous de ne pas les rater !"},
@@ -2622,8 +2843,8 @@ function maybeAppGuide(){ if(tab==="seance" && !S.profile.active && S.profile.tu
 function gymonHealthAlert(){
   const c = creatureState(); if(!c.fidelity && !c.stage && !c.dead) return "";
   if(c.dead) return `<button class="alert danger gy-alert" data-act="goto" data-tab="creature">💀 Ton Gymon est mort. Touche ici pour le ressusciter.</button>`;
-  const vit = creatureVitality(c); if(vit > 50) return "";
-  return `<button class="alert ${vit <= 30 ? "danger" : "warn"} gy-alert" data-act="goto" data-tab="creature">${vit <= 30 ? "⚠️ Ton Gymon est mourant : une séance vite !" : "🤒 Ton Gymon est malade, il a besoin d'une séance."}</button>`;
+  const vit = creatureSatiety(c); if(vit > 50) return "";
+  return `<button class="alert ${vit <= 30 ? "danger" : "warn"} gy-alert" data-act="goto" data-tab="creature">${vit <= 30 ? "⚠️ Ton Gymon meurt de faim : nourris-le vite !" : "🍗 Ton Gymon a très faim : une séance ou le frigo."}</button>`;
 }
 
 /* ---------- Boîte à idées : brouillon gardé sur le téléphone ---------- */
@@ -2816,7 +3037,7 @@ function render(){
   document.getElementById("title").textContent = TITLES[tab]; document.body.dataset.tab = tab;
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===tab ? "page" : "false"));
   const v = document.getElementById("view");
-  const gc = creatureState(), sick = gc.dead || ((gc.fidelity || gc.stage) && creatureVitality(gc) <= 50);
+  const gc = creatureState(), sick = gc.dead || ((gc.fidelity || gc.stage) && creatureSatiety(gc) <= 50);
   document.querySelector('.tabs [data-tab="creature"]').classList.toggle("sick", !!sick);
   v.innerHTML = installHint() + (tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : gymonHealthAlert() + viewHome())
     : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : tab==="reglages" ? viewSettings() : viewExercises());
@@ -3247,7 +3468,7 @@ function finishWorkout(){
     ${cr && cr.dead ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>Ton Gymon est mort…</b>
       Cette séance l'attend : ressuscite-le pour qu'il la mange.</span></button>`
     : cr ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(creatureState(), true)}<span><b>${cr.evolved ? "Ton Gymon a évolué !" : "Ton Gymon a mangé"}</b>
-      ${fmtVol(cr.vol)} soulevés · ${cr.gain>0 ? "+"+fmtWeight(cr.gain) : "il reprend des forces"}${cr.ups.length ? ` · plus musclé : ${cr.ups.join(", ").toLowerCase()}` : ""}</span></button>` : ""}
+      ${fmtVol(cr.vol)} soulevés · satiété ${Math.round(cr.satBefore)} → ${Math.round(cr.satAfter)} %${(cr.fridge||[]).length ? ` · au frigo : ${cr.fridge.map(x => x.k === "poulet" || x.k === "or" ? FOODS[x.k].e + " " + fmtVol(x.kg) : FOODS[x.k].e).join(", ")}` : ""}${cr.ups.length ? ` · plus musclé : ${cr.ups.join(", ").toLowerCase()}` : ""}</span></button>` : ""}
     ${w.prs.length ? `<p style="margin:0">Nouveau record sur ${w.prs.map(id=>"<b>"+esc(exById(id).name)+"</b>").join(", ")}.</p>` : ""}
     <button class="btn primary" data-act="close">Fermer</button>`);
   celebrate(w, cr);
@@ -3295,7 +3516,7 @@ async function wakeLock(){
   try{ if(S.profile.active && !lock && navigator.wakeLock && document.visibilityState==="visible"){ lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", ()=>lock=null); }
        else if(!S.profile.active && lock){ lock.release(); lock = null; } }catch(e){ lock = null; }
 }
-document.addEventListener("visibilitychange", () => { if(document.visibilityState==="visible") wakeLock(); });
+document.addEventListener("visibilitychange", () => { if(document.visibilityState==="visible"){ wakeLock(); if(peasDraw(creatureState()) && tab === "creature") render(); } });
 
 /* ---------- Actions ---------- */
 const A = () => S.profile.active;
@@ -3319,16 +3540,26 @@ const ACT = {
       <button class="btn" data-act="close">Fermer</button>`); },
   "gy-flip": (b, e) => { e.stopPropagation(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; },
   "gy-curve": (b, e) => { e.stopPropagation(); const c = creatureState(), k = +b.dataset.k; creatureLog(c);
-    const L = {1:["Son poids", fmtWeight], 2:["Sa taille", v => `${fmtN(v, 0)} cm`], 3:["Sa vitalité", v => `${Math.round(v)} %`]}[k];
+    const L = {1:["Son poids", fmtWeight], 2:["Sa taille", v => `${fmtN(v, 0)} cm`], 3:["Sa satiété", v => `${Math.round(v)} %`]}[k];
     const pts = (c.hist || []).filter(p => p[k] !== null && p[k] !== undefined).map(p => ({d:p[0], y:p[k], est:p[4]}));
     const now = pts.length ? pts[pts.length-1].y : 0;
     openSheet(`<h3>${L[0]}</h3><p class="curve-now">${esc(L[1](now))}</p>
       ${pts.length > 1 ? `<div class="curve-box" data-k="${k}">${curveSVG(pts, L[1])}<p class="small curve-tip" id="curve-tip">Touche la courbe pour voir une date.</p></div>` : `<p class="small muted" style="margin:0">La courbe se remplit jour après jour, à partir d'aujourd'hui.</p>`}
       ${pts.some(p => p.est) ? `<p class="small muted" style="margin:0">En pointillés : reconstitué à partir de tes séances passées.</p>` : ""}
-      ${k === 3 && pts.length ? `<p class="small muted" style="margin:0">La vitalité est enregistrée depuis le 12 novembre 2026.</p>` : ""}
+      ${k === 3 && pts.length ? `<p class="small muted" style="margin:0">Enregistrée depuis le 12 novembre 2026 (vitalité jusqu'au 13 novembre, satiété ensuite).</p>` : ""}
       <button class="btn" data-act="close">Fermer</button>`);
     curvePts = pts; curveFmt = L[1]; },
-  "gy-more-tap": () => { if(Date.now() - gySwiped < 400) return; if(gymonAsleep(creatureState())){ ACT["gy-wake"](); return; } ACT["gy-more"](); },
+    fridge: (b, e) => { if(e) e.stopPropagation(); fridgeSheet(); },
+  "fr-eat": b => { const c = creatureState(), r = fridgeEat(c, b.dataset.id); if(!r) return;
+    if(r.full){ toast("Il n'a plus faim pour l'instant"); return; }
+    touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:FOODS[r.it.k].e, k:r.it.k}; tab = "creature"; render(); feedThrow(FOODS[r.it.k].e); },
+  "fr-oldest": () => { const c = creatureState(), kg = fridgeEatOldest(c); if(!kg){ toast("Il n'a plus faim pour l'instant"); return; }
+    touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:"🍗", k:"poulet", kg}; tab = "creature"; render(); feedThrow("🍗"); },
+  "gy-more-tap": () => { if(Date.now() - gySwiped < 400 || Date.now() - gyPetAt < 700) return; if(gymonAsleep(creatureState())){ ACT["gy-wake"](); return; }
+    // Double toucher = chatouilles ; un seul toucher ouvre sa fiche (après un court délai pour reconnaître le double toucher)
+    const c = creatureState(), now = Date.now(); if(c.stage < 2 || c.dead){ ACT["gy-more"](); return; }
+    if(now - gyTapAt < 320){ clearTimeout(gyTapT); gyTapAt = 0; gyGesture("tickle"); return; }
+    gyTapAt = now; clearTimeout(gyTapT); gyTapT = setTimeout(() => { gyTapAt = 0; ACT["gy-more"](); }, 300); },
   "gy-wake": (b, e) => { if(e) e.stopPropagation(); gyWake = Date.now(); render(); },
   "ba-ok": () => { const c = creatureState(); c.ref = snapNow(c); touchProfile(); render(); },
   "gy-talk": (b, e) => { e.stopPropagation(); gyTalk++; render(); },
@@ -3625,7 +3856,9 @@ function cleanCreature(x){
   const ref = x.ref && isTime(x.ref.ts) ? {ts:x.ref.ts, stage:Math.round(n(x.ref.stage, 0, N - 1, 0)), weight:n(x.ref.weight, 0, 1e6, 0), levels:byMuscle(x.ref.levels, 0, 4.5)} : null;
   const c = {v:4, born:x.born, fed:ids(x.fed).slice(-1000), pending:ids(x.pending), fidelity:Math.round(n(x.fidelity, 0, 1e5, 0)), food:n(x.food, 0, 1e9, 0),
     weight:n(x.weight, 0, 1e6, CREATURE_CFG.minWeight[stage]), stage, levels:byMuscle(x.levels, 0, 4.5), lastWorked:byMuscle(x.lastWorked, 0, now), peak:byMuscle(x.peak, 0, 4.5),
-    last:n(x.last, 0, now, 0), lastMeal:null, vit:n(x.vit, 0, 100, 100), mv:Math.round(n(x.mv, 0, 99, 0)), resurrections:Math.round(n(x.resurrections, 0, 1e4, 0)),
+    last:n(x.last, 0, now, 0), lastMeal:null, ...(x.sv === 1 ? {sv:1, sat:n(x.sat, 0, 100, 100), satT:n(x.satT, 0, now, now), full:n(x.full, 0, now + 13*3600000, 0)} : {vit:n(x.vit, 0, 100, 100)}),
+    fridge:(Array.isArray(x.fridge) ? x.fridge : []).filter(it => it && FOODS[it.k] && isTime(it.t)).slice(-60).map(it => ({id:safeId(it.id) ? it.id : uidGen("f"), k:it.k, kg:Math.round(n(it.kg, 0, 1e7, 0)), t:it.t})),
+    ...(x.peas && isTime(x.peas.t) ? {peas:{t:x.peas.t}} : {}), ...(typeof x.festDone === "number" && isFinite(x.festDone) ? {festDone:x.festDone} : {}), mv:Math.round(n(x.mv, 0, 99, 0)), resurrections:Math.round(n(x.resurrections, 0, 1e4, 0)),
     dead:x.dead && isTime(x.dead.ts) ? {ts:x.dead.ts, since:isTime(x.dead.since) ? x.dead.since : x.dead.ts} : null,
     graves:(Array.isArray(x.graves) ? x.graves : []).filter(t => t && typeof t === "object").slice(-50).map(t => ({stage:Math.round(n(t.stage, 0, N - 1, 0)), fidelity:Math.round(n(t.fidelity, 0, 1e5, 0)), died:n(t.died, 0, now, now)}))};
   if(Array.isArray(x.at) && x.at.length === N && x.at.every(v => typeof v === "number" && isFinite(v))) c.at = x.at.map(v => Math.max(0, Math.round(v)));
@@ -3807,7 +4040,8 @@ document.addEventListener("visibilitychange", () => {   // revenir dans l'app ap
 });
 gcOpen();
 
-if(!S.profile.creature){ creatureState(); saveLocal(); } else creatureFixLevels();   // l'œuf naît à la première ouverture : seules les séances suivantes comptent
+if(!S.profile.creature){ creatureState(); saveLocal(); } else creatureFixLevels();
+peasDraw(creatureState());   // tirage du jour de la boîte de pois chiches   // l'œuf naît à la première ouverture : seules les séances suivantes comptent
 render(); setStatus();
 if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});   // demande au navigateur de ne pas effacer les données
 // Uniquement pour un nouvel utilisateur : un carnet déjà rempli n'affiche pas l'accueil
