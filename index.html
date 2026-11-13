@@ -645,7 +645,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 a";
+const APP_VERSION = "2026-11-13 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -996,12 +996,38 @@ function coachFresh(exId, beforeTs, planned){
    Proposées seulement quand c'est utile : polyarticulaire chargé, premier exercice de la séance pour ce muscle.
    Séance lourde (ou fourchette 4–6/5–8) : 2 séries, ~50 % × 8 puis ~75 % × 3. Sinon : 1 série, ~60 % × 6.
    Les séries d'échauffement ne comptent ni dans le volume, ni pour le coach, ni pour le Gymon, et ne lancent pas le minuteur. */
+/* Échauffement par zone pour les jambes (décidé le 13 nov. 2026) : quadriceps, ischios, fessiers, mollets et adducteurs
+   se préparent séparément. La 1re zone de la séance a l'échauffement complet ; une zone nouvelle alors que les jambes sont
+   déjà chaudes a une seule série légère ; une zone déjà travaillée n'en a pas. Les autres muscles gardent une seule zone ;
+   pour tous, un polyarticulaire après une simple isolation du même muscle garde une série d'approche. */
+const LEG_ZONES = [["mollets", /mollet|calf/], ["adducteurs", /adduct/], ["ischios", /curl|ischio|ghd|extensions? de hanche|roumain|jambes tendues|good.?morning|nordic|soulev/],
+  ["fessiers", /hip.?thrust|fessier|glute|pont|kickback|abduct/], ["quadriceps", /squat|presse|fente|bulgare|extension|leg.?ext|hack|goblet|step|sissy|press/]];
+function warmZones(e){
+  if(e.muscle !== "Jambes") return [e.muscle];
+  const n = ((e.name || "") + " " + (e.id || "")).toLowerCase(), z = LEG_ZONES.find(([, r]) => r.test(n)), p = z ? z[0] : "Jambes";
+  // Les polyarticulaires préparent aussi les fessiers (squat, presse, fentes, soulevé de terre roumain)
+  return p === "quadriceps" && !/extension|leg.?ext|sissy/.test(n) || p === "ischios" && !/curl|nordic/.test(n) ? [p, "fessiers"] : [p];
+}
+const isPoly = e => !!(dupRanges(e) || repRange(e)[0] <= 6);
+// 2 = premier exercice du muscle, 1 = zone nouvelle d'un muscle déjà chaud, 0 = zone déjà échauffée
+// (pour un polyarticulaire, seul un polyarticulaire déjà fait sur la zone dispense de série d'approche)
+function warmNeed(prevExs, exId){
+  const e = exById(exId), zs = warmZones(e), prev = prevExs.map(x => exById(x.exId)), poly = isPoly(e);
+  if(!prev.some(x => x.muscle === e.muscle)) return 2;
+  return prev.some(x => warmZones(x).includes(zs[0]) && (!poly || isPoly(x))) ? 0 : 1;
+}
 function warmupFor(exId, beforeTs, planned, first, force){
-  if(!first && !force) return [];
+  const need = first === true ? 2 : first || 0;
+  if(!need && !force) return [];
   const e = exById(exId), c = coach(exId, beforeTs, planned), W = num(c.w);
   if(!W || e.equip==="Poids du corps") return [];
   const st = stepFor(e, W), min = e.equip==="Barre" ? 20 : st;
-  const compound = dupRanges(e) || repRange(e)[0] <= 6;
+  const compound = isPoly(e), legs = e.muscle === "Jambes";
+  // Muscle déjà chaud mais zone (ou charge lourde) pas encore préparée, ou isolation qui ouvre une zone des jambes : une série légère
+  if(need && !force && (need === 1 || legs && !compound)){
+    const w = Math.max(min, roundTo(W * (compound ? 0.6 : 0.5), st));
+    return w < W*0.9 ? [{w, r:compound ? 5 : 12}] : [];
+  }
   if(!compound || (W < 20 && e.equip!=="Barre")){   // pas utile d'office ; à la demande : une série légère
     const w = Math.max(min, roundTo(W*0.5, st));
     return force && w < W*0.9 ? [{w, r:10}] : [];
@@ -1011,10 +1037,10 @@ function warmupFor(exId, beforeTs, planned, first, force){
   return out;
 }
 // Ajoute les séries d'échauffement en tête des exercices où elles sont utiles (ordre de la séance)
-function addWarmups(exercises, ts, seen){
-  seen = seen || new Set();
-  exercises.forEach(ex => { const m = exById(ex.exId).muscle, first = !seen.has(m); seen.add(m);
-    const n = warmupFor(ex.exId, ts, ex.plan, first).length;
+function addWarmups(exercises, ts, before){
+  const prev = (before || []).slice();
+  exercises.forEach(ex => { const need = warmNeed(prev, ex.exId); prev.push(ex);
+    const n = warmupFor(ex.exId, ts, ex.plan, need).length;
     if(n && !ex.sets.some(s => s.warm)) ex.sets.unshift(...Array.from({length:n}, () => ({...blankSet(), warm:true}))); });
   return exercises;
 }
@@ -2393,6 +2419,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-13", t:"🔥 Échauffement par zone", x:"Aux jambes, chaque zone a son échauffement : après un hip thrust, le leg curl a aussi sa série légère pour les ischios, comme les mollets. Une zone déjà travaillée n'en a pas besoin. Et un exercice lourd fait après une isolation du même muscle garde sa série d'approche."},
   {d:"2026-11-12", t:"⚡ Le Gymon vit votre séance", x:"Il réagit à chaque série validée et fête vos records en direct. À partir de la 3e série, une série peut tomber en coup critique et le nourrir double. La pastille 🍗 à côté du chrono montre son repas par rapport à votre moyenne."},
   {d:"2026-11-12", t:"🍗 Nourrissez-le vous-même", x:"En fin de séance, faites glisser le repas vers votre Gymon (ou touchez-le) pour découvrir ce qu'il a gagné. Après un repas, il a les yeux rieurs et saute de joie. La nuit, de 23 h à 6 h, il dort : touchez-le pour le réveiller."},
   {d:"2026-11-12", t:"💪 Le Gymon montre sa forme", x:"En pleine vitalité, il fait le double biceps ; quand elle baisse, ses bras descendent. Son regard pétille si vous êtes régulier et que vos charges montent, et se fatigue sinon."},
@@ -2744,7 +2771,7 @@ function viewActive(){
   const a = S.profile.active;
   const exs = a.exercises.map((ex,i) => {
     const e = exById(ex.exId), prev = lastSetsFor(ex.exId, a.start), c = coach(ex.exId, a.start, ex.plan, preLoad(a.exercises, i, true));
-    const hasWarm = ex.sets.some(s => s.warm), wu = hasWarm ? warmupFor(ex.exId, a.start, ex.plan, !a.exercises.slice(0, i).some(x => exById(x.exId).muscle===e.muscle), ex.wuForce) : [];
+    const hasWarm = ex.sets.some(s => s.warm), wu = hasWarm ? warmupFor(ex.exId, a.start, ex.plan, warmNeed(a.exercises.slice(0, i), ex.exId), ex.wuForce) : [];
     const prevWork = (sessionsFor(ex.exId, a.start)[0] || {sets:[]}).sets, prevWarm = prev.filter(x => x.warm);
     let nw = 0;
     let n = 0;
@@ -3204,8 +3231,8 @@ const ACT = {
   "r-remove": () => { const d = draft; confirmSheet("Supprimer ce programme ?", `« ${d.name} » sera retiré. Vos séances passées restent dans l'historique.`, "Supprimer", () => {
     S.profile.routines = S.profile.routines.filter(r=>r.id!==d.id); touchProfile(); render(); toast("Programme supprimé"); }); },
 
-  "pick-ex": () => openPicker(ids => { const seen = new Set(A().exercises.map(x => exById(x.exId).muscle));
-    addWarmups(ids.map(id => ({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})), A().start, seen).forEach(x => A().exercises.push(x)); touchProfile(); render(); }),
+  "pick-ex": () => openPicker(ids => {
+    addWarmups(ids.map(id => ({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})), A().start, A().exercises).forEach(x => A().exercises.push(x)); touchProfile(); render(); }),
   "pick-toggle": b => { const id = b.dataset.id;
     if(picker.only){ const f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
   "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
