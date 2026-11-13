@@ -203,11 +203,15 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
     const D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true}), saved = {w:S.workouts, bw:S.profile.bw};
     S.profile.bw = 80; S.workouts = [{id:"b1", name:"x", start:n-2*D, end:n-2*D, exercises:[{exId:"squat", feel:3, sets:[set(170,5)]}, {exId:"hip-thrust", feel:3, sets:[set(40,8)]}, {exId:"dc-barre", feel:3, sets:[set(100,5)]}, {exId:"leg-curl", feel:3, sets:[set(45,10)]}]}];
     const {res} = strengthByMuscle(), svg = new DOMParser().parseFromString(bodySVG(res, null), "image/svg+xml");
+    progSub = "prog"; tab = "progres"; render();
+    const dots = [...document.querySelectorAll('.list [data-act="body-m"]')].map(b => [b.dataset.m, b.querySelector(".mdot").style.getPropertyValue("--mc").trim()]);
     const want = t => t === "fort" ? "var(--ok)" : t === "faible" ? "var(--danger)" : "var(--accent)";
     const rows = MUSC.filter(m => res[m].score !== null).map(m => [m, res[m].tag, [...svg.querySelectorAll(`g[data-m="${m}"]`)].map(g => g.getAttribute("fill"))]);
     S.workouts = saved.w; S.profile.bw = saved.bw;
-    return {rows, glute:res.Fessiers.tag, quad:res.Quadriceps.tag, ok:rows.every(([m, t, f]) => f.length && f.every(x => x === want(t)))}; });
+    const dotsOk = dots.length && dots.every(([m, c]) => c === want(res[m].tag));
+    return {rows, dots, dotsOk, glute:res.Fessiers.tag, quad:res.Quadriceps.tag, ok:rows.every(([m, t, f]) => f.length && f.every(x => x === want(t)))}; });
   ok(BODY.glute === "faible" && BODY.quad === "fort" && BODY.ok, "points forts et faibles : chaque muscle de la liste a la même couleur sur la silhouette (fessiers faibles = rouges, quadriceps forts = verts)", BODY.rows);
+  ok(BODY.dotsOk, "points forts et faibles : la pastille de chaque muscle de la liste a la couleur fort / moyen / faible", BODY.dots);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);
