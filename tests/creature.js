@@ -112,30 +112,103 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(seen.join() === [2,3,4,5,6,7,8,9,10,11,12].join() && res.stages.every((x,i,a) => i===0 || x - a[i-1] <= 1), "progression jusqu'au dragon, une forme à la fois, sans en sauter", seen);
   ok(res.stages.every((x,i,a) => i===0 || x >= a[i-1]), "un stade acquis ne se perd jamais");
 
-  // Règles de vitalité : -20 au 2e jour sans séance, puis -10 par jour, mort sous 10 %
-  const rule = await p.evaluate(() => { const c = {vit:100, born:0, fidelity:1, stage:3}, at = d => { c.last = Date.now() - d*864e5 - 6e4; return creatureVitality(c); };
-    const r = [0,1,2,3,4,21,22].map(d => Math.round(at(d)*10)/10); c.vit = 80; r.push(Math.round(at(2))); c.last = Date.now() - 2*864e5; r.push(creatureDaysLeft(c)); return r; });
-  ok(rule.join() === "100,100,80,72,65,11,10,64,18", "vitalité en proportion : 100, 100, 80 (2 j), 72 (×0,9), 65, 11 (21 j), 10 → sous 10 % à 22 j ; partie de 80 % → 64 % à 2 j, mort dans 18 j", rule);
-  // Pause de 5 jours : vitalité en baisse, rien n'est perdu
-  const pause = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify({s:c.stage, l:c.levels, w:c.weight, f:c.fidelity});
-    c.vit = 100; c.last = Date.now() - 5*864e5 - 6e4; const v = creatureVitality(c);
-    return {v, same: keep === JSON.stringify({s:c.stage, l:c.levels, w:c.weight, f:c.fidelity})}; });
-  ok(pause.v === 58 && pause.same, "pause de 5 jours : vitalité 58 % (100×0,8×0,9×0,9×0,9), stade, muscles et poids conservés", pause.v);
-  await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3tired.png")});
-  await play("90","8","90","8");
-  ok(await p.evaluate(() => creatureVitality(creatureState())) === 70, "reprise : une séance augmente de 20 % (58 → 70 %)");
-  // 3 jours de suite avec une séance : retour à 100 %
-  const streak = await p.evaluate(() => { const c = creatureState(), D = 864e5, now = Date.now();
-    const mk = (id, t) => ({id, name:"x", start:t, end:t, exercises:[{exId:"dc-barre", sets:[{w:"60",r:"8",done:true}]}]});
-    c.vit = 50; c.last = now - 2*D - 6e4; c.born = Math.min(c.born, now - 5*D);
-    const a = mk("st-a", now - 1*D), b = mk("st-b", now);
-    S.workouts.push(a); creatureFeed(a); const v1 = c.vit;
-    const y = mk("st-y", now - 2*D); S.workouts.push(y); c.fed.push(y.id);   // séance de l'avant-veille déjà comptée
-    S.workouts.push(b); creatureFeed(b); return [v1, c.vit]; });
-  const low = await p.evaluate(() => { const c = creatureState(), now = Date.now(), w = {id:"low-1", name:"x", start:now, end:now, exercises:[{exId:"dc-barre", sets:[{w:"60",r:"8",done:true}]}]};
-    S.workouts = S.workouts.filter(x => !/^st-/.test(x.id)); c.fed = c.fed.filter(id => !/^st-/.test(id)); c.vit = 20; c.last = now - 6e4; S.workouts.push(w); creatureFeed(w); return Math.round(c.vit); });
-  ok(low === 30, "sous 30 % : une séance augmente de 50 % (20 → 30 %)", low);
-  ok(Math.round(streak[0]) === 60 && streak[1] === 100, "séance : +20 % de la vitalité (50 → 60 %) ; 3 jours de suite : retour à 100 %", streak);
+  // Satiété (13 nov. 2026, remplace la vitalité) : 100 % pendant 6 h, −1 %/h jusqu'à 50, −1 %/2 h jusqu'à 10, −1 %/jour jusqu'à 0 = mort
+  const rule = await p.evaluate(() => { const H = 3600e3, n = Date.now(), c = {born:1, fidelity:1, stage:3, sat:100, satT:n, full:n + 6*H, fridge:[]};
+    const at = h => creatureSatiety(c, n + h*H); const r = [at(5), at(6), at(16), at(56), at(96), at(136), at(136 + 24*5), at(136 + 24*10)];
+    const c2 = {...c, satT:n, full:n}; return {r, left:creatureDaysLeft(c2), leftPeas:creatureDaysLeft({...c2, peas:{t:n}})}; });
+  ok(rule.r.join() === "100,100,90,50,30,10,5,0", "satiété : 100 % pendant 6 h, puis 90 (16 h), 50 (56 h), 30, 10 (136 h), 5, 0 = mort au bout de 15,7 jours", rule.r);
+  ok(rule.left === 16 && rule.leftPeas === 24, "jours avant la mort : 16 sans boîte, 24 avec une boîte de pois chiches", rule);
+  // Repas de fin de séance : jusqu'à 100 %, 1 ration = +20 %, le reste au frigo ; steak (record), omelette (3e séance de la semaine)
+  const meal = await p.evaluate(() => { const c = creatureState(), n = Date.now(), H = 3600e3, saved = JSON.stringify(c), W = S.workouts;
+    const mk = (id, kg, prs) => ({id, name:"x", start:n, end:n, prs:prs || [], exercises:[{exId:"squat", sets:[{w:String(kg/10), r:"10", done:true}]}]});
+    S.workouts = []; c.dead = null; c.sat = 40; c.satT = n; c.full = 0; c.fridge = []; c.born = n - 2*86400000;
+    const r1 = satRation(n); const a = mk("fd1", 1000); S.workouts.push(a); const w0 = c.weight, f1 = creatureFeed(a);
+    const s1 = Math.round(f1.satAfter), grew = c.weight > w0;
+    const b = mk("fd2", 5000, ["squat"]); S.workouts.push(b); const f2 = creatureFeed(b);
+    const s2 = Math.round(f2.satAfter), poulet = c.fridge.find(x => x.k === "poulet"), steak = c.fridge.some(x => x.k === "steak");
+    const w1 = c.weight, d = mk("fd3", 800); S.workouts.push(d); const f3 = creatureFeed(d); const ome = c.fridge.some(x => x.k === "omelette"), still = c.weight === w1;
+    const res = {r1, s1, grew, s2, fr:poulet && poulet.kg, eaten2:Math.round(f2.eaten), steak, ome, still, full:f3.satAfter, plateau:c.full - n};
+    S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return res; });
+  ok(meal.r1 === 1000 && meal.s1 === 60 && meal.grew, "nouveau joueur : ration 1 000 kg ; 1 000 kg mangés = +20 % (40 → 60 %), et il grossit", meal);
+  ok(meal.s2 === 100 && meal.fr + meal.eaten2 === 5000 && meal.fr > 0, "il mange jusqu'à 100 %, le reste part au frigo", meal);
+  ok(meal.steak && meal.ome, "un record rapporte un steak, la 3e séance de la semaine une omelette (rangés au frigo)", meal);
+  ok(meal.still && meal.full === 100 && meal.plateau === 6*3600e3, "déjà rassasié : tout va au frigo et il ne grossit pas ; 6 h à 100 % après le repas", meal);
+  // Frigo : manger depuis le frigo, steak (12 h à 100 %), le plus ancien d'abord, péremption en 5 jours
+  const fr = await p.evaluate(() => { const c = creatureState(), n = Date.now(), H = 3600e3, D = 864e5, saved = JSON.stringify(c), W = S.workouts;
+    S.workouts = []; c.dead = null; c.sat = 50; c.satT = n; c.full = 0;
+    c.fridge = [{id:"f-old", k:"poulet", kg:300, t:n - 4*D}, {id:"f-new", k:"poulet", kg:5000, t:n - D}, {id:"f-st", k:"steak", kg:0, t:n - D}, {id:"f-om", k:"omelette", kg:0, t:n - 9*D}];
+    const st = fridgeEat(c, "f-st"); const s1 = Math.round(satExact(c)), pl = Math.round((c.full - n)/H);
+    c.sat = 50; c.satT = n; c.full = 0; const kg = fridgeEatOldest(c); const oldGone = !c.fridge.some(x => x.id === "f-old"), s2 = Math.round(satExact(c));
+    const again = fridgeEat(c, "f-new");
+    c.fridge.push({id:"f-rot", k:"poulet", kg:700, t:n - 5*D - 6e4}); fridgeTick(c); const rot = !c.fridge.some(x => x.id === "f-rot") && c.spoiled && c.spoiled.kg === 700, ome = c.fridge.some(x => x.id === "f-om");
+    S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return {s1, pl, steak:!c.fridge.some(x => x.id === "f-st"), kg:Math.round(kg), oldGone, s2, full:again && again.full, rot, ome}; });
+  ok(fr.steak && fr.s1 === 70 && fr.pl === 12, "steak : +1 ration (50 → 70 %) et 12 h à 100 %… au niveau atteint", fr);
+  ok(fr.oldGone && fr.s2 === 100 && fr.full, "« Nourrir avec le plus ancien » : le poulet le plus vieux d'abord, jusqu'à 100 % ; rassasié, il refuse", fr);
+  ok(fr.rot && fr.ome, "le poulet périme au bout de 5 jours (message) ; l'omelette ne périme pas", fr);
+  // Boîte de pois chiches : après 30 jours, 1 chance sur 40 par jour, une seule ; ouverte toute seule sous 5 % → 50 %
+  const peas = await p.evaluate(() => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c), W = S.workouts, r0 = PEAS.roll;
+    PEAS.roll = () => true; c.dead = null; c.peas = null; c.peasDay = null;
+    S.workouts = [{id:"pz1", name:"x", start:n - 10*D, end:n - 10*D, exercises:[]}]; const young = peasDraw(c);
+    c.peasDay = null; S.workouts[0].start = n - 31*D; const got = peasDraw(c), again = (c.peas = null, peasDraw(c));
+    c.peas = {t:n}; c.sat = 6; c.satT = n - 2*D; c.full = 0; satTick(c); const after = {peas:c.peas, used:!!c.peasUsed, v:creatureSatiety(c), dead:!!c.dead};
+    PEAS.roll = r0; S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return {young, got, again, after}; });
+  ok(!peas.young && peas.got && !peas.again, "pois chiches : rien avant 30 jours d'utilisation ; un tirage par jour", peas);
+  ok(peas.after.peas === null && peas.after.used && peas.after.v === 38 && !peas.after.dead, "sous 5 % : la boîte s'ouvre toute seule et remonte à 50 % (puis −1 % toutes les 2 h : 38 % un jour après)", peas.after);
+  // Festin du dimanche : jamais sous 50 % de la semaine → festin et un steak offert, une seule fois
+  const fest = await p.evaluate(() => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c);
+    c.dead = null; c.sat = 90; c.satT = n; c.full = 0; c.fridge = []; c.festDone = null; c.festDue = null;
+    c.wk = {k:weekStart(n) - 7*D, min:62, full:true}; const yes = festinCheck(c), steak = c.fridge.some(x => x.k === "steak"), twice = festinCheck(c);
+    c.festDone = null; c.wk = {k:weekStart(n) - 7*D, min:45, full:true}; const low = festinCheck(c);
+    c.wk = {k:weekStart(n) - 7*D, min:90, full:false}; const partial = festinCheck(c);
+    S.profile.creature = JSON.parse(saved); saveLocal(); return {yes, steak, twice, low, partial}; });
+  ok(fest.yes && fest.steak && !fest.twice && !fest.low && !fest.partial, "festin : semaine entière jamais sous 50 % → festin + steak, une seule fois ; rien sous 50 % ou semaine incomplète", fest);
+  // Interface : la case Satiété ouvre le frigo (option C), on le nourrit depuis le frigo, il attrape la portion
+  const ui = await p.evaluate(async () => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c);
+    c.dead = null; c.stage = Math.max(5, c.stage); c.sat = 40; c.satT = n; c.full = 0; c.peas = {t:n}; c.spoiled = null; c.peasUsed = null; c.lastMeal = null; c.ateTs = 0;
+    c.fridge = [{id:"u1", k:"poulet", kg:400, t:n - 4.6*D}, {id:"u2", k:"steak", kg:0, t:n - D}];
+    tab = "creature"; render(); const chip = document.querySelector(".gy-sat"), chipTxt = chip.textContent.replace(/\s+/g, " "), bubble = document.querySelector(".gy-bubble").textContent;
+    chip.click(); const sh = document.getElementById("sheet-in").textContent, rows = document.querySelectorAll(".fr-row").length;
+    document.querySelector('[data-act="fr-eat"][data-id="u1"]').click(); const closed = document.getElementById("sheet").hidden;
+    await new Promise(r => setTimeout(r, 30)); const thrown = !!document.querySelector(".fr-throw"), after = creatureSatiety(c), miam = /Miam/.test(document.querySelector(".gy-bubble").textContent), gone = !c.fridge.some(x => x.id === "u1");
+    await new Promise(r => setTimeout(r, 700));
+    S.profile.creature = JSON.parse(saved); saveLocal(); gyAte = null; render();
+    return {chipTxt, bubble, sh, rows, closed, thrown, after, miam, gone}; });
+  ok(/Satiété/.test(ui.chipTxt) && /40 %/.test(ui.chipTxt) && /400 kg/.test(ui.chipTxt) && /\+1/.test(ui.chipTxt) && /🥫/.test(ui.chipTxt), "case Satiété : satiété, petit frigo, kg en réserve et boîte de pois chiches", ui.chipTxt);
+  ok(/sent bizarre/.test(ui.bubble), "bulle : le poulet qui périme dans moins d'un jour est signalé", ui.bubble);
+  ok(/Le frigo de/.test(ui.sh) && ui.rows === 3 && /périme bientôt|périme demain/.test(ui.sh) && /Pois chiches|pois chiches/.test(ui.sh), "toucher la case ouvre le frigo : aliments, péremption, boîte de pois chiches", ui);
+  ok(ui.closed && ui.thrown && ui.gone && ui.after > 40 && ui.miam, "nourrir depuis le frigo : la portion est lancée, il mange (satiété en hausse) et dit « Miam »", ui);
+  // Fin de séance : nourrir est obligatoire, « Continuer » n'apparaît qu'après
+  const cel2 = await p.evaluate(async () => { const c = creatureState(), n = Date.now(); c.dead = null; c.stage = Math.max(5, c.stage);
+    celebrate({id:"z9", prs:[], exercises:[]}, {vol:1200, eaten:800, satBefore:60, satAfter:100, fridge:[{k:"poulet", kg:400}, {k:"steak", kg:0}], gain:.1, evolved:false, ups:[]});
+    const before = document.getElementById("celeb-btns").hidden; document.getElementById("celeb-food").click(); await new Promise(r => setTimeout(r, 600));
+    const after = document.getElementById("celeb-btns").hidden, txt = document.getElementById("celeb-rev").textContent; celebClose(true); return {before, after, txt}; });
+  ok(cel2.before && !cel2.after && /60 %/.test(cel2.txt) && /100 %/.test(cel2.txt) && /400 kg au frigo/.test(cel2.txt) && /Steak du record au frigo/.test(cel2.txt), "fin de séance : « Continuer » seulement après le repas ; satiété avant → après et ce qui part au frigo", cel2);
+  // Gestes : double toucher = chatouilles, appui long = caresse ; réveil du matin = il s'étire (une fois par jour)
+  const gest = await p.evaluate(async () => { const c = creatureState(), saved = JSON.stringify(c); c.dead = null; c.stage = Math.max(5, c.stage); c.sat = 90; c.satT = Date.now(); gyMsg = null; tab = "creature"; render();
+    ACT["gy-more-tap"](); ACT["gy-more-tap"](); await new Promise(r => setTimeout(r, 350)); const tickle = /chatouille/.test(document.querySelector(".gy-bubble").textContent) && document.getElementById("sheet").hidden;
+    gyMsg = null; render(); const st = document.querySelector(".gy-stage"), r = st.getBoundingClientRect(), x = r.left + r.width/2, y = r.top + r.height/2;
+    st.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true, clientX:x, clientY:y})); await new Promise(r => setTimeout(r, 650));
+    document.dispatchEvent(new PointerEvent("pointerup", {bubbles:true})); const pet = /encore/.test(document.querySelector(".gy-bubble").textContent) && !!document.querySelector(".gy-heart");
+    ACT["gy-more-tap"](); await new Promise(r => setTimeout(r, 350)); const noSheet = document.getElementById("sheet").hidden;   // le relâcher d'un appui long n'ouvre pas la fiche
+    gyMsg = null; c.stretchDay = null; gyHourFix = 8; render(); const stretch = /s'étire/.test(document.querySelector(".gy-bubble").textContent) && !!document.querySelector(".creature.gy-stretch");
+    gyMsg = null; render(); const once = !/s'étire/.test(document.querySelector(".gy-bubble").textContent); gyHourFix = 12;
+    closeSheet(); S.profile.creature = JSON.parse(saved); saveLocal(); render(); return {tickle, pet, noSheet, stretch, once}; });
+  ok(gest.tickle && gest.pet && gest.noSheet, "gestes : double toucher = chatouilles, appui long = caresse (cœurs) sans ouvrir sa fiche", gest);
+  ok(gest.stretch && gest.once, "le matin, il s'étire à la première ouverture (une fois par jour)", gest);
+  // Festin et boîte de pois chiches : écrans d'annonce
+  const ann = await p.evaluate(async () => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c); c.dead = null; c.sat = 90; c.satT = n; c.full = 0;
+    c.festDone = null; c.wk = {k:weekStart(n) - 7*D, min:70, full:true}; tab = "creature"; render(); await new Promise(r => setTimeout(r, 20));
+    const fest = /Festin du dimanche/.test((document.getElementById("celebrate")||{}).textContent || ""); celebClose(true);
+    c.peas = {t:n}; c.peasNew = 1; render(); await new Promise(r => setTimeout(r, 20)); const pz = /pois chiches/.test(document.getElementById("sheet-in").textContent) && !c.peasNew;
+    closeSheet(); S.profile.creature = JSON.parse(saved); saveLocal(); render(); return {fest, pz}; });
+  ok(ann.fest && ann.pz, "écrans : festin du dimanche à l'ouverture ; boîte de pois chiches expliquée quand on la reçoit", ann);
+
+  // Mise à jour : la satiété part de la vitalité du moment (40 % au moins)
+  const mig2 = await p.evaluate(() => { const saved = S.profile.creature, n = Date.now();
+    S.profile.creature = {...JSON.parse(JSON.stringify(saved)), sv:undefined, vit:70, last:n - 864e5, dead:null}; delete S.profile.creature.sat; const a = creatureState().sat;
+    S.profile.creature = {...JSON.parse(JSON.stringify(saved)), sv:undefined, vit:20, last:n - 864e5, dead:null}; delete S.profile.creature.sat; const b = creatureState().sat;
+    S.profile.creature = saved; saveLocal(); return [a, b]; });
+  ok(mig2.join() === "70,40", "mise à jour : satiété = vitalité du moment (70 %), 40 % au moins pour que personne ne meure de la mise à jour", mig2);
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3.png"), fullPage:true});
 
   // Croissance v2 : chaque séance fait grossir le muscle travaillé, sans plafond de force, de moins en moins vite, max 4,5
@@ -161,24 +234,24 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.profile.creature = keep; return out; });
   ok(mig.map(x => x[0]).join() === "0,2,5,9" && mig.every(x => x[2] === 13), "migration : œuf → œuf, poussin → poussin, poulet → poule adulte, dino → dinosaure", mig);
 
-  // Mort sous 10 % de vitalité (10 jours sans séance depuis 100 %), séance mise de côté, résurrection, nouvel œuf
-  const death = await p.evaluate(() => { const c = creatureState(); c.vit = 100; c.last = Date.now() - 22*864e5 - 6e4; S.profile.creature = c;
+  // Mort de faim à 0 % (16 jours sans manger depuis 100 %), séance mise de côté, résurrection, nouvel œuf
+  const death = await p.evaluate(() => { const c = creatureState(); c.sat = 100; c.satT = Date.now() - 16*864e5; c.full = 0; c.peas = null; S.profile.creature = c;
     const d = creatureState(); const keep = {stage:d.stage, levels:JSON.stringify(d.levels), w:d.weight, fid:d.fidelity};
     const w = {id:"after-death", name:"x", start:Date.now(), end:Date.now(), exercises:[{exId:"dc-barre", sets:[{w:"80",r:"8",done:true}]}]};
     S.workouts.push(w); const r = creatureFeed(w);
-    return {dead:!!d.dead, vit:creatureVitality(d), fedWhileDead:r && r.dead, pending:d.pending.length, fid:d.fidelity, keep}; });
-  ok(death.dead && death.vit === 0, "22 jours sans séance : vitalité sous 10 %, le Gymon meurt");
+    return {dead:!!d.dead, vit:creatureSatiety(d), fedWhileDead:r && r.dead, pending:d.pending.length, fid:d.fidelity, keep}; });
+  ok(death.dead && death.vit === 0, "16 jours sans manger : satiété à 0 %, le Gymon meurt de faim");
   ok(death.fedWhileDead && death.pending === 1 && death.fid === death.keep.fid, "une séance faite pendant sa mort est mise de côté, pas comptée");
   await p.click('.tabs [data-tab="creature"]');
   ok(/Ressusciter/.test(await p.textContent("#view")) && /nouvel œuf/.test(await p.textContent("#view")), "page Gymon : boutons Ressusciter et Nouvel œuf");
   ok(await p.evaluate(() => document.querySelector('.tabs [data-tab="creature"]').classList.contains("sick")), "pastille rouge sur l'onglet Gymon");
   if(SHOTS) await p.screenshot({path:path.join(SHOTS, "dead.png")});
   await p.click('[data-act="gy-resurrect"]'); await p.waitForTimeout(150);
-  const res2 = await p.evaluate(() => { const c = creatureState(); return {dead:!!c.dead, vit:creatureVitality(c), stage:c.stage, levels:JSON.stringify(c.levels), fid:c.fidelity, w:c.weight, n:c.resurrections}; });
+  const res2 = await p.evaluate(() => { const c = creatureState(); return {dead:!!c.dead, vit:creatureSatiety(c), stage:c.stage, levels:JSON.stringify(c.levels), fid:c.fidelity, w:c.weight, n:c.resurrections}; });
   const kept = JSON.parse(death.keep.levels), now2 = JSON.parse(res2.levels);
-  ok(!res2.dead && res2.vit === 100 && res2.stage === death.keep.stage && MUSCLES_LIST.every(m => (now2[m]||0) >= (kept[m]||0) - 1e-9), "ressuscité : vivant, vitalité 100 %, stade et muscles conservés (la séance en attente peut les faire grossir)");
+  ok(!res2.dead && res2.vit === 100 && res2.stage === death.keep.stage && MUSCLES_LIST.every(m => (now2[m]||0) >= (kept[m]||0) - 1e-9), "ressuscité : vivant, satiété 100 %, stade et muscles conservés (la séance en attente peut les faire grossir)");
   ok(res2.fid === death.keep.fid + 1, "la séance mise de côté est mangée à la résurrection", res2.fid);
-  await p.evaluate(() => { creatureState().last = Date.now() - 23*864e5; creatureState(); render(); });
+  await p.evaluate(() => { const c = creatureState(); c.sat = 100; c.satT = Date.now() - 17*864e5; c.full = 0; c.peas = null; c.fridge = []; creatureState(); render(); });
   await p.click('.tabs [data-tab="creature"]'); await p.click('[data-act="gy-restart"]'); await p.click('[data-act="confirm-ok"]'); await p.waitForTimeout(150);
   const fresh = await p.evaluate(() => { const c = creatureState(); return {stage:c.stage, fid:c.fidelity, dead:!!c.dead, graves:(c.graves||[]).length, workouts:S.workouts.length}; });
   ok(fresh.stage === 0 && fresh.fid === 0 && !fresh.dead && fresh.graves === 1, "nouvel œuf : départ à zéro, l'ancien Gymon reste en souvenir");
@@ -196,7 +269,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const cv = await p.evaluate(() => { const D = 86400000, n = Date.now(), saved = {c:JSON.stringify(S.profile.creature), w:S.workouts};
     const set = (w, r) => Array.from({length:3}, () => ({w:String(w), r:String(r), done:true, warm:false}));
     S.workouts = []; for(let i = 0; i < 12; i++){ const t = n - (40 - i*3)*D; S.workouts.push({id:"cv"+i, name:"x", start:t, end:t+3600000, prs:[], exercises:[{exId:"squat", feel:3, sets:set(80+i, 8)}]}); }
-    const c = creatureState(); c.born = n - 45*D; c.at = CREATURE_CFG.stageAt; c.fed = S.workouts.map(w => w.id); c.fidelity = 12; c.stage = stageFor(12, c); c.weight = 1.5; c.last = n - D; c.vit = 90; c.hist = null; c.histB = 0; c.dead = null;
+    const c = creatureState(); c.born = n - 45*D; c.at = CREATURE_CFG.stageAt; c.fed = S.workouts.map(w => w.id); c.fidelity = 12; c.stage = stageFor(12, c); c.weight = 1.5; c.last = n - D; c.sat = 90; c.satT = n; c.full = 0; c.hist = null; c.histB = 0; c.dead = null;
     creatureLog(c); const h = c.hist, est = h.filter(p => p[4]).length, last = h[h.length-1], up = h[0][2] <= last[2];
     tab = "creature"; render(); ACT["gy-curve"](document.querySelector('[data-act="gy-curve"][data-k="1"]'), {stopPropagation(){}}); const svg = !!document.querySelector(".curve-box svg"); closeSheet();
     const back = cleanCreature(JSON.parse(JSON.stringify(c))).hist.length === h.length;
@@ -204,17 +277,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return {n:h.length, est, lastReal:last[4] === 0 && last[3] === 90, endsAtWeight:Math.abs(last[1] - 1.5) < 1e-9, up, svg, back}; });
   ok(cv.est === 12 && cv.lastReal && cv.endsAtWeight && cv.up, "courbes : 12 points reconstitués puis le point du jour, recalés sur le poids actuel, taille croissante", cv);
   ok(cv.svg && cv.back, "courbe affichée au toucher du poids ; l'historique suit la sauvegarde", cv);
-  // Bras selon la vitalité, regard selon la forme (validés le 12 nov. 2026)
+  // Bras selon la satiété, regard selon la forme (validés le 12 nov. 2026, seuils de la satiété le 13 nov.)
   const ge = await p.evaluate(() => { const D = 86400000, n = Date.now(), lv = Object.fromEntries(MUSCLES.map(m => [m, 2]));
-    const mk = (vit, fed) => ({born:n - 60*D, last:n - D, vit, weight:3, fidelity:30, at:CREATURE_CFG.stageAt, look:{col:3, shorts:1}, stage:9, levels:lv, fed:fed || []});
+    const mk = (vit, fed) => ({born:n - 60*D, last:n - D, sv:1, sat:vit, satT:n, full:n + 3600e3, fridge:[], weight:3, fidelity:30, at:CREATURE_CFG.stageAt, look:{col:3, shorts:1}, stage:9, levels:lv, fed:fed || []});
     const arm = v => { const svg = creatureSVG(mk(v), false, false, {noFx:true}); return svg.includes("rotate(-82 ") ? 3 : svg.includes("rotate(-72 ") ? 2 : svg.includes("rotate(-38 ") ? 1 : 0; };
     const saved = S.workouts, set = Array.from({length:3}, () => ({w:"50", r:"8", done:true, warm:false}));
     S.workouts = []; for(let i = 0; i < 7; i++) S.workouts.push({id:"ge"+i, name:"x", start:n - (1 + i*2)*D, end:n - (1 + i*2)*D, prs:i < 3 ? ["squat"] : [], exercises:[{exId:"squat", feel:3, sets:set}]});
     const all = S.workouts.map(w => w.id), eyes = [gymonEyes(mk(100, all)), gymonEyes(mk(100, all.slice(3, 6))), gymonEyes(mk(100, all.slice(6))), gymonEyes(mk(100, ["x"]))];
-    const sick = creatureSVG(mk(40, all), false, false, {noFx:true}).includes('rx="8.2"');   // malade : yeux mi-clos, sans iris
-    S.workouts = saved; return {arms:[arm(100), arm(65), arm(40), arm(20)], eyes, sick}; });
-  ok(ge.arms.join() === "0,1,2,3", "bras : levés à 80 % et plus, mi-hauteur, le long du corps, ballants sous 30 %", ge.arms);
-  ok(ge.eyes[0] === "spark" && ge.eyes[1] === "tired" && ge.eyes[3] === "worn" && !ge.sick, "regard : étincelant si régulier et en progrès, fatigué puis épuisé sinon ; malade, les yeux restent mi-clos", ge);
+    const sick = creatureSVG(mk(20, all), false, false, {noFx:true}).includes('rx="8.2"');   // affamé : yeux mi-clos, sans iris
+    S.workouts = saved; return {arms:[arm(100), arm(60), arm(35), arm(20)], eyes, sick}; });
+  ok(ge.arms.join() === "0,1,2,3", "bras : levés à 70 % et plus, mi-hauteur dès 45 %, le long du corps dès 25 %, ballants en dessous", ge.arms);
+  ok(ge.eyes[0] === "spark" && ge.eyes[1] === "tired" && ge.eyes[3] === "worn" && !ge.sick, "regard : étincelant si régulier et en progrès, fatigué puis épuisé sinon ; affamé, les yeux restent mi-clos", ge);
   // La page Gymon tient dans l'écran : pas de défilement, bouton de séance au-dessus de la barre d'onglets
   const fit = await p.evaluate(() => { closeSheet(); const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); tab = "creature"; render();
     const r = {scroll:document.documentElement.scrollHeight - innerHeight, cta:document.querySelector(".gy-cta").getBoundingClientRect().bottom <= document.getElementById("tabs").getBoundingClientRect().top};
@@ -262,7 +335,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.evaluate(() => { tab = "creature"; render(); });
   await p.click('[data-act="gy-name"]'); await p.fill("#gy-name-in", "Rocky"); await p.click('[data-act="gy-name-ok"]');
   ok(await p.evaluate(() => creatureState().name === "Rocky" && /Rocky/.test(document.querySelector(".gy-name").textContent)), "nommer son Gymon : nom enregistré et affiché");
-  const ba = await p.evaluate(() => { const c = creatureState(), D = 864e5; c.dead = null; c.last = Date.now(); c.vit = 100;
+  const ba = await p.evaluate(() => { const c = creatureState(), D = 864e5; c.dead = null; c.last = Date.now(); c.sat = 100; c.satT = Date.now(); c.full = 0;
     c.ref = {ts:Date.now() - 16*D, stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSCLES.map(m => [m, Math.max(0, muscleLevel(c, m) - 0.5)]))};
     render(); const shown = !!document.querySelector(".ba"); c.ref.ts = Date.now() - 5*D; render(); const early = !!document.querySelector(".ba");
     c.ref = {ts:Date.now() - 31*D, stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSCLES.map(m => [m, muscleLevel(c, m)]))}; render(); const month = !!document.querySelector(".ba");
@@ -286,7 +359,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const card = await p.evaluate(async () => { const bl = await cardPNG(cardSVG("week")); return {type:bl.type, size:bl.size, svg:/Rocky/.test(cardSVG("week"))}; });
   ok(card.type === "image/png" && card.size > 20000 && card.svg, "carte de partage : image PNG avec le Gymon, son nom et les perfs", card);
   // Célébration de fin de séance et évolution en plein écran
-  const cel = await p.evaluate(() => { const c = creatureState(), n = Date.now(); c.dead = null; c.last = n; c.vit = 100;
+  const cel = await p.evaluate(() => { const c = creatureState(), n = Date.now(); c.dead = null; c.last = n; c.sat = 100; c.satT = n; c.full = 0;
     const w = {id:"cel1", name:"x", start:n - 3000000, end:n, prs:[], exercises:[{exId:"dc-barre", sets:[{w:"60", r:"8", done:true}]}]}; S.workouts.push(w);
     celebrate(w, {vol:480, evolved:true, from:4, stage:5, ups:[]}); const evo = document.getElementById("celebrate").className;
     celebState.main(); const main = !!document.querySelector("#celebrate .celeb-in"); celebClose(true);
