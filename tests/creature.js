@@ -387,6 +387,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.mouse.up(); await p.waitForTimeout(600);
   ok(await p.evaluate(() => { const r = !document.getElementById("celeb-rev").hidden; celebClose(true); return r; }), "glisser le repas sur le Gymon le nourrit");
 
+  // Noms des stades retirés partout (13 nov. 2026) : page, carte de partage, évolution, avant/après, résumé
+  const noName = await p.evaluate(() => { const c = creatureState(), saved = JSON.stringify(c); c.stage = 7; c.dead = false;
+    c.ref = {ts:Date.now() - 40*864e5, stage:5, weight:3, levels:{}}; tab = "creature"; render();
+    const txt = [document.getElementById("view").innerHTML, cardSVG("week")];
+    celebrate({id:"e", prs:[], exercises:[]}, {vol:500, evolved:true, from:6, stage:7, ups:[]}); txt.push(document.getElementById("celebrate").innerHTML); celebClose(true);
+    const names = CREATURE_CFG.stages.slice(1), hit = names.filter(n => txt.some(t => t.includes(n)));
+    S.profile.creature = JSON.parse(saved); saveLocal(); render(); return hit; });
+  ok(noName.length === 0, "aucun nom de stade affiché (page, partage, évolution, avant/après)", noName);
+
   // Rendu des 4 stades avec muscles faibles puis forts
   if(SHOTS){ for(const st of [5,9,12]) for(const lv of [0,4]){
     await p.evaluate(([st,lv]) => { const c = creatureState(); c.stage = st; MUSCLES.forEach(m => c.levels[m] = m==="Jambes" ? Math.min(lv,1) : lv); c.last = Date.now(); render(); }, [st,lv]);
