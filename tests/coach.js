@@ -158,6 +158,46 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(EST.oiseau.tag === "Estimé" && EST.oiseau.w > 0 && EST.oiseau.w <= 12 && Number.isInteger(EST.oiseau.w) && EST.oiseau.r === 10 && /estimation/.test(EST.oiseau.why), "nouvel exercice : charge estimée depuis le niveau en épaules, au palier, au bas de la fourchette, « Estimé »", EST.oiseau);
   ok(EST.dm.tag === "Estimé" && EST.dm.w % 2.5 === 0 && EST.dm.w >= 20 && EST.dm.w <= 60, "développé militaire barre : estimation au palier de 2,5 kg, plausible", EST.dm);
   ok(EST.noBw === "Nouveau" && EST.perso === "Nouveau", "sans poids de corps, ou exercice sans repère : pas d'estimation (« Nouveau »)", EST);
+  // 17 muscles (13 nov. 2026) : répartition du travail, ↻ par muscle principal, fatigue et récupération au prorata, programme varié
+  const MU = await p.evaluate(() => {
+    const D = 864e5, n = Date.now(), set = (w, r) => ({w:String(w), r:String(r), done:true}), saved = {w:S.workouts, custom:S.profile.custom};
+    const table = EX.every(e => WORK[e.id] && GROUP_OF[primOf(e)] === e.muscle && Object.keys(WORK[e.id]).every(m => MUSC.includes(m)));
+    const gx = [["Curl aux jambes assis","Jambes"],["Presse à mollets","Jambes"],["Haussement d'épaules aux haltères","Épaules"],["Dips pour triceps","Triceps"]].map(([name, muscle]) => primOf({id:"gx-t", name, muscle}));
+    // ↻ en séance
+    S.workouts = []; S.profile.active = null; startWorkout("S", [{exId:"leg-ext", sets:[blankSet()]}, {exId:"mollets", sets:[blankSet()]}]); closeSheet();
+    const seen = new Set(); for(let k = 0; k < 6; k++){ ACT["ex-swap"]({dataset:{i:"0"}}); seen.add(primOf(exById(A().exercises[0].exId))); }
+    let toastTxt = ""; const t0 = toast; window.toast = m => toastTxt = m; ACT["ex-swap"]({dataset:{i:"1"}}); window.toast = t0;
+    const calf = A().exercises[1].exId; S.profile.active = null;
+    // Fatigue en séance : séries déjà faites, au prorata
+    const pre = {curl:preLoad([{exId:"squat", sets:[set(100,5),set(100,5),set(100,5)]}, {exId:"leg-curl", sets:[]}], 1), tri:preLoad([{exId:"dc-barre", sets:[set(80,8),set(80,8)]}, {exId:"ext-poulie", sets:[]}], 1)};
+    // Récupération : leg extension lourde hier → quadriceps fatigués, mollets reposés, « Jambes » = le plus fatigué
+    S.workouts = [{id:"r1", name:"x", start:n-20*3600e3, end:n-19*3600e3, exercises:[{exId:"leg-ext", feel:5, sets:Array.from({length:6}, () => set(60,10))}]}];
+    const rec = {q:recoveryFine("Quadriceps").pct, m:recoveryFine("Mollets").pct, j:recovery("Jambes").pct};
+    // Programme : une séance jambes de 45 min = des muscles principaux variés
+    S.workouts = []; const g = generatePlan({days:[{dow:0, muscles:["Jambes"], off:{}, min:45}], novOff:0, noNovelty:true});
+    const prims = g.days[0].items.map(it => primOf(exById(it.exId)));
+    const g2 = generatePlan({days:[{dow:0, muscles:["Jambes"], off:{"Jambes:0":1}, min:45}], novOff:0, noNovelty:true});
+    const swapKeep = primOf(exById(g2.days[0].items[0].exId)) === prims[0];
+    // Volume hebdo par muscle, au prorata
+    const wf = g.weeklyFine;
+    // Force par muscle principal
+    S.profile.bw = 80; S.workouts = [{id:"s1", name:"x", start:n-2*D, end:n-2*D, exercises:[{exId:"squat", feel:3, sets:[set(120,5)]}, {exId:"leg-curl", feel:3, sets:[set(40,10)]}, {exId:"hip-thrust", feel:3, sets:[set(100,8)]}]}];
+    const sb = strengthByMuscle(), str = {q:sb.res.Quadriceps.ex.map(x => x.e.id), i:sb.res.Ischios.ex.map(x => x.e.id), g:sb.resG.Jambes.score !== null};
+    // Exercice créé : muscle principal choisi
+    S.profile.custom = [{id:"xmol", name:"Machin perso", muscle:"Jambes", prim:"Mollets", equip:"Machine"}]; const perso = primOf(exById("xmol"));
+    S.workouts = saved.w; S.profile.custom = saved.custom;
+    return {table, gx, seen:[...seen], toastTxt, calf, pre, rec, prims, swapKeep, wf:{q:wf.Quadriceps, f:wf.Fessiers}, str, perso}; });
+  ok(MU.table, "17 muscles : chaque exercice de la bibliothèque a sa répartition, cohérente avec sa catégorie", MU.table);
+  ok(MU.gx.join() === "Ischios,Mollets,Haut du dos,Triceps", "exercices importés : muscle principal deviné d'après le nom", MU.gx);
+  ok(MU.seen.length === 1 && MU.seen[0] === "Quadriceps", "↻ en séance : un exercice quadriceps reste un exercice quadriceps (jamais des mollets)", MU.seen);
+  ok(MU.calf === "mollets" && /mollets/.test(MU.toastTxt), "↻ sans autre exercice du même muscle : message, rien n'est remplacé", MU);
+  ok(MU.pre.curl === 0.6 && MU.pre.tri === 1, "fatigue en séance au prorata : 3 squats = 0,6 série d'ischios ; 2 développés = 1 série de triceps", MU.pre);
+  ok(MU.rec.q < 0.6 && MU.rec.m === 1 && MU.rec.j === MU.rec.q, "récupération par muscle : quadriceps fatigués, mollets reposés ; « Jambes » = le muscle le plus fatigué", MU.rec);
+  ok(new Set(MU.prims).size === MU.prims.length && MU.prims.length >= 3, "programme : une séance jambes travaille des muscles principaux différents", MU.prims);
+  ok(MU.swapKeep, "programme : ↻ propose un autre exercice du même muscle principal", MU);
+  ok(MU.wf.q >= 3 && MU.wf.f > 0, "volume hebdo par muscle, travail indirect au prorata (fessiers comptés via squat, presse…)", MU.wf);
+  ok(MU.str.q.join() === "squat" && MU.str.i.join() === "leg-curl" && MU.str.g, "force par muscle : chaque exercice compte pour son muscle principal, moyenne par catégorie", MU.str);
+  ok(MU.perso === "Mollets", "exercice créé : le muscle principal choisi est respecté", MU.perso);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);

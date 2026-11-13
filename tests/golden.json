@@ -941,7 +941,7 @@
    ],
    [
     "Dos",
-    2.858,
+    2.926,
     "moyen"
    ],
    [
@@ -997,6 +997,374 @@
    ],
    [
     "Abdos",
+    1
+   ]
+  ],
+  "work": {
+   "dc-barre": {
+    "Pectoraux": 1,
+    "Triceps": 0.5,
+    "Deltoïde avant": 0.5
+   },
+   "dc-halteres": {
+    "Pectoraux": 1,
+    "Triceps": 0.4,
+    "Deltoïde avant": 0.5
+   },
+   "di-barre": {
+    "Pectoraux": 1,
+    "Deltoïde avant": 0.7,
+    "Triceps": 0.5
+   },
+   "di-halteres": {
+    "Pectoraux": 1,
+    "Deltoïde avant": 0.7,
+    "Triceps": 0.4
+   },
+   "ecarte-poulie": {
+    "Pectoraux": 1,
+    "Deltoïde avant": 0.3
+   },
+   "ecarte-halteres": {
+    "Pectoraux": 1,
+    "Deltoïde avant": 0.3
+   },
+   "dips": {
+    "Pectoraux": 1,
+    "Triceps": 0.8,
+    "Deltoïde avant": 0.5
+   },
+   "pompes": {
+    "Pectoraux": 1,
+    "Triceps": 0.5,
+    "Deltoïde avant": 0.5,
+    "Abdos": 0.2
+   },
+   "tractions": {
+    "Grand dorsal": 1,
+    "Biceps": 0.6,
+    "Haut du dos": 0.5,
+    "Avant-bras": 0.4,
+    "Deltoïde arrière": 0.3
+   },
+   "tirage-vertical": {
+    "Grand dorsal": 1,
+    "Biceps": 0.5,
+    "Haut du dos": 0.4,
+    "Avant-bras": 0.3,
+    "Deltoïde arrière": 0.3
+   },
+   "rowing-barre": {
+    "Haut du dos": 1,
+    "Grand dorsal": 0.8,
+    "Deltoïde arrière": 0.5,
+    "Biceps": 0.5,
+    "Lombaires": 0.5,
+    "Avant-bras": 0.3
+   },
+   "rowing-haltere": {
+    "Grand dorsal": 1,
+    "Haut du dos": 0.8,
+    "Deltoïde arrière": 0.4,
+    "Biceps": 0.5,
+    "Avant-bras": 0.3
+   },
+   "tirage-horizontal": {
+    "Haut du dos": 1,
+    "Grand dorsal": 0.8,
+    "Deltoïde arrière": 0.5,
+    "Biceps": 0.5,
+    "Avant-bras": 0.3
+   },
+   "souleve-terre": {
+    "Lombaires": 1,
+    "Fessiers": 0.8,
+    "Ischios": 0.7,
+    "Haut du dos": 0.6,
+    "Quadriceps": 0.5,
+    "Avant-bras": 0.5,
+    "Grand dorsal": 0.3
+   },
+   "pullover": {
+    "Grand dorsal": 1,
+    "Pectoraux": 0.3,
+    "Triceps": 0.2
+   },
+   "dm-barre": {
+    "Deltoïde avant": 1,
+    "Deltoïde latéral": 0.5,
+    "Triceps": 0.6,
+    "Haut du dos": 0.3
+   },
+   "dm-halteres": {
+    "Deltoïde avant": 1,
+    "Deltoïde latéral": 0.5,
+    "Triceps": 0.5
+   },
+   "elev-lat": {
+    "Deltoïde latéral": 1,
+    "Haut du dos": 0.3,
+    "Deltoïde avant": 0.2
+   },
+   "oiseau": {
+    "Deltoïde arrière": 1,
+    "Haut du dos": 0.6
+   },
+   "face-pull": {
+    "Deltoïde arrière": 1,
+    "Haut du dos": 0.7,
+    "Deltoïde latéral": 0.3
+   },
+   "curl-barre": {
+    "Biceps": 1,
+    "Avant-bras": 0.5
+   },
+   "curl-halteres": {
+    "Biceps": 1,
+    "Avant-bras": 0.4
+   },
+   "curl-marteau": {
+    "Biceps": 1,
+    "Avant-bras": 0.8
+   },
+   "curl-pupitre": {
+    "Biceps": 1,
+    "Avant-bras": 0.3
+   },
+   "ext-poulie": {
+    "Triceps": 1
+   },
+   "barre-front": {
+    "Triceps": 1
+   },
+   "ext-nuque": {
+    "Triceps": 1
+   },
+   "squat": {
+    "Quadriceps": 1,
+    "Fessiers": 0.7,
+    "Adducteurs": 0.5,
+    "Lombaires": 0.3,
+    "Ischios": 0.2
+   },
+   "front-squat": {
+    "Quadriceps": 1,
+    "Fessiers": 0.5,
+    "Adducteurs": 0.4,
+    "Haut du dos": 0.3,
+    "Abdos": 0.2
+   },
+   "presse": {
+    "Quadriceps": 1,
+    "Fessiers": 0.6,
+    "Adducteurs": 0.4
+   },
+   "fentes": {
+    "Quadriceps": 1,
+    "Fessiers": 0.8,
+    "Adducteurs": 0.4,
+    "Ischios": 0.2
+   },
+   "bulgare": {
+    "Quadriceps": 1,
+    "Fessiers": 0.8,
+    "Adducteurs": 0.4
+   },
+   "leg-ext": {
+    "Quadriceps": 1
+   },
+   "leg-curl": {
+    "Ischios": 1,
+    "Mollets": 0.2
+   },
+   "sdt-roumain": {
+    "Ischios": 1,
+    "Fessiers": 0.8,
+    "Lombaires": 0.6,
+    "Haut du dos": 0.3,
+    "Avant-bras": 0.3
+   },
+   "hip-thrust": {
+    "Fessiers": 1,
+    "Ischios": 0.4,
+    "Quadriceps": 0.2
+   },
+   "mollets": {
+    "Mollets": 1
+   },
+   "crunch": {
+    "Abdos": 1,
+    "Obliques": 0.3
+   },
+   "releve-jambes": {
+    "Abdos": 1,
+    "Obliques": 0.4,
+    "Avant-bras": 0.3
+   },
+   "crunch-poulie": {
+    "Abdos": 1,
+    "Obliques": 0.3
+   },
+   "ab-wheel": {
+    "Abdos": 1,
+    "Obliques": 0.4,
+    "Grand dorsal": 0.3
+   }
+  },
+  "strengthFine": [
+   [
+    "Pectoraux",
+    3.476,
+    "fort"
+   ],
+   [
+    "Grand dorsal",
+    2.722,
+    "moyen"
+   ],
+   [
+    "Haut du dos",
+    3.131,
+    "moyen"
+   ],
+   [
+    "Lombaires",
+    null,
+    null
+   ],
+   [
+    "Deltoïde avant",
+    3.166,
+    "moyen"
+   ],
+   [
+    "Deltoïde latéral",
+    2.486,
+    "moyen"
+   ],
+   [
+    "Deltoïde arrière",
+    2.333,
+    "moyen"
+   ],
+   [
+    "Biceps",
+    2.823,
+    "moyen"
+   ],
+   [
+    "Avant-bras",
+    null,
+    null
+   ],
+   [
+    "Triceps",
+    2.556,
+    "moyen"
+   ],
+   [
+    "Quadriceps",
+    3.015,
+    "moyen"
+   ],
+   [
+    "Ischios",
+    2.556,
+    "moyen"
+   ],
+   [
+    "Fessiers",
+    2.386,
+    "moyen"
+   ],
+   [
+    "Mollets",
+    null,
+    null
+   ],
+   [
+    "Adducteurs",
+    null,
+    null
+   ],
+   [
+    "Abdos",
+    null,
+    null
+   ],
+   [
+    "Obliques",
+    null,
+    null
+   ]
+  ],
+  "recoveryFine": [
+   [
+    "Pectoraux",
+    0.887
+   ],
+   [
+    "Grand dorsal",
+    1
+   ],
+   [
+    "Haut du dos",
+    1
+   ],
+   [
+    "Lombaires",
+    1
+   ],
+   [
+    "Deltoïde avant",
+    1
+   ],
+   [
+    "Deltoïde latéral",
+    1
+   ],
+   [
+    "Deltoïde arrière",
+    1
+   ],
+   [
+    "Biceps",
+    1
+   ],
+   [
+    "Avant-bras",
+    1
+   ],
+   [
+    "Triceps",
+    1
+   ],
+   [
+    "Quadriceps",
+    1
+   ],
+   [
+    "Ischios",
+    1
+   ],
+   [
+    "Fessiers",
+    1
+   ],
+   [
+    "Mollets",
+    1
+   ],
+   [
+    "Adducteurs",
+    1
+   ],
+   [
+    "Abdos",
+    1
+   ],
+   [
+    "Obliques",
     1
    ]
   ],
