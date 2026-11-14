@@ -148,11 +148,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   // Boîte de pois chiches : après 30 jours, 1 chance sur 40 par jour, une seule ; ouverte toute seule sous 5 % → 50 %
   const peas = await p.evaluate(() => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c), W = S.workouts, r0 = PEAS.roll;
     PEAS.roll = () => true; c.dead = null; c.peas = null; c.peasDay = null;
-    S.workouts = [{id:"pz1", name:"x", start:n - 10*D, end:n - 10*D, exercises:[]}]; const young = peasDraw(c);
-    c.peasDay = null; S.workouts[0].start = n - 31*D; const got = peasDraw(c), again = (c.peas = null, peasDraw(c));
+    const fs = localStorage.getItem("gymon.firstSeen");
+    S.workouts = [{id:"pz0", name:"x", start:n - 400*D, end:n - 400*D, exercises:[], source:"Gravl"}];   // historique Gravl ancien : ne compte pas
+    localStorage.setItem("gymon.firstSeen", String(n - 10*D)); const young = peasDraw(c);
+    c.peasDay = null; localStorage.setItem("gymon.firstSeen", String(n - 31*D)); const got = peasDraw(c), again = (c.peas = null, peasDraw(c));
+    if(fs) localStorage.setItem("gymon.firstSeen", fs); else localStorage.removeItem("gymon.firstSeen");
     c.peas = {t:n}; c.sat = 6; c.satT = n - 2*D; c.full = 0; satTick(c); const after = {peas:c.peas, used:!!c.peasUsed, v:creatureSatiety(c), dead:!!c.dead};
     PEAS.roll = r0; S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return {young, got, again, after}; });
-  ok(!peas.young && peas.got && !peas.again, "pois chiches : rien avant 30 jours d'utilisation ; un tirage par jour", peas);
+  ok(!peas.young && peas.got && !peas.again, "pois chiches : rien avant 30 jours d'utilisation de Gymon (l'historique Gravl ne compte pas) ; un tirage par jour", peas);
   ok(peas.after.peas === null && peas.after.used && peas.after.v === 38 && !peas.after.dead, "sous 5 % : la boîte s'ouvre toute seule et remonte à 50 % (puis −1 % toutes les 2 h : 38 % un jour après)", peas.after);
   // Festin du dimanche : jamais sous 50 % de la semaine → festin et un steak offert, une seule fois
   const fest = await p.evaluate(() => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c);

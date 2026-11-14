@@ -678,7 +678,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-13 i";
+const APP_VERSION = "2026-11-14 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1792,14 +1792,14 @@ function festinShow(c){
       <div class="celeb-btns"><button class="btn primary" data-act="celeb-close">Continuer</button></div></div>`;
   document.body.appendChild(el);
 }
-/* Boîte de pois chiches 🥫 (pause, vacances) : après 30 jours d'utilisation (depuis la première séance), chaque jour d'ouverture de l'app
+/* Boîte de pois chiches 🥫 (pause, vacances) : après 30 jours d'utilisation de Gymon (hors historique importé), chaque jour d'ouverture de l'app
    1 chance sur 40 d'en recevoir une ; une seule à la fois ; rangée au frigo, ne périme pas ; ouverte toute seule sous 5 % (→ 50 %). */
 const PEAS = {roll:() => Math.random() < SAT.peas.chance};
 function peasDraw(c, now){
   now = now || Date.now(); if(!c || c.dead || c.peas) return false;
   const day = dayNum(); if(c.peasDay === day) return false; c.peasDay = day;
-  const first = S.workouts.reduce((m, w) => Math.min(m, w.start), Infinity);
-  if(!isFinite(first) || now - first < SAT.peas.afterDays * 86400000){ saveLocal(); return false; }
+  // Première utilisation de Gymon, pas l'historique importé (Gravl) : sinon un ancien utilisateur de Gravl l'a dès le premier jour (corrigé le 14 nov. 2026)
+  if(now - gcFirstSeen() < SAT.peas.afterDays * 86400000){ saveLocal(); return false; }
   if(PEAS.roll()){ c.peas = {t:now}; c.peasNew = 1; }
   saveLocal(); return !!c.peas;
 }
