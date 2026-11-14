@@ -11,3 +11,5 @@ Données : enregistrées uniquement dans l'iPhone. Pensez à "Exporter mes donn�
 (onglet Exercices) de temps en temps pour garder une sauvegarde.
 
 Assisté par IA - la responsabilité finale reste celle de l'utilisateur.
+
+Photos des exercices : free-exercise-db (https://github.com/yuhonas/free-exercise-db), domaine public (Unlicense).

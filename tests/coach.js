@@ -166,8 +166,11 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
     // ↻ en séance
     S.workouts = []; S.profile.active = null; startWorkout("S", [{exId:"leg-ext", sets:[blankSet()]}, {exId:"mollets", sets:[blankSet()]}]); closeSheet();
     const seen = new Set(); for(let k = 0; k < 6; k++){ ACT["ex-swap"]({dataset:{i:"0"}}); seen.add(primOf(exById(A().exercises[0].exId))); }
-    let toastTxt = ""; const t0 = toast; window.toast = m => toastTxt = m; ACT["ex-swap"]({dataset:{i:"1"}}); window.toast = t0;
-    const calf = A().exercises[1].exId; S.profile.active = null;
+    ACT["ex-swap"]({dataset:{i:"1"}}); const calfSwap = primOf(exById(A().exercises[1].exId)); S.profile.active = null;
+    // tous les exercices mollets déjà dans la séance : rien à proposer, message
+    const calves = allEx().filter(e => primOf(e) === "Mollets").map(e => e.id); startWorkout("S2", calves.map(id => ({exId:id, sets:[blankSet()]}))); closeSheet();
+    let toastTxt = ""; const t0 = toast; window.toast = m => toastTxt = m; ACT["ex-swap"]({dataset:{i:"0"}}); window.toast = t0;
+    const calf = A().exercises[0].exId === calves[0]; S.profile.active = null;
     // Fatigue en séance : séries déjà faites, au prorata
     const pre = {curl:preLoad([{exId:"squat", sets:[set(100,5),set(100,5),set(100,5)]}, {exId:"leg-curl", sets:[]}], 1), tri:preLoad([{exId:"dc-barre", sets:[set(80,8),set(80,8)]}, {exId:"ext-poulie", sets:[]}], 1)};
     // Récupération : leg extension lourde hier → quadriceps fatigués, mollets reposés, « Jambes » = le plus fatigué
@@ -186,11 +189,12 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
     // Exercice créé : muscle principal choisi
     S.profile.custom = [{id:"xmol", name:"Machin perso", muscle:"Jambes", prim:"Mollets", equip:"Machine"}]; const perso = primOf(exById("xmol"));
     S.workouts = saved.w; S.profile.custom = saved.custom;
-    return {table, gx, seen:[...seen], toastTxt, calf, pre, rec, prims, swapKeep, wf:{q:wf.Quadriceps, f:wf.Fessiers}, str, perso}; });
+    return {table, gx, seen:[...seen], toastTxt, calf, calfSwap, pre, rec, prims, swapKeep, wf:{q:wf.Quadriceps, f:wf.Fessiers}, str, perso}; });
   ok(MU.table, "17 muscles : chaque exercice de la bibliothèque a sa répartition, cohérente avec sa catégorie", MU.table);
   ok(MU.gx.join() === "Ischios,Mollets,Haut du dos,Triceps", "exercices importés : muscle principal deviné d'après le nom", MU.gx);
   ok(MU.seen.length === 1 && MU.seen[0] === "Quadriceps", "↻ en séance : un exercice quadriceps reste un exercice quadriceps (jamais des mollets)", MU.seen);
-  ok(MU.calf === "mollets" && /mollets/.test(MU.toastTxt), "↻ sans autre exercice du même muscle : message, rien n'est remplacé", MU);
+  ok(MU.calfSwap === "Mollets", "↻ sur des mollets : un autre exercice de mollets", MU.calfSwap);
+  ok(MU.calf && /mollets/.test(MU.toastTxt), "↻ sans autre exercice du même muscle disponible : message, rien n'est remplacé", MU);
   ok(MU.pre.curl === 0.6 && MU.pre.tri === 1, "fatigue en séance au prorata : 3 squats = 0,6 série d'ischios ; 2 développés = 1 série de triceps", MU.pre);
   ok(MU.rec.q < 0.6 && MU.rec.m === 1 && MU.rec.j === MU.rec.q, "récupération par muscle : quadriceps fatigués, mollets reposés ; « Jambes » = le muscle le plus fatigué", MU.rec);
   ok(new Set(MU.prims).size === MU.prims.length && MU.prims.length >= 3, "programme : une séance jambes travaille des muscles principaux différents", MU.prims);
@@ -212,6 +216,28 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
     return {rows, dots, dotsOk, glute:res.Fessiers.tag, quad:res.Quadriceps.tag, ok:rows.every(([m, t, f]) => f.length && f.every(x => x === want(t)))}; });
   ok(BODY.glute === "faible" && BODY.quad === "fort" && BODY.ok, "points forts et faibles : chaque muscle de la liste a la même couleur sur la silhouette (fessiers faibles = rouges, quadriceps forts = verts)", BODY.rows);
   ok(BODY.dotsOk, "points forts et faibles : la pastille de chaque muscle de la liste a la couleur fort / moyen / faible", BODY.dots);
+  // Bibliothèque de 200+ exercices (14 nov. 2026) : complète, cohérente, photos présentes, classiques d'abord, imports fusionnés
+  const LIB = await p.evaluate(async () => {
+    const names = new Set(EX.map(e => e.name.toLowerCase())), bad = EX.filter(e => !WORK[e.id] || GROUP_OF[primOf(e)] !== e.muscle || !(defaultRange(e)[1] > defaultRange(e)[0]));
+    const miss = []; await Promise.all(EX.flatMap(e => [0, 1].map(k => fetch(`img/${e.id}-${k}.jpg`, {method:"HEAD"}).then(r => { if(!r.ok) miss.push(`${e.id}-${k}`); }))));
+    const comp = ["rowing-2-halteres", "squat-goblet", "arnold", "tirage-vertical-serre"].every(id => isCompound(exById(id))) && !isCompound(exById("kickback")) && !isCompound(exById("elev-lat-inclinee"));
+    const saved = {w:S.workouts, c:S.profile.custom};
+    S.workouts = []; const first = candidatesFor("Biceps", {}).slice(0, 2).map(c => c.e.id);
+    S.profile.custom = [{id:"gx-chin-up", name:"Chin up", muscle:"Dos", equip:"Poids du corps"}, {id:"gx-truc", name:"Truc", muscle:"Dos", equip:"Autre"}];
+    const dedup = allEx().filter(e => e.id === "gx-chin-up").length, kept = !!allEx().find(e => e.id === "gx-truc"), lib = exById("gx-chin-up").name;
+    // Alternance lourd / volume en 5–7 / 8–12 : une séance volume à 8 reps est bien une séance volume → la suivante est lourde
+    const D = 864e5, n = Date.now(), st = (w, r, k) => Array.from({length:k}, () => ({w:String(w), r:String(r), done:true}));
+    S.workouts = [{id:"a1", name:"x", start:n - 6*D, end:n - 6*D, exercises:[{exId:"dm-halteres", feel:3, sets:st(18, 6, 3)}]}, {id:"a2", name:"x", start:n - 3*D, end:n - 3*D, exercises:[{exId:"dm-halteres", feel:3, sets:st(16, 8, 3)}]}];
+    const alt = coach("dm-halteres").mode;
+    S.workouts = saved.w; S.profile.custom = saved.c;
+    return {n:EX.length, uniq:names.size === EX.length, bad:bad.map(e => e.id), miss, comp, first, dedup, kept, lib, alt, kb:stepFor(exById("squat-goblet"), 20)}; });
+  ok(LIB.n >= 200 && LIB.uniq && !LIB.bad.length, "bibliothèque : 200 exercices et plus, noms uniques, répartition et fourchette cohérentes", {n:LIB.n, bad:LIB.bad});
+  ok(LIB.miss.length === 0, "chaque exercice a ses 2 photos", LIB.miss.slice(0, 5));
+  ok(LIB.comp, "polyarticulaires reconnus par la répartition (rowing haltères, squat goblet, développé Arnold), isolations non", LIB);
+  ok(LIB.first.join() === "curl-barre,curl-halteres", "sans historique, les grands classiques passent avant les variantes", LIB.first);
+  ok(LIB.dedup === 1 && LIB.kept && /chin-up/i.test(LIB.lib), "exercice importé entré dans la bibliothèque : une seule fois (version de la bibliothèque) ; les autres imports restent", LIB);
+  ok(LIB.alt === "lourd", "alternance lourd / volume : une séance volume faite à 8 reps est reconnue, la suivante est lourde", LIB.alt);
+  ok(LIB.kb === 4, "kettlebell : paliers de 4 kg", LIB.kb);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);

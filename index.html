@@ -678,7 +678,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-14 a";
+const APP_VERSION = "2026-11-14 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -705,7 +705,7 @@ const EX = [
   ["curl-barre","Curl barre","Biceps","Barre"],
   ["curl-halteres","Curl haltères","Biceps","Haltères"],
   ["curl-marteau","Curl marteau","Biceps","Haltères"],
-  ["curl-pupitre","Curl pupitre","Biceps","Machine"],
+  ["curl-pupitre","Curl pupitre (barre EZ)","Biceps","Barre"],
   ["ext-poulie","Extension triceps à la poulie","Triceps","Poulie"],
   ["barre-front","Barre au front","Triceps","Barre"],
   ["ext-nuque","Extension nuque haltère","Triceps","Haltères"],
@@ -722,7 +722,187 @@ const EX = [
   ["crunch","Crunch","Abdos","Poids du corps"],
   ["releve-jambes","Relevé de jambes suspendu","Abdos","Poids du corps"],
   ["crunch-poulie","Crunch à la poulie","Abdos","Poulie"],
-  ["ab-wheel","Roue abdominale","Abdos","Poids du corps"]
+  ["ab-wheel","Roue abdominale","Abdos","Poids du corps"],
+  // Bibliothèque élargie (14 nov. 2026) : exercices importés de Gravl intégrés sous leur identifiant, puis nouveaux exercices
+  // (photos : free-exercise-db, domaine public)
+  ["gx-abducteurs-des-hanches-a-la-machine","Abduction de hanche à la machine (écarter)","Jambes","Machine"],
+  ["gx-adduction-a-la-machine","Adduction de hanche à la machine (serrer)","Jambes","Machine"],
+  ["gx-bicep-curl-a-la-poulie-basse","Curl biceps à la poulie basse","Biceps","Poulie"],
+  ["gx-chin-up","Tractions supination (chin-up)","Dos","Poids du corps"],
+  ["gx-curl-a-la-barre-ez","Curl barre EZ","Biceps","Barre"],
+  ["gx-curl-aux-jambes-assis","Leg curl assis","Jambes","Machine"],
+  ["gx-curl-avec-cable-croise-d-un-bras","Curl à la poulie haute (bras en croix)","Biceps","Poulie"],
+  ["gx-curl-avec-halteres-assis","Curl haltères assis","Biceps","Haltères"],
+  ["gx-curl-marteau-incline","Curl marteau incliné","Biceps","Haltères"],
+  ["gx-curl-marteau-poulie-basse","Curl marteau à la corde","Biceps","Poulie"],
+  ["gx-curl-poignet-sur-banc-paumes-vers-le-bas-a-la-barre","Curl poignets en pronation (barre)","Biceps","Barre"],
+  ["gx-curl-poignet-sur-banc-paumes-vers-le-haut-a-la-barre","Curl poignets en supination (barre)","Biceps","Barre"],
+  ["gx-dips-pour-triceps","Dips triceps","Triceps","Poids du corps"],
+  ["gx-dips-triceps-a-la-machine","Dips à la machine","Triceps","Machine"],
+  ["gx-ecarte-a-la-poulie-vis-a-vis-basse","Écarté poulie basse (vis-à-vis)","Pectoraux","Poulie"],
+  ["gx-ecarte-incline-avec-halteres","Écarté incliné (haltères)","Pectoraux","Haltères"],
+  ["gx-ecarte-inverse-a-la-machine","Oiseau à la machine (reverse fly)","Épaules","Machine"],
+  ["gx-ecarte-inverse-a-la-poulie-pour-deltoides-posterieurs","Oiseau à la poulie","Épaules","Poulie"],
+  ["gx-elevation-frontale-avec-corde","Élévation frontale à la poulie","Épaules","Poulie"],
+  ["gx-elevation-frontale-avec-halteres","Élévation frontale (haltères)","Épaules","Haltères"],
+  ["gx-elevation-frontale-disque","Élévation frontale avec un disque","Épaules","Autre"],
+  ["gx-elevation-laterale-a-la-poulie","Élévation latérale à la poulie","Épaules","Poulie"],
+  ["gx-elevation-laterale-assise","Élévation latérale assise","Épaules","Haltères"],
+  ["gx-elevation-y-sur-banc-incline-avec-halteres","Élévation en Y sur banc incliné","Épaules","Haltères"],
+  ["gx-extension-des-mollets-a-la-presse-inclinee-a-disques","Mollets à la presse","Jambes","Machine"],
+  ["gx-extension-des-triceps-a-la-poulie-en-supination","Extension triceps poulie en supination","Triceps","Poulie"],
+  ["gx-extension-du-dos-au-banc-a-lombaires","Extension lombaire (banc à lombaires)","Dos","Poids du corps"],
+  ["gx-extension-verticale-d-un-bras-avec-haltere","Extension triceps à un bras au-dessus de la tête","Triceps","Haltères"],
+  ["gx-extensions-de-hanches-au-ghd","Glute-ham raise (GHD)","Jambes","Poids du corps"],
+  ["gx-haussement-d-epaules-aux-halteres","Haussement d'épaules (haltères)","Dos","Haltères"],
+  ["gx-presse-a-mollets","Presse à mollets","Jambes","Machine"],
+  ["gx-presse-pectorale-a-disques","Presse pectorale (machine)","Pectoraux","Machine"],
+  ["gx-pushdown-triceps-en-prise-en-v","Extension triceps poulie (barre en V)","Triceps","Poulie"],
+  ["gx-rowing-vertical-a-la-poulie","Rowing vertical à la poulie","Épaules","Poulie"],
+  ["gx-rowing-vertical-avec-halteres","Rowing vertical (haltères)","Épaules","Haltères"],
+  ["gx-squat-hack","Hack squat (machine)","Jambes","Machine"],
+  ["gx-tirage-bras-tendu-a-la-corde","Tirage bras tendus à la corde","Dos","Poulie"],
+  ["gx-tirage-horizontal-a-la-poulie-a-un-bras","Tirage horizontal à un bras","Dos","Poulie"],
+  ["gx-tirage-vertical-unilateral","Tirage vertical à un bras","Dos","Poulie"],
+  ["gx-trapeze-haussement-epaules-a-la-poulie","Haussement d'épaules à la poulie","Dos","Poulie"],
+  ["dc-prise-large","Développé couché prise large","Pectoraux","Barre"],
+  ["dd-barre","Développé décliné (barre)","Pectoraux","Barre"],
+  ["dd-halteres","Développé décliné (haltères)","Pectoraux","Haltères"],
+  ["dc-halteres-neutre","Développé couché haltères prise neutre","Pectoraux","Haltères"],
+  ["di-halteres-neutre","Développé incliné haltères prise neutre","Pectoraux","Haltères"],
+  ["dc-smith","Développé couché à la Smith","Pectoraux","Machine"],
+  ["di-smith","Développé incliné à la Smith","Pectoraux","Machine"],
+  ["dc-machine","Développé couché à la machine","Pectoraux","Machine"],
+  ["di-machine","Développé incliné à la machine","Pectoraux","Machine"],
+  ["dd-machine","Développé décliné à la machine","Pectoraux","Machine"],
+  ["dc-poulie","Développé pectoraux à la poulie (debout)","Pectoraux","Poulie"],
+  ["pec-deck","Pec deck (butterfly)","Pectoraux","Machine"],
+  ["ecarte-decline","Écarté décliné (haltères)","Pectoraux","Haltères"],
+  ["ecarte-poulie-incline","Écarté incliné à la poulie","Pectoraux","Poulie"],
+  ["ecarte-poulie-banc","Écarté couché à la poulie","Pectoraux","Poulie"],
+  ["pompes-pieds-sureleves","Pompes pieds surélevés","Pectoraux","Poids du corps"],
+  ["pompes-larges","Pompes prise large","Pectoraux","Poids du corps"],
+  ["pompes-inclinees","Pompes inclinées (mains surélevées)","Pectoraux","Poids du corps"],
+  ["pullover-haltere","Pull-over haltère","Pectoraux","Haltères"],
+  ["rowing-t-barre","Rowing T-bar","Dos","Barre"],
+  ["rowing-t-machine","Rowing T-bar à la machine (appui poitrine)","Dos","Machine"],
+  ["rowing-barre-supination","Rowing barre en supination","Dos","Barre"],
+  ["rowing-2-halteres","Rowing deux haltères buste penché","Dos","Haltères"],
+  ["rowing-incline-halteres","Rowing haltères sur banc incliné","Dos","Haltères"],
+  ["rowing-smith","Rowing à la Smith","Dos","Machine"],
+  ["rowing-machine","Rowing assis à la machine","Dos","Machine"],
+  ["tirage-haut-machine","Tirage haut à la machine (high row)","Dos","Machine"],
+  ["tirage-vertical-serre","Tirage vertical prise serrée","Dos","Poulie"],
+  ["tirage-vertical-supination","Tirage vertical en supination","Dos","Poulie"],
+  ["tirage-triangle","Tirage vertical au triangle","Dos","Poulie"],
+  ["tractions-lestees","Tractions lestées","Dos","Autre"],
+  ["tractions-assistees","Tractions assistées (élastique)","Dos","Poids du corps"],
+  ["tractions-neutres","Tractions prise neutre","Dos","Poids du corps"],
+  ["rowing-inverse","Rowing inversé (australien)","Dos","Poids du corps"],
+  ["rack-pull","Rack pull (soulevé partiel)","Dos","Barre"],
+  ["shrug-barre","Haussement d'épaules (barre)","Dos","Barre"],
+  ["shrug-machine","Haussement d'épaules à la machine","Dos","Machine"],
+  ["pullover-barre","Pull-over barre bras fléchis","Dos","Barre"],
+  ["dm-assis-barre","Développé militaire assis (barre)","Épaules","Barre"],
+  ["dm-assis-halteres","Développé épaules assis (haltères)","Épaules","Haltères"],
+  ["arnold","Développé Arnold","Épaules","Haltères"],
+  ["dm-machine","Développé épaules à la machine","Épaules","Machine"],
+  ["dm-smith","Développé épaules à la Smith","Épaules","Machine"],
+  ["dm-poulie","Développé épaules à la poulie","Épaules","Poulie"],
+  ["push-press","Push press","Épaules","Barre"],
+  ["dm-un-bras","Développé épaule à un bras (haltère)","Épaules","Haltères"],
+  ["elev-lat-poulie-basse","Élévation latérale à un bras (poulie basse)","Épaules","Poulie"],
+  ["elev-lat-inclinee","Élévation latérale sur banc incliné","Épaules","Haltères"],
+  ["elev-frontale-barre","Élévation frontale (barre)","Épaules","Barre"],
+  ["oiseau-assis","Oiseau assis (haltères)","Épaules","Haltères"],
+  ["oiseau-incline","Oiseau allongé sur banc","Épaules","Haltères"],
+  ["rowing-vertical-barre","Rowing vertical (barre)","Épaules","Barre"],
+  ["rotation-externe-poulie","Rotation externe à la poulie","Épaules","Poulie"],
+  ["rotation-externe-haltere","Rotation externe (haltère)","Épaules","Haltères"],
+  ["rowing-delt-arriere","Rowing deltoïdes postérieurs (barre)","Épaules","Barre"],
+  ["curl-incline","Curl incliné (haltères)","Biceps","Haltères"],
+  ["curl-concentre","Curl concentré","Biceps","Haltères"],
+  ["curl-pupitre-haltere","Curl pupitre à un bras (haltère)","Biceps","Haltères"],
+  ["curl-pupitre-machine","Curl pupitre à la machine","Biceps","Machine"],
+  ["curl-machine","Curl biceps à la machine","Biceps","Machine"],
+  ["curl-pupitre-poulie","Curl pupitre à la poulie","Biceps","Poulie"],
+  ["curl-araignee","Curl araignée (barre EZ)","Biceps","Barre"],
+  ["curl-inverse","Curl inversé (barre)","Biceps","Barre"],
+  ["curl-zottman","Curl Zottman","Biceps","Haltères"],
+  ["curl-marteau-croise","Curl marteau croisé","Biceps","Haltères"],
+  ["curl-drag","Drag curl","Biceps","Barre"],
+  ["curl-alterne","Curl haltères alterné","Biceps","Haltères"],
+  ["curl-poulie-un-bras","Curl à un bras à la poulie","Biceps","Poulie"],
+  ["curl-ez-serre","Curl barre EZ prise serrée","Biceps","Barre"],
+  ["curl-poignets-halteres","Curl poignets (haltères)","Biceps","Haltères"],
+  ["curl-poignets-poulie","Curl poignets à la poulie","Biceps","Poulie"],
+  ["dc-serre","Développé couché prise serrée","Triceps","Barre"],
+  ["jm-press","JM press","Triceps","Barre"],
+  ["dc-serre-halteres","Développé serré (haltères)","Triceps","Haltères"],
+  ["ext-couchee-halteres","Extension couchée (haltères)","Triceps","Haltères"],
+  ["ext-corde","Extension triceps à la corde","Triceps","Poulie"],
+  ["ext-corde-nuque","Extension triceps à la corde au-dessus de la tête","Triceps","Poulie"],
+  ["kickback","Kickback triceps (haltère)","Triceps","Haltères"],
+  ["ext-un-bras-poulie","Extension triceps à un bras (poulie)","Triceps","Poulie"],
+  ["ext-machine","Extension triceps à la machine","Triceps","Machine"],
+  ["dips-banc","Dips entre deux bancs","Triceps","Poids du corps"],
+  ["pompes-serrees","Pompes prise serrée","Triceps","Poids du corps"],
+  ["ext-nuque-barre","Extension nuque à la barre","Triceps","Barre"],
+  ["tate-press","Tate press","Triceps","Haltères"],
+  ["ext-couchee-poulie","Extension couchée à la poulie","Triceps","Poulie"],
+  ["squat-smith","Squat à la Smith","Jambes","Machine"],
+  ["squat-goblet","Squat goblet","Jambes","Kettlebell"],
+  ["squat-halteres","Squat haltères","Jambes","Haltères"],
+  ["squat-sumo-haltere","Squat sumo (haltère)","Jambes","Haltères"],
+  ["box-squat","Box squat","Jambes","Barre"],
+  ["squat-zercher","Squat Zercher","Jambes","Barre"],
+  ["presse-pieds-serres","Presse à cuisses pieds serrés","Jambes","Machine"],
+  ["squat-machine","Squat à la machine (allongé)","Jambes","Machine"],
+  ["fentes-barre","Fentes (barre)","Jambes","Barre"],
+  ["fentes-marchees","Fentes marchées (barre)","Jambes","Barre"],
+  ["fentes-arriere","Fentes arrière (haltères)","Jambes","Haltères"],
+  ["step-up","Step-up (haltères)","Jambes","Haltères"],
+  ["bulgare-smith","Fente bulgare à la Smith","Jambes","Machine"],
+  ["leg-ext-unilateral","Leg extension à une jambe","Jambes","Machine"],
+  ["sissy-squat","Sissy squat lesté","Jambes","Autre"],
+  ["leg-curl-debout","Leg curl debout (une jambe)","Jambes","Machine"],
+  ["sdt-jambes-tendues","Soulevé de terre jambes tendues","Jambes","Barre"],
+  ["sdt-roumain-halteres","Soulevé de terre roumain (haltères)","Jambes","Haltères"],
+  ["sdt-smith","Soulevé de terre jambes tendues à la Smith","Jambes","Machine"],
+  ["good-morning","Good morning","Jambes","Barre"],
+  ["nordic","Nordic curl","Jambes","Poids du corps"],
+  ["hyperextension-inverse","Hyperextension inversée","Jambes","Machine"],
+  ["souleve-terre-sumo","Soulevé de terre sumo","Jambes","Barre"],
+  ["trap-bar","Soulevé de terre à la trap bar","Jambes","Autre"],
+  ["pont-fessier-barre","Pont fessier (barre)","Jambes","Barre"],
+  ["pont-fessier","Pont fessier au sol","Jambes","Poids du corps"],
+  ["pont-fessier-unipodal","Pont fessier sur une jambe","Jambes","Poids du corps"],
+  ["kickback-poulie","Kickback fessier à la poulie","Jambes","Poulie"],
+  ["kickback-sol","Kickback fessier au sol","Jambes","Poids du corps"],
+  ["pull-through","Pull-through à la poulie","Jambes","Poulie"],
+  ["swing-kettlebell","Swing kettlebell à un bras","Jambes","Kettlebell"],
+  ["mollets-assis","Mollets assis (machine)","Jambes","Machine"],
+  ["mollets-smith","Mollets debout à la Smith","Jambes","Machine"],
+  ["mollets-halteres","Mollets debout (haltères)","Jambes","Haltères"],
+  ["mollets-barre","Mollets debout (barre)","Jambes","Barre"],
+  ["mollets-ane","Mollets à l'âne (donkey)","Jambes","Autre"],
+  ["adduction-poulie","Adduction à la poulie","Jambes","Poulie"],
+  ["squat-poids-corps","Squat au poids du corps","Jambes","Poids du corps"],
+  ["crunch-machine","Crunch à la machine","Abdos","Machine"],
+  ["crunch-inverse","Crunch inversé","Abdos","Poids du corps"],
+  ["crunch-decline","Crunch sur banc décliné","Abdos","Poids du corps"],
+  ["crunch-oblique","Crunch oblique","Abdos","Poids du corps"],
+  ["crunch-velo","Crunch vélo","Abdos","Poids du corps"],
+  ["releve-jambes-sol","Relevé de jambes allongé","Abdos","Poids du corps"],
+  ["releve-genoux-barres","Relevé de genoux aux barres parallèles","Abdos","Poids du corps"],
+  ["gainage","Gainage planche (secondes)","Abdos","Poids du corps"],
+  ["gainage-lateral","Gainage latéral (secondes)","Abdos","Poids du corps"],
+  ["russian-twist","Russian twist","Abdos","Poids du corps"],
+  ["woodchop","Rotation du buste à la poulie (bûcheron)","Abdos","Poulie"],
+  ["pallof","Pallof press","Abdos","Poulie"],
+  ["flexion-laterale","Flexion latérale (haltère)","Abdos","Haltères"],
+  ["sit-up","Sit-up","Abdos","Poids du corps"],
+  ["dead-bug","Dead bug","Abdos","Poids du corps"]
 ].map(([id,name,muscle,equip])=>({id,name,muscle,equip,img:true}));
 const MCOL = {"Pectoraux":"--m-pec","Dos":"--m-dos","Épaules":"--m-epa","Biceps":"--m-bic","Triceps":"--m-tri","Jambes":"--m-jam","Abdos":"--m-abd"};
 const mc = m => `--mc:var(${MCOL[m]||"--muted"})`;
@@ -760,7 +940,185 @@ const WORK = {
   "sdt-roumain":{"Ischios":1, "Fessiers":.8, "Lombaires":.6, "Haut du dos":.3, "Avant-bras":.3}, "hip-thrust":{"Fessiers":1, "Ischios":.4, "Quadriceps":.2},
   "mollets":{"Mollets":1},
   "crunch":{"Abdos":1, "Obliques":.3}, "releve-jambes":{"Abdos":1, "Obliques":.4, "Avant-bras":.3}, "crunch-poulie":{"Abdos":1, "Obliques":.3},
-  "ab-wheel":{"Abdos":1, "Obliques":.4, "Grand dorsal":.3}
+  "ab-wheel":{"Abdos":1, "Obliques":.4, "Grand dorsal":.3},
+  "gx-abducteurs-des-hanches-a-la-machine":{"Fessiers": 1},
+  "gx-adduction-a-la-machine":{"Adducteurs": 1},
+  "gx-bicep-curl-a-la-poulie-basse":{"Biceps": 1, "Avant-bras": 0.3},
+  "gx-chin-up":{"Grand dorsal": 1, "Biceps": 0.7, "Haut du dos": 0.4, "Avant-bras": 0.4},
+  "gx-curl-a-la-barre-ez":{"Biceps": 1, "Avant-bras": 0.4},
+  "gx-curl-aux-jambes-assis":{"Ischios": 1, "Mollets": 0.2},
+  "gx-curl-avec-cable-croise-d-un-bras":{"Biceps": 1},
+  "gx-curl-avec-halteres-assis":{"Biceps": 1, "Avant-bras": 0.4},
+  "gx-curl-marteau-incline":{"Biceps": 1, "Avant-bras": 0.8},
+  "gx-curl-marteau-poulie-basse":{"Biceps": 1, "Avant-bras": 0.8},
+  "gx-curl-poignet-sur-banc-paumes-vers-le-bas-a-la-barre":{"Avant-bras": 1},
+  "gx-curl-poignet-sur-banc-paumes-vers-le-haut-a-la-barre":{"Avant-bras": 1},
+  "gx-dips-pour-triceps":{"Triceps": 1, "Pectoraux": 0.5, "Deltoïde avant": 0.4},
+  "gx-dips-triceps-a-la-machine":{"Triceps": 1, "Pectoraux": 0.4, "Deltoïde avant": 0.3},
+  "gx-ecarte-a-la-poulie-vis-a-vis-basse":{"Pectoraux": 1, "Deltoïde avant": 0.4},
+  "gx-ecarte-incline-avec-halteres":{"Pectoraux": 1, "Deltoïde avant": 0.4},
+  "gx-ecarte-inverse-a-la-machine":{"Deltoïde arrière": 1, "Haut du dos": 0.6},
+  "gx-ecarte-inverse-a-la-poulie-pour-deltoides-posterieurs":{"Deltoïde arrière": 1, "Haut du dos": 0.6},
+  "gx-elevation-frontale-avec-corde":{"Deltoïde avant": 1, "Deltoïde latéral": 0.2},
+  "gx-elevation-frontale-avec-halteres":{"Deltoïde avant": 1, "Deltoïde latéral": 0.2},
+  "gx-elevation-frontale-disque":{"Deltoïde avant": 1, "Deltoïde latéral": 0.2},
+  "gx-elevation-laterale-a-la-poulie":{"Deltoïde latéral": 1},
+  "gx-elevation-laterale-assise":{"Deltoïde latéral": 1},
+  "gx-elevation-y-sur-banc-incline-avec-halteres":{"Deltoïde latéral": 1, "Haut du dos": 0.7, "Deltoïde avant": 0.4},
+  "gx-extension-des-mollets-a-la-presse-inclinee-a-disques":{"Mollets": 1},
+  "gx-extension-des-triceps-a-la-poulie-en-supination":{"Triceps": 1},
+  "gx-extension-du-dos-au-banc-a-lombaires":{"Lombaires": 1, "Fessiers": 0.5, "Ischios": 0.4},
+  "gx-extension-verticale-d-un-bras-avec-haltere":{"Triceps": 1},
+  "gx-extensions-de-hanches-au-ghd":{"Ischios": 1, "Fessiers": 0.6, "Mollets": 0.3},
+  "gx-haussement-d-epaules-aux-halteres":{"Haut du dos": 1, "Avant-bras": 0.3},
+  "gx-presse-a-mollets":{"Mollets": 1},
+  "gx-presse-pectorale-a-disques":{"Pectoraux": 1, "Triceps": 0.5, "Deltoïde avant": 0.5},
+  "gx-pushdown-triceps-en-prise-en-v":{"Triceps": 1},
+  "gx-rowing-vertical-a-la-poulie":{"Deltoïde latéral": 1, "Haut du dos": 0.6, "Biceps": 0.3},
+  "gx-rowing-vertical-avec-halteres":{"Deltoïde latéral": 1, "Haut du dos": 0.6, "Biceps": 0.3},
+  "gx-squat-hack":{"Quadriceps": 1, "Fessiers": 0.5, "Adducteurs": 0.3},
+  "gx-tirage-bras-tendu-a-la-corde":{"Grand dorsal": 1, "Triceps": 0.2},
+  "gx-tirage-horizontal-a-la-poulie-a-un-bras":{"Haut du dos": 1, "Grand dorsal": 0.8, "Biceps": 0.5, "Deltoïde arrière": 0.4},
+  "gx-tirage-vertical-unilateral":{"Grand dorsal": 1, "Biceps": 0.5, "Haut du dos": 0.3},
+  "gx-trapeze-haussement-epaules-a-la-poulie":{"Haut du dos": 1},
+  "dc-prise-large":{"Pectoraux": 1, "Deltoïde avant": 0.5, "Triceps": 0.4},
+  "dd-barre":{"Pectoraux": 1, "Triceps": 0.5, "Deltoïde avant": 0.3},
+  "dd-halteres":{"Pectoraux": 1, "Triceps": 0.5, "Deltoïde avant": 0.3},
+  "dc-halteres-neutre":{"Pectoraux": 1, "Triceps": 0.6, "Deltoïde avant": 0.5},
+  "di-halteres-neutre":{"Pectoraux": 1, "Deltoïde avant": 0.7, "Triceps": 0.5},
+  "dc-smith":{"Pectoraux": 1, "Triceps": 0.5, "Deltoïde avant": 0.5},
+  "di-smith":{"Pectoraux": 1, "Deltoïde avant": 0.7, "Triceps": 0.4},
+  "dc-machine":{"Pectoraux": 1, "Triceps": 0.5, "Deltoïde avant": 0.5},
+  "di-machine":{"Pectoraux": 1, "Deltoïde avant": 0.7, "Triceps": 0.4},
+  "dd-machine":{"Pectoraux": 1, "Triceps": 0.5, "Deltoïde avant": 0.3},
+  "dc-poulie":{"Pectoraux": 1, "Triceps": 0.4, "Deltoïde avant": 0.4, "Abdos": 0.2},
+  "pec-deck":{"Pectoraux": 1, "Deltoïde avant": 0.3},
+  "ecarte-decline":{"Pectoraux": 1, "Deltoïde avant": 0.3},
+  "ecarte-poulie-incline":{"Pectoraux": 1, "Deltoïde avant": 0.4},
+  "ecarte-poulie-banc":{"Pectoraux": 1, "Deltoïde avant": 0.3},
+  "pompes-pieds-sureleves":{"Pectoraux": 1, "Deltoïde avant": 0.6, "Triceps": 0.5, "Abdos": 0.2},
+  "pompes-larges":{"Pectoraux": 1, "Deltoïde avant": 0.5, "Triceps": 0.3, "Abdos": 0.2},
+  "pompes-inclinees":{"Pectoraux": 1, "Triceps": 0.5, "Deltoïde avant": 0.4},
+  "pullover-haltere":{"Pectoraux": 1, "Grand dorsal": 0.7, "Triceps": 0.3},
+  "rowing-t-barre":{"Haut du dos": 1, "Grand dorsal": 0.8, "Biceps": 0.5, "Deltoïde arrière": 0.4, "Lombaires": 0.4, "Avant-bras": 0.3},
+  "rowing-t-machine":{"Haut du dos": 1, "Grand dorsal": 0.8, "Deltoïde arrière": 0.5, "Biceps": 0.5},
+  "rowing-barre-supination":{"Grand dorsal": 1, "Haut du dos": 0.8, "Biceps": 0.6, "Lombaires": 0.4, "Avant-bras": 0.3},
+  "rowing-2-halteres":{"Haut du dos": 1, "Grand dorsal": 0.8, "Deltoïde arrière": 0.5, "Biceps": 0.5, "Lombaires": 0.3},
+  "rowing-incline-halteres":{"Haut du dos": 1, "Grand dorsal": 0.8, "Deltoïde arrière": 0.5, "Biceps": 0.5},
+  "rowing-smith":{"Haut du dos": 1, "Grand dorsal": 0.8, "Biceps": 0.5, "Deltoïde arrière": 0.4, "Lombaires": 0.3},
+  "rowing-machine":{"Grand dorsal": 1, "Haut du dos": 0.8, "Biceps": 0.5, "Deltoïde arrière": 0.4},
+  "tirage-haut-machine":{"Haut du dos": 1, "Grand dorsal": 0.8, "Deltoïde arrière": 0.4, "Biceps": 0.4},
+  "tirage-vertical-serre":{"Grand dorsal": 1, "Biceps": 0.6, "Haut du dos": 0.4, "Avant-bras": 0.3},
+  "tirage-vertical-supination":{"Grand dorsal": 1, "Biceps": 0.7, "Haut du dos": 0.3, "Avant-bras": 0.3},
+  "tirage-triangle":{"Grand dorsal": 1, "Biceps": 0.5, "Haut du dos": 0.4, "Avant-bras": 0.3},
+  "tractions-lestees":{"Grand dorsal": 1, "Biceps": 0.6, "Haut du dos": 0.5, "Avant-bras": 0.4, "Deltoïde arrière": 0.3},
+  "tractions-assistees":{"Grand dorsal": 1, "Biceps": 0.5, "Haut du dos": 0.4, "Avant-bras": 0.3},
+  "tractions-neutres":{"Grand dorsal": 1, "Biceps": 0.6, "Haut du dos": 0.4, "Avant-bras": 0.4},
+  "rowing-inverse":{"Haut du dos": 1, "Grand dorsal": 0.7, "Biceps": 0.5, "Deltoïde arrière": 0.4},
+  "rack-pull":{"Lombaires": 1, "Haut du dos": 0.8, "Fessiers": 0.6, "Ischios": 0.5, "Avant-bras": 0.5, "Grand dorsal": 0.3},
+  "shrug-barre":{"Haut du dos": 1, "Avant-bras": 0.3},
+  "shrug-machine":{"Haut du dos": 1},
+  "pullover-barre":{"Grand dorsal": 1, "Pectoraux": 0.6, "Triceps": 0.3},
+  "dm-assis-barre":{"Deltoïde avant": 1, "Deltoïde latéral": 0.5, "Triceps": 0.6, "Haut du dos": 0.3},
+  "dm-assis-halteres":{"Deltoïde avant": 1, "Deltoïde latéral": 0.5, "Triceps": 0.5},
+  "arnold":{"Deltoïde avant": 1, "Deltoïde latéral": 0.6, "Triceps": 0.5},
+  "dm-machine":{"Deltoïde avant": 1, "Deltoïde latéral": 0.5, "Triceps": 0.5},
+  "dm-smith":{"Deltoïde avant": 1, "Deltoïde latéral": 0.5, "Triceps": 0.5},
+  "dm-poulie":{"Deltoïde avant": 1, "Deltoïde latéral": 0.5, "Triceps": 0.5},
+  "push-press":{"Deltoïde avant": 1, "Triceps": 0.6, "Deltoïde latéral": 0.5, "Quadriceps": 0.4, "Haut du dos": 0.4},
+  "dm-un-bras":{"Deltoïde avant": 1, "Deltoïde latéral": 0.5, "Triceps": 0.5, "Obliques": 0.2},
+  "elev-lat-poulie-basse":{"Deltoïde latéral": 1},
+  "elev-lat-inclinee":{"Deltoïde latéral": 1},
+  "elev-frontale-barre":{"Deltoïde avant": 1, "Deltoïde latéral": 0.3},
+  "oiseau-assis":{"Deltoïde arrière": 1, "Haut du dos": 0.6},
+  "oiseau-incline":{"Deltoïde arrière": 1, "Haut du dos": 0.6},
+  "rowing-vertical-barre":{"Deltoïde latéral": 1, "Haut du dos": 0.7, "Biceps": 0.3},
+  "rotation-externe-poulie":{"Deltoïde arrière": 1},
+  "rotation-externe-haltere":{"Deltoïde arrière": 1},
+  "rowing-delt-arriere":{"Deltoïde arrière": 1, "Haut du dos": 0.8, "Biceps": 0.3},
+  "curl-incline":{"Biceps": 1, "Avant-bras": 0.3},
+  "curl-concentre":{"Biceps": 1, "Avant-bras": 0.2},
+  "curl-pupitre-haltere":{"Biceps": 1, "Avant-bras": 0.3},
+  "curl-pupitre-machine":{"Biceps": 1, "Avant-bras": 0.3},
+  "curl-machine":{"Biceps": 1, "Avant-bras": 0.3},
+  "curl-pupitre-poulie":{"Biceps": 1, "Avant-bras": 0.3},
+  "curl-araignee":{"Biceps": 1, "Avant-bras": 0.3},
+  "curl-inverse":{"Avant-bras": 1, "Biceps": 0.7},
+  "curl-zottman":{"Biceps": 1, "Avant-bras": 0.8},
+  "curl-marteau-croise":{"Biceps": 1, "Avant-bras": 0.8},
+  "curl-drag":{"Biceps": 1, "Avant-bras": 0.3},
+  "curl-alterne":{"Biceps": 1, "Avant-bras": 0.4},
+  "curl-poulie-un-bras":{"Biceps": 1, "Avant-bras": 0.3},
+  "curl-ez-serre":{"Biceps": 1, "Avant-bras": 0.4},
+  "curl-poignets-halteres":{"Avant-bras": 1},
+  "curl-poignets-poulie":{"Avant-bras": 1},
+  "dc-serre":{"Triceps": 1, "Pectoraux": 0.7, "Deltoïde avant": 0.4},
+  "jm-press":{"Triceps": 1, "Pectoraux": 0.3},
+  "dc-serre-halteres":{"Triceps": 1, "Pectoraux": 0.6, "Deltoïde avant": 0.4},
+  "ext-couchee-halteres":{"Triceps": 1},
+  "ext-corde":{"Triceps": 1},
+  "ext-corde-nuque":{"Triceps": 1},
+  "kickback":{"Triceps": 1},
+  "ext-un-bras-poulie":{"Triceps": 1},
+  "ext-machine":{"Triceps": 1},
+  "dips-banc":{"Triceps": 1, "Deltoïde avant": 0.4, "Pectoraux": 0.3},
+  "pompes-serrees":{"Triceps": 1, "Pectoraux": 0.7, "Deltoïde avant": 0.4},
+  "ext-nuque-barre":{"Triceps": 1},
+  "tate-press":{"Triceps": 1},
+  "ext-couchee-poulie":{"Triceps": 1},
+  "squat-smith":{"Quadriceps": 1, "Fessiers": 0.6, "Adducteurs": 0.4},
+  "squat-goblet":{"Quadriceps": 1, "Fessiers": 0.6, "Adducteurs": 0.4, "Abdos": 0.2},
+  "squat-halteres":{"Quadriceps": 1, "Fessiers": 0.6, "Adducteurs": 0.4},
+  "squat-sumo-haltere":{"Quadriceps": 1, "Adducteurs": 0.8, "Fessiers": 0.7},
+  "box-squat":{"Quadriceps": 1, "Fessiers": 0.8, "Adducteurs": 0.5, "Ischios": 0.3, "Lombaires": 0.3},
+  "squat-zercher":{"Quadriceps": 1, "Fessiers": 0.6, "Adducteurs": 0.4, "Haut du dos": 0.4, "Abdos": 0.3},
+  "presse-pieds-serres":{"Quadriceps": 1, "Fessiers": 0.4, "Adducteurs": 0.3},
+  "squat-machine":{"Quadriceps": 1, "Fessiers": 0.6, "Adducteurs": 0.3},
+  "fentes-barre":{"Quadriceps": 1, "Fessiers": 0.8, "Adducteurs": 0.4, "Ischios": 0.2},
+  "fentes-marchees":{"Quadriceps": 1, "Fessiers": 0.8, "Adducteurs": 0.4, "Ischios": 0.2},
+  "fentes-arriere":{"Quadriceps": 1, "Fessiers": 0.9, "Adducteurs": 0.4, "Ischios": 0.2},
+  "step-up":{"Quadriceps": 1, "Fessiers": 0.8, "Adducteurs": 0.3},
+  "bulgare-smith":{"Quadriceps": 1, "Fessiers": 0.8, "Adducteurs": 0.4},
+  "leg-ext-unilateral":{"Quadriceps": 1},
+  "sissy-squat":{"Quadriceps": 1},
+  "leg-curl-debout":{"Ischios": 1, "Mollets": 0.2},
+  "sdt-jambes-tendues":{"Ischios": 1, "Fessiers": 0.8, "Lombaires": 0.6, "Haut du dos": 0.3, "Avant-bras": 0.3},
+  "sdt-roumain-halteres":{"Ischios": 1, "Fessiers": 0.8, "Lombaires": 0.6, "Haut du dos": 0.3, "Avant-bras": 0.3},
+  "sdt-smith":{"Ischios": 1, "Fessiers": 0.8, "Lombaires": 0.6, "Haut du dos": 0.3, "Avant-bras": 0.3},
+  "good-morning":{"Ischios": 1, "Lombaires": 0.8, "Fessiers": 0.6},
+  "nordic":{"Ischios": 1, "Fessiers": 0.3, "Mollets": 0.2},
+  "hyperextension-inverse":{"Fessiers": 1, "Ischios": 0.7, "Lombaires": 0.6},
+  "souleve-terre-sumo":{"Fessiers": 1, "Quadriceps": 0.8, "Adducteurs": 0.7, "Ischios": 0.6, "Lombaires": 0.6, "Haut du dos": 0.5, "Avant-bras": 0.4},
+  "trap-bar":{"Quadriceps": 1, "Fessiers": 0.8, "Ischios": 0.6, "Lombaires": 0.6, "Haut du dos": 0.6, "Avant-bras": 0.4},
+  "pont-fessier-barre":{"Fessiers": 1, "Ischios": 0.4},
+  "pont-fessier":{"Fessiers": 1, "Ischios": 0.4},
+  "pont-fessier-unipodal":{"Fessiers": 1, "Ischios": 0.4},
+  "kickback-poulie":{"Fessiers": 1, "Ischios": 0.3},
+  "kickback-sol":{"Fessiers": 1, "Ischios": 0.3},
+  "pull-through":{"Fessiers": 1, "Ischios": 0.6, "Lombaires": 0.3},
+  "swing-kettlebell":{"Fessiers": 1, "Ischios": 0.8, "Lombaires": 0.5, "Abdos": 0.2},
+  "mollets-assis":{"Mollets": 1},
+  "mollets-smith":{"Mollets": 1},
+  "mollets-halteres":{"Mollets": 1},
+  "mollets-barre":{"Mollets": 1},
+  "mollets-ane":{"Mollets": 1},
+  "adduction-poulie":{"Adducteurs": 1},
+  "squat-poids-corps":{"Quadriceps": 1, "Fessiers": 0.6, "Adducteurs": 0.3},
+  "crunch-machine":{"Abdos": 1, "Obliques": 0.3},
+  "crunch-inverse":{"Abdos": 1, "Obliques": 0.3},
+  "crunch-decline":{"Abdos": 1, "Obliques": 0.3},
+  "crunch-oblique":{"Obliques": 1, "Abdos": 0.5},
+  "crunch-velo":{"Abdos": 1, "Obliques": 0.8},
+  "releve-jambes-sol":{"Abdos": 1, "Obliques": 0.3},
+  "releve-genoux-barres":{"Abdos": 1, "Obliques": 0.4},
+  "gainage":{"Abdos": 1, "Obliques": 0.5},
+  "gainage-lateral":{"Obliques": 1, "Abdos": 0.4},
+  "russian-twist":{"Obliques": 1, "Abdos": 0.5},
+  "woodchop":{"Obliques": 1, "Abdos": 0.5},
+  "pallof":{"Obliques": 1, "Abdos": 0.6},
+  "flexion-laterale":{"Obliques": 1},
+  "sit-up":{"Abdos": 1, "Obliques": 0.3},
+  "dead-bug":{"Abdos": 1}
 };
 // Exercices importés ou créés : répartition devinée d'après le nom (premier motif reconnu), sinon muscle principal de la catégorie
 const GUESS_WORK = [
@@ -860,8 +1218,10 @@ const sortW = l => l.sort((a,b) => b.start - a.start);
 const num = v => { const n = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(n) ? n : 0; };
 const e1rm = (w,r) => r<=0 ? 0 : r===1 ? w : w*(1 + r/30);
 // Exercices importés de Gravl qui ont aussi une photo
-const EXTRA_IMG = new Set(["gx-abducteurs-des-hanches-a-la-machine", "gx-adduction-a-la-machine", "gx-bicep-curl-a-la-poulie-basse", "gx-chin-up", "gx-curl-a-la-barre-ez", "gx-curl-aux-jambes-assis", "gx-curl-avec-cable-croise-d-un-bras", "gx-curl-avec-halteres-assis", "gx-curl-marteau-incline", "gx-curl-marteau-poulie-basse", "gx-curl-poignet-sur-banc-paumes-vers-le-bas-a-la-barre", "gx-curl-poignet-sur-banc-paumes-vers-le-haut-a-la-barre", "gx-dips-a-la-machine-a-disques", "gx-dips-pour-triceps", "gx-dips-triceps-a-la-machine", "gx-ecarte-a-la-poulie-vis-a-vis-basse", "gx-ecarte-incline-avec-halteres", "gx-ecarte-inverse-a-la-machine", "gx-ecarte-inverse-a-la-poulie-pour-deltoides-posterieurs", "gx-ecartes-a-la-poulie", "gx-elevation-frontale-avec-corde", "gx-elevation-frontale-avec-halteres", "gx-elevation-frontale-disque", "gx-elevation-laterale-a-la-machine", "gx-elevation-laterale-a-la-poulie", "gx-elevation-laterale-assise", "gx-elevation-y-sur-banc-incline-avec-halteres", "gx-extension-des-mollets-a-la-presse-inclinee-a-disques", "gx-extension-des-triceps-a-la-poulie-en-supination", "gx-extension-du-dos-au-banc-a-lombaires", "gx-extension-lombaire-a-la-machine", "gx-extension-verticale-d-un-bras-avec-haltere", "gx-extensions-de-hanches-au-ghd", "gx-haussement-d-epaules-aux-halteres", "gx-presse-a-mollets", "gx-presse-pectorale-a-disques", "gx-pushdown-triceps-en-prise-en-v", "gx-rowing-vertical-a-la-poulie", "gx-rowing-vertical-avec-halteres", "gx-squat-hack", "gx-tirage-bras-tendu-a-la-corde", "gx-tirage-horizontal-a-la-poulie-a-un-bras", "gx-tirage-vertical-unilateral", "gx-trapeze-haussement-epaules-a-la-poulie"]);
-const allEx = () => EX.concat((S.profile.custom||[]).map(e => EXTRA_IMG.has(e.id) ? {...e, img:true} : e));
+const EXTRA_IMG = new Set(["gx-abducteurs-des-hanches-a-la-machine", "gx-adduction-a-la-machine", "gx-bicep-curl-a-la-poulie-basse", "gx-chin-up", "gx-curl-a-la-barre-ez", "gx-curl-aux-jambes-assis", "gx-curl-avec-cable-croise-d-un-bras", "gx-curl-avec-halteres-assis", "gx-curl-marteau-incline", "gx-curl-marteau-poulie-basse", "gx-curl-poignet-sur-banc-paumes-vers-le-bas-a-la-barre", "gx-curl-poignet-sur-banc-paumes-vers-le-haut-a-la-barre", "gx-dips-a-la-machine-a-disques", "gx-dips-pour-triceps", "gx-dips-triceps-a-la-machine", "gx-ecarte-a-la-poulie-vis-a-vis-basse", "gx-ecarte-incline-avec-halteres", "gx-ecarte-inverse-a-la-machine", "gx-ecarte-inverse-a-la-poulie-pour-deltoides-posterieurs", "gx-ecartes-a-la-poulie", "gx-elevation-frontale-avec-corde", "gx-elevation-frontale-avec-halteres", "gx-elevation-frontale-disque", "gx-elevation-laterale-a-la-poulie", "gx-elevation-laterale-assise", "gx-elevation-y-sur-banc-incline-avec-halteres", "gx-extension-des-mollets-a-la-presse-inclinee-a-disques", "gx-extension-des-triceps-a-la-poulie-en-supination", "gx-extension-du-dos-au-banc-a-lombaires", "gx-extension-verticale-d-un-bras-avec-haltere", "gx-extensions-de-hanches-au-ghd", "gx-haussement-d-epaules-aux-halteres", "gx-presse-a-mollets", "gx-presse-pectorale-a-disques", "gx-pushdown-triceps-en-prise-en-v", "gx-rowing-vertical-a-la-poulie", "gx-rowing-vertical-avec-halteres", "gx-squat-hack", "gx-tirage-bras-tendu-a-la-corde", "gx-tirage-horizontal-a-la-poulie-a-un-bras", "gx-tirage-vertical-unilateral", "gx-trapeze-haussement-epaules-a-la-poulie"]);
+// Un exercice importé (gx-…) entré depuis dans la bibliothèque n'apparaît qu'une fois : la version de la bibliothèque, historique gardé (même identifiant)
+const EX_IDS = new Set(EX.map(e => e.id));
+const allEx = () => EX.concat((S.profile.custom||[]).filter(e => !EX_IDS.has(e.id)).map(e => EXTRA_IMG.has(e.id) ? {...e, img:true} : e));
 const exById = id => allEx().find(e => e.id===id) || {id, name:"Exercice supprimé", muscle:"", equip:""};
 const workSets = ex => ex.sets.filter(s => s.done && !s.warm);
 function wVolume(w){ let v=0; w.exercises.forEach(ex => workSets(ex).forEach(s => v += num(s.w)*num(s.r))); return v; }
@@ -911,12 +1271,18 @@ function dupRanges(e){
 }
 function isHeavySess(s, dup){
   const W = Math.max(...s.sets.map(x => num(x.w))), top = s.sets.filter(x => num(x.w)===W);
-  return top.reduce((t,x) => t + num(x.r), 0) / top.length <= dup.lourd[1] + 1;
+  // Seuil = milieu entre le haut de « lourd » et le bas de « volume » (corrigé le 14 nov. 2026 : en 5–7 / 8–12, une séance volume
+  // faite à 8 reps passait pour lourde et le coach restait bloqué en volume)
+  return top.reduce((t,x) => t + num(x.r), 0) / top.length <= (dup.lourd[1] + dup.volume[0]) / 2;
 }
 function repRange(e){
   const o = S.profile.ranges && S.profile.ranges[e.id]; return o || defaultRange(e);
 }
+// Fourchettes de reps des exercices ajoutés le 14 nov. 2026 (les 41 premiers gardent les règles par le nom ci-dessous).
+// Gainage : la « rep » est une seconde tenue.
+const EX_RANGE = {"gx-abducteurs-des-hanches-a-la-machine":[12, 20], "gx-adduction-a-la-machine":[12, 20], "gx-bicep-curl-a-la-poulie-basse":[8, 12], "gx-chin-up":[6, 10], "gx-curl-a-la-barre-ez":[8, 12], "gx-curl-aux-jambes-assis":[8, 12], "gx-curl-avec-cable-croise-d-un-bras":[10, 15], "gx-curl-avec-halteres-assis":[8, 12], "gx-curl-marteau-incline":[8, 12], "gx-curl-marteau-poulie-basse":[8, 12], "gx-curl-poignet-sur-banc-paumes-vers-le-bas-a-la-barre":[12, 20], "gx-curl-poignet-sur-banc-paumes-vers-le-haut-a-la-barre":[12, 20], "gx-dips-pour-triceps":[6, 10], "gx-dips-triceps-a-la-machine":[8, 12], "gx-ecarte-a-la-poulie-vis-a-vis-basse":[10, 15], "gx-ecarte-incline-avec-halteres":[8, 12], "gx-ecarte-inverse-a-la-machine":[10, 15], "gx-ecarte-inverse-a-la-poulie-pour-deltoides-posterieurs":[10, 15], "gx-elevation-frontale-avec-corde":[10, 15], "gx-elevation-frontale-avec-halteres":[10, 15], "gx-elevation-frontale-disque":[10, 15], "gx-elevation-laterale-a-la-poulie":[10, 15], "gx-elevation-laterale-assise":[10, 15], "gx-elevation-y-sur-banc-incline-avec-halteres":[10, 15], "gx-extension-des-mollets-a-la-presse-inclinee-a-disques":[10, 15], "gx-extension-des-triceps-a-la-poulie-en-supination":[10, 15], "gx-extension-du-dos-au-banc-a-lombaires":[10, 15], "gx-extension-verticale-d-un-bras-avec-haltere":[8, 12], "gx-extensions-de-hanches-au-ghd":[6, 10], "gx-haussement-d-epaules-aux-halteres":[10, 15], "gx-presse-a-mollets":[10, 15], "gx-presse-pectorale-a-disques":[6, 10], "gx-pushdown-triceps-en-prise-en-v":[8, 12], "gx-rowing-vertical-a-la-poulie":[10, 15], "gx-rowing-vertical-avec-halteres":[10, 15], "gx-squat-hack":[6, 10], "gx-tirage-bras-tendu-a-la-corde":[10, 15], "gx-tirage-horizontal-a-la-poulie-a-un-bras":[8, 12], "gx-tirage-vertical-unilateral":[8, 12], "gx-trapeze-haussement-epaules-a-la-poulie":[10, 15], "dc-prise-large":[5, 8], "dd-barre":[5, 8], "dd-halteres":[6, 10], "dc-halteres-neutre":[6, 10], "di-halteres-neutre":[6, 10], "dc-smith":[6, 10], "di-smith":[6, 10], "dc-machine":[6, 10], "di-machine":[6, 10], "dd-machine":[6, 10], "dc-poulie":[8, 12], "pec-deck":[10, 15], "ecarte-decline":[10, 15], "ecarte-poulie-incline":[10, 15], "ecarte-poulie-banc":[10, 15], "pompes-pieds-sureleves":[8, 15], "pompes-larges":[10, 20], "pompes-inclinees":[10, 20], "pullover-haltere":[8, 12], "rowing-t-barre":[6, 10], "rowing-t-machine":[8, 12], "rowing-barre-supination":[6, 10], "rowing-2-halteres":[8, 12], "rowing-incline-halteres":[8, 12], "rowing-smith":[8, 12], "rowing-machine":[8, 12], "tirage-haut-machine":[8, 12], "tirage-vertical-serre":[8, 12], "tirage-vertical-supination":[8, 12], "tirage-triangle":[8, 12], "tractions-lestees":[5, 8], "tractions-assistees":[6, 12], "tractions-neutres":[6, 10], "rowing-inverse":[8, 15], "rack-pull":[5, 8], "shrug-barre":[10, 15], "shrug-machine":[10, 15], "pullover-barre":[8, 12], "dm-assis-barre":[5, 8], "dm-assis-halteres":[6, 10], "arnold":[8, 12], "dm-machine":[6, 10], "dm-smith":[6, 10], "dm-poulie":[8, 12], "push-press":[5, 8], "dm-un-bras":[8, 12], "elev-lat-poulie-basse":[10, 15], "elev-lat-inclinee":[10, 15], "elev-frontale-barre":[10, 15], "oiseau-assis":[10, 15], "oiseau-incline":[10, 15], "rowing-vertical-barre":[10, 15], "rotation-externe-poulie":[12, 20], "rotation-externe-haltere":[12, 20], "rowing-delt-arriere":[10, 15], "curl-incline":[8, 12], "curl-concentre":[8, 12], "curl-pupitre-haltere":[8, 12], "curl-pupitre-machine":[8, 12], "curl-machine":[8, 12], "curl-pupitre-poulie":[8, 12], "curl-araignee":[8, 12], "curl-inverse":[10, 15], "curl-zottman":[8, 12], "curl-marteau-croise":[8, 12], "curl-drag":[8, 12], "curl-alterne":[8, 12], "curl-poulie-un-bras":[10, 15], "curl-ez-serre":[8, 12], "curl-poignets-halteres":[12, 20], "curl-poignets-poulie":[12, 20], "dc-serre":[5, 8], "jm-press":[6, 10], "dc-serre-halteres":[8, 12], "ext-couchee-halteres":[8, 12], "ext-corde":[10, 15], "ext-corde-nuque":[10, 15], "kickback":[10, 15], "ext-un-bras-poulie":[10, 15], "ext-machine":[8, 12], "dips-banc":[10, 20], "pompes-serrees":[8, 15], "ext-nuque-barre":[8, 12], "tate-press":[8, 12], "ext-couchee-poulie":[10, 15], "squat-smith":[6, 10], "squat-goblet":[8, 12], "squat-halteres":[8, 12], "squat-sumo-haltere":[8, 12], "box-squat":[5, 8], "squat-zercher":[6, 10], "presse-pieds-serres":[8, 12], "squat-machine":[8, 12], "fentes-barre":[6, 10], "fentes-marchees":[8, 12], "fentes-arriere":[8, 12], "step-up":[8, 12], "bulgare-smith":[8, 12], "leg-ext-unilateral":[10, 15], "sissy-squat":[8, 15], "leg-curl-debout":[8, 12], "sdt-jambes-tendues":[6, 10], "sdt-roumain-halteres":[8, 12], "sdt-smith":[8, 12], "good-morning":[8, 12], "nordic":[4, 8], "hyperextension-inverse":[10, 15], "souleve-terre-sumo":[4, 6], "trap-bar":[5, 8], "pont-fessier-barre":[8, 12], "pont-fessier":[12, 20], "pont-fessier-unipodal":[10, 15], "kickback-poulie":[10, 15], "kickback-sol":[12, 20], "pull-through":[10, 15], "swing-kettlebell":[12, 20], "mollets-assis":[10, 15], "mollets-smith":[10, 15], "mollets-halteres":[10, 15], "mollets-barre":[10, 15], "mollets-ane":[10, 15], "adduction-poulie":[12, 20], "squat-poids-corps":[12, 20], "crunch-machine":[12, 20], "crunch-inverse":[12, 20], "crunch-decline":[12, 20], "crunch-oblique":[12, 20], "crunch-velo":[12, 20], "releve-jambes-sol":[12, 20], "releve-genoux-barres":[10, 15], "gainage":[30, 60], "gainage-lateral":[20, 45], "russian-twist":[12, 20], "woodchop":[10, 15], "pallof":[10, 15], "flexion-laterale":[12, 20], "sit-up":[12, 20], "dead-bug":[10, 15]};
 function defaultRange(e){
+  if(EX_RANGE[e.id]) return EX_RANGE[e.id];
   const n = (e.name || "").toLowerCase();
   if(/crunch|relev|roue|gainage/.test(n)) return [12,20];
   if(/élévation|elévation|elevation|face|oiseau|mollet|abduct|adduct|poignet|y sur|haussement|trapèze|inverse|postérieur|rowing vertical|rowing menton/.test(n)) return [10,15];
@@ -925,6 +1291,7 @@ function defaultRange(e){
   return [6,10];
 }
 function stepFor(e, w){
+  if(e.equip==="Kettlebell") return 4;   // kettlebells de 4 en 4 kg
   if(e.equip==="Haltères") return w<10 ? 1 : 2;
   if(e.equip==="Barre") return 2.5;
   return w<10 ? 1 : 2.5;
@@ -1123,7 +1490,7 @@ function warmZones(e){
   const w = exWork(e), pm = primOf(e);
   return [pm, ...Object.keys(w).filter(m => m !== pm && w[m] >= .6)];
 }
-const isPoly = e => !!(dupRanges(e) || repRange(e)[0] <= 6);
+const isPoly = e => !!(dupRanges(e) || repRange(e)[0] <= 6 || (EX_RANGE[e.id] && multiJoint(e)));
 // 2 = premier exercice du muscle, 1 = zone nouvelle d'un muscle déjà chaud, 0 = zone déjà échauffée
 // (pour un polyarticulaire, seul un polyarticulaire déjà fait sur la zone dispense de série d'approche)
 function warmNeed(prevExs, exId){
@@ -1220,10 +1587,15 @@ function exStats(){
   return st;
 }
 // Polyarticulaire : classement par défaut de l'exercice (fourchette 5–8 ou 6–10), indépendant d'une fourchette choisie à la main
-const isCompound = e => defaultRange(e)[0] <= 6;
+// Exercices ajoutés le 14 nov. 2026 : polyarticulaire si la fourchette est basse OU si 3 muscles au moins travaillent à 40 % et plus
+// (un rowing haltères en 8–12 reste un polyarticulaire). Les 41 premiers gardent la règle d'origine.
+const multiJoint = e => Object.values(exWork(e)).filter(x => x >= .4).length >= 3;
+const isCompound = e => defaultRange(e)[0] <= 6 || (!!EX_RANGE[e.id] && multiJoint(e));
+// Sans historique, les grands classiques passent avant les variantes (bibliothèque de 200+ exercices, 14 nov. 2026)
+const EX_CORE = new Set(EX.slice(0, 41).map(e => e.id));
 function candidatesFor(m, st){
   return allEx().filter(e => e.muscle===m).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
-    .sort((a,b) => b.n-a.n || b.comp-a.comp || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
+    .sort((a,b) => b.n-a.n || b.comp-a.comp || (EX_CORE.has(b.e.id)?1:0)-(EX_CORE.has(a.e.id)?1:0) || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
 }
 // Exercices dont le muscle principal est m (ex. quadriceps), dans le même ordre
 const candidatesPrim = (m, st) => candidatesFor(GROUP_OF[m] || m, st).filter(c => primOf(c.e) === m);
@@ -1383,8 +1755,10 @@ const STD = {"dc-barre":1.0,"di-barre":0.85,"dc-halteres":0.36,"di-halteres":0.3
   "curl-barre":0.5,"curl-halteres":0.2,"curl-marteau":0.22,"curl-pupitre":0.4,"ext-poulie":0.45,"barre-front":0.45,"ext-nuque":0.2,
   // Exercices Gravl comparables (poids libres) ; les machines à disques ou à charge guidée sont exclues : leur résistance varie trop d'un modèle à l'autre
   "gx-curl-a-la-barre-ez":0.45,"gx-curl-avec-halteres-assis":0.19,"gx-curl-marteau-incline":0.18,"gx-elevation-laterale-assise":0.15,
-  "gx-rowing-vertical-avec-halteres":0.25,"gx-extension-verticale-d-un-bras-avec-haltere":0.12,"gx-haussement-d-epaules-aux-halteres":0.5,"gx-ecarte-incline-avec-halteres":0.16};
-const STD_REPS = {"tractions":9,"gx-chin-up":10,"dips":15,"pompes":30,"gx-dips-pour-triceps":15};
+  "gx-rowing-vertical-avec-halteres":0.25,"gx-extension-verticale-d-un-bras-avec-haltere":0.12,"gx-haussement-d-epaules-aux-halteres":0.5,"gx-ecarte-incline-avec-halteres":0.16,
+  // Bibliothèque élargie (14 nov. 2026) : repères estimés à partir des exercices voisins (même règle : poids libres et poulies, pas les machines)
+  "dc-prise-large":0.95, "dd-barre":1.05, "dd-halteres":0.38, "dc-halteres-neutre":0.34, "di-halteres-neutre":0.3, "ecarte-decline":0.18, "ecarte-poulie-incline":0.3, "ecarte-poulie-banc":0.3, "pullover-haltere":0.35, "gx-ecarte-a-la-poulie-vis-a-vis-basse":0.3, "rowing-t-barre":0.8, "rowing-barre-supination":0.85, "rowing-2-halteres":0.35, "rowing-incline-halteres":0.32, "tirage-vertical-serre":0.8, "tirage-vertical-supination":0.8, "tirage-triangle":0.8, "rack-pull":1.9, "shrug-barre":1.2, "pullover-barre":0.5, "gx-tirage-bras-tendu-a-la-corde":0.4, "gx-tirage-horizontal-a-la-poulie-a-un-bras":0.45, "gx-tirage-vertical-unilateral":0.45, "gx-trapeze-haussement-epaules-a-la-poulie":0.8, "dm-assis-barre":0.6, "dm-assis-halteres":0.27, "arnold":0.24, "push-press":0.85, "dm-un-bras":0.3, "elev-lat-poulie-basse":0.1, "elev-lat-inclinee":0.12, "elev-frontale-barre":0.3, "oiseau-assis":0.14, "oiseau-incline":0.13, "rowing-vertical-barre":0.5, "rowing-delt-arriere":0.5, "gx-elevation-frontale-avec-halteres":0.17, "gx-elevation-frontale-avec-corde":0.25, "gx-elevation-laterale-a-la-poulie":0.1, "gx-rowing-vertical-a-la-poulie":0.45, "curl-incline":0.17, "curl-concentre":0.18, "curl-pupitre-haltere":0.17, "curl-pupitre-poulie":0.35, "curl-araignee":0.35, "curl-inverse":0.35, "curl-zottman":0.17, "curl-marteau-croise":0.2, "curl-drag":0.4, "curl-alterne":0.2, "curl-poulie-un-bras":0.2, "curl-ez-serre":0.45, "gx-bicep-curl-a-la-poulie-basse":0.45, "gx-curl-marteau-poulie-basse":0.45, "dc-serre":0.85, "jm-press":0.6, "dc-serre-halteres":0.3, "ext-couchee-halteres":0.15, "ext-corde":0.4, "ext-corde-nuque":0.35, "kickback":0.1, "ext-un-bras-poulie":0.2, "ext-nuque-barre":0.35, "tate-press":0.12, "ext-couchee-poulie":0.4, "gx-extension-des-triceps-a-la-poulie-en-supination":0.35, "gx-pushdown-triceps-en-prise-en-v":0.5, "squat-goblet":0.4, "squat-halteres":0.35, "squat-sumo-haltere":0.5, "box-squat":1.3, "squat-zercher":1.1, "fentes-barre":0.9, "fentes-marchees":0.8, "fentes-arriere":0.3, "step-up":0.25, "sdt-jambes-tendues":1.2, "sdt-roumain-halteres":0.45, "good-morning":0.7, "souleve-terre-sumo":1.6, "pont-fessier-barre":1.4, "kickback-poulie":0.2, "pull-through":0.6, "swing-kettlebell":0.3, "mollets-halteres":0.4, "mollets-barre":1.2, "adduction-poulie":0.2};
+const STD_REPS = {"tractions":9,"gx-chin-up":10,"dips":15,"pompes":30,"gx-dips-pour-triceps":15, "tractions-neutres":9, "rowing-inverse":15, "pompes-larges":30, "pompes-inclinees":40, "pompes-pieds-sureleves":25, "pompes-serrees":20, "dips-banc":25, "squat-poids-corps":40, "nordic":5, "gx-extensions-de-hanches-au-ghd":10, "gx-extension-du-dos-au-banc-a-lombaires":20, "pont-fessier":30};
 const LEVELS = ["Débutant","Novice","Intermédiaire","Avancé","Élite"], LMULT = [0.5,0.75,1,1.35,1.75];
 function detectBodyweight(){
   let bw = 0;   // charge notée sur les tractions dans Gravl = poids de corps
@@ -2773,6 +3147,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-14", t:"📚 219 exercices", x:"La bibliothèque passe de 41 à 219 exercices avec photos : machines, poids libres, poulies, kettlebell et poids du corps, pour chaque muscle (mollets, fessiers, ischios, deltoïdes, avant-bras, obliques…). Le bouton ↻ a enfin de quoi proposer. Les exercices importés de Gravl qui existent maintenant dans la bibliothèque y sont rattachés, avec leur historique."},
   {d:"2026-11-13", t:"🍗 Nourrissez votre Gymon", x:"La vitalité devient la satiété : votre Gymon a faim, et ce que vous soulevez devient son poulet. En fin de séance, faites glisser le repas vers lui : il mange jusqu'à 100 %, le reste va au frigo (touchez la case Satiété), où il périme en 5 jours. Un record rapporte un steak, la 3e séance de la semaine une omelette. Une semaine sans jamais passer sous 50 % : festin du dimanche ! Après un mois, une boîte de pois chiches peut le sauver pendant vos vacances. Et essayez de le caresser (appui long) ou de le chatouiller (double toucher)."},
   {d:"2026-11-13", t:"💪 17 muscles au lieu de 7", x:"Gymon distingue maintenant quadriceps, ischios, fessiers, mollets, dorsaux, trapèzes, chaque deltoïde… Chaque exercice compte pour plusieurs muscles selon sa part de travail (un développé couché travaille aussi les triceps). Le coach, la récupération, le bouton ↻ (un quadriceps reste un quadriceps) et votre Gymon suivent ce détail. Les muscles du Gymon ont été recalculés d'après vos séances passées."},
   {d:"2026-11-13", t:"🔴 « Trop dur » : on vérifie", x:"Quand vous choisissez « Trop dur », Gymon vous rappelle vos séries pour vérifier que la saisie correspond à ce que vous avez vraiment fait : le coach s'en sert pour la séance suivante."},
@@ -2998,9 +3373,11 @@ function gravlToWorkouts(txt){
     let exId = GRAVL[name];
     if(typeof exId !== "string"){
       const ex = findCustom(name) || custom.get(name);
+      const gid = "gx-" + name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
       if(ex) exId = ex.id;
+      else if(EX_IDS.has(gid)) exId = gid;   // déjà dans la bibliothèque (14 nov. 2026)
       else { const [muscle, equip] = Array.isArray(exId) ? exId : guessEx(name);
-        const e = {id:"gx-" + name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), name, muscle, equip};
+        const e = {id:gid, name, muscle, equip};
         custom.set(name, e); exId = e.id; }
     }
     const [y,m,d] = (r[iD]||"").split(/[\/-]/).map(Number), [hh,mm] = (r[iT]||"12:00").split(":").map(Number);
@@ -3656,7 +4033,7 @@ const ACT = {
     openSheet(`<h3>Nouvel exercice</h3>
       <label class="field">Nom<input id="nx-name" placeholder="Ex. Développé couché à la Smith"></label>
       <label class="field">Muscle principal<select id="nx-m">${MUSCLES.map(g => `<optgroup label="${g}">${FINE[g].map(m => `<option>${m}</option>`).join("")}</optgroup>`).join("")}</select></label>
-      <label class="field">Matériel<select id="nx-e">${["Barre","Haltères","Poulie","Machine","Poids du corps","Autre"].map(m=>`<option>${m}</option>`).join("")}</select></label>
+      <label class="field">Matériel<select id="nx-e">${["Barre","Haltères","Kettlebell","Poulie","Machine","Poids du corps","Autre"].map(m=>`<option>${m}</option>`).join("")}</select></label>
       <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Annuler</button><button class="btn primary" style="flex:1" data-act="nx-save">Créer</button></div>`);
     ACT["nx-save"] = () => {
       const name = document.getElementById("nx-name").value.trim();
