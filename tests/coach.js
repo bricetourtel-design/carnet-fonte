@@ -238,6 +238,35 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(LIB.dedup === 1 && LIB.kept && /chin-up/i.test(LIB.lib), "exercice importé entré dans la bibliothèque : une seule fois (version de la bibliothèque) ; les autres imports restent", LIB);
   ok(LIB.alt === "lourd", "alternance lourd / volume : une séance volume faite à 8 reps est reconnue, la suivante est lourde", LIB.alt);
   ok(LIB.kb === 4, "kettlebell : paliers de 4 kg", LIB.kb);
+  // Règles validées le 14 nov. 2026 : gros paliers, fourchettes au poids du corps, gainage en secondes ; réglage avec / sans matériel
+  const V = await p.evaluate(() => {
+    const D = 864e5, n = Date.now(), st = (w, r, k) => Array.from({length:k}, () => ({w:String(w), r:String(r), done:true})), saved = {w:S.workouts, eq:S.profile.equip};
+    const ses = (id, list) => list.map(([d, w, r, f], i) => ({id:id + i, name:"x", start:n - d*D, end:n - d*D, exercises:[{exId:id, feel:f, sets:st(w, r, 3)}]}));
+    // curl 10 kg × 12 « Idéal » : monter à 12 kg (+20 %) serait trop dur → reps au-delà de 12
+    S.workouts = ses("curl-halteres", [[3, 10, 12, 3]]); const big = coach("curl-halteres");
+    // après la montée à 12 kg, 7 reps « Trop dur » : on garde 12 kg
+    S.workouts = ses("curl-halteres", [[6, 10, 16, 3], [3, 12, 7, 5]]); const keep = coach("curl-halteres");
+    // barre : palier de 2,5 kg sur 80 kg, rien ne change
+    S.workouts = ses("curl-barre", [[3, 30, 12, 3]]); const bar = coach("curl-barre");
+    const ranges = ["pompes", "dips", "tractions"].map(id => repRange(exById(id)).join("-"));
+    S.workouts = ses("gainage", [[3, "", 40, 3]]); const g1 = coach("gainage"); S.workouts = ses("gainage", [[3, "", 40, 4]]); const g2 = coach("gainage");
+    // Sans matériel
+    S.profile.equip = "maison"; S.workouts = [];
+    const home = ["Pectoraux", "Dos", "Jambes"].every(m => candidatesFor(m, {}).length && candidatesFor(m, {}).every(c => c.e.equip === "Poids du corps"));
+    const g = generatePlan({days:[{dow:0, muscles:["Pectoraux","Biceps","Jambes"], off:{}, min:60}], novOff:0, noNovelty:true});
+    const planOk = g.days[0].items.every(it => exById(it.exId).equip === "Poids du corps") && g.notes.some(t => /biceps/.test(t));
+    exFilter.all = false; exFilter.m = "Tous"; exFilter.q = ""; const listHome = (exListHTML(null, "browse").match(/data-id=/g) || []).length; exFilter.all = true; const listAll = (exListHTML(null, "browse").match(/data-id=/g) || []).length; exFilter.all = false;
+    S.profile.equip = ""; const gym = candidatesFor("Pectoraux", {}).some(c => c.e.equip === "Poids du corps") && candidatesFor("Pectoraux", {}).some(c => c.e.equip === "Barre");
+    S.workouts = saved.w; S.profile.equip = saved.eq;
+    return {big:{w:big.w, r:big.r, why:big.why}, keep:{w:keep.w, r:keep.r}, bar:{w:bar.w, r:bar.r}, ranges, g1:{r:g1.r, unit:g1.unit, tag:g1.tag}, g2:g2.r, home, planOk, listHome, listAll, gym, notes:g.notes}; });
+  ok(V.big.w === 10 && V.big.r === 13 && /saut de 20 %/.test(V.big.why), "gros palier (10 → 12 kg, +20 %) : on ajoute d'abord des reps au-delà de la fourchette", V.big);
+  ok(V.keep.w === 12 && V.keep.r >= 7, "après la montée, encore trop dur : la nouvelle charge est gardée (pas de yo-yo)", V.keep);
+  ok(V.bar.w === 32.5, "barre : petit palier (30 → 32,5 kg), progression inchangée", V.bar);
+  ok(V.ranges.join() === "10-25,6-15,5-12", "poids du corps : pompes 10–25, dips 6–15, tractions 5–12", V.ranges);
+  ok(V.g1.r === 45 && V.g1.unit === "s" && /\+5 s/.test(V.g1.tag) && V.g2 === 40, "gainage : +5 s par progression (« Dur » : on garde)", V);
+  ok(V.home && V.planOk, "sans matériel : programme et propositions au poids du corps ; catégories sans exercice signalées", V.notes);
+  ok(V.listHome > 20 && V.listAll > V.listHome * 3, "sans matériel : la liste montre le poids du corps, un bouton montre aussi le reste", [V.listHome, V.listAll]);
+  ok(V.gym, "avec matériel : le poids du corps reste proposé avec le reste");
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);

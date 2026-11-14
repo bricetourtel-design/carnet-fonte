@@ -1314,6 +1314,60 @@
     "Dead bug",
     "Abdos",
     "Poids du corps"
+   ],
+   [
+    "pompes-poirier",
+    "Pompes en équilibre (handstand push-up)",
+    "Épaules",
+    "Poids du corps"
+   ],
+   [
+    "superman",
+    "Superman (au sol)",
+    "Dos",
+    "Poids du corps"
+   ],
+   [
+    "extension-lombaire-sol",
+    "Extension lombaire sur banc plat (pieds tenus)",
+    "Dos",
+    "Poids du corps"
+   ],
+   [
+    "squat-saute",
+    "Squat sauté",
+    "Jambes",
+    "Poids du corps"
+   ],
+   [
+    "fentes-sautees",
+    "Fentes sautées",
+    "Jambes",
+    "Poids du corps"
+   ],
+   [
+    "fentes-marchees-pdc",
+    "Fentes marchées au poids du corps",
+    "Jambes",
+    "Poids du corps"
+   ],
+   [
+    "step-up-genou",
+    "Step-up avec montée de genou",
+    "Jambes",
+    "Poids du corps"
+   ],
+   [
+    "extension-triceps-pdc",
+    "Extension triceps au poids du corps (barre basse)",
+    "Triceps",
+    "Poids du corps"
+   ],
+   [
+    "mountain-climbers",
+    "Mountain climbers",
+    "Abdos",
+    "Poids du corps"
    ]
   ],
   "gravlMap": {
@@ -1575,21 +1629,21 @@
     "dips",
     [
      6,
-     10
+     15
     ]
    ],
    [
     "pompes",
     [
-     6,
-     10
+     10,
+     25
     ]
    ],
    [
     "tractions",
     [
-     6,
-     10
+     5,
+     12
     ]
    ],
    [
@@ -1840,8 +1894,8 @@
    [
     "gx-chin-up",
     [
-     6,
-     10
+     5,
+     12
     ]
    ],
    [
@@ -1904,7 +1958,7 @@
     "gx-dips-pour-triceps",
     [
      6,
-     10
+     15
     ]
    ],
    [
@@ -2205,21 +2259,21 @@
     "pompes-pieds-sureleves",
     [
      8,
-     15
+     20
     ]
    ],
    [
     "pompes-larges",
     [
      10,
-     20
+     25
     ]
    ],
    [
     "pompes-inclinees",
     [
      10,
-     20
+     25
     ]
    ],
    [
@@ -2323,8 +2377,8 @@
    [
     "tractions-neutres",
     [
-     6,
-     10
+     5,
+     12
     ]
    ],
    [
@@ -2660,14 +2714,14 @@
     "dips-banc",
     [
      10,
-     20
+     25
     ]
    ],
    [
     "pompes-serrees",
     [
      8,
-     15
+     20
     ]
    ],
    [
@@ -3061,6 +3115,69 @@
      10,
      15
     ]
+   ],
+   [
+    "pompes-poirier",
+    [
+     3,
+     10
+    ]
+   ],
+   [
+    "superman",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "extension-lombaire-sol",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "squat-saute",
+    [
+     10,
+     20
+    ]
+   ],
+   [
+    "fentes-sautees",
+    [
+     10,
+     20
+    ]
+   ],
+   [
+    "fentes-marchees-pdc",
+    [
+     10,
+     20
+    ]
+   ],
+   [
+    "step-up-genou",
+    [
+     10,
+     20
+    ]
+   ],
+   [
+    "extension-triceps-pdc",
+    [
+     8,
+     15
+    ]
+   ],
+   [
+    "mountain-climbers",
+    [
+     20,
+     40
+    ]
    ]
   ],
   "e1rm": [
@@ -3192,9 +3309,9 @@
     5,
     3,
     "Reprise",
-    6,
-    10,
-    150
+    5,
+    12,
+    180
    ],
    [
     "curl-halteres",
@@ -4333,6 +4450,52 @@
    },
    "dead-bug": {
     "Abdos": 1
+   },
+   "pompes-poirier": {
+    "Deltoïde avant": 1,
+    "Triceps": 0.7,
+    "Deltoïde latéral": 0.5,
+    "Haut du dos": 0.3
+   },
+   "superman": {
+    "Lombaires": 1,
+    "Fessiers": 0.4,
+    "Haut du dos": 0.3
+   },
+   "extension-lombaire-sol": {
+    "Lombaires": 1,
+    "Fessiers": 0.5,
+    "Ischios": 0.3
+   },
+   "squat-saute": {
+    "Quadriceps": 1,
+    "Fessiers": 0.6,
+    "Mollets": 0.4
+   },
+   "fentes-sautees": {
+    "Quadriceps": 1,
+    "Fessiers": 0.7,
+    "Mollets": 0.3,
+    "Adducteurs": 0.3
+   },
+   "fentes-marchees-pdc": {
+    "Quadriceps": 1,
+    "Fessiers": 0.8,
+    "Adducteurs": 0.3
+   },
+   "step-up-genou": {
+    "Fessiers": 1,
+    "Quadriceps": 0.9,
+    "Abdos": 0.2
+   },
+   "extension-triceps-pdc": {
+    "Triceps": 1,
+    "Pectoraux": 0.3
+   },
+   "mountain-climbers": {
+    "Abdos": 1,
+    "Quadriceps": 0.4,
+    "Deltoïde avant": 0.3
    }
   },
   "strengthFine": [
