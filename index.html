@@ -678,7 +678,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-14 b";
+const APP_VERSION = "2026-11-14 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -902,7 +902,17 @@ const EX = [
   ["pallof","Pallof press","Abdos","Poulie"],
   ["flexion-laterale","Flexion latérale (haltère)","Abdos","Haltères"],
   ["sit-up","Sit-up","Abdos","Poids du corps"],
-  ["dead-bug","Dead bug","Abdos","Poids du corps"]
+  ["dead-bug","Dead bug","Abdos","Poids du corps"],
+  // Entraînement à la maison (14 nov. 2026)
+  ["pompes-poirier","Pompes en équilibre (handstand push-up)","Épaules","Poids du corps"],
+  ["superman","Superman (au sol)","Dos","Poids du corps"],
+  ["extension-lombaire-sol","Extension lombaire sur banc plat (pieds tenus)","Dos","Poids du corps"],
+  ["squat-saute","Squat sauté","Jambes","Poids du corps"],
+  ["fentes-sautees","Fentes sautées","Jambes","Poids du corps"],
+  ["fentes-marchees-pdc","Fentes marchées au poids du corps","Jambes","Poids du corps"],
+  ["step-up-genou","Step-up avec montée de genou","Jambes","Poids du corps"],
+  ["extension-triceps-pdc","Extension triceps au poids du corps (barre basse)","Triceps","Poids du corps"],
+  ["mountain-climbers","Mountain climbers","Abdos","Poids du corps"]
 ].map(([id,name,muscle,equip])=>({id,name,muscle,equip,img:true}));
 const MCOL = {"Pectoraux":"--m-pec","Dos":"--m-dos","Épaules":"--m-epa","Biceps":"--m-bic","Triceps":"--m-tri","Jambes":"--m-jam","Abdos":"--m-abd"};
 const mc = m => `--mc:var(${MCOL[m]||"--muted"})`;
@@ -1118,7 +1128,16 @@ const WORK = {
   "pallof":{"Obliques": 1, "Abdos": 0.6},
   "flexion-laterale":{"Obliques": 1},
   "sit-up":{"Abdos": 1, "Obliques": 0.3},
-  "dead-bug":{"Abdos": 1}
+  "dead-bug":{"Abdos": 1},
+  "pompes-poirier":{"Deltoïde avant": 1, "Triceps": 0.7, "Deltoïde latéral": 0.5, "Haut du dos": 0.3},
+  "superman":{"Lombaires": 1, "Fessiers": 0.4, "Haut du dos": 0.3},
+  "extension-lombaire-sol":{"Lombaires": 1, "Fessiers": 0.5, "Ischios": 0.3},
+  "squat-saute":{"Quadriceps": 1, "Fessiers": 0.6, "Mollets": 0.4},
+  "fentes-sautees":{"Quadriceps": 1, "Fessiers": 0.7, "Mollets": 0.3, "Adducteurs": 0.3},
+  "fentes-marchees-pdc":{"Quadriceps": 1, "Fessiers": 0.8, "Adducteurs": 0.3},
+  "step-up-genou":{"Fessiers": 1, "Quadriceps": 0.9, "Abdos": 0.2},
+  "extension-triceps-pdc":{"Triceps": 1, "Pectoraux": 0.3},
+  "mountain-climbers":{"Abdos": 1, "Quadriceps": 0.4, "Deltoïde avant": 0.3}
 };
 // Exercices importés ou créés : répartition devinée d'après le nom (premier motif reconnu), sinon muscle principal de la catégorie
 const GUESS_WORK = [
@@ -1280,7 +1299,13 @@ function repRange(e){
 }
 // Fourchettes de reps des exercices ajoutés le 14 nov. 2026 (les 41 premiers gardent les règles par le nom ci-dessous).
 // Gainage : la « rep » est une seconde tenue.
-const EX_RANGE = {"gx-abducteurs-des-hanches-a-la-machine":[12, 20], "gx-adduction-a-la-machine":[12, 20], "gx-bicep-curl-a-la-poulie-basse":[8, 12], "gx-chin-up":[6, 10], "gx-curl-a-la-barre-ez":[8, 12], "gx-curl-aux-jambes-assis":[8, 12], "gx-curl-avec-cable-croise-d-un-bras":[10, 15], "gx-curl-avec-halteres-assis":[8, 12], "gx-curl-marteau-incline":[8, 12], "gx-curl-marteau-poulie-basse":[8, 12], "gx-curl-poignet-sur-banc-paumes-vers-le-bas-a-la-barre":[12, 20], "gx-curl-poignet-sur-banc-paumes-vers-le-haut-a-la-barre":[12, 20], "gx-dips-pour-triceps":[6, 10], "gx-dips-triceps-a-la-machine":[8, 12], "gx-ecarte-a-la-poulie-vis-a-vis-basse":[10, 15], "gx-ecarte-incline-avec-halteres":[8, 12], "gx-ecarte-inverse-a-la-machine":[10, 15], "gx-ecarte-inverse-a-la-poulie-pour-deltoides-posterieurs":[10, 15], "gx-elevation-frontale-avec-corde":[10, 15], "gx-elevation-frontale-avec-halteres":[10, 15], "gx-elevation-frontale-disque":[10, 15], "gx-elevation-laterale-a-la-poulie":[10, 15], "gx-elevation-laterale-assise":[10, 15], "gx-elevation-y-sur-banc-incline-avec-halteres":[10, 15], "gx-extension-des-mollets-a-la-presse-inclinee-a-disques":[10, 15], "gx-extension-des-triceps-a-la-poulie-en-supination":[10, 15], "gx-extension-du-dos-au-banc-a-lombaires":[10, 15], "gx-extension-verticale-d-un-bras-avec-haltere":[8, 12], "gx-extensions-de-hanches-au-ghd":[6, 10], "gx-haussement-d-epaules-aux-halteres":[10, 15], "gx-presse-a-mollets":[10, 15], "gx-presse-pectorale-a-disques":[6, 10], "gx-pushdown-triceps-en-prise-en-v":[8, 12], "gx-rowing-vertical-a-la-poulie":[10, 15], "gx-rowing-vertical-avec-halteres":[10, 15], "gx-squat-hack":[6, 10], "gx-tirage-bras-tendu-a-la-corde":[10, 15], "gx-tirage-horizontal-a-la-poulie-a-un-bras":[8, 12], "gx-tirage-vertical-unilateral":[8, 12], "gx-trapeze-haussement-epaules-a-la-poulie":[10, 15], "dc-prise-large":[5, 8], "dd-barre":[5, 8], "dd-halteres":[6, 10], "dc-halteres-neutre":[6, 10], "di-halteres-neutre":[6, 10], "dc-smith":[6, 10], "di-smith":[6, 10], "dc-machine":[6, 10], "di-machine":[6, 10], "dd-machine":[6, 10], "dc-poulie":[8, 12], "pec-deck":[10, 15], "ecarte-decline":[10, 15], "ecarte-poulie-incline":[10, 15], "ecarte-poulie-banc":[10, 15], "pompes-pieds-sureleves":[8, 15], "pompes-larges":[10, 20], "pompes-inclinees":[10, 20], "pullover-haltere":[8, 12], "rowing-t-barre":[6, 10], "rowing-t-machine":[8, 12], "rowing-barre-supination":[6, 10], "rowing-2-halteres":[8, 12], "rowing-incline-halteres":[8, 12], "rowing-smith":[8, 12], "rowing-machine":[8, 12], "tirage-haut-machine":[8, 12], "tirage-vertical-serre":[8, 12], "tirage-vertical-supination":[8, 12], "tirage-triangle":[8, 12], "tractions-lestees":[5, 8], "tractions-assistees":[6, 12], "tractions-neutres":[6, 10], "rowing-inverse":[8, 15], "rack-pull":[5, 8], "shrug-barre":[10, 15], "shrug-machine":[10, 15], "pullover-barre":[8, 12], "dm-assis-barre":[5, 8], "dm-assis-halteres":[6, 10], "arnold":[8, 12], "dm-machine":[6, 10], "dm-smith":[6, 10], "dm-poulie":[8, 12], "push-press":[5, 8], "dm-un-bras":[8, 12], "elev-lat-poulie-basse":[10, 15], "elev-lat-inclinee":[10, 15], "elev-frontale-barre":[10, 15], "oiseau-assis":[10, 15], "oiseau-incline":[10, 15], "rowing-vertical-barre":[10, 15], "rotation-externe-poulie":[12, 20], "rotation-externe-haltere":[12, 20], "rowing-delt-arriere":[10, 15], "curl-incline":[8, 12], "curl-concentre":[8, 12], "curl-pupitre-haltere":[8, 12], "curl-pupitre-machine":[8, 12], "curl-machine":[8, 12], "curl-pupitre-poulie":[8, 12], "curl-araignee":[8, 12], "curl-inverse":[10, 15], "curl-zottman":[8, 12], "curl-marteau-croise":[8, 12], "curl-drag":[8, 12], "curl-alterne":[8, 12], "curl-poulie-un-bras":[10, 15], "curl-ez-serre":[8, 12], "curl-poignets-halteres":[12, 20], "curl-poignets-poulie":[12, 20], "dc-serre":[5, 8], "jm-press":[6, 10], "dc-serre-halteres":[8, 12], "ext-couchee-halteres":[8, 12], "ext-corde":[10, 15], "ext-corde-nuque":[10, 15], "kickback":[10, 15], "ext-un-bras-poulie":[10, 15], "ext-machine":[8, 12], "dips-banc":[10, 20], "pompes-serrees":[8, 15], "ext-nuque-barre":[8, 12], "tate-press":[8, 12], "ext-couchee-poulie":[10, 15], "squat-smith":[6, 10], "squat-goblet":[8, 12], "squat-halteres":[8, 12], "squat-sumo-haltere":[8, 12], "box-squat":[5, 8], "squat-zercher":[6, 10], "presse-pieds-serres":[8, 12], "squat-machine":[8, 12], "fentes-barre":[6, 10], "fentes-marchees":[8, 12], "fentes-arriere":[8, 12], "step-up":[8, 12], "bulgare-smith":[8, 12], "leg-ext-unilateral":[10, 15], "sissy-squat":[8, 15], "leg-curl-debout":[8, 12], "sdt-jambes-tendues":[6, 10], "sdt-roumain-halteres":[8, 12], "sdt-smith":[8, 12], "good-morning":[8, 12], "nordic":[4, 8], "hyperextension-inverse":[10, 15], "souleve-terre-sumo":[4, 6], "trap-bar":[5, 8], "pont-fessier-barre":[8, 12], "pont-fessier":[12, 20], "pont-fessier-unipodal":[10, 15], "kickback-poulie":[10, 15], "kickback-sol":[12, 20], "pull-through":[10, 15], "swing-kettlebell":[12, 20], "mollets-assis":[10, 15], "mollets-smith":[10, 15], "mollets-halteres":[10, 15], "mollets-barre":[10, 15], "mollets-ane":[10, 15], "adduction-poulie":[12, 20], "squat-poids-corps":[12, 20], "crunch-machine":[12, 20], "crunch-inverse":[12, 20], "crunch-decline":[12, 20], "crunch-oblique":[12, 20], "crunch-velo":[12, 20], "releve-jambes-sol":[12, 20], "releve-genoux-barres":[10, 15], "gainage":[30, 60], "gainage-lateral":[20, 45], "russian-twist":[12, 20], "woodchop":[10, 15], "pallof":[10, 15], "flexion-laterale":[12, 20], "sit-up":[12, 20], "dead-bug":[10, 15]};
+const EX_RANGE = {"gx-abducteurs-des-hanches-a-la-machine":[12, 20], "gx-adduction-a-la-machine":[12, 20], "gx-bicep-curl-a-la-poulie-basse":[8, 12], "gx-chin-up":[6, 10], "gx-curl-a-la-barre-ez":[8, 12], "gx-curl-aux-jambes-assis":[8, 12], "gx-curl-avec-cable-croise-d-un-bras":[10, 15], "gx-curl-avec-halteres-assis":[8, 12], "gx-curl-marteau-incline":[8, 12], "gx-curl-marteau-poulie-basse":[8, 12], "gx-curl-poignet-sur-banc-paumes-vers-le-bas-a-la-barre":[12, 20], "gx-curl-poignet-sur-banc-paumes-vers-le-haut-a-la-barre":[12, 20], "gx-dips-pour-triceps":[6, 10], "gx-dips-triceps-a-la-machine":[8, 12], "gx-ecarte-a-la-poulie-vis-a-vis-basse":[10, 15], "gx-ecarte-incline-avec-halteres":[8, 12], "gx-ecarte-inverse-a-la-machine":[10, 15], "gx-ecarte-inverse-a-la-poulie-pour-deltoides-posterieurs":[10, 15], "gx-elevation-frontale-avec-corde":[10, 15], "gx-elevation-frontale-avec-halteres":[10, 15], "gx-elevation-frontale-disque":[10, 15], "gx-elevation-laterale-a-la-poulie":[10, 15], "gx-elevation-laterale-assise":[10, 15], "gx-elevation-y-sur-banc-incline-avec-halteres":[10, 15], "gx-extension-des-mollets-a-la-presse-inclinee-a-disques":[10, 15], "gx-extension-des-triceps-a-la-poulie-en-supination":[10, 15], "gx-extension-du-dos-au-banc-a-lombaires":[10, 15], "gx-extension-verticale-d-un-bras-avec-haltere":[8, 12], "gx-extensions-de-hanches-au-ghd":[6, 10], "gx-haussement-d-epaules-aux-halteres":[10, 15], "gx-presse-a-mollets":[10, 15], "gx-presse-pectorale-a-disques":[6, 10], "gx-pushdown-triceps-en-prise-en-v":[8, 12], "gx-rowing-vertical-a-la-poulie":[10, 15], "gx-rowing-vertical-avec-halteres":[10, 15], "gx-squat-hack":[6, 10], "gx-tirage-bras-tendu-a-la-corde":[10, 15], "gx-tirage-horizontal-a-la-poulie-a-un-bras":[8, 12], "gx-tirage-vertical-unilateral":[8, 12], "gx-trapeze-haussement-epaules-a-la-poulie":[10, 15], "dc-prise-large":[5, 8], "dd-barre":[5, 8], "dd-halteres":[6, 10], "dc-halteres-neutre":[6, 10], "di-halteres-neutre":[6, 10], "dc-smith":[6, 10], "di-smith":[6, 10], "dc-machine":[6, 10], "di-machine":[6, 10], "dd-machine":[6, 10], "dc-poulie":[8, 12], "pec-deck":[10, 15], "ecarte-decline":[10, 15], "ecarte-poulie-incline":[10, 15], "ecarte-poulie-banc":[10, 15], "pompes-pieds-sureleves":[8, 15], "pompes-larges":[10, 20], "pompes-inclinees":[10, 20], "pullover-haltere":[8, 12], "rowing-t-barre":[6, 10], "rowing-t-machine":[8, 12], "rowing-barre-supination":[6, 10], "rowing-2-halteres":[8, 12], "rowing-incline-halteres":[8, 12], "rowing-smith":[8, 12], "rowing-machine":[8, 12], "tirage-haut-machine":[8, 12], "tirage-vertical-serre":[8, 12], "tirage-vertical-supination":[8, 12], "tirage-triangle":[8, 12], "tractions-lestees":[5, 8], "tractions-assistees":[6, 12], "tractions-neutres":[6, 10], "rowing-inverse":[8, 15], "rack-pull":[5, 8], "shrug-barre":[10, 15], "shrug-machine":[10, 15], "pullover-barre":[8, 12], "dm-assis-barre":[5, 8], "dm-assis-halteres":[6, 10], "arnold":[8, 12], "dm-machine":[6, 10], "dm-smith":[6, 10], "dm-poulie":[8, 12], "push-press":[5, 8], "dm-un-bras":[8, 12], "elev-lat-poulie-basse":[10, 15], "elev-lat-inclinee":[10, 15], "elev-frontale-barre":[10, 15], "oiseau-assis":[10, 15], "oiseau-incline":[10, 15], "rowing-vertical-barre":[10, 15], "rotation-externe-poulie":[12, 20], "rotation-externe-haltere":[12, 20], "rowing-delt-arriere":[10, 15], "curl-incline":[8, 12], "curl-concentre":[8, 12], "curl-pupitre-haltere":[8, 12], "curl-pupitre-machine":[8, 12], "curl-machine":[8, 12], "curl-pupitre-poulie":[8, 12], "curl-araignee":[8, 12], "curl-inverse":[10, 15], "curl-zottman":[8, 12], "curl-marteau-croise":[8, 12], "curl-drag":[8, 12], "curl-alterne":[8, 12], "curl-poulie-un-bras":[10, 15], "curl-ez-serre":[8, 12], "curl-poignets-halteres":[12, 20], "curl-poignets-poulie":[12, 20], "dc-serre":[5, 8], "jm-press":[6, 10], "dc-serre-halteres":[8, 12], "ext-couchee-halteres":[8, 12], "ext-corde":[10, 15], "ext-corde-nuque":[10, 15], "kickback":[10, 15], "ext-un-bras-poulie":[10, 15], "ext-machine":[8, 12], "dips-banc":[10, 20], "pompes-serrees":[8, 15], "ext-nuque-barre":[8, 12], "tate-press":[8, 12], "ext-couchee-poulie":[10, 15], "squat-smith":[6, 10], "squat-goblet":[8, 12], "squat-halteres":[8, 12], "squat-sumo-haltere":[8, 12], "box-squat":[5, 8], "squat-zercher":[6, 10], "presse-pieds-serres":[8, 12], "squat-machine":[8, 12], "fentes-barre":[6, 10], "fentes-marchees":[8, 12], "fentes-arriere":[8, 12], "step-up":[8, 12], "bulgare-smith":[8, 12], "leg-ext-unilateral":[10, 15], "sissy-squat":[8, 15], "leg-curl-debout":[8, 12], "sdt-jambes-tendues":[6, 10], "sdt-roumain-halteres":[8, 12], "sdt-smith":[8, 12], "good-morning":[8, 12], "nordic":[4, 8], "hyperextension-inverse":[10, 15], "souleve-terre-sumo":[4, 6], "trap-bar":[5, 8], "pont-fessier-barre":[8, 12], "pont-fessier":[12, 20], "pont-fessier-unipodal":[10, 15], "kickback-poulie":[10, 15], "kickback-sol":[12, 20], "pull-through":[10, 15], "swing-kettlebell":[12, 20], "mollets-assis":[10, 15], "mollets-smith":[10, 15], "mollets-halteres":[10, 15], "mollets-barre":[10, 15], "mollets-ane":[10, 15], "adduction-poulie":[12, 20], "squat-poids-corps":[12, 20], "crunch-machine":[12, 20], "crunch-inverse":[12, 20], "crunch-decline":[12, 20], "crunch-oblique":[12, 20], "crunch-velo":[12, 20], "releve-jambes-sol":[12, 20], "releve-genoux-barres":[10, 15], "gainage":[30, 60], "gainage-lateral":[20, 45], "russian-twist":[12, 20], "woodchop":[10, 15], "pallof":[10, 15], "flexion-laterale":[12, 20], "sit-up":[12, 20], "dead-bug":[10, 15], "pompes-poirier":[3, 10], "superman":[12, 20], "extension-lombaire-sol":[12, 20], "squat-saute":[10, 20], "fentes-sautees":[10, 20], "fentes-marchees-pdc":[10, 20], "step-up-genou":[10, 20], "extension-triceps-pdc":[8, 15], "mountain-climbers":[20, 40]};
+// Poids du corps (validé le 14 nov. 2026) : des fourchettes réalistes (on fait 15 à 25 pompes, pas 6 à 10)
+Object.assign(EX_RANGE, {"pompes":[10,25], "dips":[6,15], "tractions":[5,12], "gx-chin-up":[5,12], "tractions-neutres":[5,12], "gx-dips-pour-triceps":[6,15],
+  "pompes-larges":[10,25], "pompes-inclinees":[10,25], "pompes-pieds-sureleves":[8,20], "pompes-serrees":[8,20], "dips-banc":[10,25]});
+// Exercices tenus en secondes (gainage) : la « rep » est une seconde, la progression se fait par 5 s (validé le 14 nov. 2026)
+const TIMED = new Set(["gainage", "gainage-lateral"]);
+const unitOf = e => TIMED.has(e && e.id) ? "s" : "reps";
 function defaultRange(e){
   if(EX_RANGE[e.id]) return EX_RANGE[e.id];
   const n = (e.name || "").toLowerCase();
@@ -1392,6 +1417,12 @@ function coachFresh(exId, beforeTs, planned){
   let sets = planned || Math.min(5, Math.max(2, nSets));
   const gapDays = Math.round(((beforeTs || Date.now()) - last.ts) / 86400000);
   // Poids du corps (charge = poids de corps éventuel) : progression en répétitions
+  if(!W && TIMED.has(e.id)){
+    let r = Math.max(5, minR + ({1:15,2:10,3:5,4:0,5:-5})[feel]); if(gapDays > 21) r = Math.max(5, minR - 5);
+    return {lo, hi, rest, w:"", r, sets, unit:"s", tag: gapDays > 21 ? "Reprise" : r > minR ? `+${r-minR} s` : r < minR ? `${r-minR} s` : "Consolider",
+      why: gapDays > 21 ? `Vous n'avez pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend avec 5 secondes de moins.`
+        : r > minR ? `Exercice tenu en secondes : on vise ${r} s, ${r-minR} de plus que la dernière fois (${minR} s).` : r < minR ? `La dernière fois, c'était trop dur : on tient ${r} s.` : `C'était dur : on garde ${r} s pour les rendre plus faciles avant d'en ajouter.`};
+  }
   if(!W || e.equip==="Poids du corps"){
     let r = Math.max(1, minR + ({1:3,2:2,3:1,4:0,5:-1})[feel]);
     if(gapDays > 21) r = Math.max(1, minR - 1);
@@ -1447,6 +1478,9 @@ function coachFresh(exId, beforeTs, planned){
     r = lo; why = `La dernière fois : ${minR} reps à ${fmtN(W)} kg, sans difficulté. C'est juste sous l'objectif (${lo} à ${hi} reps) : on garde la même charge et on va chercher ${lo} reps.`;
   }else if(minR < lo && feel === 4 && minR >= lo - 1){
     r = minR; why = `La dernière fois : ${minR} reps à ${fmtN(W)} kg, et c'était dur. On garde la même charge et les mêmes reps pour les rendre plus faciles avant d'aller plus loin.`;
+  }else if(feel >= 4 && minR >= lo - 2 && st / W > 0.1 && hist[1] && W > Math.max(...hist[1].sets.map(s => num(s.w)))){
+    // Après un gros palier (> 10 %), la nouvelle charge est encore dure : on la garde et on reconstruit les reps (au lieu de redescendre)
+    r = Math.max(minR, lo - 2); why = `Nouvelle charge (${fmtN(W)} kg), encore dure : on la garde et on reconstruit les reps, plutôt que de redescendre.`;
   }else if(minR < lo){
     w = lower(); r = Math.max(lo, Math.min(hi, repsAt(w)));
     why = `La dernière fois : ${minR} reps à ${fmtN(W)} kg, loin de l'objectif (${lo} reps minimum). On baisse un peu la charge pour revenir dans l'objectif.`;
@@ -1458,7 +1492,11 @@ function coachFresh(exId, beforeTs, planned){
     else { r = minR; why = "La dernière fois, c'était dur. On garde la même charge et les mêmes reps : on les consolide avant d'aller plus loin."; }
   }else{
     const need = feel===3 ? hi : feel===2 ? hi-1 : lo;   // seuil de reps pour monter la charge
-    if(minR >= need){
+    // Gros palier (> 10 % de la charge : petits haltères, kettlebells ; validé le 14 nov. 2026) : des reps au-delà du haut de la fourchette
+    // (jusqu'à +4) tant que la charge suivante serait trop dure, puis on monte
+    if(minR >= need && st / W > 0.1 && repsAt(W + st) < lo - 1 && minR < hi + 4){
+      r = minR + 1; why = `Monter à ${fmtN(W + st)} kg ferait un saut de ${Math.round(st / W * 100)} % d'un coup : on ajoute d'abord des reps au-delà de ${hi}, puis on montera.`;
+    }else if(minR >= need){
       w = W + st * (feel===1 ? 2 : 1);
       while(repsAt(w) < lo && w - st > W) w -= st;
       r = Math.max(lo, Math.min(hi, repsAt(w)));
@@ -1591,10 +1629,14 @@ function exStats(){
 // (un rowing haltères en 8–12 reste un polyarticulaire). Les 41 premiers gardent la règle d'origine.
 const multiJoint = e => Object.values(exWork(e)).filter(x => x >= .4).length >= 3;
 const isCompound = e => defaultRange(e)[0] <= 6 || (!!EX_RANGE[e.id] && multiJoint(e));
+/* Avec ou sans matériel (réglage du 14 nov. 2026) : « Sans matériel » limite les propositions (programme, ↻, séance du jour, listes)
+   aux exercices au poids du corps, pour s'entraîner à la maison. « Avec matériel » (par défaut) garde tout, poids du corps compris. */
+const atHome = () => S.profile.equip === "maison";
+const usableEx = e => !atHome() || e.equip === "Poids du corps";
 // Sans historique, les grands classiques passent avant les variantes (bibliothèque de 200+ exercices, 14 nov. 2026)
 const EX_CORE = new Set(EX.slice(0, 41).map(e => e.id));
 function candidatesFor(m, st){
-  return allEx().filter(e => e.muscle===m).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
+  return allEx().filter(e => e.muscle===m && usableEx(e)).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
     .sort((a,b) => b.n-a.n || b.comp-a.comp || (EX_CORE.has(b.e.id)?1:0)-(EX_CORE.has(a.e.id)?1:0) || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
 }
 // Exercices dont le muscle principal est m (ex. quadriceps), dans le même ordre
@@ -1683,6 +1725,8 @@ function generatePlan(d){
   const notes = [];
   const missing = MUSCLES.filter(m => !freq[m] && m!=="Abdos"); if(missing.length) notes.push(`Non travaillés cette semaine : ${missing.join(", ")}.`);
   const once = MUSCLES.filter(m => freq[m]===1 && m!=="Abdos"); if(once.length && out.length>=2) notes.push(`Une seule fois par semaine : ${once.join(", ")}. Deux fois est conseillé pour la prise de muscle.`);
+  if(atHome()){ const none = [...new Set(out.flatMap(x => x.muscles))].filter(m => !candidatesFor(m, st).length);
+    if(none.length) notes.push(`Sans matériel, pas d'exercice dédié pour : ${none.join(", ").toLowerCase()}. Ils travaillent en indirect (ex. tractions supination pour les biceps).`); }
   // Séries par muscle et par semaine, au prorata (un squat compte aussi 0,7 série de fessiers)
   const weeklyFine = {}; MUSC.forEach(m => weeklyFine[m] = 0);
   out.forEach(day => day.items.forEach(it => Object.entries(exWork(exById(it.exId))).forEach(([m, p]) => weeklyFine[m] += it.sets * p)));
@@ -3147,6 +3191,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-14", t:"🏠 Avec ou sans matériel", x:"Vous vous entraînez à la maison sans matériel ? Réglages › Mes entraînements › Sans matériel : le programme, le bouton ↻ et les listes ne proposent que des exercices au poids du corps (9 nouveaux, dont pompes en équilibre, squat sauté, fentes sautées, superman). Le coach progresse aussi mieux : pompes en 10–25 reps, gainage par 5 secondes, et plus de yo-yo avec les petits haltères (des reps en plus avant de monter de poids)."},
   {d:"2026-11-14", t:"📚 219 exercices", x:"La bibliothèque passe de 41 à 219 exercices avec photos : machines, poids libres, poulies, kettlebell et poids du corps, pour chaque muscle (mollets, fessiers, ischios, deltoïdes, avant-bras, obliques…). Le bouton ↻ a enfin de quoi proposer. Les exercices importés de Gravl qui existent maintenant dans la bibliothèque y sont rattachés, avec leur historique."},
   {d:"2026-11-13", t:"🍗 Nourrissez votre Gymon", x:"La vitalité devient la satiété : votre Gymon a faim, et ce que vous soulevez devient son poulet. En fin de séance, faites glisser le repas vers lui : il mange jusqu'à 100 %, le reste va au frigo (touchez la case Satiété), où il périme en 5 jours. Un record rapporte un steak, la 3e séance de la semaine une omelette. Une semaine sans jamais passer sous 50 % : festin du dimanche ! Après un mois, une boîte de pois chiches peut le sauver pendant vos vacances. Et essayez de le caresser (appui long) ou de le chatouiller (double toucher)."},
   {d:"2026-11-13", t:"💪 17 muscles au lieu de 7", x:"Gymon distingue maintenant quadriceps, ischios, fessiers, mollets, dorsaux, trapèzes, chaque deltoïde… Chaque exercice compte pour plusieurs muscles selon sa part de travail (un développé couché travaille aussi les triceps). Le coach, la récupération, le bouton ↻ (un quadriceps reste un quadriceps) et votre Gymon suivent ce détail. Les muscles du Gymon ont été recalculés d'après vos séances passées."},
@@ -3535,12 +3580,12 @@ function viewActive(){
         <button class="icon-btn" data-act="ex-menu" data-i="${i}" aria-label="Options de l'exercice">⋯</button></div>
       <button class="coach ${c.deload?"deload":""}" data-act="coach-why" data-i="${i}">
         <span class="ctag">${esc(c.tag)}</span>
-        <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:"reps"}` : `Objectif ${c.lo}–${c.hi} reps`}${c.fatigue ? `<small class="fat"> · fatigue −${c.fatigue} %</small>` : ""}</span>
+        <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:unitOf(e)}` : `Objectif ${c.lo}–${c.hi} ${unitOf(e)}`}${c.fatigue ? `<small class="fat"> · fatigue −${c.fatigue} %</small>` : ""}</span>
         <span class="cwhy">pourquoi ?</span></button>
       ${(() => { const nums = ex.sets.filter(x => !x.warm).map((x, k) => x.crit && !x.done ? k + 1 : 0).filter(Boolean);
         return nums.length && !creatureState().dead ? `<p class="crit-hint">⚡ Série${nums.length > 1 ? "s" : ""} ${nums.join(" et ")} : coup critique, ${nums.length > 1 ? "elles nourrissent" : "elle nourrit"} double ton Gymon !</p>` : ""; })()}
       ${wu.length ? `<p class="wu-hint">🔥 Échauffement d'abord (séries « É ») : ${wu.map(x => `${fmtN(x.w)} kg × ${x.r}`).join(" puis ")}. Sans minuteur, ne compte pas dans le volume.</p>` : ""}
-      <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>kg</th><th>Reps</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+      <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>kg</th><th>${TIMED.has(e.id) ? "Sec." : "Reps"}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div class="ex-actions"><button class="btn sm" data-act="add-set" data-i="${i}">+ Série</button>
         ${ex.sets.length>1?`<button class="btn sm ghost" data-act="del-set" data-i="${i}">− Série</button>`:""}
         ${ex.sets.some(s => s.warm && !s.done) ? `<button class="btn sm ghost" data-act="del-warm" data-i="${i}">− Échauffement</button>` : ""}
@@ -3706,11 +3751,11 @@ function lineChart(h){
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution du 1RM estimé et de la charge maximale">${g}</svg>`;
 }
 
-let exFilter = {q:"", m:"Tous"};
+let exFilter = {q:"", m:"Tous", all:false};
 function exListHTML(sel, mode){
   const q = exFilter.q.trim().toLowerCase();
   const only = mode==="pick" && picker && picker.only;
-  const list = allEx().filter(e => (exFilter.m==="Tous" || e.muscle===exFilter.m) && (!q || e.name.toLowerCase().includes(q)) && (!only || only[e.id]))
+  const list = allEx().filter(e => (exFilter.m==="Tous" || e.muscle===exFilter.m) && (!q || e.name.toLowerCase().includes(q)) && (!only || only[e.id]) && (only || exFilter.all || usableEx(e)))
     .sort((a,b) => a.name.localeCompare(b.name,"fr"));
   if(!list.length) return `<div class="item"><span class="t muted">${only ? "Aucun exercice pratiqué ne correspond à ce filtre." : "Aucun exercice ne correspond. Créez-le avec le bouton ci-dessous."}</span></div>`;
   return list.map(e => {
@@ -3722,7 +3767,8 @@ function exListHTML(sel, mode){
   }).join("");
 }
 function chipsHTML(){
-  return `<div class="chips">${["Tous",...MUSCLES].map(m => `<button class="chip" data-act="filter-m" data-m="${m}" aria-pressed="${exFilter.m===m}">${m}</button>`).join("")}</div>`;
+  return `<div class="chips">${["Tous",...MUSCLES].map(m => `<button class="chip" data-act="filter-m" data-m="${m}" aria-pressed="${exFilter.m===m}">${m}</button>`).join("")}</div>`
+    + (atHome() ? `<button class="chip home-all" data-act="filter-all" aria-pressed="${exFilter.all}">${exFilter.all ? "Tout le matériel" : "Sans matériel"} · voir ${exFilter.all ? "seulement sans matériel" : "aussi avec matériel"}</button>` : "");
 }
 function viewExercises(){
   return `
@@ -3737,6 +3783,9 @@ function viewSettings(){
     <section class="card" id="reglages" style="display:flex;flex-direction:column;gap:12px">
       <label class="field">Apparence
         <select id="theme">${[["dark","Sombre (par défaut)"],["light","Clair"],["auto","Automatique, comme l'iPhone"]].map(([v,l]) => `<option value="${v}" ${(S.profile.theme||"dark")===v?"selected":""}>${l}</option>`).join("")}</select></label>
+      <label class="field">Mes entraînements
+        <select id="equip-mode"><option value="salle" ${atHome() ? "" : "selected"}>Avec matériel (salle ou maison équipée)</option><option value="maison" ${atHome() ? "selected" : ""}>Sans matériel : au poids du corps</option></select>
+        <small class="muted">Avec matériel, les exercices au poids du corps restent proposés. Sans matériel, le programme, le bouton ↻ et les listes ne proposent que des exercices au poids du corps.</small></label>
       <label class="field">Repos par défaut après une série
         <select id="rest-default">${[-1,0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s<0?"Auto selon l'exercice (1 min 30 à 3 min)":s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
       <div class="row wrap">
@@ -4026,6 +4075,9 @@ const ACT = {
   "plan-nov": () => { planDraft.novOff++; render(); },
   "plan-save": () => { planSave(); const n = S.profile.routines.filter(r=>r.plan).length; tab = "seance"; render(); window.scrollTo(0,0); toast(`Routine enregistrée : ${n} séance${n>1?"s":""} par semaine`); },
   "pick-done": () => { const ids = [...picker.sel], f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); if(ids.length) f(ids); },
+  "filter-all": () => { exFilter.all = !exFilter.all; const l = document.getElementById("ex-list") || document.getElementById("pick-list");
+    if(document.getElementById("ex-list")) document.getElementById("ex-list").innerHTML = exListHTML(null, "browse"); else if(picker) refreshPicker();
+    document.querySelectorAll('[data-act="filter-all"]').forEach(c => { c.setAttribute("aria-pressed", exFilter.all); c.textContent = (exFilter.all ? "Tout le matériel" : "Sans matériel") + " · voir " + (exFilter.all ? "seulement sans matériel" : "aussi avec matériel"); }); },
   "filter-m": b => { exFilter.m = b.dataset.m; document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.m===exFilter.m));
     if(picker){ refreshPicker(); const sc = document.getElementById("pick-scroll"); if(sc) sc.scrollTop = 0; } else { const l = document.getElementById("ex-list"); if(l) l.innerHTML = exListHTML(null,"browse"); } },
   "new-ex": () => {
@@ -4308,6 +4360,8 @@ document.addEventListener("change", e => {
   else if(e.target.id==="bar-ez"){ S.profile.barEz = +e.target.value; touchProfile(); }
   else if(e.target.id==="height"){ S.profile.height = num(e.target.value) || ""; touchProfile(); }
   else if(e.target.id==="sex"){ S.profile.sex = e.target.value; touchProfile(); }
+  else if(e.target.id==="equip-mode"){ S.profile.equip = e.target.value === "maison" ? "maison" : ""; exFilter.all = false; touchProfile();
+    toast(atHome() ? "Sans matériel : les propositions passent au poids du corps" : "Avec matériel : tous les exercices sont proposés"); }
   else if(e.target.id==="theme"){ S.profile.theme = e.target.value; touchProfile(); applyTheme(); }
   else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
 });
