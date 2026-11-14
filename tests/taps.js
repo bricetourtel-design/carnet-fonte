@@ -102,6 +102,18 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   const rest = await p.evaluate(() => ({n:S.workouts.filter(w => w.id === "wsauv1").length, total:S.workouts.length}));
   ok(rest.n === 1 && rest.total === before + 1, "restauration depuis un fichier : la séance manquante est ajoutée, sans doublon", rest);
   await p.evaluate(() => { S.workouts = S.workouts.filter(w => w.id !== "wsauv1"); saveLocal(); closeSheet(); });
+  // Glisser une fenêtre vers le bas la ferme (14 nov. 2026) ; petit glissement : elle revient ; contenu défilé : on fait défiler, pas de fermeture
+  const swipe = async (dy, scrolled) => { await p.evaluate(() => { closeSheet(); openSheet(`<h3>Test</h3>${"<p>ligne</p>".repeat(80)}<button class="btn" data-act="close">Fermer</button>`); });
+    if(scrolled) await p.evaluate(() => { document.getElementById("sheet-in").scrollTop = 200; });
+    const r = await p.locator("#sheet-in h3").boundingBox(), x = r.x + 20, y = r.y + 5;
+    const cdp = await p.context().newCDPSession(p);
+    await cdp.send("Input.dispatchTouchEvent", {type:"touchStart", touchPoints:[{x, y}]});
+    for(let k = 1; k <= 6; k++) await cdp.send("Input.dispatchTouchEvent", {type:"touchMove", touchPoints:[{x, y: y + dy*k/6}]});
+    await cdp.send("Input.dispatchTouchEvent", {type:"touchEnd", touchPoints:[]}); await p.waitForTimeout(300);
+    return p.evaluate(() => document.getElementById("sheet").hidden); };
+  const closedBig = await swipe(220), closedSmall = await swipe(40), closedScrolled = await swipe(220, true);
+  ok(closedBig && !closedSmall && !closedScrolled, "fenêtre : glisser vers le bas la ferme ; petit glissement ou contenu défilé : elle reste ouverte", {closedBig, closedSmall, closedScrolled});
+  await p.evaluate(() => closeSheet());
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de touchers passent"); process.exit(fails ? 1 : 0);

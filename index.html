@@ -678,7 +678,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-14 c";
+const APP_VERSION = "2026-11-14 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -3806,7 +3806,7 @@ function viewSettings(){
 
 /* ---------- Feuilles, toasts ---------- */
 function openSheet(html, onClose, cls){ sheetOnClose = onClose||null; const el = document.getElementById("sheet-in");
-  el.className = "sheet-in" + (cls ? " "+cls : ""); el.innerHTML = html; el.scrollTop = 0;
+  el.className = "sheet-in" + (cls ? " "+cls : ""); el.innerHTML = html; el.scrollTop = 0; el.style.transform = ""; el.style.transition = "";
   document.getElementById("sheet").hidden = false; lockBody(); }
 let lockY = null;
 function lockBody(){ if(lockY!==null) return; lockY = window.scrollY; const b = document.body.style;
@@ -3816,6 +3816,24 @@ function unlockBody(){ if(lockY===null) return; const b = document.body.style, y
 function closeSheet(){ document.getElementById("sheet").hidden = true; unlockBody();
   picker = null; const f = sheetOnClose; sheetOnClose = null; if(f) f(); }
 document.getElementById("sheet").addEventListener("click", e => { if(e.target.id==="sheet") closeSheet(); });
+/* Glisser une fenêtre vers le bas la ferme (14 nov. 2026) : seulement quand son contenu est tout en haut (sinon on fait défiler),
+   la fenêtre suit le doigt ; fermée au-delà de 110 px ou d'un geste rapide, sinon elle revient en place. */
+let shDrag = null;
+(() => { const box = document.getElementById("sheet-in");
+  const atTop = t => { for(let el = t; el && el !== box.parentElement; el = el.parentElement){ if(el.scrollTop > 0) return false; } return true; };
+  box.addEventListener("touchstart", e => { shDrag = null; if(e.touches.length !== 1 || e.target.closest("input,textarea,select,.curve-box,.celeb-food") || !atTop(e.target)) return;
+    shDrag = {x:e.touches[0].clientX, y:e.touches[0].clientY, t:Date.now(), dy:0, on:false}; }, {passive:true});
+  box.addEventListener("touchmove", e => { if(!shDrag) return;
+    const dy = e.touches[0].clientY - shDrag.y, dx = e.touches[0].clientX - shDrag.x;
+    if(!shDrag.on){ if(dy > 8 && dy > Math.abs(dx) * 1.2) shDrag.on = true; else if(dy < -4 || Math.abs(dx) > 12){ shDrag = null; return; } else return; }
+    shDrag.dy = Math.max(0, dy); box.style.transition = "none"; box.style.transform = `translateY(${shDrag.dy}px)`; if(e.cancelable) e.preventDefault(); }, {passive:false});
+  const end = () => { const d = shDrag; shDrag = null; if(!d || !d.on) return;
+    const fast = d.dy > 50 && d.dy / Math.max(1, Date.now() - d.t) > 0.6;
+    box.style.transition = "transform .2s ease-out";
+    if(d.dy > 110 || fast){ box.style.transform = "translateY(110%)"; setTimeout(() => { closeSheet(); box.style.transform = ""; box.style.transition = ""; }, 190); }
+    else box.style.transform = ""; };
+  box.addEventListener("touchend", end); box.addEventListener("touchcancel", end);
+})();
 let toastT;
 function toast(msg){ const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(()=>t.hidden=true, 2600); }
 function confirmSheet(title, text, okLabel, onOk){
