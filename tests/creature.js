@@ -293,9 +293,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(ge.eyes[0] === "spark" && ge.eyes[1] === "tired" && ge.eyes[3] === "worn" && !ge.sick, "regard : étincelant si régulier et en progrès, fatigué puis épuisé sinon ; affamé, les yeux restent mi-clos", ge);
   // La page Gymon tient dans l'écran : pas de défilement, bouton de séance au-dessus de la barre d'onglets
   const fit = await p.evaluate(() => { closeSheet(); const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); tab = "creature"; render();
-    const r = {scroll:document.documentElement.scrollHeight - innerHeight, cta:document.querySelector(".gy-cta").getBoundingClientRect().bottom <= document.getElementById("tabs").getBoundingClientRect().top};
+    const r = {scroll:document.documentElement.scrollHeight - innerHeight, cta:document.querySelector(".gy-acts").getBoundingClientRect().bottom <= document.getElementById("tabs").getBoundingClientRect().top, noGo:!document.querySelector('.gy [data-act="goto"]')};
     c.stage = st0; render(); return r; });
-  ok(fit.scroll <= 1 && fit.cta, "page Gymon sans défilement, tout tient au-dessus des onglets", fit);
+  ok(fit.scroll <= 1 && fit.cta && fit.noGo, "page Gymon sans défilement, barre d'actions au-dessus des onglets, plus de bouton de séance", fit);
   // Glisser sur le Gymon : face ⇄ dos, sans ouvrir sa fiche
   const sw = await p.evaluate(() => { const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); gyBack = false; tab = "creature"; render();
     const el = document.querySelector(".gy-stage"), r = el.getBoundingClientRect(), y = r.top + r.height/2;
@@ -462,6 +462,23 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(sv.anim && sv.clean && /propre/.test(sv.after) && sv.first, "douche : animation, puis tout propre", sv);
   ok(sv.cwash && sv.mile && sv.mj, "fin de séance : bouton douche et palier de 10 séances fêté", sv);
   ok(sv.kept && sv.badJ === 0 && sv.badA.join() === "30", "les souvenirs passent la sauvegarde, entrées invalides écartées", sv);
+
+  // Barre d'actions façon Tamagotchi (15 nov. 2026)
+  const ac = await p.evaluate(async () => {
+    const D = 86400000, now = Date.now(), c = creatureState(), saved = JSON.stringify(c); c.stage = Math.max(2, c.stage); c.dead = null; c.sv = 1; c.sat = 90; c.satT = now; c.full = 0;
+    c.washTs = now - 8 * D; c.last = now - 8 * D; c.jSeen = now; gyMsg = null; tab = "creature"; render();
+    const labels = [...document.querySelectorAll(".gy-act .ga-l")].map(x => x.textContent).join(), washWarn = document.querySelector('.gy-act[data-act="gy-wash"]').classList.contains("warn");
+    const jOff = !document.querySelector('.gy-act[data-act="gy-journal"]').classList.contains("on");
+    memAdd(creatureState(), null, "Test", now + 1000, "🧪"); render(); const jOn = document.querySelector('.gy-act[data-act="gy-journal"]').classList.contains("on");
+    document.querySelector('.gy-act[data-act="gy-journal"]').click(); closeSheet(); const jRead = !document.querySelector('.gy-act[data-act="gy-journal"]').classList.contains("on");
+    c.sat = 40; c.satT = Date.now(); render(); const hungry = document.querySelector('.gy-act[data-act="fridge"]').classList.contains("on");
+    document.querySelector('.gy-act[data-act="fridge"]').click(); const fridge = !!document.querySelector(".fr-sheet, .sheet .fr-head"); closeSheet();
+    document.querySelector('.gy-act[data-act="gy-pet"]').click(); const pet = /encore/.test((document.querySelector(".gy-bubble") || {}).textContent || "") && !!document.querySelector(".gy-heart");
+    gyMsg = null; S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {labels, washWarn, jOff, jOn, jRead, hungry, fridge, pet}; });
+  ok(ac.labels === "Nourrir,Laver,Câlin,Journal", "barre d'actions : Nourrir, Laver, Câlin, Journal", ac.labels);
+  ok(ac.washWarn && ac.hungry && ac.jOff && ac.jOn && ac.jRead, "pastilles : il sent mauvais, il a faim, nouveau souvenir (effacée une fois le journal lu)", ac);
+  ok(ac.fridge && ac.pet, "Nourrir ouvre le frigo, Câlin le fait ronronner", ac);
 
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
