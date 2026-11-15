@@ -556,6 +556,29 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .creature.gy-stretch{transform-origin:50% 100%;animation:stretch 1.6s ease-in-out 1}@keyframes stretch{40%{transform:scale(.96,1.08)}70%{transform:scale(1,.98)}}
 .gy-heart{position:absolute;z-index:4;pointer-events:none;font-size:24px;animation:heart 1.4s ease-out forwards}@keyframes heart{to{transform:translateY(-80px) scale(1.3);opacity:0}}
 @media (prefers-reduced-motion: reduce){.creature.gy-pet,.creature.gy-tickle,.creature.gy-stretch{animation:none}.gy-heart{animation:none;opacity:.8}}
+.gy-icon{padding:0 10px;font-size:15px}.gy-dirty{box-shadow:0 0 0 2px #8bc34a}
+.gy-shower{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden}
+.gy-showering .gy-bubble{visibility:hidden}
+.gy-shower .sh-head{position:absolute;left:50%;top:20%;font-size:46px;transform:translateX(-50%) scaleX(-1)}
+.gy-shower i{position:absolute;top:30%;width:3px;height:18px;border-radius:2px;background:#7cc8ff;opacity:0;animation:rain .55s linear 4}
+@keyframes rain{0%{transform:translateY(0);opacity:.9}100%{transform:translateY(170px);opacity:0}}
+.gy-shower b{position:absolute;bottom:22%;font-size:20px;opacity:0;animation:bubble 1.4s ease-out forwards}
+@keyframes bubble{0%{transform:translateY(0) scale(.5);opacity:0}30%{opacity:1}100%{transform:translateY(-120px) scale(1.2);opacity:0}}
+.gy-stink{position:absolute;left:50%;top:32%;z-index:3;pointer-events:none;transform:translateX(-50%);width:62%;height:36%}
+.gy-stink i{position:absolute;bottom:0;font-style:normal;font-size:30px;font-weight:700;color:#9ccc65;text-shadow:0 0 6px rgba(156,204,101,.6);transform:rotate(90deg);opacity:0;animation:stink 2.4s ease-in-out infinite}
+.gy-stink i:nth-child(1){left:10%}.gy-stink i:nth-child(2){left:45%;animation-delay:.8s}.gy-stink i:nth-child(3){left:80%;animation-delay:1.6s}
+@keyframes stink{0%{transform:translateY(20px) rotate(90deg);opacity:0}40%{opacity:.9}100%{transform:translateY(-70px) rotate(90deg);opacity:0}}
+.gy-stink b{position:absolute;top:0;left:50%;font-size:16px;animation:fly 3s linear infinite}
+@keyframes fly{0%{transform:translate(-40px,0)}25%{transform:translate(30px,-20px)}50%{transform:translate(50px,10px)}75%{transform:translate(-10px,25px)}100%{transform:translate(-40px,0)}}
+.gy-sweat{position:absolute;left:50%;top:22%;z-index:3;pointer-events:none;transform:translateX(-50%);width:34%;height:30%}
+.gy-sweat i{position:absolute;font-style:normal;font-size:16px;opacity:0;animation:sweat 2s ease-in infinite}
+.gy-sweat i:nth-child(1){left:0}.gy-sweat i:nth-child(2){left:80%;animation-delay:.7s}.gy-sweat i:nth-child(3){left:40%;animation-delay:1.3s}
+@keyframes sweat{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(50px);opacity:0}}
+.celeb .celeb-wash{background:rgba(124,200,255,.2);color:#fff;border-color:rgba(124,200,255,.5)}
+.jr-list{display:flex;flex-direction:column;gap:6px}.jr-m{margin:8px 0 0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.jr-row{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--fill)}.jr-e{font-size:22px;width:28px;text-align:center}
+.jr-t{display:flex;flex-direction:column}.jr-t b{font-size:15px;font-weight:600}.jr-t small{color:var(--muted);font-size:12px}
+@media (prefers-reduced-motion: reduce){.gy-shower i,.gy-shower b,.gy-stink i,.gy-stink b,.gy-sweat i{animation:none;opacity:.7}}
 .fest-table{font-size:40px;letter-spacing:4px;margin:-6px 0 0}
 .gy-sat{text-align:left}.sat-row{display:flex;align-items:center;gap:5px;margin-top:5px}.sat-row b{font-size:12px;font-weight:700;color:#ff8ac0}.sat-row i{font-style:normal;font-size:14px}
 .mini-fr{display:inline-block;width:12px;height:18px}.mini-fr svg,.fr-ico svg{width:100%;height:100%}
@@ -678,7 +701,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-14 d";
+const APP_VERSION = "2026-11-15 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2074,7 +2097,7 @@ function creatureState(){
 function creatureResurrect(){
   const c = creatureState(); if(!c.dead) return;
   const pending = (c.pending || []).slice();
-  c.dead = null; c.pending = []; c.resurrections = (c.resurrections||0) + 1;
+  c.dead = null; c.pending = []; memAdd(c, null, "Ressuscité !", Date.now(), "✨"); c.resurrections = (c.resurrections||0) + 1;
   c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight * CREATURE_CFG.resurrectWeightKeep);
   c.last = Date.now(); c.sat = 100; c.satT = Date.now(); c.full = Date.now() + SAT.plateauH * 3600000;
   // Les séances faites pendant qu'il était mort le nourrissent maintenant
@@ -2128,9 +2151,9 @@ function satTick(c, now){
   now = now || Date.now(); if(c.dead) return;
   if(c.peas && satExact(c, now) < SAT.peas.below){
     const t5 = satStart(c) + satHoursTo(c.sat ?? 100, SAT.peas.below) * 3600000;
-    c.sat = SAT.peas.to; c.satT = Math.min(now, t5); c.full = 0; c.peasUsed = {ts:c.satT}; c.peas = null; saveLocal(); }
+    c.sat = SAT.peas.to; c.satT = Math.min(now, t5); c.full = 0; c.peasUsed = {ts:c.satT}; c.peas = null; memAdd(c, null, "Il a ouvert la boîte de pois chiches pour tenir.", c.satT, "🥫"); saveLocal(); }
   if(satExact(c, now) <= 0){ const t0 = satStart(c) + satHoursTo(c.sat ?? 100, 0) * 3600000;
-    c.dead = {ts:Math.min(now, t0), since:c.last || c.born}; c.pending = []; saveLocal(); }
+    c.dead = {ts:Math.min(now, t0), since:c.last || c.born}; c.pending = []; memAdd(c, null, "Il est mort de faim.", c.dead.ts, "🪦"); saveLocal(); }
 }
 // Jours restants avant la mort sans manger (boîte de pois chiches comprise)
 function creatureDaysLeft(c){
@@ -2195,7 +2218,7 @@ function festinCheck(c, now){
   const d = new Date(now);
   if(d.getDay() === 0 && d.getHours() >= 18 && c.wk.full && c.wk.min >= SAT.festinMin && c.festDone !== c.wk.k) c.festDue = c.wk.k;
   if(!c.festDue || c.festDone === c.festDue) return false;
-  c.festDone = c.festDue; c.festDue = null; fridgeAdd(c, "steak", 0, now); saveLocal(); return true;
+  c.festDone = c.festDue; c.festDue = null; fridgeAdd(c, "steak", 0, now); memAdd(c, "f" + c.festDone, "Festin du dimanche : il n'a jamais eu faim de la semaine.", now, "🎉"); saveLocal(); return true;
 }
 function festinShow(c){
   celebClose(true);
@@ -2218,7 +2241,7 @@ function peasDraw(c, now){
   const day = dayNum(); if(c.peasDay === day) return false; c.peasDay = day;
   // Première utilisation de Gymon, pas l'historique importé (Gravl) : sinon un ancien utilisateur de Gravl l'a dès le premier jour (corrigé le 14 nov. 2026)
   if(now - gcFirstSeen() < SAT.peas.afterDays * 86400000){ saveLocal(); return false; }
-  if(PEAS.roll()){ c.peas = {t:now}; c.peasNew = 1; }
+  if(PEAS.roll()){ c.peas = {t:now}; c.peasNew = 1; memAdd(c, null, "Il a reçu une boîte de pois chiches.", now, "🥫"); }
   saveLocal(); return !!c.peas;
 }
 function peasSheet(c){
@@ -2312,13 +2335,13 @@ function creatureFeed(w){
   if((w.prs || []).length) fr.push(fridgeAdd(c, "steak", 0, t));
   const ws = weekStart(w.end || w.start), nWeek = S.workouts.filter(x => c.fed.includes(x.id) && (x.end || x.start) >= ws && (x.end || x.start) <= (w.end || w.start)).length;
   if(nWeek === 3) fr.push(fridgeAdd(c, "omelette", 0, t));
-  growMuscles(c, w); creatureLog(c);
+  growMuscles(c, w); creatureLog(c); const mile = memAfterMeal(c, w, before.stage);
   const ups = MUSC.filter(m => (c.levels[m]||0) - (before.levels[m]||0) >= 0.005), satAfter = satExact(c, t);
   const fridge = fr.map(x => ({k:x.k, kg:x.kg}));
   c.lastMeal = {w:w.id, vol, bonus, eaten:ate + ateB, satBefore, satAfter, gain:c.weight - before.weight, ts:Date.now(), ups, fridge,
     dl:Object.fromEntries(ups.map(m => [m, Math.round(((c.levels[m]||0) - (before.levels[m]||0))*100)/100]))};
   touchProfile();
-  return {vol, bonus, eaten:ate + ateB, satBefore, satAfter, fridge, gain:c.weight - before.weight, evolved:c.stage > before.stage, stage:c.stage, from:before.stage, ups};
+  return {vol, bonus, eaten:ate + ateB, satBefore, satAfter, fridge, mile, gain:c.weight - before.weight, evolved:c.stage > before.stage, stage:c.stage, from:before.stage, ups};
 }
 /* Historique pour les courbes (décidé le 12 novembre 2026) : un point par jour [jour, poids kg, taille cm, vitalité %, reconstitué ?],
    enregistré dans le téléphone à chaque ouverture et après chaque repas ; le passé (poids et taille) est reconstitué une fois
@@ -2813,6 +2836,89 @@ function fitGymon(){
   if(over > 0) g.style.height = Math.max(360, parseFloat(g.style.height) - over) + "px";
 }
 addEventListener("resize", () => { if(tab === "creature") fitGymon(); });
+/* ---------- Souvenirs et douche (décidés le 14 novembre 2026) ----------
+   Journal tenu automatiquement (naissance, premier repas, records, évolutions, paliers de séances, festins, pois chiches, faim, mort,
+   résurrection, nom, douches, retrouvailles), anniversaires avec gâteau, « Tu m'as manqué » après 3 jours sans le voir.
+   Douche : bouton 🚿 sur la page Gymon ou en fin de séance ; en sueur après une séance jusqu'à la douche ; il sent mauvais après
+   7 jours sans douche. Rien de tout cela ne touche aux règles du jeu. */
+const MEM = {missDays:3, smellDays:7, anniv:[[30,"1 mois"],[91,"3 mois"],[182,"6 mois"],[365,"1 an"],[730,"2 ans"],[1095,"3 ans"]], sessions:[10,25,50,100,150,200,300,500,1000]};
+function memAdd(c, k, txt, ts, e){
+  c.journal = c.journal || []; if(k && c.journal.some(j => j.k === k)) return false;
+  c.journal.push({ts:ts || Date.now(), ...(k ? {k} : {}), e:e || "•", t:txt}); c.journal.sort((a, b) => a.ts - b.ts);
+  if(c.journal.length > 400) c.journal.splice(0, c.journal.length - 400); return true;
+}
+// Gymon d'avant : on reconstitue ce qu'on sait (naissance, séances mangées, records, paliers, anniversaires passés) sans rien fêter
+function memBackfill(c){
+  if(c.jv) return; c.jv = 1; const D = 86400000, now = Date.now();
+  memAdd(c, "born", "Naissance : l'œuf est arrivé.", c.born, "🥚");
+  const ws = S.workouts.filter(w => (c.fed || []).includes(w.id)).sort((a, b) => (a.end || a.start) - (b.end || b.start));
+  ws.forEach((w, i) => { const t = w.end || w.start;
+    if(i === 0) memAdd(c, "first", `Premier repas : ${fmtVol(wVolume(w))} soulevés.`, t, "🍗");
+    if(MEM.sessions.includes(i + 1)) memAdd(c, "s" + (i + 1), `${i + 1} séances ensemble !`, t, "🏅");
+    if((w.prs || []).length) memAdd(c, "pr-" + w.id, `Record au ${exById(w.prs[0]).name.toLowerCase()} !`, t, "🏆"); });
+  c.anniv = MEM.anniv.filter(([d]) => now - c.born >= d * D).map(([d, l]) => { memAdd(c, "a" + d, `${l} ensemble !`, c.born + d * D, "🎂"); return d; });
+  c.washTs = c.washTs || now; c.seen = c.seen || now;
+}
+// Après chaque séance mangée : premier repas, palier de séances, record, évolution
+function memAfterMeal(c, w, from){
+  const t = w.end || w.start;
+  if(c.fidelity === 1) memAdd(c, "first", `Premier repas : ${fmtVol(wVolume(w))} soulevés.`, t, "🍗");
+  if(MEM.sessions.includes(c.fidelity)) memAdd(c, "s" + c.fidelity, `${c.fidelity} séances ensemble !`, t, "🏅");
+  if((w.prs || []).length) memAdd(c, "pr-" + w.id, `Record au ${exById(w.prs[0]).name.toLowerCase()} !`, t, "🏆");
+  if(c.stage > from) memAdd(c, "evo" + c.stage, from < 2 && c.stage >= 2 ? "Éclosion : il est né !" : "Il a évolué !", t, "✨");
+  return MEM.sessions.includes(c.fidelity) ? c.fidelity : 0;
+}
+// À l'ouverture de la page : retrouvailles, anniversaires, épisode de grande faim
+function memVisit(c){
+  const now = Date.now(), D = 86400000; memBackfill(c);
+  let show = null;
+  if(c.stage >= 2 && c.seen && now - c.seen >= MEM.missDays * D){ const n = Math.floor((now - c.seen) / D);
+    memAdd(c, null, `Retrouvailles après ${n} jours.`, now, "🤗"); gyMsg = {ts:now, txt:`Tu m'as manqué ! 🥺 ${n} jours sans te voir…`, cls:"gy-hop", eye:"happy", arm:0}; }
+  if(!c.seen || now - c.seen > 3600000){ c.seen = now; saveLocal(); }
+  MEM.anniv.forEach(([d, l]) => { if(now - c.born >= d * D && !(c.anniv || []).includes(d)){ (c.anniv = c.anniv || []).push(d); const at = c.born + d * D, fresh = now - at < 7 * D;
+    memAdd(c, "a" + d, `${l} ensemble !`, fresh ? now : at, "🎂"); if(fresh) show = l; } });
+  const v = satExact(c, now);
+  if(v < 30 && !c.hungry){ c.hungry = 1; memAdd(c, null, "Il a eu très faim…", now, "😣"); } else if(v >= 50 && c.hungry) c.hungry = 0;
+  if(show) saveLocal();
+  return show;
+}
+function annivShow(c, label){
+  celebClose(true);
+  const el = document.createElement("div"); el.id = "celebrate"; el.className = "celeb festin"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Anniversaire");
+  const cols = ["#ff5a5f","#ffd23f","#3bd16f","#4a9de0","#c86bff"], nm = c.name || "Ton Gymon";
+  el.innerHTML = `<div class="confetti" aria-hidden="true">${Array.from({length:30}, (_, i) => `<i style="--x:${(i*37)%100}%;--d:${((i*0.23)%2.2).toFixed(2)}s;--c:${cols[i%cols.length]};--r:${(i*47)%360}deg"></i>`).join("")}</div>
+    <div class="celeb-in"><p class="celeb-k">Joyeux anniversaire !</p>
+      <div class="celeb-gy">${creatureSVG(c, false, false, {noSteam:true, eyeState:"happy", armLevel:0})}</div>
+      <div class="fest-table" aria-hidden="true">🎂</div>
+      <h2>${esc(nm)} et toi : ${esc(label)} ensemble</h2>
+      <p class="celeb-sub">C'est noté dans son journal 📖</p>
+      <div class="celeb-btns"><button class="btn primary" data-act="celeb-close">Continuer</button></div></div>`;
+  document.body.appendChild(el);
+}
+function journalSheet(){
+  const c = creatureState(); memBackfill(c); const nm = c.name || "ton Gymon", D = 86400000;
+  const L = (c.journal || []).slice().sort((a, b) => b.ts - a.ts); let month = "";
+  const rows = L.map(j => { const m = fmtDate(j.ts, {month:"long", year:"numeric"}), head = m !== month ? `<p class="jr-m">${esc(m)}</p>` : ""; month = m;
+    return head + `<div class="jr-row"><span class="jr-e">${esc(j.e)}</span><span class="jr-t"><b>${esc(j.t)}</b><small>${esc(fmtDate(j.ts, {weekday:"long", day:"numeric", month:"long"}))}</small></span></div>`; }).join("");
+  openSheet(`<h3>Le journal de ${esc(nm)}</h3>
+    <p class="small muted" style="margin:-4px 0 0">Ensemble depuis ${Math.max(1, Math.floor((Date.now() - c.born) / D))} jour${Date.now() - c.born >= 2*D ? "s" : ""} · ${c.fidelity} séance${c.fidelity > 1 ? "s" : ""}</p>
+    <div class="jr-list">${rows || `<p class="small muted">Le journal se remplira au fil de vos séances.</p>`}</div>
+    <button class="btn" data-act="close">Fermer</button>`);
+}
+const isSmelly = c => !c.dead && c.stage >= 2 && Date.now() - (c.washTs || Date.now()) > MEM.smellDays * 86400000;
+const isSweaty = c => !c.dead && c.stage >= 2 && c.last > (c.washTs || 0) && Date.now() - c.last < 24 * 3600000;
+// Animation de douche sur une zone (page Gymon ou fin de séance)
+function showerAnim(zone, done){
+  if(!zone) return; zone.querySelectorAll(".gy-sweat,.gy-stink").forEach(x => x.remove());
+  const el = document.createElement("div"); el.className = "gy-shower"; el.setAttribute("aria-hidden", "true");
+  el.innerHTML = `<span class="sh-head">🚿</span>` + Array.from({length:16}, (_, i) => `<i style="left:${30 + (i * 37) % 42}%;animation-delay:${((i * 0.13) % 0.6).toFixed(2)}s"></i>`).join("")
+    + Array.from({length:6}, (_, i) => `<b style="left:${32 + i * 7}%;animation-delay:${(0.5 + i * 0.18).toFixed(2)}s">🫧</b>`).join("");
+  zone.appendChild(el); zone.classList.add("gy-showering");
+  setTimeout(() => { const cr = zone.querySelector(".creature"); if(cr){ cr.classList.remove("gy-tickle"); void cr.getBoundingClientRect(); cr.classList.add("gy-tickle"); } }, 1700);
+  setTimeout(() => { el.remove(); zone.classList.remove("gy-showering"); if(done) done(); }, 2400);
+}
+function washGymon(){ const c = creatureState(), first = !c.washTs || !(c.journal || []).some(j => j.k === "wash1");
+  c.washTs = Date.now(); if(first) memAdd(c, "wash1", "Première douche !", Date.now(), "🚿"); touchProfile(); }
 /* Case « Satiété » (option C, 13 nov. 2026) : satiété, petit frigo et ce qu'il contient ; la toucher ouvre le frigo */
 const FRIDGE_SVG = open => `<svg viewBox="0 0 40 60" aria-hidden="true"><rect x="3" y="2" width="34" height="56" rx="6" fill="#dfe4f1" stroke="#7d86a3" stroke-width="2"/>
   ${open ? `<rect x="7" y="6" width="26" height="48" rx="3" fill="#1d2440"/><rect x="7" y="22" width="26" height="2" fill="#8fa0c9"/><rect x="7" y="38" width="26" height="2" fill="#8fa0c9"/>`
@@ -2871,7 +2977,8 @@ function feedThrow(emoji){
 }
 function viewCreature(){
   const c = creatureState(), vit = creatureSatiety(c); creatureLog(c);
-  if(!c.dead){ if(festinCheck(c)) setTimeout(() => festinShow(creatureState()), 0); else if(c.peasNew) setTimeout(() => peasSheet(creatureState()), 0); }
+  const annivL = c.dead ? null : memVisit(c);
+  if(!c.dead){ if(festinCheck(c)) setTimeout(() => festinShow(creatureState()), 0); else if(annivL) setTimeout(() => annivShow(creatureState(), annivL), 0); else if(c.peasNew) setTimeout(() => peasSheet(creatureState()), 0); }
   const lvAvg = MUSCLES.reduce((t,g) => t + groupLevel(c, g), 0) / MUSCLES.length, force = Math.min(5, Math.round(lvAvg) + 1);
   const ch = S.profile.active ? null : (S.profile.routines.some(r => r.plan) ? chooseToday() : null);
   const cta = S.profile.active ? "Reprendre la séance" : ch ? `Séance du jour · ${ch.eff.name}` : "Aller à la séance";
@@ -2901,6 +3008,7 @@ function viewCreature(){
         <div class="gy-aura"></div>
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
         <i class="gy-spark" style="--x:72%;--y:72%;--d:2.1s"></i><i class="gy-spark" style="--x:24%;--y:66%;--d:.7s"></i>
+        ${isSmelly(c) ? `<span class="gy-stink" aria-hidden="true"><i>〰</i><i>〰</i><i>〰</i><b>🪰</b></span>` : isSweaty(c) ? `<span class="gy-sweat" aria-hidden="true"><i>💧</i><i>💧</i><i>💧</i></span>` : ""}
         ${gyZoom(sv, c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}${hop ? " gy-hop" : ""}${fx && fx.cls && Date.now() - fx.ts < 1500 ? " " + fx.cls : ""}`)}
         ${m0 === "sleep" ? `<span class="gy-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><button class="gy-bubble" data-act="gy-wake">Zzz… 💤</button>` : (() => { const L = fx ? [fx.txt] : gyAte && Date.now() - gyAte.ts < 6000 ? [gyAte.k === "steak" ? "Un steak ! Je suis calé pour 12 heures 🥩💪" : gyAte.k === "omelette" ? "Une omelette ! Miam 🥚" : `Miam ! 😋 Satiété ${vit} %`]
           : gyWake && Date.now() - gyWake < 60000 ? ["Hein ? Quoi ? … Ah, c'est toi 😴 Je me rendors vite."] : gymonLines(c); return L.length ? `<button class="gy-bubble" data-act="gy-talk">${esc(L[L.prio ? gyTalk % L.length : (gyTalk + dayNum()) % L.length])}</button>` : ""; })()}
@@ -2910,7 +3018,7 @@ function viewCreature(){
         <span class="gy-chip br" aria-label="Niveau de chaque muscle"><small>Muscles</small><span class="gy-lv">${MUSCLES.map(m => `<i style="height:${Math.max(3, Math.round(groupLevel(c, m)/4.5*26))}px;${mc(m)}"></i>`).join("")}</span></span>
       </div>
       ${c.stage >= 2 ? `<button class="gy-name" data-act="gy-name">${c.name ? esc(c.name) : "✏️ Donner un nom"}</button>` : ""}
-      <p class="gy-form"><button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button><button class="gy-flip gy-share" data-act="share" data-k="week" aria-label="Partager mon Gymon">↗ Partager</button>` : ""}</p>
+      <p class="gy-form"><button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `<button class="gy-flip gy-icon${isSmelly(c) || isSweaty(c) ? " gy-dirty" : ""}" data-act="gy-wash" aria-label="Lui faire prendre une douche">🚿</button><button class="gy-flip gy-icon" data-act="gy-journal" aria-label="Son journal">📖</button>` : ""}${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button><button class="gy-flip gy-share" data-act="share" data-k="week" aria-label="Partager mon Gymon">↗ Partager</button>` : ""}</p>
       <p class="gy-hint">${esc(gymonHint(c))}</p>
       <button class="btn primary gy-cta" data-act="goto" data-tab="seance">${esc(cta)}</button>
     </section>`;
@@ -3022,6 +3130,8 @@ function celebHTML(w, cr, hatch){
       ${cr.gain > 0 ? `<p class="celeb-sub">+${fmtWeight(cr.gain)} sur la balance</p>` : ""}
       ${Object.keys(dl).length ? `<div class="celeb-ups">${Object.entries(dl).map(([m,d]) => `<span>💪 ${esc(m)} +${fmtN(d,2)}</span>`).join("")}</div>` : `<p class="celeb-sub">Il reprend des forces.</p>`}
       ${w.prs.length ? `<p class="celeb-sub">🏆 Record : ${w.prs.map(id => esc(exById(id).name)).join(", ")}</p>` : ""}
+      ${cr.mile ? `<p class="celeb-sat">🏅 ${cr.mile} séances ensemble !</p>` : ""}
+      ${c.stage >= 2 ? `<button class="btn celeb-wash" data-act="celeb-wash">🚿 Une douche ?</button>` : ""}
       </div>
       ${hatch ? `<div class="row celeb-name"><input id="celeb-name" class="name-input" maxlength="16" placeholder="Donne-lui un nom" aria-label="Nom du Gymon"><button class="btn" data-act="celeb-rand" aria-label="Nom au hasard">🎲</button></div>` : ""}
       <div class="celeb-btns" id="celeb-btns" hidden><button class="btn" data-act="celeb-share">📸 Partager</button><button class="btn primary" data-act="celeb-close">Continuer</button></div>
@@ -3057,7 +3167,7 @@ function celebDrag(){
 function celebClose(silent){
   const el = document.getElementById("celebrate");
   if(celebState){ celebState.timers.forEach(clearTimeout);
-    const i = document.getElementById("celeb-name"); if(i && i.value.trim()){ creatureState().name = i.value.trim().slice(0, 16); touchProfile(); } }
+    const i = document.getElementById("celeb-name"); if(i && i.value.trim()){ const cn = creatureState(); cn.name = i.value.trim().slice(0, 16); memAdd(cn, null, `Il s'appelle ${cn.name}.`, Date.now(), "✏️"); touchProfile(); } }
   if(el) el.remove();
   const ask = celebState && celebState.hatch && !creatureState().name && !silent;
   celebState = null; if(!silent) render();
@@ -3116,6 +3226,7 @@ function gymonLines(c){
     if(lw && muscleMelting(c, m)) melt.push(`Mes ${M_SANS[m]} fondent 💧 ${days} jours sans les travailler…`);
     else if(lw && days > 10 && m !== "Abdos") L.push(`${days} jours sans ${M_SANS[m]}… ils vont bientôt fondre !`);
     else if(r.pct < 0.6 && m !== "Abdos") L.push(`Mes ${M_SANS[m]} chauffent encore 🔥 Laisse-les souffler.`); });
+  if(isSmelly(c)) melt.unshift("Je sens un peu fort… une douche ? 🚿");
   // Frigo (13 nov. 2026) : boîte de pois chiches ouverte, poulet périmé, poulet qui va périmer — dits en premier
   if(c.peasUsed && now - c.peasUsed.ts < 3*D) melt.unshift("J'ai dû ouvrir la boîte de pois chiches… ouf ! Reviens vite me nourrir 🥫");
   if(c.spoiled && now - c.spoiled.ts < 2*D) melt.unshift(c.spoiled.kg ? `Beurk ! ${fmtVol(c.spoiled.kg)} de poulet ont périmé au frigo 🤢` : "Beurk ! Quelque chose a périmé au frigo 🤢");
@@ -3191,6 +3302,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-15", t:"🚿 Douche et journal du Gymon", x:"Après une séance, votre Gymon transpire : offrez-lui une douche en fin de séance ou avec le bouton 🚿 de sa page. Sans douche pendant plus d'une semaine, il sent mauvais (et les mouches arrivent). Le bouton 📖 ouvre son journal : naissance, premier repas, records, évolutions, paliers de séances, festins… Il fête aussi vos anniversaires ensemble, et vous dit quand vous lui avez manqué."},
   {d:"2026-11-14", t:"🏠 Avec ou sans matériel", x:"Vous vous entraînez à la maison sans matériel ? Réglages › Mes entraînements › Sans matériel : le programme, le bouton ↻ et les listes ne proposent que des exercices au poids du corps (9 nouveaux, dont pompes en équilibre, squat sauté, fentes sautées, superman). Le coach progresse aussi mieux : pompes en 10–25 reps, gainage par 5 secondes, et plus de yo-yo avec les petits haltères (des reps en plus avant de monter de poids)."},
   {d:"2026-11-14", t:"📚 219 exercices", x:"La bibliothèque passe de 41 à 219 exercices avec photos : machines, poids libres, poulies, kettlebell et poids du corps, pour chaque muscle (mollets, fessiers, ischios, deltoïdes, avant-bras, obliques…). Le bouton ↻ a enfin de quoi proposer. Les exercices importés de Gravl qui existent maintenant dans la bibliothèque y sont rattachés, avec leur historique."},
   {d:"2026-11-13", t:"🍗 Nourrissez votre Gymon", x:"La vitalité devient la satiété : votre Gymon a faim, et ce que vous soulevez devient son poulet. En fin de séance, faites glisser le repas vers lui : il mange jusqu'à 100 %, le reste va au frigo (touchez la case Satiété), où il périme en 5 jours. Un record rapporte un steak, la 3e séance de la semaine une omelette. Une semaine sans jamais passer sous 50 % : festin du dimanche ! Après un mois, une boîte de pois chiches peut le sauver pendant vos vacances. Et essayez de le caresser (appui long) ou de le chatouiller (double toucher)."},
@@ -3999,6 +4111,10 @@ const ACT = {
     touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:FOODS[r.it.k].e, k:r.it.k}; tab = "creature"; render(); feedThrow(FOODS[r.it.k].e); },
   "fr-oldest": () => { const c = creatureState(), kg = fridgeEatOldest(c); if(!kg){ toast("Il n'a plus faim pour l'instant"); return; }
     touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:"🍗", k:"poulet", kg}; tab = "creature"; render(); feedThrow("🍗"); },
+    "gy-wash": (b, e) => { if(e) e.stopPropagation(); washGymon(); const z = document.querySelector(".gy-stage");
+    showerAnim(z, () => { gyMsg = {ts:Date.now(), txt:"Tout propre ! ✨ Merci !", eye:"happy", cls:"gy-hop"}; render(); }); },
+  "gy-journal": (b, e) => { if(e) e.stopPropagation(); journalSheet(); },
+  "celeb-wash": b => { washGymon(); b.disabled = true; showerAnim(document.getElementById("celeb-gy"), () => { b.textContent = "✨ Tout propre !"; }); },
   "gy-more-tap": () => { if(Date.now() - gySwiped < 400 || Date.now() - gyPetAt < 700) return; if(gymonAsleep(creatureState())){ ACT["gy-wake"](); return; }
     // Double toucher = chatouilles ; un seul toucher ouvre sa fiche (après un court délai pour reconnaître le double toucher)
     const c = creatureState(), now = Date.now(); if(c.stage < 2 || c.dead){ ACT["gy-more"](); return; }
@@ -4010,7 +4126,7 @@ const ACT = {
   "gy-name": () => nameSheet(),
   "gy-name-rand": () => { const i = document.getElementById("gy-name-in"); if(i) i.value = GYM_NAMES[Math.floor(Math.random()*GYM_NAMES.length)]; },
   "gy-name-ok": () => { const i = document.getElementById("gy-name-in"), v = (i ? i.value : "").trim().slice(0, 16);
-    if(!v){ toast("Écris un nom"); return; } creatureState().name = v; touchProfile(); closeSheet(); render(); toast(`Bienvenue ${v} !`); },
+    if(!v){ toast("Écris un nom"); return; } const cn = creatureState(); if(cn.name !== v) memAdd(cn, null, `Il s'appelle désormais ${v}.`, Date.now(), "✏️"); cn.name = v; touchProfile(); closeSheet(); render(); toast(`Bienvenue ${v} !`); },
   share: b => shareSheet(b.dataset.k || "week"),
   "share-go": () => shareSend(),
   "celeb-close": () => celebClose(),
@@ -4312,6 +4428,14 @@ function cleanCreature(x){
   if(look) c.look = look;
   if(ref) c.ref = ref;
   if(typeof x.name === "string" && x.name.trim()) c.name = x.name.trim().slice(0, 16);
+  // Souvenirs et douche (14 nov. 2026)
+  if(Array.isArray(x.journal)) c.journal = x.journal.filter(j => j && isTime(j.ts) && typeof j.t === "string").slice(-400)
+    .map(j => ({ts:j.ts, ...(typeof j.k === "string" ? {k:j.k.slice(0, 40)} : {}), e:typeof j.e === "string" ? j.e.slice(0, 8) : "•", t:j.t.slice(0, 160)}));
+  if(x.jv === 1) c.jv = 1;
+  if(isTime(x.washTs)) c.washTs = Math.min(now, x.washTs);
+  if(isTime(x.seen)) c.seen = Math.min(now, x.seen);
+  if(Array.isArray(x.anniv)) c.anniv = x.anniv.filter(d => MEM.anniv.some(a => a[0] === d));
+  if(x.hungry) c.hungry = 1;
   if(Array.isArray(x.hist)){ c.hist = x.hist.filter(p => Array.isArray(p) && p.length >= 4 && [p[0], p[1], p[2]].every(v => typeof v === "number" && isFinite(v)))
     .slice(-730).map(p => [Math.round(p[0]), Math.max(0, p[1]), Math.max(0, p[2]), typeof p[3] === "number" && isFinite(p[3]) ? Math.min(100, Math.max(0, p[3])) : null, p[4] ? 1 : 0]); c.histB = 1; }
   return c;
