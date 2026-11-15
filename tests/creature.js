@@ -535,6 +535,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(cu.nov.lv[0] >= 0.16 && cu.nov.lv[0] <= 0.35 && cu.nov.lv[3] < 1 && cu.nov.lv[3] < cu.adv.lv[0], "débutant : jamais moins que la croissance par séries, cible basse (vite atteinte)", cu.nov);
   ok(cu.nobw.lv[0] < 0.2, "sans poids de corps : pas de cible, croissance habituelle", cu.nobw);
 
+  // Bandeau de repos : chrono et boutons sur une seule ligne, même avec la réaction du Gymon au-dessus (15 nov. 2026)
+  const rl = await p.evaluate(() => { const W = JSON.stringify(S.workouts); S.profile.active = null;
+    startWorkout("R", [{exId:"dc-barre", sets:[blankSet(), blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm); tab = "seance"; render();
+    const s = A().exercises[0].sets[0]; s.w = "60"; s.r = "10"; render(); ACT.check(document.querySelector('tr[data-i="0"][data-j="0"] .check'));
+    const t = document.querySelector(".rest-t").getBoundingClientRect(), bs = [...document.querySelectorAll(".rest-row .btn")].map(x => x.getBoundingClientRect());
+    const pop = !!document.querySelector(".rest-in #gy-pop"), one = bs.length === 3 && bs.every(x => Math.abs(x.top - bs[0].top) < 1) && Math.abs((t.top + t.bottom) / 2 - (bs[0].top + bs[0].bottom) / 2) < 4;
+    stopRest(); S.profile.active = null; S.workouts = JSON.parse(W); saveLocal(); render(); return {pop, one}; });
+  ok(rl.pop && rl.one, "repos : réaction du Gymon dans le bandeau, chrono et boutons −15 s, +15 s, Passer sur une seule ligne", rl);
+
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
     const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;
