@@ -293,9 +293,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(ge.eyes[0] === "spark" && ge.eyes[1] === "tired" && ge.eyes[3] === "worn" && !ge.sick, "regard : étincelant si régulier et en progrès, fatigué puis épuisé sinon ; affamé, les yeux restent mi-clos", ge);
   // La page Gymon tient dans l'écran : pas de défilement, bouton de séance au-dessus de la barre d'onglets
   const fit = await p.evaluate(() => { closeSheet(); const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); tab = "creature"; render();
-    const r = {scroll:document.documentElement.scrollHeight - innerHeight, cta:document.querySelector(".gy-acts").getBoundingClientRect().bottom <= document.getElementById("tabs").getBoundingClientRect().top, noGo:!document.querySelector('.gy [data-act="goto"]')};
+    const r = {scroll:document.documentElement.scrollHeight - innerHeight, cta:document.querySelector(".gy-acts").getBoundingClientRect().bottom <= document.getElementById("tabs").getBoundingClientRect().top, noGo:!document.querySelector('.gy .gy-cta')};
     c.stage = st0; render(); return r; });
-  ok(fit.scroll <= 1 && fit.cta && fit.noGo, "page Gymon sans défilement, barre d'actions au-dessus des onglets, plus de bouton de séance", fit);
+  ok(fit.scroll <= 1 && fit.cta && fit.noGo, "page Gymon sans défilement, barre d'actions au-dessus des onglets, plus de gros bouton de séance", fit);
   // Glisser sur le Gymon : face ⇄ dos, sans ouvrir sa fiche
   const sw = await p.evaluate(() => { const c = creatureState(), st0 = c.stage; c.stage = Math.max(2, c.stage); gyBack = false; tab = "creature"; render();
     const el = document.querySelector(".gy-stage"), r = el.getBoundingClientRect(), y = r.top + r.height/2;
@@ -457,7 +457,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(sv.keys.includes("born") && sv.anniv.join() === "30,91" && sv.noParty, "Gymon d'avant : journal reconstitué, anniversaires passés notés sans fête", sv);
   ok(/manqué/.test(sv.miss) && sv.reunion, "« Tu m'as manqué » après 3 jours sans le voir, noté dans le journal", sv.miss);
   ok(/Joyeux anniversaire/.test(sv.cake) && /1 mois/.test(sv.cake), "anniversaire tout juste atteint : fête avec gâteau", sv.cake);
-  ok(/Le journal de/.test(sv.jr) && /<b>x<\/b>/.test(sv.jr) && !sv.raw, "journal du Gymon dans une feuille, texte échappé", sv.jr.slice(0, 120));
+  ok(/Le carnet de santé de/.test(sv.jr) && /Faits marquants/.test(sv.jr) && /Masse/.test(sv.jr) && /Taille/.test(sv.jr) && /<b>x<\/b>/.test(sv.jr) && !sv.raw, "carnet de santé : masse, taille et faits marquants, texte échappé", sv.jr.slice(0, 160));
   ok(sv.smell && /douche/.test(sv.sbub) && sv.sweat, "il sent mauvais après 7 jours sans douche, il transpire après une séance", sv);
   ok(sv.anim && sv.clean && /propre/.test(sv.after) && sv.first, "douche : animation, puis tout propre", sv);
   ok(sv.cwash && sv.mile && sv.mj, "fin de séance : bouton douche et palier de 10 séances fêté", sv);
@@ -473,10 +473,16 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     document.querySelector('.gy-act[data-act="gy-journal"]').click(); closeSheet(); const jRead = !document.querySelector('.gy-act[data-act="gy-journal"]').classList.contains("on");
     c.sat = 40; c.satT = Date.now(); render(); const hungry = document.querySelector('.gy-act[data-act="fridge"]').classList.contains("on");
     document.querySelector('.gy-act[data-act="fridge"]').click(); const fridge = !!document.querySelector(".fr-sheet, .sheet .fr-head"); closeSheet();
+    const c5 = creatureState(); c5.hist = [[dayNum() - 3, 0.2, 20, 80, 0], [dayNum() - 1, 0.3, 22, 90, 0], [dayNum(), 0.36, 25, 90, 0]];
+    document.querySelector('.gy-act[data-act="gy-journal"]').click(); const curves = document.querySelectorAll(".sheet .curve-box svg").length;
+    const sv1 = document.querySelector(".sheet .curve-box svg"), r1 = sv1.getBoundingClientRect(); sv1.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true, clientX:r1.left + r1.width * 0.5, clientY:r1.top + 20}));
+    const tip = document.querySelector(".sheet .curve-box .curve-tip").textContent; closeSheet();
     document.querySelector('.gy-act[data-act="gy-pet"]').click(); const pet = /encore/.test((document.querySelector(".gy-bubble") || {}).textContent || "") && !!document.querySelector(".gy-heart");
-    gyMsg = null; S.profile.creature = JSON.parse(saved); saveLocal(); render();
-    return {labels, washWarn, jOff, jOn, jRead, hungry, fridge, pet}; });
-  ok(ac.labels === "Nourrir,Laver,Câlin,Journal", "barre d'actions : Nourrir, Laver, Câlin, Journal", ac.labels);
+    gyMsg = null; document.querySelector('.gy-act[data-act="goto"]').click(); const go = tab; tab = "creature";
+    S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {curves, tip, go, labels, washWarn, jOff, jOn, jRead, hungry, fridge, pet}; });
+  ok(ac.labels === "S'entraîner,Nourrir,Laver,Câlin,Carnet de santé" && ac.go === "seance", "barre d'actions : S'entraîner (mène à la séance), Nourrir, Laver, Câlin, Carnet de santé", ac);
+  ok(ac.curves === 2 && /kg|g/.test(ac.tip), "carnet de santé : deux courbes touchables (masse et taille)", ac);
   ok(ac.washWarn && ac.hungry && ac.jOff && ac.jOn && ac.jRead, "pastilles : il sent mauvais, il a faim, nouveau souvenir (effacée une fois le journal lu)", ac);
   ok(ac.fridge && ac.pet, "Nourrir ouvre le frigo, Câlin le fait ronronner", ac);
 

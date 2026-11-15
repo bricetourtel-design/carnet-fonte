@@ -518,12 +518,17 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .gy-form{margin:2px 0 0;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .gy-hint{margin:0;font-size:15px;font-weight:500;letter-spacing:-.01em;text-align:center;text-wrap:balance}
 .gy-cta{margin-top:8px;min-width:72%}
-.gy-acts{display:flex;justify-content:center;gap:14px;margin:10px 0 2px}
-.gy-act{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:62px;padding:0;background:none;border:0;color:var(--fg)}
-.ga-i{position:relative;display:grid;place-items:center;width:58px;height:58px;border-radius:50%;font-size:28px;background:var(--glass);border:1.5px solid var(--glass-line);
+.gy-acts{display:flex;justify-content:center;align-items:flex-start;gap:6px;margin:10px 0 2px}
+.gy-act{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;padding:0;background:none;border:0;color:var(--fg)}
+.ga-i{position:relative;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;font-size:26px;background:var(--glass);border:1.5px solid var(--glass-line);
   box-shadow:0 4px 14px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .12s}
 .gy-act:active .ga-i{transform:scale(.9)}
-.ga-l{font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--muted)}
+.ga-l{font-size:11.5px;font-weight:700;line-height:1.15;text-align:center;color:var(--muted)}
+.gy-act.go .ga-i{background:var(--grad, linear-gradient(135deg,#8b5cf6,#ec4899));border-color:transparent}
+.gy-act.go .ga-l{color:var(--fg)}
+.hs-h{margin:10px 0 0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hs-curve{display:flex;flex-direction:column;gap:2px}.hs-k{margin:0;display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:600}
+.hs-k b{font-size:17px}.hs-curve .curve{width:100%;height:auto}.hs-curve .curve-tip{margin:0;font-size:12px;color:var(--muted)}
 .gy-act.on .ga-i{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent),0 4px 14px rgba(0,0,0,.18)}
 .gy-act.on .ga-l{color:var(--fg)}
 .gy-act.warn .ga-i{border-color:#ff5a5f;box-shadow:0 0 0 3px rgba(255,90,95,.28);animation:gaPulse 1.6s ease-in-out infinite}
@@ -715,7 +720,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 b";
+const APP_VERSION = "2026-11-15 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2820,14 +2825,15 @@ function gymonHint(c){
   if(near >= 0.85 && c.stage < CREATURE_CFG.stages.length - 1) return pick(["Il se passe quelque chose d'étrange…", "Il ne tient plus en place."]);
   return gymQuote(c);
 }
-let gyBack = false, gyFlipAnim = false, gySwiped = 0, gyTouch = null, curvePts = null, curveFmt = null;
+let gyBack = false, gyFlipAnim = false, gySwiped = 0, gyTouch = null, curvePts = null, curveFmt = null, CURVES = {};
 // Toucher ou glisser sur une courbe : trait vertical et valeur du jour le plus proche
-function curveAt(e){ const svg = e.target.closest && e.target.closest(".curve-box svg"); if(!svg || !curvePts) return;
+function curveAt(e){ const svg = e.target.closest && e.target.closest(".curve-box svg"); if(!svg) return;
+  const box = svg.closest(".curve-box"), set = box.dataset.ck && CURVES[box.dataset.ck], P = set ? set.pts : curvePts, F = set ? set.fmt : curveFmt; if(!P || !P.length) return;
   const r = svg.getBoundingClientRect(), cx = (e.touches ? e.touches[0].clientX : e.clientX), vx = (cx - r.left) / r.width * 340;
-  const x0 = curvePts[0].d, x1 = Math.max(curvePts[curvePts.length-1].d, x0 + 1), X = d => 8 + (d - x0) / (x1 - x0) * 324;
-  const p = curvePts.reduce((a, q) => Math.abs(X(q.d) - vx) < Math.abs(X(a.d) - vx) ? q : a);
+  const x0 = P[0].d, x1 = Math.max(P[P.length-1].d, x0 + 1), X = d => 8 + (d - x0) / (x1 - x0) * 324;
+  const p = P.reduce((a, q) => Math.abs(X(q.d) - vx) < Math.abs(X(a.d) - vx) ? q : a);
   const hl = svg.querySelector(".curve-hair"); hl.setAttribute("x1", X(p.d)); hl.setAttribute("x2", X(p.d)); hl.style.display = "";
-  const tip = document.getElementById("curve-tip"); if(tip) tip.textContent = `${fmtDate(p.d * 86400000 + 43200000, {day:"numeric", month:"long"})} : ${curveFmt(p.y)}${p.est ? " (reconstitué)" : ""}`; }
+  const tip = box.querySelector(".curve-tip"); if(tip) tip.textContent = `${fmtDate(p.d * 86400000 + 43200000, {day:"numeric", month:"long"})} : ${F(p.y)}${p.est ? " (reconstitué)" : ""}`; }
 document.addEventListener("pointerdown", curveAt); document.addEventListener("pointermove", e => { if(e.buttons || e.pointerType === "touch") curveAt(e); });
 // Glisser à gauche ou à droite sur le Gymon : le retourner (face ⇄ dos), sans ouvrir sa fiche
 document.addEventListener("touchstart", e => { const st = e.target.closest && e.target.closest(".gy-stage"); gyTouch = st && e.touches.length === 1 ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : null; }, {passive:true});
@@ -2905,7 +2911,7 @@ function annivShow(c, label){
       <div class="celeb-gy">${creatureSVG(c, false, false, {noSteam:true, eyeState:"happy", armLevel:0})}</div>
       <div class="fest-table" aria-hidden="true">🎂</div>
       <h2>${esc(nm)} et toi : ${esc(label)} ensemble</h2>
-      <p class="celeb-sub">C'est noté dans son journal 📖</p>
+      <p class="celeb-sub">C'est noté dans son carnet de santé 🩺</p>
       <div class="celeb-btns"><button class="btn primary" data-act="celeb-close">Continuer</button></div></div>`;
   document.body.appendChild(el);
 }
@@ -2914,10 +2920,19 @@ function journalSheet(){
   const L = (c.journal || []).slice().sort((a, b) => b.ts - a.ts); let month = "";
   const rows = L.map(j => { const m = fmtDate(j.ts, {month:"long", year:"numeric"}), head = m !== month ? `<p class="jr-m">${esc(m)}</p>` : ""; month = m;
     return head + `<div class="jr-row"><span class="jr-e">${esc(j.e)}</span><span class="jr-t"><b>${esc(j.t)}</b><small>${esc(fmtDate(j.ts, {weekday:"long", day:"numeric", month:"long"}))}</small></span></div>`; }).join("");
-  openSheet(`<h3>Le journal de ${esc(nm)}</h3>
-    <p class="small muted" style="margin:-4px 0 0">Ensemble depuis ${Math.max(1, Math.floor((Date.now() - c.born) / D))} jour${Date.now() - c.born >= 2*D ? "s" : ""} · ${c.fidelity} séance${c.fidelity > 1 ? "s" : ""}</p>
-    <div class="jr-list">${rows || `<p class="small muted">Le journal se remplira au fil de vos séances.</p>`}</div>
-    <button class="btn" data-act="close">Fermer</button>`);
+  // Courbes de masse et de taille (même historique que les cases Poids et Taille), touchables
+  creatureLog(c); const curves = [[1, "Masse", fmtWeight, c.weight], [2, "Taille", v => `${fmtN(v, 0)} cm`, creatureHeight(c)]].map(([k, t, f, now]) => {
+    const pts = (c.hist || []).filter(p => p[k] !== null && p[k] !== undefined).map(p => ({d:p[0], y:p[k], est:p[4]})); CURVES["h" + k] = {pts, fmt:f};
+    return `<div class="hs-curve"><p class="hs-k"><span>${t}</span><b>${esc(f(now))}</b></p>${pts.length > 1 ? `<div class="curve-box" data-ck="h${k}">${curveSVG(pts, f)}<p class="small curve-tip">Touche la courbe pour voir une date.</p></div>`
+      : `<p class="small muted" style="margin:0">La courbe se remplit jour après jour.</p>`}</div>`; }).join("");
+  const est = Object.values(CURVES).some(x => x.pts.some(p => p.est));
+  openSheet(`<h3>Le carnet de santé de ${esc(nm)}</h3>
+    <p class="small muted" style="margin:-4px 0 0">Ensemble depuis ${Math.max(1, Math.floor((Date.now() - c.born) / D))} jour${Date.now() - c.born >= 2*D ? "s" : ""} · ${c.fidelity} séance${c.fidelity > 1 ? "s" : ""} · satiété ${creatureSatiety(c)} %</p>
+    <p class="hs-h">Croissance</p>${curves}
+    ${est ? `<p class="small muted" style="margin:0">En pointillés : reconstitué à partir de tes séances passées.</p>` : ""}
+    <p class="hs-h">Faits marquants</p>
+    <div class="jr-list">${rows || `<p class="small muted">Le carnet se remplira au fil de vos séances.</p>`}</div>
+    <button class="btn" data-act="close">Fermer</button>`, null, "hs-sheet");
 }
 const isSmelly = c => !c.dead && c.stage >= 2 && Date.now() - (c.washTs || Date.now()) > MEM.smellDays * 86400000;
 const isSweaty = c => !c.dead && c.stage >= 2 && c.last > (c.washTs || 0) && Date.now() - c.last < 24 * 3600000;
@@ -2989,16 +3004,17 @@ function feedThrow(emoji){
     requestAnimationFrame(() => el.classList.add("go"));
     setTimeout(() => { el.remove(); cr.classList.remove("gy-hop"); void cr.getBoundingClientRect(); cr.classList.add("gy-hop"); }, 650); });
 }
-// Barre d'actions façon Tamagotchi (15 nov. 2026) : nourrir, laver, câlin, journal ; une pastille signale ce qui est attendu
+// Barre d'actions façon Tamagotchi (15 nov. 2026) : s'entraîner, nourrir, laver, câlin, carnet de santé ; une pastille signale ce qui est attendu
 function gyActionsHTML(c, v){
   const smelly = isSmelly(c), sweaty = isSweaty(c), food = (c.fridge || []).some(x => x.k !== "poulet" && x.k !== "or" || x.kg > 0);
   const newJ = (c.journal || []).some(j => j.ts > (c.jSeen || 0) && j.k !== "born");
   const A = [
+    {act:"goto", tab:"seance", e:"🏋️", l:S.profile.active ? "Reprendre" : "S'entraîner", a:S.profile.active ? "•" : "", s:S.profile.active ? "séance en cours" : "aller à la séance", cls:" go"},
     {act:"fridge", e:"🍗", l:"Nourrir", a:v < 50 ? "!" : v < 100 && food ? "•" : "", w:v < 30, s:`Satiété ${v} %`},
     {act:"gy-wash", e:"🚿", l:"Laver", a:smelly ? "!" : sweaty ? "•" : "", w:smelly, s:smelly ? "il sent mauvais" : sweaty ? "il transpire" : "propre"},
     {act:"gy-pet", e:"💜", l:"Câlin", a:"", s:"un câlin"},
-    {act:"gy-journal", e:"📖", l:"Journal", a:newJ ? "•" : "", s:newJ ? "nouveau souvenir" : "souvenirs"}];
-  return `<nav class="gy-acts" aria-label="S'occuper de ${esc(c.name || "ton Gymon")}">${A.map(x => `<button class="gy-act${x.a ? " on" : ""}${x.w ? " warn" : ""}" data-act="${x.act}" aria-label="${x.l} : ${esc(x.s)}">
+    {act:"gy-journal", e:"🩺", l:"Carnet de santé", a:newJ ? "•" : "", s:newJ ? "nouveau fait marquant" : "courbes et faits marquants"}];
+  return `<nav class="gy-acts" aria-label="S'occuper de ${esc(c.name || "ton Gymon")}">${A.map(x => `<button class="gy-act${x.cls || ""}${x.a ? " on" : ""}${x.w ? " warn" : ""}" data-act="${x.act}"${x.tab ? ` data-tab="${x.tab}"` : ""} aria-label="${x.l} : ${esc(x.s)}">
     <span class="ga-i">${x.e}${x.a ? `<b class="ga-b">${x.a === "!" ? "!" : ""}</b>` : ""}</span><span class="ga-l">${x.l}</span></button>`).join("")}</nav>`;
 }
 function viewCreature(){
@@ -3326,6 +3342,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-15", t:"🩺 Carnet de santé", x:"Le journal devient le carnet de santé de votre Gymon : ses courbes de masse et de taille, puis ses faits marquants. La barre d'actions gagne « S'entraîner » pour lancer (ou reprendre) votre séance."},
   {d:"2026-11-15", t:"🎮 S'occuper de votre Gymon", x:"Sur sa page, une barre d'actions remplace le bouton de séance : Nourrir (le frigo), Laver, Câlin et Journal. Une pastille vous signale ce qu'il attend : faim, douche, nouveau souvenir. Pour lancer une séance, passez par l'onglet Séance."},
   {d:"2026-11-15", t:"🚿 Douche et journal du Gymon", x:"Après une séance, votre Gymon transpire : offrez-lui une douche en fin de séance ou avec le bouton 🚿 de sa page. Sans douche pendant plus d'une semaine, il sent mauvais (et les mouches arrivent). Le bouton 📖 ouvre son journal : naissance, premier repas, records, évolutions, paliers de séances, festins… Il fête aussi vos anniversaires ensemble, et vous dit quand vous lui avez manqué."},
   {d:"2026-11-14", t:"🏠 Avec ou sans matériel", x:"Vous vous entraînez à la maison sans matériel ? Réglages › Mes entraînements › Sans matériel : le programme, le bouton ↻ et les listes ne proposent que des exercices au poids du corps (9 nouveaux, dont pompes en équilibre, squat sauté, fentes sautées, superman). Le coach progresse aussi mieux : pompes en 10–25 reps, gainage par 5 secondes, et plus de yo-yo avec les petits haltères (des reps en plus avant de monter de poids)."},
