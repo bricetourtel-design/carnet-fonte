@@ -113,14 +113,18 @@ button.thumb{padding:0}
 .meal{flex:none;display:flex;align-items:center;gap:4px;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;color:var(--fg);padding:6px 12px;border-radius:999px;
   background:linear-gradient(90deg,rgba(139,92,246,.45) var(--p),var(--fill) var(--p));transition:background .5s}
 .meal.full{background:linear-gradient(90deg,#ffd23f,#ff8a3d);color:#1b1b1f}
-.gy-pop{position:fixed;left:50%;bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px));z-index:31;display:flex;align-items:center;gap:8px;
-  width:max-content;max-width:min(92vw,380px);padding:6px 14px 6px 6px;border-radius:22px;background:#fff;color:#1b1b1f;box-shadow:0 10px 30px rgba(0,0,0,.25);
-  transform:translateX(-50%);animation:popin .35s cubic-bezier(.2,1.4,.5,1);pointer-events:none}
-.gy-pop .creature{height:58px;width:auto;animation:hop .9s ease-in-out 2}
-.gy-pop p{margin:0;font-size:14px;font-weight:700;line-height:1.25}
-.gy-pop.pop-pr{background:linear-gradient(90deg,#ffe27a,#ffb347)}
+.rest-in{flex-wrap:wrap}
+/* Réaction du Gymon (15 nov. 2026) : une ligne discrète dans le bandeau de repos, en bas, plus une bulle au milieu du carnet */
+.gy-pop{order:-1;flex:1 0 100%;display:flex;align-items:center;gap:8px;min-width:0;margin:-4px 0 2px;padding:2px 10px 2px 6px;border-radius:14px;
+  background:var(--fill);color:var(--fg);animation:gpin .3s ease-out;pointer-events:none}
+@keyframes gpin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.gy-pop .gp-av{flex:none;display:flex;align-items:flex-end;justify-content:center;width:34px;height:32px;overflow:visible}
+.gy-pop .creature,.gy-pop .creature.sm{height:50px;width:auto;max-width:none;flex:none;margin-top:-18px;animation:hop .9s ease-in-out 2}
+.gy-pop p{margin:0;flex:1;min-width:0;font-size:13px;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gy-pop.pop-pr{background:linear-gradient(90deg,#ffe27a,#ffb347);color:#1b1b1f}
 .gy-pop.pop-crit{background:linear-gradient(90deg,#8B5CF6,#ff5fa2);color:#fff}
 .gy-pop.out{opacity:0;transition:opacity .3s}
+.rest-in.only{padding:6px 8px}.rest-in.only .gy-pop{margin:0}
 @keyframes popin{from{transform:translateX(-50%) translateY(20px) scale(.8);opacity:0}to{transform:translateX(-50%) translateY(0) scale(1);opacity:1}}
 .set.crit{background:linear-gradient(90deg,rgba(139,92,246,.22),rgba(255,95,162,.18))}
 .set.crit .check{box-shadow:0 0 0 2px #ff5fa2}
@@ -720,7 +724,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 g";
+const APP_VERSION = "2026-11-15 h";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -3742,6 +3746,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-15", t:"🤫 Un Gymon plus discret en séance", x:"Ses réactions après chaque série ne s'affichent plus au milieu de votre carnet : elles apparaissent sur une ligne du bandeau de repos, en bas de l'écran."},
   {d:"2026-11-15", t:"💪 Un Gymon à votre image", x:"Vous êtes déjà costaud ? Votre Gymon rattrape votre niveau : chaque muscle vise votre force mesurée (charges rapportées à votre poids de corps), et chaque séance qui le travaille comble une bonne partie de l'écart. En quelques séances, il vous ressemble. Pour les débutants, rien ne change : il grandit avec vos séries. Pensez à indiquer votre poids de corps dans Réglages."},
   {d:"2026-11-15", t:"💬 Les conseils du Gymon", x:"Quand il n'a rien de plus urgent à vous dire (faim, douche, muscles, records…), votre Gymon partage un conseil : sommeil, alimentation (avec vos protéines du jour selon votre poids), entraînement, récupération, sécurité, motivation et astuces de l'appli. Plus de 350 conseils, tirés de la recherche en musculation. Touchez sa bulle pour le suivant."},
   {d:"2026-11-15", t:"🩺 Carnet de santé", x:"Le journal devient le carnet de santé de votre Gymon : ses courbes de masse et de taille, puis ses faits marquants. La barre d'actions gagne « S'entraîner » pour lancer (ou reprendre) votre séance."},
@@ -4174,18 +4179,23 @@ function setReaction(ex, s){
     if(e > Math.max(...prev.map(x => x.best)) + 0.01 || num(s.w) > Math.max(...prev.map(x => x.maxW)) + 0.01){ kind = "pr"; (a.prShown = a.prShown || []).push(ex.exId); } }
   if(s.crit && !c.dead && !kind) kind = "crit";
   if(c.dead || c.stage < 2) msg = c.dead ? "Ton Gymon t'attend pour revenir à la vie…" : kind === "pr" ? "L'œuf tremble : RECORD ! 🏆" : "L'œuf frémit… +" + fmtVol(v);
-  else if(kind === "pr") msg = `RECORD ! 🏆 ${exById(ex.exId).name}, je le sens jusque dans mes plumes !`;
+  else if(kind === "pr") msg = `RECORD ! 🏆 Je le sens jusque dans mes plumes !`;
   else if(kind === "crit") msg = `COUP CRITIQUE ! +${fmtVol(2*v)} avalés d'un coup 🍗×2`;
   else msg = POP_LINES[popN++ % POP_LINES.length].replace("{v}", fmtVol(v));
   if(s.crit && kind === "pr") msg += " · Coup critique ×2 !";
   gyPop(c, msg, kind);
 }
+// Affichée dans le bandeau de repos (qui démarre justement à la validation) ; sans repos en cours, seule à la même place
 function gyPop(c, msg, kind){
-  let el = document.getElementById("gy-pop"); if(el) el.remove();
-  el = document.createElement("div"); el.id = "gy-pop"; el.className = "gy-pop" + (kind ? " pop-" + kind : ""); el.setAttribute("role", "status");
-  el.innerHTML = creatureSVG(c, true, false, {noFx:true, eyeState:c.dead ? undefined : "happy"}) + `<p>${esc(msg)}</p>`;
-  document.body.appendChild(el); clearTimeout(popT);
-  popT = setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 320); }, kind ? 3200 : 2200);
+  const host = document.getElementById("rest"); if(!host) return;
+  const old = document.getElementById("gy-pop"); if(old) old.remove();
+  let box = host.querySelector(".rest-in"); if(!box){ host.innerHTML = `<div class="rest-in only"></div>`; box = host.firstChild; }
+  host.hidden = false;
+  const el = document.createElement("div"); el.id = "gy-pop"; el.className = "gy-pop" + (kind ? " pop-" + kind : ""); el.setAttribute("role", "status");
+  el.innerHTML = `<span class="gp-av">${creatureSVG(c, true, false, {noFx:true, eyeState:c.dead ? undefined : "happy"})}</span><p>${esc(msg)}</p>`;
+  box.prepend(el); clearTimeout(popT);
+  popT = setTimeout(() => { el.classList.add("out"); setTimeout(() => { el.remove();
+    const h = document.getElementById("rest"), only = h && h.querySelector(".rest-in.only"); if(only && !only.children.length){ h.innerHTML = ""; if(!restState) h.hidden = true; } }, 320); }, kind ? 3200 : 2200);
 }
 // Repas du Gymon (pastille à côté du chrono, sans prendre de hauteur) : volume avec les coups critiques / moyenne des 5 dernières séances
 function mealInfo(){
