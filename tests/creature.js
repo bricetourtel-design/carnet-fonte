@@ -517,6 +517,24 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(/130 à 175 g/.test(tp.prot) && tp.leak === 0, "protéines calculées sur le poids de corps (80 kg : 130 à 175 g), aucune variable oubliée", tp.prot);
   ok(!tp.femOnly && !tp.gymOnly && tp.home && tp.distinct > 300, "conseils filtrés : maison sans matériel, règles seulement pour les femmes", tp);
 
+  // Rattrapage selon la force (15 nov. 2026) : un avancé rattrape vite, un novice garde la croissance par séries
+  const cu = await p.evaluate(() => {
+    const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts), bw0 = S.profile.bw, sx0 = S.profile.sex, now = Date.now(), D = 86400000;
+    S.profile.bw = 80; S.profile.sex = "m";
+    const mk = (i, kg) => ({id:"cu" + i + kg, name:"T", start:now - (10 - i) * D, end:now - (10 - i) * D + 3600000, prs:[],
+      exercises:[{exId:"dc-barre", sets:[1,2,3,4].map(() => ({w:String(kg), r:"5", done:true}))}]});
+    const run = kg => { S.workouts = []; c.levels = {}; c.peak = {}; c.lastWorked = {}; const out = [];
+      for(let i = 0; i < 4; i++){ const w = mk(i, kg); S.workouts.push(w); growMuscles(c, w); out.push(c.levels.Pectoraux || 0); }
+      return {lv:out, score:strengthByMuscle().res.Pectoraux.score}; };
+    const adv = run(95);   // 1RM ≈ 110 kg = 1,38 × poids de corps : avancé
+    const nov = run(30);   // 1RM ≈ 35 kg : débutant
+    S.profile.bw = 0; const nobw = run(95); S.profile.bw = bw0; S.profile.sex = sx0;
+    S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {adv, nov, nobw}; });
+  ok(cu.adv.score >= 4 && cu.adv.lv[0] >= 1.4 && cu.adv.lv[3] >= 2.9 && cu.adv.lv[3] <= 0.9 * cu.adv.score + 0.01, "avancé : chaque séance comble 40 % de l'écart à sa force (≈ 1,4 puis ≈ 3 après 4 séances)", cu.adv);
+  ok(cu.nov.lv[0] >= 0.16 && cu.nov.lv[0] <= 0.35 && cu.nov.lv[3] < 1 && cu.nov.lv[3] < cu.adv.lv[0], "débutant : jamais moins que la croissance par séries, cible basse (vite atteinte)", cu.nov);
+  ok(cu.nobw.lv[0] < 0.2, "sans poids de corps : pas de cible, croissance habituelle", cu.nobw);
+
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
     const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;
