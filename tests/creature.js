@@ -421,6 +421,48 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(g17.mig.mv === 3 && !g17.mig.keys.includes("Jambes") && g17.mig.q > 0 && g17.mig.m === 0 && g17.mig.refQ, "mise à jour : niveaux recalculés par muscle depuis l'historique (mollets jamais travaillés : 0), avant/après remis à zéro", g17.mig);
   ok(g17.bars === 7 && g17.sheet && g17.svgOk, "page Gymon : case « Muscles » par catégorie, fiche détaillée par muscle", g17);
 
+  // Souvenirs et douche (14 nov. 2026)
+  const sv = await p.evaluate(async () => {
+    const D = 86400000, now = Date.now(), c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts);
+    c.stage = Math.max(2, c.stage); c.dead = null; c.sv = 1; c.sat = 90; c.satT = now; c.full = 0;
+    // Gymon d'avant : journal reconstitué, anniversaires passés notés sans fête
+    delete c.journal; delete c.jv; delete c.anniv; delete c.washTs; c.born = now - 100 * D; c.seen = now - 4 * D;
+    gyMsg = null; render(); document.querySelector('.tabs [data-tab="creature"]').click(); await new Promise(r => setTimeout(r, 50));
+    const keys = (creatureState().journal || []).map(j => j.k).filter(Boolean), anniv = (creatureState().anniv || []).slice(), noParty = !document.getElementById("celebrate");
+    const miss = (document.querySelector(".gy-bubble") || {}).textContent || "", reunion = creatureState().journal.some(j => /Retrouvailles après 4 jours/.test(j.t));
+    // Anniversaire tout juste atteint : fête avec gâteau
+    const c2 = creatureState(); c2.born = now - 30 * D - 3600000; c2.anniv = []; c2.journal = c2.journal.filter(j => !/^a\d/.test(j.k || "")); render();
+    await new Promise(r => setTimeout(r, 50)); const cake = (document.getElementById("celebrate") || {}).textContent || ""; celebClose(true);
+    // Journal : feuille, entrées échappées
+    memAdd(creatureState(), null, "<b>x</b>", now, "🧪"); ACT["gy-journal"](document.body, null);
+    const sh = document.querySelector(".sheet") || document.body, jr = sh.textContent, raw = !!sh.querySelector(".jr-t b b"); closeSheet();
+    // Odeur après 7 jours sans douche, sueur après une séance
+    const c3 = creatureState(); c3.washTs = now - 8 * D; c3.last = now - 8 * D; gyMsg = null; gyTalk = 0; render();
+    const smell = !!document.querySelector(".gy-stink"), sbub = (document.querySelector(".gy-bubble") || {}).textContent || "";
+    c3.washTs = now - 2 * D; c3.last = now - 3600000; render(); const sweat = !!document.querySelector(".gy-sweat") && !document.querySelector(".gy-stink");
+    // Douche depuis la page Gymon : animation puis tout propre
+    document.querySelector('[data-act="gy-wash"]').click(); const anim = !!document.querySelector(".gy-shower");
+    await new Promise(r => setTimeout(r, 2600)); const clean = !document.querySelector(".gy-sweat,.gy-stink,.gy-shower") && Date.now() - creatureState().washTs < 5000;
+    const after = (document.querySelector(".gy-bubble") || {}).textContent || "", first = creatureState().journal.some(j => j.k === "wash1");
+    // Fin de séance : bouton douche, palier de séances noté
+    const c4 = creatureState(); c4.fidelity = 9; S.profile.active = null; startWorkout("D", [{exId:"squat", sets:[blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm);
+    Object.assign(A().exercises[0].sets[0], {w:"60", r:"10", done:true}); finishWorkout(); await new Promise(r => setTimeout(r, 50));
+    const cel = document.getElementById("celebrate"), cwash = !!(cel && cel.querySelector('[data-act="celeb-wash"]')), mile = /10 séances ensemble/.test(cel ? cel.textContent : ""), mj = creatureState().journal.some(j => j.k === "s10");
+    celebClose(true);
+    // Sauvegarde : les souvenirs survivent à l'export / import
+    const back = cleanCreature(JSON.parse(JSON.stringify(creatureState()))), kept = back.journal.length === creatureState().journal.length && back.washTs === creatureState().washTs && back.jv === 1;
+    const bad = cleanCreature({...JSON.parse(JSON.stringify(creatureState())), journal:[{ts:"x"}, null, {ts:now, t:5}], anniv:[30, 999]});
+    closeSheet(); S.workouts = JSON.parse(W); S.profile.active = null; S.profile.creature = JSON.parse(saved); gyMsg = null; saveLocal(); render();
+    return {keys, anniv, noParty, miss, reunion, cake, jr, raw, smell, sbub, sweat, anim, clean, after, first, cwash, mile, mj, kept, badJ:bad.journal.length, badA:bad.anniv}; });
+  ok(sv.keys.includes("born") && sv.anniv.join() === "30,91" && sv.noParty, "Gymon d'avant : journal reconstitué, anniversaires passés notés sans fête", sv);
+  ok(/manqué/.test(sv.miss) && sv.reunion, "« Tu m'as manqué » après 3 jours sans le voir, noté dans le journal", sv.miss);
+  ok(/Joyeux anniversaire/.test(sv.cake) && /1 mois/.test(sv.cake), "anniversaire tout juste atteint : fête avec gâteau", sv.cake);
+  ok(/Le journal de/.test(sv.jr) && /<b>x<\/b>/.test(sv.jr) && !sv.raw, "journal du Gymon dans une feuille, texte échappé", sv.jr.slice(0, 120));
+  ok(sv.smell && /douche/.test(sv.sbub) && sv.sweat, "il sent mauvais après 7 jours sans douche, il transpire après une séance", sv);
+  ok(sv.anim && sv.clean && /propre/.test(sv.after) && sv.first, "douche : animation, puis tout propre", sv);
+  ok(sv.cwash && sv.mile && sv.mj, "fin de séance : bouton douche et palier de 10 séances fêté", sv);
+  ok(sv.kept && sv.badJ === 0 && sv.badA.join() === "30", "les souvenirs passent la sauvegarde, entrées invalides écartées", sv);
+
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
     const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;
