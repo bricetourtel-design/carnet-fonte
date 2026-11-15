@@ -439,10 +439,10 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     // Odeur après 7 jours sans douche, sueur après une séance
     const c3 = creatureState(); c3.washTs = now - 8 * D; c3.last = now - 8 * D; gyMsg = null; gyTalk = 0; render();
     const smell = !!document.querySelector(".gy-stink"), sbub = (document.querySelector(".gy-bubble") || {}).textContent || "";
-    c3.washTs = now - 2 * D; c3.last = now - 3600000; render(); const sweat = !!document.querySelector(".gy-sweat") && !document.querySelector(".gy-stink");
+    c3.washTs = now - 2 * D; c3.last = now - 3600000; render(); const sweat = !!document.querySelector(".gy-sweat") && !!document.querySelector(".gy-puddle") && !document.querySelector(".gy-stink");
     // Douche depuis la page Gymon : animation puis tout propre
     document.querySelector('[data-act="gy-wash"]').click(); const anim = !!document.querySelector(".gy-shower");
-    await new Promise(r => setTimeout(r, 2600)); const clean = !document.querySelector(".gy-sweat,.gy-stink,.gy-shower") && Date.now() - creatureState().washTs < 5000;
+    await new Promise(r => setTimeout(r, 2600)); const clean = !document.querySelector(".gy-sweat,.gy-stink,.gy-shower,.gy-puddle") && Date.now() - creatureState().washTs < 5000;
     const after = (document.querySelector(".gy-bubble") || {}).textContent || "", first = creatureState().journal.some(j => j.k === "wash1");
     // Fin de séance : bouton douche, palier de séances noté
     const c4 = creatureState(); c4.fidelity = 9; S.profile.active = null; startWorkout("D", [{exId:"squat", sets:[blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm);
