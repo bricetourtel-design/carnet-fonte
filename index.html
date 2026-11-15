@@ -136,6 +136,7 @@ button.thumb{padding:0}
 .set.crit .check{box-shadow:0 0 0 2px #ff5fa2}
 .set.crit .setno{position:relative;background:linear-gradient(135deg,#8B5CF6,#ff5fa2);color:#fff}
 .set.crit .setno::after{content:"⚡";position:absolute;right:-7px;top:-8px;font-size:13px}
+.set.crit-miss .setno{position:relative}.set.crit-miss .setno::after{content:"⚡";position:absolute;right:-7px;top:-8px;font-size:13px;filter:grayscale(1);opacity:.6}
 .feel-check{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
 .feel-check li{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;background:var(--fill)}
 .set.check-me{animation:checkme 1s ease-in-out 4}
@@ -730,7 +731,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 k";
+const APP_VERSION = "2026-11-15 l";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2361,7 +2362,9 @@ function critPlan(a){
     if(!c.dead && k >= CRIT.fromSet && n < CRIT.max && CRIT.roll()){ s.crit = 1; n++; got++; } }));
   return got;
 }
-function critVolume(w){ let v = 0; w.exercises.forEach(ex => workSets(ex).forEach(s => { if(s.crit) v += num(s.w)*num(s.r); })); return v; }
+// Coup critique réussi seulement si l'objectif de la série est atteint (charge et reps visées, décision du 15 nov. 2026) ; critOK est posé à la validation
+const critHit = s => s.crit && s.critOK !== 0;
+function critVolume(w){ let v = 0; w.exercises.forEach(ex => workSets(ex).forEach(s => { if(critHit(s)) v += num(s.w)*num(s.r); })); return v; }
 // Appelée une fois à la validation d'une séance ; ne compte jamais deux fois la même séance.
 // Repas de fin de séance (13 nov. 2026) : il mange le poulet de la séance (puis la portion dorée) jusqu'à 100 %, le reste part au frigo ;
 // un record rapporte un steak, la 3e séance de la semaine une omelette (rangés au frigo). Les muscles poussent avec les séries, comme avant.
@@ -3765,6 +3768,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-15", t:"⚡ Coup critique mérité", x:"Une série ⚡ ne nourrit double votre Gymon que si vous atteignez son objectif : la charge prévue et le nombre de répétitions visé. Sinon, le Gymon vous le dit, et la série compte normalement."},
   {d:"2026-11-15", t:"🔁 Plus de doublons dans le programme", x:"Le coach ne propose plus deux variantes du même mouvement dans une séance (par exemple développé incliné aux haltères puis à la barre). Il garde un seul exercice et ajoute des séries, ce qui évite de changer de poste. Votre programme actuel est corrigé automatiquement dans la séance du jour."},
   {d:"2026-11-15", t:"🤫 Un Gymon plus discret en séance", x:"Ses réactions après chaque série ne s'affichent plus au milieu de votre carnet : elles apparaissent sur une ligne du bandeau de repos, en bas de l'écran, et restent le temps de les lire."},
   {d:"2026-11-15", t:"💪 Un Gymon à votre image", x:"Vous êtes déjà costaud ? Votre Gymon rattrape votre niveau : chaque muscle vise votre force mesurée (charges rapportées à votre poids de corps), et chaque séance qui le travaille comble une bonne partie de l'écart. En quelques séances, il vous ressemble. Pour les débutants, rien ne change : il grandit avec vos séries. Pensez à indiquer votre poids de corps dans Réglages."},
@@ -4147,7 +4151,7 @@ function viewActive(){
     let n = 0;
     const rows = ex.sets.map((s,j) => {
       const label = s.warm ? "É" : String(++n), p = (s.warm ? prevWarm[nw++] : prevWork[n-1]) || null;
-      return `<tr class="set ${s.done?"done":""} ${s.warm?"warm":""} ${s.crit && !s.warm?"crit":""}" data-i="${i}" data-j="${j}">
+      return `<tr class="set ${s.done?"done":""} ${s.warm?"warm":""} ${s.crit && !s.warm ? (s.done && s.critOK === 0 ? "crit-miss" : "crit") : ""}" data-i="${i}" data-j="${j}">
         <td><button class="setno ${s.warm?"warm":""}" data-act="toggle-warm" aria-label="Série ${label}${s.crit && !s.warm ? ", coup critique" : ""}, toucher pour marquer en échauffement">${label}</button></td>
         <td class="prev">${p ? esc(setTxt(p)) : "—"}</td>
         <td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (wu[nw-1] ? fmtN(wu[nw-1].w) : p&&num(p.w)?fmtN(num(p.w)):"kg") : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg">${e.equip==="Barre" ? `<small class="plates" id="pl-${i}-${j}">${plateText(e, num(s.w) || num(s.warm ? (wu[nw-1]||{}).w : c.w))}</small>` : ""}</td>
@@ -4164,7 +4168,7 @@ function viewActive(){
         <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:unitOf(e)}` : `Objectif ${c.lo}–${c.hi} ${unitOf(e)}`}${c.fatigue ? `<small class="fat"> · fatigue −${c.fatigue} %</small>` : ""}</span>
         <span class="cwhy">pourquoi ?</span></button>
       ${(() => { const nums = ex.sets.filter(x => !x.warm).map((x, k) => x.crit && !x.done ? k + 1 : 0).filter(Boolean);
-        return nums.length && !creatureState().dead ? `<p class="crit-hint">⚡ Série${nums.length > 1 ? "s" : ""} ${nums.join(" et ")} : coup critique, ${nums.length > 1 ? "elles nourrissent" : "elle nourrit"} double ton Gymon !</p>` : ""; })()}
+        return nums.length && !creatureState().dead ? `<p class="crit-hint">⚡ Série${nums.length > 1 ? "s" : ""} ${nums.join(" et ")} : coup critique : objectif atteint, ${nums.length > 1 ? "elles nourrissent" : "elle nourrit"} double ton Gymon !</p>` : ""; })()}
       ${wu.length ? `<p class="wu-hint">🔥 Échauffement d'abord (séries « É ») : ${wu.map(x => `${fmtN(x.w)} kg × ${x.r}`).join(" puis ")}. Sans minuteur, ne compte pas dans le volume.</p>` : ""}
       <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>kg</th><th>${TIMED.has(e.id) ? "Sec." : "Reps"}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div class="ex-actions"><button class="btn sm" data-act="add-set" data-i="${i}">+ Série</button>
@@ -4197,12 +4201,15 @@ function setReaction(ex, s){
   const prev = exHistory(ex.exId);
   if(prev.length && !(a.prShown||[]).includes(ex.exId)){ const e = e1rm(num(s.w), num(s.r));
     if(e > Math.max(...prev.map(x => x.best)) + 0.01 || num(s.w) > Math.max(...prev.map(x => x.maxW)) + 0.01){ kind = "pr"; (a.prShown = a.prShown || []).push(ex.exId); } }
-  if(s.crit && !c.dead && !kind) kind = "crit";
+  const missed = s.crit && s.critOK === 0;
+  if(critHit(s) && !c.dead && !kind) kind = "crit";
   if(c.dead || c.stage < 2) msg = c.dead ? "Ton Gymon t'attend pour revenir à la vie…" : kind === "pr" ? "L'œuf tremble : RECORD ! 🏆" : "L'œuf frémit… +" + fmtVol(v);
   else if(kind === "pr") msg = `RECORD ! 🏆 Je le sens jusque dans mes plumes !`;
   else if(kind === "crit") msg = `COUP CRITIQUE ! +${fmtVol(2*v)} avalés d'un coup 🍗×2`;
+  else if(missed) msg = `Coup critique raté : il fallait ${s.critGoal || "l'objectif"}. Pas de double ration cette fois 😢`;
   else msg = POP_LINES[popN++ % POP_LINES.length].replace("{v}", fmtVol(v));
-  if(s.crit && kind === "pr") msg += " · Coup critique ×2 !";
+  if(critHit(s) && kind === "pr") msg += " · Coup critique ×2 !";
+  else if(missed && kind === "pr") msg += ` · Coup critique raté (il fallait ${s.critGoal || "l'objectif"})`;
   gyPop(c, msg, kind);
 }
 // Affichée dans le bandeau de repos (qui démarre justement à la validation) ; sans repos en cours, seule à la même place
@@ -4473,7 +4480,7 @@ function startWorkout(name, exercises, routineId){
 }
 function finishWorkout(){
   const a = S.profile.active;
-  const exercises = a.exercises.map(ex => ({exId:ex.exId, feel:ex.feel||0, sets:ex.sets.filter(s=>s.done).map(s=>({w:s.w, r:s.r, done:true, warm:!!s.warm, ...(s.crit && !s.warm ? {crit:1} : {})}))})).filter(ex => ex.sets.length);
+  const exercises = a.exercises.map(ex => ({exId:ex.exId, feel:ex.feel||0, sets:ex.sets.filter(s=>s.done).map(s=>({w:s.w, r:s.r, done:true, warm:!!s.warm, ...(critHit(s) && !s.warm ? {crit:1} : {})}))})).filter(ex => ex.sets.length);
   if(!exercises.length){ toast("Validez au moins une série avec ✓ avant de terminer"); return; }
   const w = {id:a.id, name:a.name.trim()||"Séance", start:a.start, end:Date.now(), routineId:a.routineId, exercises, prs:[]};
   exercises.forEach(ex => {
@@ -4758,11 +4765,14 @@ const ACT = {
       if(s.w==="" && wi.placeholder && wi.placeholder!=="kg") s.w = wi.placeholder;
       if(s.r==="" && ri.placeholder && ri.placeholder!=="reps") s.r = ri.placeholder;
       if(!num(s.r)){ toast("Indiquez le nombre de répétitions"); ri.focus(); return; }
+      // Coup critique : réussi seulement si l'objectif est atteint (charge visée et reps visées au moins)
+      if(s.crit && !s.warm){ const c = coach(ex.exId, A().start, ex.plan, preLoad(A().exercises, i, true)), tw = num(c.w), tr0 = num(c.r) || num(c.lo);
+        s.critOK = (!tw || num(s.w) >= tw - 0.01) && (!tr0 || num(s.r) >= tr0) ? 1 : 0; s.critGoal = (tw ? fmtN(tw) + " kg × " : "") + (tr0 ? tr0 + (c.unit === "s" ? " s" : " reps") : ""); }
       s.done = true; if(!s.warm) startRest(S.profile.rest<0 ? coach(ex.exId, A().start, ex.plan).rest : S.profile.rest);
       // Pré-remplit la série suivante si elle est vide
       const nx = ex.sets[j+1]; if(nx && !nx.done && !nx.warm && nx.w==="" && s.w!=="" && !s.warm) nx.w = s.w;
       if(!s.warm) setReaction(ex, s);
-    } else s.done = false;
+    } else { s.done = false; delete s.critOK; }
     touchProfile(); render();
   },
   // Toucher le numéro d'une série la passe en échauffement, placée en tête (un échauffement après les séries de travail n'a pas de sens) ; toucher « É » l'annule

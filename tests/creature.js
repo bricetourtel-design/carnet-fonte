@@ -544,10 +544,29 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     stopRest(); S.profile.active = null; S.workouts = JSON.parse(W); saveLocal(); render(); return {pop, one}; });
   ok(rl.pop && rl.one, "repos : réaction du Gymon dans le bandeau, chrono et boutons −15 s, +15 s, Passer sur une seule ligne", rl);
 
+  // Coup critique mérité (15 nov. 2026) : double seulement si l'objectif (charge et reps visées) est atteint
+  const cm = await p.evaluate(() => {
+    const W = JSON.stringify(S.workouts), c = creatureState(), saved = JSON.stringify(c), now = Date.now(), D = 86400000; c.stage = Math.max(2, c.stage); c.dead = null;
+    S.workouts = [{id:"cm0", name:"P", start:now - 4 * D, end:now - 4 * D + 3600000, prs:[], exercises:[{exId:"dc-barre", feel:3, sets:[1,2,3].map(() => ({w:"60", r:"8", done:true}))}]}];
+    S.profile.active = null; startWorkout("C", [{exId:"dc-barre", sets:[blankSet(), blankSet(), blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm);
+    A().exercises[0].sets.forEach(x => x.crit = 1); tab = "seance"; render();
+    const g = coach("dc-barre", A().start, A().exercises[0].plan, preLoad(A().exercises, 0, true)), tw = num(g.w), tr = num(g.r);
+    const val = (j, w, r) => { const x = A().exercises[0].sets[j]; x.w = String(w); x.r = String(r); render(); ACT.check(document.querySelector(`tr[data-i="0"][data-j="${j}"] .check`)); return (document.getElementById("gy-pop") || {}).textContent || ""; };
+    const m1 = val(0, tw, tr - 2), v1 = critVolume(A()), miss = document.querySelector('tr[data-j="0"]').classList.contains("crit-miss");
+    const m2 = val(1, tw - 5, tr), v2 = critVolume(A());
+    const m3 = val(2, tw, tr), v3 = critVolume(A());
+    finishWorkout(); const w = S.workouts[S.workouts.length - 1], saved3 = w.exercises[0].sets.map(x => x.crit ? 1 : 0).join("");
+    celebClose(true); closeSheet(); stopRest(); S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {tw, tr, m1, v1, miss, m2, v2, m3, v3, saved3}; });
+  ok(/raté/.test(cm.m1) && cm.v1 === 0 && cm.miss, "coup critique : reps visées non atteintes → pas de double, le Gymon le dit", cm);
+  ok(/raté/.test(cm.m2) && cm.v2 === 0, "coup critique : charge inférieure à l'objectif → pas de double", cm);
+  ok(/CRITIQUE/.test(cm.m3) && cm.v3 === cm.tw * cm.tr && cm.saved3 === "001", "coup critique : objectif atteint → double ration, seule cette série est enregistrée critique", cm);
+
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
     const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;
     const r0 = CRIT.roll; CRIT.roll = () => true;   // les dés tombent toujours sur « critique »
+    S.workouts = S.workouts.filter(w => !w.exercises.some(ex => ex.exId === "squat"));   // squat sans historique : l'objectif ne porte que sur les reps (coup critique mérité, 15 nov. 2026)
     S.profile.active = null; startWorkout("G", [{exId:"squat", sets:[blankSet(), blankSet(), blankSet(), blankSet()]}]); A().exercises[0].sets = A().exercises[0].sets.filter(x => !x.warm); render();
     const start = document.getElementById("gy-pop").textContent, marks = A().exercises[0].sets.map(x => x.crit ? 1 : 0).join(""), hint = (document.querySelector(".crit-hint")||{}).textContent || "", crow = document.querySelectorAll("tr.set.crit").length;
     const row = j => document.querySelector(`tr[data-i="0"][data-j="${j}"]`), val = (j, w, r) => { const a = A().exercises[0].sets[j]; a.w = w; a.r = r; render(); ACT.check(row(j).querySelector(".check")); };
