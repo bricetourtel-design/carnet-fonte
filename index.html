@@ -601,15 +601,21 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 @keyframes stink{0%{transform:translateY(20px) scaleY(.8);opacity:0}40%{opacity:.95}100%{transform:translateY(-70px) scaleY(1.1);opacity:0}}
 .gy-stink b{position:absolute;top:0;left:50%;font-size:16px;animation:fly 3s linear infinite}
 @keyframes fly{0%{transform:translate(-40px,0)}25%{transform:translate(30px,-20px)}50%{transform:translate(50px,10px)}75%{transform:translate(-10px,25px)}100%{transform:translate(-40px,0)}}
-.gy-sweat{position:absolute;left:50%;top:22%;z-index:3;pointer-events:none;transform:translateX(-50%);width:34%;height:30%}
-.gy-sweat i{position:absolute;font-style:normal;font-size:16px;opacity:0;animation:sweat 2s ease-in infinite}
-.gy-sweat i:nth-child(1){left:0}.gy-sweat i:nth-child(2){left:80%;animation-delay:.7s}.gy-sweat i:nth-child(3){left:40%;animation-delay:1.3s}
-@keyframes sweat{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(50px);opacity:0}}
+.gy-sweat{position:absolute;inset:0;z-index:3;pointer-events:none}
+/* Transpiration (15 nov. 2026) : une flaque à ses pieds et des gouttes qui glissent du bas du corps dedans, rien ne tombe d'en haut (≠ douche) */
+.gy-puddle{position:absolute;left:50%;bottom:2.2%;z-index:0;width:34%;height:18px;transform:translateX(-50%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,rgba(140,210,255,.75),rgba(110,190,255,.45) 55%,rgba(110,190,255,0) 72%);animation:puddle 3.2s ease-in-out infinite}
+.gy-puddle::after{content:"";position:absolute;left:30%;top:30%;width:22%;height:22%;border-radius:50%;background:rgba(255,255,255,.7);filter:blur(1px)}
+@keyframes puddle{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.08,1.15)}}
+.gy-sweat i{position:absolute;bottom:20%;width:7px;height:10px;border-radius:50% 50% 50% 50% / 62% 62% 38% 38%;background:linear-gradient(180deg,#d6f0ff,#6cc0ff);
+  box-shadow:0 0 4px rgba(120,200,255,.8);opacity:0;animation:sweat 2.2s ease-in infinite}
+.gy-sweat i:nth-child(1){left:44%}.gy-sweat i:nth-child(2){left:55%;animation-delay:.8s}.gy-sweat i:nth-child(3){left:49%;animation-delay:1.5s}
+@keyframes sweat{0%{bottom:20%;opacity:0}15%{opacity:1}85%{opacity:1}100%{bottom:3.5%;opacity:0}}
 .celeb .celeb-wash{background:rgba(124,200,255,.2);color:#fff;border-color:rgba(124,200,255,.5)}
 .jr-list{display:flex;flex-direction:column;gap:6px}.jr-m{margin:8px 0 0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .jr-row{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--fill)}.jr-e{font-size:22px;width:28px;text-align:center}
 .jr-t{display:flex;flex-direction:column}.jr-t b{font-size:15px;font-weight:600}.jr-t small{color:var(--muted);font-size:12px}
-@media (prefers-reduced-motion: reduce){.gy-shower i,.gy-shower b,.gy-stink i,.gy-stink b,.gy-sweat i{animation:none;opacity:.7}}
+@media (prefers-reduced-motion: reduce){.gy-shower i,.gy-shower b,.gy-stink i,.gy-stink b,.gy-sweat i,.gy-puddle{animation:none;opacity:.7}}
 .fest-table{font-size:40px;letter-spacing:4px;margin:-6px 0 0}
 .gy-sat{text-align:left}.sat-row{display:flex;align-items:center;gap:5px;margin-top:5px}.sat-row b{font-size:12px;font-weight:700;color:#ff8ac0}.sat-row i{font-style:normal;font-size:14px}
 .mini-fr{display:inline-block;width:12px;height:18px}.mini-fr svg,.fr-ico svg{width:100%;height:100%}
@@ -732,7 +738,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 n";
+const APP_VERSION = "2026-11-15 o";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2986,7 +2992,7 @@ const isSmelly = c => !c.dead && c.stage >= 2 && Date.now() - (c.washTs || Date.
 const isSweaty = c => !c.dead && c.stage >= 2 && c.last > (c.washTs || 0) && Date.now() - c.last < 24 * 3600000;
 // Animation de douche sur une zone (page Gymon ou fin de séance)
 function showerAnim(zone, done){
-  if(!zone) return; zone.querySelectorAll(".gy-sweat,.gy-stink").forEach(x => x.remove());
+  if(!zone) return; zone.querySelectorAll(".gy-sweat,.gy-stink,.gy-puddle").forEach(x => x.remove());
   const el = document.createElement("div"); el.className = "gy-shower"; el.setAttribute("aria-hidden", "true");
   el.innerHTML = `<span class="sh-head">🚿</span>` + Array.from({length:16}, (_, i) => `<i style="left:${30 + (i * 37) % 42}%;animation-delay:${((i * 0.13) % 0.6).toFixed(2)}s"></i>`).join("")
     + Array.from({length:6}, (_, i) => `<b style="left:${32 + i * 7}%;animation-delay:${(0.5 + i * 0.18).toFixed(2)}s">🫧</b>`).join("");
@@ -3096,7 +3102,7 @@ function viewCreature(){
         <div class="gy-aura"></div>
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
         <i class="gy-spark" style="--x:72%;--y:72%;--d:2.1s"></i><i class="gy-spark" style="--x:24%;--y:66%;--d:.7s"></i>
-        ${isSmelly(c) ? `<span class="gy-stink" aria-hidden="true">${'<i><svg viewBox="0 0 16 48"><path d="M8 46 C 1 40 15 34 8 27 S 1 14 8 2" stroke="#8bc34a" stroke-width="3.2" fill="none" stroke-linecap="round"/></svg></i>'.repeat(3)}<b>🪰</b></span>` : isSweaty(c) ? `<span class="gy-sweat" aria-hidden="true"><i>💧</i><i>💧</i><i>💧</i></span>` : ""}
+        ${isSmelly(c) ? `<span class="gy-stink" aria-hidden="true">${'<i><svg viewBox="0 0 16 48"><path d="M8 46 C 1 40 15 34 8 27 S 1 14 8 2" stroke="#8bc34a" stroke-width="3.2" fill="none" stroke-linecap="round"/></svg></i>'.repeat(3)}<b>🪰</b></span>` : isSweaty(c) ? `<span class="gy-puddle" aria-hidden="true"></span><span class="gy-sweat" aria-hidden="true"><i></i><i></i><i></i></span>` : ""}
         ${gyZoom(sv, c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}${hop ? " gy-hop" : ""}${fx && fx.cls && Date.now() - fx.ts < 1500 ? " " + fx.cls : ""}`)}
         ${m0 === "sleep" ? `<span class="gy-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><button class="gy-bubble" data-act="gy-wake">Zzz… 💤</button>` : (() => { const L = fx ? [fx.txt] : gyAte && Date.now() - gyAte.ts < 6000 ? [gyAte.k === "steak" ? "Un steak ! Je suis calé pour 12 heures 🥩💪" : gyAte.k === "omelette" ? "Une omelette ! Miam 🥚" : `Miam ! 😋 Satiété ${vit} %`]
           : gyWake && Date.now() - gyWake < 60000 ? ["Hein ? Quoi ? … Ah, c'est toi 😴 Je me rendors vite."] : gymonLines(c); const say = L.prio === undefined ? L[0] : gyTalk < L.length ? L[gyTalk] : c.stage >= 2 && !c.dead ? gymonTip(c, gyTalk - L.length) : "";   // le jeu d'abord, puis un conseil
