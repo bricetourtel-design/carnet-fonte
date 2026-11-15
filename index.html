@@ -720,7 +720,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 f";
+const APP_VERSION = "2026-11-15 g";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2081,7 +2081,7 @@ const CREATURE_CFG = {
   heightPerSessionAfter: 1,                 // cm par séance après le dernier seuil
   // Musculature v2 (niveau 0 à 4,5) : grossit avec les séries de chaque séance, de moins en moins vite en approchant du haut,
   // bonus quand on bat un record ; fond doucement après 14 jours sans travailler le muscle (jamais sous 40 % de son maximum)
-  growth: {perSet:0.04, maxSession:0.45, ceiling:5, max:4.5, prBonus:0.15},
+  growth: {perSet:0.04, maxSession:0.45, ceiling:5, max:4.5, prBonus:0.15, target:0.9, catchUp:0.4},
   atrophy: {afterDays:14, perDay:0.05, floorRatio:0.4},
   levelThresholds: {default:[1.5, 2.5, 3.25, 4]},
   // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
@@ -2300,9 +2300,15 @@ function growMuscles(c, w){
   w.exercises.forEach(ex => { const n = workSets(ex).length; if(!n) return; const e = exById(ex.exId);
     Object.entries(exWork(e)).forEach(([m, p]) => sets[m] = (sets[m]||0) + n * p);
     if((w.prs||[]).includes(ex.exId)) pr.add(primOf(e)); });
+  // Rattrapage selon la force (15 nov. 2026, décision du propriétaire) : un pratiquant avancé doit vite avoir un Gymon à son image,
+  // sans pénaliser les novices. Cible = 90 % du score de force du muscle (0 à 5, 1RM rapporté au poids de corps, barème femmes) ;
+  // sous la cible, chaque séance qui travaille le muscle rapporte au moins 40 % de l'écart. Au-dessus, la croissance habituelle.
+  const sb = Object.keys(sets).length ? strengthByMuscle() : null;
   Object.entries(sets).forEach(([m, n]) => { if(n < 0.5) return;
     const cur = muscleLevel(c, m, t);   // la fonte éventuelle est d'abord appliquée
-    const gain = Math.min(G.maxSession, G.perSet * n) * Math.max(0.08, 1 - cur / G.ceiling) + (pr.has(m) ? G.prBonus : 0);
+    const sc = sb && sb.res[m] && sb.res[m].score, T = typeof sc === "number" && isFinite(sc) ? G.target * sc : 0;
+    const base = Math.min(G.maxSession, G.perSet * n) * Math.max(0.08, 1 - cur / G.ceiling);
+    const gain = (cur < T ? Math.max(base, G.catchUp * (T - cur)) : base) + (pr.has(m) ? G.prBonus : 0);
     c.levels[m] = Math.round(Math.min(G.max, cur + gain) * 100) / 100;
     c.lastWorked[m] = Math.max(c.lastWorked[m] || 0, t); c.peak[m] = Math.max(c.peak[m] || 0, c.levels[m]);
   });
@@ -3736,6 +3742,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-15", t:"💪 Un Gymon à votre image", x:"Vous êtes déjà costaud ? Votre Gymon rattrape votre niveau : chaque muscle vise votre force mesurée (charges rapportées à votre poids de corps), et chaque séance qui le travaille comble une bonne partie de l'écart. En quelques séances, il vous ressemble. Pour les débutants, rien ne change : il grandit avec vos séries. Pensez à indiquer votre poids de corps dans Réglages."},
   {d:"2026-11-15", t:"💬 Les conseils du Gymon", x:"Quand il n'a rien de plus urgent à vous dire (faim, douche, muscles, records…), votre Gymon partage un conseil : sommeil, alimentation (avec vos protéines du jour selon votre poids), entraînement, récupération, sécurité, motivation et astuces de l'appli. Plus de 350 conseils, tirés de la recherche en musculation. Touchez sa bulle pour le suivant."},
   {d:"2026-11-15", t:"🩺 Carnet de santé", x:"Le journal devient le carnet de santé de votre Gymon : ses courbes de masse et de taille, puis ses faits marquants. La barre d'actions gagne « S'entraîner » pour lancer (ou reprendre) votre séance."},
   {d:"2026-11-15", t:"🎮 S'occuper de votre Gymon", x:"Sur sa page, une barre d'actions remplace le bouton de séance : Nourrir (le frigo), Laver, Câlin et Journal. Une pastille vous signale ce qu'il attend : faim, douche, nouveau souvenir. Pour lancer une séance, passez par l'onglet Séance."},
