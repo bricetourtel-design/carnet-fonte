@@ -724,7 +724,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 h";
+const APP_VERSION = "2026-11-15 i";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -3746,7 +3746,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
-  {d:"2026-11-15", t:"🤫 Un Gymon plus discret en séance", x:"Ses réactions après chaque série ne s'affichent plus au milieu de votre carnet : elles apparaissent sur une ligne du bandeau de repos, en bas de l'écran."},
+  {d:"2026-11-15", t:"🤫 Un Gymon plus discret en séance", x:"Ses réactions après chaque série ne s'affichent plus au milieu de votre carnet : elles apparaissent sur une ligne du bandeau de repos, en bas de l'écran, et restent le temps de les lire."},
   {d:"2026-11-15", t:"💪 Un Gymon à votre image", x:"Vous êtes déjà costaud ? Votre Gymon rattrape votre niveau : chaque muscle vise votre force mesurée (charges rapportées à votre poids de corps), et chaque séance qui le travaille comble une bonne partie de l'écart. En quelques séances, il vous ressemble. Pour les débutants, rien ne change : il grandit avec vos séries. Pensez à indiquer votre poids de corps dans Réglages."},
   {d:"2026-11-15", t:"💬 Les conseils du Gymon", x:"Quand il n'a rien de plus urgent à vous dire (faim, douche, muscles, records…), votre Gymon partage un conseil : sommeil, alimentation (avec vos protéines du jour selon votre poids), entraînement, récupération, sécurité, motivation et astuces de l'appli. Plus de 350 conseils, tirés de la recherche en musculation. Touchez sa bulle pour le suivant."},
   {d:"2026-11-15", t:"🩺 Carnet de santé", x:"Le journal devient le carnet de santé de votre Gymon : ses courbes de masse et de taille, puis ses faits marquants. La barre d'actions gagne « S'entraîner » pour lancer (ou reprendre) votre séance."},
@@ -4195,7 +4195,7 @@ function gyPop(c, msg, kind){
   el.innerHTML = `<span class="gp-av">${creatureSVG(c, true, false, {noFx:true, eyeState:c.dead ? undefined : "happy"})}</span><p>${esc(msg)}</p>`;
   box.prepend(el); clearTimeout(popT);
   popT = setTimeout(() => { el.classList.add("out"); setTimeout(() => { el.remove();
-    const h = document.getElementById("rest"), only = h && h.querySelector(".rest-in.only"); if(only && !only.children.length){ h.innerHTML = ""; if(!restState) h.hidden = true; } }, 320); }, kind ? 3200 : 2200);
+    const h = document.getElementById("rest"), only = h && h.querySelector(".rest-in.only"); if(only && !only.children.length){ h.innerHTML = ""; if(!restState) h.hidden = true; } }, 320); }, (kind ? 7000 : 5000) + Math.max(0, msg.length - 40) * 40);   // le temps de lire : 5 s (7 s record ou critique), plus pour les longs messages
 }
 // Repas du Gymon (pastille à côté du chrono, sans prendre de hauteur) : volume avec les coups critiques / moyenne des 5 dernières séances
 function mealInfo(){
