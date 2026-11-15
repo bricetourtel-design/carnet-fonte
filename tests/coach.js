@@ -286,6 +286,16 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(FM.dup.every(n => n === 0) && !FM.twoIncl, "programme : jamais deux variantes du même mouvement dans une séance (45 à 90 min)", FM.dup);
   ok(FM.di.length === 1 && FM.di[0][1] === 5 && /Regroupé/.test(FM.note), "programme déjà enregistré : doublon regroupé en un exercice de 5 séries, expliqué", FM);
   ok(FM.mine === 2, "routine faite à la main : laissée telle quelle", FM.mine);
+  // Poids du corps (15 nov. 2026) : charge proposée = poids de corps actuel, jamais baissée par la fatigue
+  const BWT = await p.evaluate(() => {
+    const W = S.workouts, bw0 = S.profile.bw, now = Date.now(), D = 86400000; S.profile.bw = 82;
+    const ses = (id, w, r) => ({id:"bw" + id, name:"T", start:now - 3 * D, end:now - 3 * D + 3600000, prs:[], exercises:[{exId:id, feel:3, sets:[1,2,3].map(() => ({w, r, done:true}))}]});
+    S.workouts = [ses("tractions", "75", "8"), ses("pompes", "", "15")];
+    const t0 = coach("tractions"), tf = coach("tractions", now, 3, 9), p0 = coach("pompes");
+    S.workouts = W; S.profile.bw = bw0;
+    return {t0:[t0.w, t0.r], tf:[tf.w, tf.r], p0:p0.w}; });
+  ok(BWT.t0[0] === 82 && BWT.tf[0] === 82 && BWT.tf[1] < BWT.t0[1], "poids du corps : charge proposée = poids actuel (82 kg, pas l'ancien 75), la fatigue baisse les reps, pas le poids", BWT);
+  ok(BWT.p0 === "", "poids du corps : une charge jamais notée reste vide", BWT.p0);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);
