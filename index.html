@@ -720,7 +720,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 c";
+const APP_VERSION = "2026-11-15 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -3059,8 +3059,7 @@ function viewCreature(){
       </div>
       ${c.stage >= 2 ? `<button class="gy-name" data-act="gy-name">${c.name ? esc(c.name) : "✏️ Donner un nom"}</button>` : ""}
       <p class="gy-form"><button class="gy-help" data-act="tuto" aria-label="Comment ça marche ?">?</button>${c.stage >= 2 ? `` : ""}${c.stage >= 2 ? `<button class="gy-flip" data-act="gy-flip" aria-label="${gyBack ? "Voir de face" : "Voir de dos"}">↻ ${gyBack ? "Face" : "Dos"}</button><button class="gy-flip gy-share" data-act="share" data-k="week" aria-label="Partager mon Gymon">↗ Partager</button>` : ""}</p>
-      <p class="gy-hint">${esc(gymonHint(c))}</p>
-      ${c.stage >= 2 ? gyActionsHTML(c, vit) : ""}
+      ${c.stage >= 2 ? gyActionsHTML(c, vit) : `<p class="gy-hint">${esc(gymonHint(c))}</p>`}
     </section>`;
 }
 
@@ -3267,6 +3266,9 @@ function gymonLines(c){
     else if(lw && days > 10 && m !== "Abdos") L.push(`${days} jours sans ${M_SANS[m]}… ils vont bientôt fondre !`);
     else if(r.pct < 0.6 && m !== "Abdos") L.push(`Mes ${M_SANS[m]} chauffent encore 🔥 Laisse-les souffler.`); });
   if(isSmelly(c)) melt.unshift("Je sens un peu fort… une douche ? 🚿");
+  // La phrase sous le Gymon est retirée (15 nov. 2026) : l'alerte « il meurt de faim » passe dans sa bulle, en premier
+  { const v = creatureSatiety(c), left = creatureDaysLeft(c), fk = fridgeKg(c) > 0 || (c.fridge || []).length;
+    if(v <= 30) melt.unshift(`Je meurs de faim ! Plus que ${left} jour${left > 1 ? "s" : ""}… ${fk ? "le frigo ou une séance, vite 🍗" : "une séance, vite 🏋️"}`); }
   // Frigo (13 nov. 2026) : boîte de pois chiches ouverte, poulet périmé, poulet qui va périmer — dits en premier
   if(c.peasUsed && now - c.peasUsed.ts < 3*D) melt.unshift("J'ai dû ouvrir la boîte de pois chiches… ouf ! Reviens vite me nourrir 🥫");
   if(c.spoiled && now - c.spoiled.ts < 2*D) melt.unshift(c.spoiled.kg ? `Beurk ! ${fmtVol(c.spoiled.kg)} de poulet ont périmé au frigo 🤢` : "Beurk ! Quelque chose a périmé au frigo 🤢");
