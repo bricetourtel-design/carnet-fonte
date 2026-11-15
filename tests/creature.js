@@ -490,6 +490,33 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     gyMsg = null; gyTalk = 0; tab = "creature"; render(); const b = (document.querySelector(".gy-bubble") || {}).textContent || ""; S.profile.creature = JSON.parse(saved); saveLocal(); render(); return b; });
   ok(/Je meurs de faim ! Plus que \d+ jour/.test(hb), "sous 30 % : l'alerte de faim passe dans sa bulle, en premier", hb);
 
+  // Conseils du Gymon (15 nov. 2026) : après les phrases du jeu, au hasard
+  const tp = await p.evaluate(() => {
+    const D = 86400000, now = Date.now(), c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts), bw0 = S.profile.bw, eq0 = S.profile.equip, sx0 = S.profile.sex;
+    const cats = {}; GYM_TIPS.forEach(t => { const k = t.split("|")[0]; cats[k] = (cats[k] || 0) + 1; });
+    const bad = GYM_TIPS.filter(t => t.split("|").length !== 3 || t.split("|")[2].length > 110);
+    // Aucune phrase de jeu : un conseil ; un toucher → un autre conseil
+    c.stage = Math.max(2, c.stage); c.dead = null; c.sv = 1; c.sat = 100; c.satT = now; c.full = now + 3600000; c.fridge = []; c.washTs = now; c.last = now - 3 * D; c.spoiled = null; c.peasUsed = null;
+    S.workouts = []; c.fed = []; c.lastWorked = {}; c.levels = {}; c.peak = {}; MUSC.forEach(m => { c.levels[m] = 1; c.peak[m] = 1; });
+    gyMsg = null; gyAte = null; gyWake = 0; gyTalk = 0; tab = "creature"; render();
+    const lines = gymonLines(c), b1 = document.querySelector(".gy-bubble").textContent; document.querySelector(".gy-bubble").click(); const b2 = document.querySelector(".gy-bubble").textContent;
+    const pool = [...GYM_TIPS.map(t => t.split("|")[2]), ...GYM_QUOTES, ...GYM_CHAT], isTip = x => pool.some(t => !/\{/.test(t) && t === x) || /de protéines|séances ensemble|d'eau par jour/.test(x);
+    // Une phrase de jeu passe avant : il sent mauvais → d'abord la douche, puis les conseils
+    c.washTs = now - 8 * D; gyTalk = 0; render(); const g1 = document.querySelector(".gy-bubble").textContent; document.querySelector(".gy-bubble").click(); const g2 = document.querySelector(".gy-bubble").textContent;
+    c.washTs = now;
+    // Variables et conditions
+    S.profile.bw = 80; S.profile.equip = "maison"; S.profile.sex = "m"; gyHourFix = 12;
+    const seen = Array.from({length:600}, (_, k) => gymonTip(c, k)), prot = seen.find(x => /de protéines par jour/.test(x) && /\d+ à \d+ g/.test(x)) || "";
+    const leak = seen.filter(x => /\{|\}/.test(x)), femOnly = seen.some(x => /tes règles/.test(x)), gymOnly = seen.some(x => /sécurités du rack/.test(x)), home = seen.some(x => /sac à dos rempli/.test(x));
+    S.profile.bw = bw0; S.profile.equip = eq0; S.profile.sex = sx0; gyHourFix = 12; gyMsg = null; gyTalk = 0;
+    S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {n:GYM_TIPS.length, cats, bad:bad.length, lines:lines.length, b1, b2, t1:isTip(b1), t2:isTip(b2), g1, g2, g2tip:isTip(g2), prot, leak:leak.length, femOnly, gymOnly, home, distinct:new Set(seen).size}; });
+  ok(tp.n >= 300 && Object.keys(tp.cats).length === 8 && tp.bad === 0, "plus de 300 conseils en 8 catégories (sommeil, alimentation, entraînement, récupération, motivation, humain, sécurité, appli), courts", {n:tp.n, cats:tp.cats});
+  ok(tp.lines === 0 && tp.t1 && tp.t2 && tp.b1 !== tp.b2, "rien d'important à dire : il donne un conseil, un autre à chaque toucher", [tp.b1, tp.b2]);
+  ok(/douche/.test(tp.g1) && tp.g2tip, "les phrases du jeu passent d'abord (douche), les conseils ensuite", [tp.g1, tp.g2]);
+  ok(/130 à 175 g/.test(tp.prot) && tp.leak === 0, "protéines calculées sur le poids de corps (80 kg : 130 à 175 g), aucune variable oubliée", tp.prot);
+  ok(!tp.femOnly && !tp.gymOnly && tp.home && tp.distinct > 300, "conseils filtrés : maison sans matériel, règles seulement pour les femmes", tp);
+
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
     const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;
