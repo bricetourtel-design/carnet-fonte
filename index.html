@@ -724,7 +724,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 i";
+const APP_VERSION = "2026-11-15 j";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -1685,6 +1685,12 @@ function candidatesFor(m, st){
   return allEx().filter(e => e.muscle===m && usableEx(e)).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
     .sort((a,b) => b.n-a.n || b.comp-a.comp || (EX_CORE.has(b.e.id)?1:0)-(EX_CORE.has(a.e.id)?1:0) || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
 }
+// Même mouvement (15 nov. 2026) : deux exercices qui ne diffèrent que par le matériel (développé incliné barre / haltères / Smith / machine)
+// forment une famille. Jamais deux de la même famille dans une séance du programme : plutôt plus de séries sur un seul (demande du propriétaire).
+const EQUIP_WORDS = "haltères?|barre ez|barre|poulies?|machine|smith|kettlebell|élastique|câble|banc";
+const exFamily = e => e.muscle + "|" + e.name.toLowerCase().replace(/\(.*?\)/g, " ")
+  .replace(new RegExp(`(^|\\s)(aux|au|à la|à l'|avec|en|sur)\\s+(${EQUIP_WORDS})(?=\\s|$)`, "g"), " ")
+  .replace(new RegExp(`(^|\\s)(${EQUIP_WORDS})(?=\\s|$)`, "g"), " ").replace(/\s+/g, " ").trim();
 // Exercices dont le muscle principal est m (ex. quadriceps), dans le même ordre
 const candidatesPrim = (m, st) => candidatesFor(GROUP_OF[m] || m, st).filter(c => primOf(c.e) === m);
 function estMinutes(items){
@@ -1697,7 +1703,7 @@ function generatePlan(d){
     const ms = day.muscles.slice().sort((a,b) => PRIO.indexOf(a)-PRIO.indexOf(b));
     const mins = day.min || 60, sumW = ms.reduce((t,m) => t+WEIGHT[m], 0);
     const slots = Math.max(2, Math.min(9, Math.floor((mins - 5)/9.5 + 0.3)));   // ~9,5 min par exercice de 3 séries, 5 min d'échauffement
-    const items = [], used = new Set(), usedPrim = new Set();
+    const items = [], used = new Set(), usedPrim = new Set(), usedFam = new Set();
     ms.forEach(m => {
       const k = seen[m] = (seen[m]||0) + 1;           // k-ième séance de la semaine pour ce muscle
       const cnt = m==="Abdos" ? (slots>=5 ? 1 : 0) : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
@@ -1709,14 +1715,16 @@ function generatePlan(d){
         if(j===0 && WEIGHT[m]>=1.5){ const comp = pool.filter(c => c.comp); if(comp.length) list = comp; }   // gros muscle : un polyarticulaire d'abord
         let c = null; const base = list===pool ? (k-1)*cnt + j : (k-1);   // d'une séance à l'autre on alterne les exercices
         // Plusieurs exercices d'une même catégorie : d'abord un muscle principal pas encore travaillé ce jour (quadriceps, puis ischios…)
-        for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(!used.has(x.e.id) && !usedPrim.has(primOf(x.e))) c = x; }
-        for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(!used.has(x.e.id)) c = x; }
-        if(!c) for(const x of all) if(!used.has(x.e.id)){ c = x; break; }
-        if(!c) continue;
-        // ↻ sur ce créneau : un autre exercice du même muscle principal (un quadriceps reste un quadriceps)
-        if(off){ const pm = primOf(c.e), same = [...pool, ...all].filter((x, i, l) => primOf(x.e) === pm && !used.has(x.e.id) && l.findIndex(y => y.e.id === x.e.id) === i);
+        const free = x => !used.has(x.e.id) && !usedFam.has(exFamily(x.e));
+        for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(free(x) && !usedPrim.has(primOf(x.e))) c = x; }
+        for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(free(x)) c = x; }
+        if(!c) for(const x of all) if(free(x)){ c = x; break; }
+        // Plus d'autre mouvement pour ce muscle : des séries en plus sur l'exercice déjà prévu plutôt qu'un doublon
+        if(!c){ const it = items.filter(x => x.muscle === m).sort((a, b) => a.sets - b.sets)[0]; if(it && it.sets < 5) it.sets++; continue; }
+        // ↻ sur ce créneau : un autre exercice du même muscle principal (un quadriceps reste un quadriceps), d'un autre mouvement
+        if(off){ const pm = primOf(c.e), same = [...pool, ...all].filter((x, i, l) => primOf(x.e) === pm && free(x) && l.findIndex(y => y.e.id === x.e.id) === i);
           const i0 = same.findIndex(x => x.e.id === c.e.id); if(same.length) c = same[(Math.max(0, i0) + off) % same.length]; }
-        used.add(c.e.id); usedPrim.add(primOf(c.e)); items.push({exId:c.e.id, muscle:m, slot:m+":"+j, comp:c.comp, n:c.n, sets:3});
+        used.add(c.e.id); usedPrim.add(primOf(c.e)); usedFam.add(exFamily(c.e)); items.push({exId:c.e.id, muscle:m, slot:m+":"+j, comp:c.comp, n:c.n, sets:3});
       }
     });
     return {dow:day.dow, muscles:ms, name:dayName(ms), items, min:mins};
@@ -1967,6 +1975,11 @@ function adaptToday(r){
   MUSC.forEach(m => { if(!(m in rec)) rec[m] = recovery(m).pct; });
   const weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible" && rec[m] >= 0.9);
   let items = r.items.map(it => { const e = exById(it.exId); return {exId:it.exId, sets:it.sets, muscle:e.muscle, prim:primOf(e), comp:isCompound(e)}; });
+  // Programme déjà enregistré : deux exercices du même mouvement sont regroupés en un seul, avec plus de séries (5 au plus)
+  if(r.plan){ const fam = {}, merged = [];
+    items = items.filter(it => { const f = exFamily(exById(it.exId)), k = fam[f]; if(!k){ fam[f] = it; return true; }
+      k.sets = Math.min(5, Math.max(k.sets + 1, k.sets + it.sets)); merged.push([k, it]); return false; });
+    merged.forEach(([k, it]) => changes.push({k:"up", t:`Regroupé : ${exById(it.exId).name} est le même mouvement que ${exById(k.exId).name}. ${k.sets} séries de ${exById(k.exId).name} à la place, sans changer de poste.`})); }
   const removed = [];
   items = items.filter(it => {
     const pc = rec[it.prim] ?? rec[it.muscle];   // récupération du muscle principal de l'exercice
@@ -3746,6 +3759,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-15", t:"🔁 Plus de doublons dans le programme", x:"Le coach ne propose plus deux variantes du même mouvement dans une séance (par exemple développé incliné aux haltères puis à la barre). Il garde un seul exercice et ajoute des séries, ce qui évite de changer de poste. Votre programme actuel est corrigé automatiquement dans la séance du jour."},
   {d:"2026-11-15", t:"🤫 Un Gymon plus discret en séance", x:"Ses réactions après chaque série ne s'affichent plus au milieu de votre carnet : elles apparaissent sur une ligne du bandeau de repos, en bas de l'écran, et restent le temps de les lire."},
   {d:"2026-11-15", t:"💪 Un Gymon à votre image", x:"Vous êtes déjà costaud ? Votre Gymon rattrape votre niveau : chaque muscle vise votre force mesurée (charges rapportées à votre poids de corps), et chaque séance qui le travaille comble une bonne partie de l'écart. En quelques séances, il vous ressemble. Pour les débutants, rien ne change : il grandit avec vos séries. Pensez à indiquer votre poids de corps dans Réglages."},
   {d:"2026-11-15", t:"💬 Les conseils du Gymon", x:"Quand il n'a rien de plus urgent à vous dire (faim, douche, muscles, records…), votre Gymon partage un conseil : sommeil, alimentation (avec vos protéines du jour selon votre poids), entraînement, récupération, sécurité, motivation et astuces de l'appli. Plus de 350 conseils, tirés de la recherche en musculation. Touchez sa bulle pour le suivant."},

@@ -267,6 +267,25 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(V.home && V.planOk, "sans matériel : programme et propositions au poids du corps ; catégories sans exercice signalées", V.notes);
   ok(V.listHome > 20 && V.listAll > V.listHome * 3, "sans matériel : la liste montre le poids du corps, un bouton montre aussi le reste", [V.listHome, V.listAll]);
   ok(V.gym, "avec matériel : le poids du corps reste proposé avec le reste");
+  // Même mouvement (15 nov. 2026) : jamais deux variantes du même exercice dans une séance, plutôt plus de séries
+  const FM = await p.evaluate(() => {
+    const W = S.workouts, eq = S.profile.equip; S.profile.equip = ""; const now = Date.now(), D = 86400000;
+    // Historique où les deux développés inclinés sont les plus pratiqués (le cas vu sur iPhone)
+    S.workouts = Array.from({length:6}, (_, i) => ({id:"fm" + i, name:"P", start:now - (i + 10) * D, end:now - (i + 10) * D + 3600000, prs:[],
+      exercises:["di-halteres", "di-barre"].map(id => ({exId:id, sets:[1,2,3].map(() => ({w:"20", r:"8", done:true}))}))}));
+    const days = [45, 60, 75, 90].map(min => generatePlan({days:[{dow:0, muscles:["Pectoraux","Épaules","Triceps"], off:{}, min}], novOff:0, noNovelty:true}).days[0]);
+    const dup = days.map(d => { const f = d.items.map(it => exFamily(exById(it.exId))); return f.length - new Set(f).size; });
+    const twoIncl = days.some(d => d.items.some(it => it.exId === "di-halteres") && d.items.some(it => it.exId === "di-barre"));
+    // Programme déjà enregistré avec le doublon : regroupé à l'affichage de la séance du jour
+    const r = {id:"plan-x", plan:true, dow:0, name:"T", items:[{exId:"di-halteres", sets:3}, {exId:"di-barre", sets:3}, {exId:"ecarte-halteres", sets:3}]};
+    const a = adaptToday(r), di = a.items.filter(it => /^di-/.test(it.exId));
+    const mine = adaptToday({...r, plan:false}).items.filter(it => /^di-/.test(it.exId)).length;   // routine faite à la main : on n'y touche pas
+    S.workouts = W; S.profile.equip = eq;
+    return {dup, twoIncl, di:di.map(x => [x.exId, x.sets]), note:(a.changes.find(c => /Regroupé/.test(c.t)) || {}).t || "", mine, fam:[exFamily(exById("di-barre")) === exFamily(exById("di-halteres")), exFamily(exById("dc-barre")) !== exFamily(exById("di-barre"))]}; });
+  ok(FM.fam[0] && FM.fam[1], "même mouvement : développé incliné barre = haltères ; couché ≠ incliné", FM.fam);
+  ok(FM.dup.every(n => n === 0) && !FM.twoIncl, "programme : jamais deux variantes du même mouvement dans une séance (45 à 90 min)", FM.dup);
+  ok(FM.di.length === 1 && FM.di[0][1] === 5 && /Regroupé/.test(FM.note), "programme déjà enregistré : doublon regroupé en un exercice de 5 séries, expliqué", FM);
+  ok(FM.mine === 2, "routine faite à la main : laissée telle quelle", FM.mine);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);
