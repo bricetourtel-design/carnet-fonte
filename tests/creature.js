@@ -314,9 +314,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   // Phrase du jour : tirée parmi 50, différente d'un jour à l'autre
   const q = await p.evaluate(() => { const c = creatureState(), real = Date; const at = d => { const t0 = new real(2026, 10, d, 12).getTime();
       window.Date = class extends real { constructor(...a){ a.length ? super(...a) : super(t0); } static now(){ return t0; } }; const r = gymQuote(c); window.Date = real; return r; };
-    const days = Array.from({length:50}, (_, i) => at(i+1)); return {n:GYM_QUOTES.length, all:new Set(days).size, diff:days.every((x,i) => !i || x !== days[i-1]), hint:document.querySelector(".gy-hint") && getComputedStyle(document.querySelector(".gy-hint")).fontSize}; });
+    const days = Array.from({length:50}, (_, i) => at(i+1)); return {n:GYM_QUOTES.length, all:new Set(days).size, diff:days.every((x,i) => !i || x !== days[i-1]), hint:(() => { const c = creatureState(), st = c.stage; c.stage = Math.max(2, st); render(); const h = !document.querySelector(".gy .gy-hint"); c.stage = st; render(); return h; })()}; });
   ok(q.n === 50 && q.all === 50 && q.diff, "phrase du jour : 50 phrases, une différente chaque jour, toutes vues en 50 jours", q);
-  ok(q.hint === "15px", "phrase écrite plus petite (15 px)", q.hint);
+  ok(q.hint, "plus de phrase sous le Gymon une fois éclos", q.hint);
   // v1.9 : couleur et short tirés à la naissance, gardés à vie ; 3 couleurs rares
   const look = await p.evaluate(() => { const c = creatureState(), keep = JSON.stringify(c.look);
     const svgs = [5, 9, 12].map(st => { c.stage = st; return creatureSVG(c); }); c.stage = 5;
@@ -485,6 +485,10 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(ac.curves === 2 && /kg|g/.test(ac.tip), "carnet de santé : deux courbes touchables (masse et taille)", ac);
   ok(ac.washWarn && ac.hungry && ac.jOff && ac.jOn && ac.jRead, "pastilles : il sent mauvais, il a faim, nouveau souvenir (effacée une fois le journal lu)", ac);
   ok(ac.fridge && ac.pet, "Nourrir ouvre le frigo, Câlin le fait ronronner", ac);
+
+  const hb = await p.evaluate(() => { const c = creatureState(), saved = JSON.stringify(c); c.stage = Math.max(2, c.stage); c.dead = null; c.sv = 1; c.sat = 20; c.satT = Date.now(); c.full = 0; c.washTs = Date.now();
+    gyMsg = null; gyTalk = 0; tab = "creature"; render(); const b = (document.querySelector(".gy-bubble") || {}).textContent || ""; S.profile.creature = JSON.parse(saved); saveLocal(); render(); return b; });
+  ok(/Je meurs de faim ! Plus que \d+ jour/.test(hb), "sous 30 % : l'alerte de faim passe dans sa bulle, en premier", hb);
 
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
