@@ -296,6 +296,11 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
     return {t0:[t0.w, t0.r], tf:[tf.w, tf.r], p0:p0.w}; });
   ok(BWT.t0[0] === 82 && BWT.tf[0] === 82 && BWT.tf[1] < BWT.t0[1], "poids du corps : charge proposée = poids actuel (82 kg, pas l'ancien 75), la fatigue baisse les reps, pas le poids", BWT);
   ok(BWT.p0 === "", "poids du corps : une charge jamais notée reste vide", BWT.p0);
+  // Trapèzes (16 nov. 2026) : nouveaux exercices, recherche par muscle
+  const TR = await p.evaluate(() => { const f = {...exFilter}; exFilter.m = "Tous"; exFilter.all = true; exFilter.q = "trapèze";
+    const h = exListHTML(null, "browse"), ids = [...h.matchAll(/data-id="([^"]+)"/g)].map(m => m[1]); exFilter.q = "haut du dos"; const h2 = (exListHTML(null, "browse").match(/data-id=/g) || []).length;
+    Object.assign(exFilter, f); return {ids, n2:h2}; });
+  ok(["shrug-barre","shrug-smith","shrug-dos","shrug-arrache","shrug-mollets","tractions-scapulaires","tirage-haut-kb"].every(id => TR.ids.includes(id)) && !TR.ids.includes("rowing-barre") && TR.ids.length <= 16 && TR.n2 > 0, "trapèzes : 6 nouveaux exercices, « trapèze » ou « haut du dos » dans la recherche les retrouve", TR);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);
