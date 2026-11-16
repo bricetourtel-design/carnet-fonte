@@ -562,6 +562,21 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(/raté/.test(cm.m2) && cm.v2 === 0, "coup critique : charge inférieure à l'objectif → pas de double", cm);
   ok(/CRITIQUE/.test(cm.m3) && cm.v3 === cm.tw * cm.tr && cm.saved3 === "001", "coup critique : objectif atteint → double ration, seule cette série est enregistrée critique", cm);
 
+  // Coup critique plus rare et bien placé (16 nov. 2026)
+  const cp = await p.evaluate(() => {
+    const W = JSON.stringify(S.workouts), c = creatureState(), saved = JSON.stringify(c), now = Date.now(), D = 86400000; c.stage = Math.max(2, c.stage); c.dead = null;
+    const ses = (id, w, r, feel) => ({id:"cp" + id, name:"P", start:now - 4 * D, end:now - 4 * D + 3600000, prs:[], exercises:[{exId:id, feel, sets:[1,2,3].map(() => ({w, r, done:true}))}]});
+    S.workouts = [ses("dc-barre", "60", "8", 2), ses("curl-barre", "30", "10", 5)];   // couché trop facile → on progresse ; curl trop dur → on consolide
+    const r0 = CRIT.roll; CRIT.roll = () => true; const where = [];
+    for(let t = 0; t < 6; t++){ S.profile.active = null; startWorkout("P", [{exId:"curl-barre", sets:[blankSet(), blankSet(), blankSet()]}, {exId:"dc-barre", sets:[blankSet(), blankSet(), blankSet()]}]);
+      const a = A(), hit = []; a.exercises.forEach(ex => ex.sets.forEach((s, j) => { if(s.crit) hit.push(ex.exId + ":" + (j === ex.sets.length - 1 ? "last" : j)); })); where.push(hit.join()); S.profile.active = null; }
+    // Fréquence : environ 40 % des séances
+    CRIT.roll = r0; let n = 0; for(let t = 0; t < 2000; t++){ S.profile.active = null; startWorkout("F", [{exId:"dc-barre", sets:[blankSet(), blankSet(), blankSet(), blankSet()]}]); if(A().exercises.some(ex => ex.sets.some(s => s.crit))) n++; }
+    S.profile.active = null; stopRest(); document.getElementById("gy-pop")?.remove(); S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {where, freq:n / 2000}; });
+  ok(cp.where.every(x => x === "dc-barre:last"), "coup critique sur la dernière série de l'exercice où l'on progresse (pas sur celui qu'on consolide)", cp.where);
+  ok(cp.freq > 0.34 && cp.freq < 0.46, "coup critique dans environ 40 % des séances, un seul", cp.freq);
+
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
     const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;
@@ -572,8 +587,8 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const row = j => document.querySelector(`tr[data-i="0"][data-j="${j}"]`), val = (j, w, r) => { const a = A().exercises[0].sets[j]; a.w = w; a.r = r; render(); ACT.check(row(j).querySelector(".check")); };
     val(0, "60", "10"); const pop1 = document.getElementById("gy-pop"), p1 = pop1 && pop1.textContent, viewSame = !!document.getElementById("w-name");
     const pill1 = document.getElementById("meal").textContent;
-    val(1, "60", "10"); val(2, "60", "10"); const p3 = document.getElementById("gy-pop").textContent;
-    val(3, "60", "10"); ACT.check(row(3).querySelector(".check")); const keep = !!A().exercises[0].sets[3].crit;   // dévalider ne change pas le tirage
+    val(1, "60", "10"); val(2, "60", "10");
+    val(3, "60", "10"); const p3 = document.getElementById("gy-pop").textContent; ACT.check(row(3).querySelector(".check")); const keep = !!A().exercises[0].sets[3].crit;   // dévalider ne change pas le tirage
     val(3, "60", "10");
     document.querySelector('[data-act="add-set"][data-i="0"]').click(); const added = !A().exercises[0].sets[4].crit;   // « + Série » n'est pas tirée
     document.querySelector('[data-act="del-set"][data-i="0"]').click();
@@ -584,9 +599,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     celebClose(true); closeSheet(); S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
     return res; });
   ok(g1.p1 && g1.viewSame, "le Gymon réagit à chaque série validée, dans une bulle hors de la page", g1.p1);
-  ok(g1.marks === "0011" && g1.crow === 2 && /Séries 3 et 4/.test(g1.hint) && /2 coups critiques/.test(g1.start), "coups critiques tirés dès le début (à partir de la 3e série, 2 au plus), marqués ⚡ et annoncés", g1);
+  ok(g1.marks === "0001" && g1.crow === 1 && /Série 4/.test(g1.hint) && /Un coup critique/.test(g1.start), "coup critique tiré dès le début, un seul, sur la dernière série, marqué ⚡ et annoncé", g1);
   ok(/CRITIQUE/.test(g1.p3) && g1.keep && g1.added, "série critique validée : annoncée ; dévalider ne la change pas ; « + Série » n'est jamais tirée", g1);
-  ok(g1.saved === 2 && g1.vol === 2400 && g1.lm.vol === 2400 && g1.lm.bonus === 1200, "le critique nourrit double le Gymon sans changer le volume de la séance", g1);
+  ok(g1.saved === 1 && g1.vol === 2400 && g1.lm.vol === 2400 && g1.lm.bonus === 600, "le critique nourrit double le Gymon sans changer le volume de la séance", g1);
   ok(/%/.test(g1.pct) && /%|kg|t/.test(g1.pill1), "pastille du repas du Gymon à côté du chrono", g1.pct);
   const g1b = await p.evaluate(() => {   // record battu en pleine séance : bulle spéciale, une fois par exercice
     const c = creatureState(), saved = JSON.stringify(c); c.stage = Math.max(2, c.stage); c.dead = false; const r0 = CRIT.roll; CRIT.roll = () => false;

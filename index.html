@@ -738,7 +738,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-15 o";
+const APP_VERSION = "2026-11-16 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -2366,12 +2366,27 @@ function creatureFixLevels(){
    2 fois au plus par séance. Le volume de la séance (historique, records, coach) ne change pas : seul le repas du Gymon compte le bonus.
    Tiré dès le début de la séance (13 nov. 2026) : les séries critiques sont marquées ⚡ à l'avance, pour motiver. Chaque série n'est tirée
    qu'une fois (rl) ; les séries ajoutées avec « + Série » ne sont pas tirées (pas de pêche au critique en retirant/ajoutant). */
-const CRIT = {chance:0.12, fromSet:3, max:2, roll:() => Math.random() < CRIT.chance};
+/* 16 nov. 2026 (décision du propriétaire) : plus rare et mieux placé. Un tirage par séance (40 %), un seul coup critique, posé sur la
+   dernière série de l'exercice le plus exigeant : d'abord un exercice où le coach demande de progresser (+ charge, + reps, « Lourd »),
+   de préférence polyarticulaire ; on évite reprise, décharge et exercice nouveau. Il faut atteindre l'objectif pour la double ration. */
+const CRIT = {chance:0.4, fromSet:3, max:1, roll:() => Math.random() < CRIT.chance};
+function critScore(a, i){
+  const ex = a.exercises[i], e = exById(ex.exId), c = coach(ex.exId, a.start, ex.plan, preLoad(a.exercises, i, true)), tag = String(c.tag || "");
+  if(c.deload || c.est || /Reprise|Nouveau|Estimé|Décharge/.test(tag)) return 0;
+  return 1 + (/^\+|Lourd|· \+/.test(tag) ? 4 : 0) + (isCompound(e) ? 2 : 0) + (/^Lourd/.test(tag) ? 1 : 0);
+}
 function critPlan(a){
-  const c = creatureState(); let k = 0, n = a.exercises.reduce((t, x) => t + x.sets.filter(y => y.crit).length, 0), got = 0;
-  a.exercises.forEach(ex => ex.sets.forEach(s => { if(s.warm) return; k++; if(s.rl) return; s.rl = 1;
-    if(!c.dead && k >= CRIT.fromSet && n < CRIT.max && CRIT.roll()){ s.crit = 1; n++; got++; } }));
-  return got;
+  const c = creatureState(); if(a.critDone) return 0;
+  const work = a.exercises.reduce((t, x) => t + x.sets.filter(y => !y.warm).length, 0); if(work < CRIT.fromSet) return 0;   // pas encore assez de séries : on attendra les exercices ajoutés
+  a.critDone = 1; a.exercises.forEach(ex => ex.sets.forEach(s => { s.rl = 1; }));
+  if(c.dead || !CRIT.roll()) return 0;
+  // Dernière série de travail de chaque exercice, si elle est au moins la 3e de la séance
+  let k = 0; const cands = [];
+  a.exercises.forEach((ex, i) => { let last = null; ex.sets.forEach(s => { if(s.warm) return; k++; last = {s, k}; });
+    if(last && last.k >= CRIT.fromSet) cands.push({i, s:last.s, sc:critScore(a, i)}); });
+  if(!cands.length) return 0;
+  const best = Math.max(...cands.map(x => x.sc)), top = cands.filter(x => x.sc === best), pick = top[Math.floor(Math.random() * top.length)];
+  pick.s.crit = 1; return 1;
 }
 // Coup critique réussi seulement si l'objectif de la série est atteint (charge et reps visées, décision du 15 nov. 2026) ; critOK est posé à la validation
 const critHit = s => s.crit && s.critOK !== 0;
@@ -3780,6 +3795,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-16", t:"⚡ Coup critique plus rare, plus corsé", x:"Le coup critique devient plus rare (environ deux séances sur cinq, une seule fois) et tombe sur la dernière série de l'exercice le plus exigeant du jour, là où le coach vous demande de progresser. Atteignez l'objectif et votre Gymon mange double."},
   {d:"2026-11-15", t:"🤸 Poids du corps : votre vrai poids", x:"Sur les exercices au poids du corps (tractions, dips…) où vous notez une charge, le coach propose désormais votre poids de corps actuel (Réglages), et non plus un ancien poids. La fatigue de la séance baisse le nombre de répétitions, jamais le poids."},
   {d:"2026-11-15", t:"⚡ Coup critique mérité", x:"Une série ⚡ ne nourrit double votre Gymon que si vous atteignez son objectif : la charge prévue et le nombre de répétitions visé. Sinon, le Gymon vous le dit, et la série compte normalement."},
   {d:"2026-11-15", t:"🔁 Plus de doublons dans le programme", x:"Le coach ne propose plus deux variantes du même mouvement dans une séance (par exemple développé incliné aux haltères puis à la barre). Il garde un seul exercice et ajoute des séries, ce qui évite de changer de poste. Votre programme actuel est corrigé automatiquement dans la séance du jour."},
@@ -4181,7 +4197,7 @@ function viewActive(){
         <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:unitOf(e)}` : `Objectif ${c.lo}–${c.hi} ${unitOf(e)}`}${c.fatigue ? `<small class="fat"> · fatigue −${c.fatigue} %</small>` : ""}</span>
         <span class="cwhy">pourquoi ?</span></button>
       ${(() => { const nums = ex.sets.filter(x => !x.warm).map((x, k) => x.crit && !x.done ? k + 1 : 0).filter(Boolean);
-        return nums.length && !creatureState().dead ? `<p class="crit-hint">⚡ Série${nums.length > 1 ? "s" : ""} ${nums.join(" et ")} : coup critique : objectif atteint, ${nums.length > 1 ? "elles nourrissent" : "elle nourrit"} double ton Gymon !</p>` : ""; })()}
+        return nums.length && !creatureState().dead ? `<p class="crit-hint">⚡ Série${nums.length > 1 ? "s" : ""} ${nums.join(" et ")} : coup critique ! Sors de ta zone de confort : objectif atteint, ${nums.length > 1 ? "elles nourrissent" : "elle nourrit"} double ton Gymon.</p>` : ""; })()}
       ${wu.length ? `<p class="wu-hint">🔥 Échauffement d'abord (séries « É ») : ${wu.map(x => `${fmtN(x.w)} kg × ${x.r}`).join(" puis ")}. Sans minuteur, ne compte pas dans le volume.</p>` : ""}
       <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>kg</th><th>${TIMED.has(e.id) ? "Sec." : "Reps"}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div class="ex-actions"><button class="btn sm" data-act="add-set" data-i="${i}">+ Série</button>
@@ -4489,7 +4505,7 @@ function startWorkout(name, exercises, routineId){
   S.profile.active = {id:uidGen("w"), name, start, routineId:routineId||null, exercises:addWarmups(exercises, start)};
   const nc = critPlan(S.profile.active);
   touchProfile(); tab = "seance"; render(); window.scrollTo(0,0);
-  if(nc){ const c = creatureState(); gyPop(c, nc > 1 ? `${nc} coups critiques t'attendent aujourd'hui ⚡ Repère les séries ⚡ : elles me nourrissent double !` : "Un coup critique t'attend aujourd'hui ⚡ Repère la série ⚡ : elle me nourrit double !", "crit"); }
+  if(nc){ const c = creatureState(); gyPop(c, "Un coup critique t'attend aujourd'hui ⚡ Sur la série la plus dure : atteins l'objectif et je mange double !", "crit"); }
 }
 function finishWorkout(){
   const a = S.profile.active;
@@ -4680,7 +4696,7 @@ const ACT = {
     S.profile.routines = S.profile.routines.filter(r=>r.id!==d.id); touchProfile(); render(); toast("Programme supprimé"); }); },
 
   "pick-ex": () => openPicker(ids => {
-    addWarmups(ids.map(id => ({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})), A().start, A().exercises).forEach(x => A().exercises.push(x)); critPlan(A()); touchProfile(); render(); }),
+    addWarmups(ids.map(id => ({exId:id, sets:Array.from({length:coach(id, A().start).sets}, blankSet)})), A().start, A().exercises).forEach(x => A().exercises.push(x)); { const nc = critPlan(A()); if(nc) gyPop(creatureState(), "Un coup critique t'attend aujourd'hui ⚡ Sur la série la plus dure : atteins l'objectif et je mange double !", "crit"); } touchProfile(); render(); }),
   "pick-toggle": b => { const id = b.dataset.id;
     if(picker.only){ const f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); f([id]); return; } picker.sel.has(id) ? picker.sel.delete(id) : picker.sel.add(id); refreshPicker(); },
   "prog-choose": () => { const freq = {}; S.workouts.forEach(w => w.exercises.forEach(ex => { if(workSets(ex).length) freq[ex.exId]=(freq[ex.exId]||0)+1; }));
