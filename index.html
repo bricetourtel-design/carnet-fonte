@@ -4391,7 +4391,7 @@ function exListHTML(sel, mode){
   const q = exFilter.q.trim().toLowerCase();
   const only = mode==="pick" && picker && picker.only;
   // Recherche (16 nov. 2026) : dans le nom, mais aussi le muscle principal ; « trapèze » trouve les exercices du haut du dos
-  const qm = e => e.name.toLowerCase().includes(q) || primOf(e).toLowerCase().includes(q) || (/^trap[eè]z/.test(q) && (exWork(e)["Haut du dos"] || 0) >= 0.7);
+  const qm = e => e.name.toLowerCase().includes(q) || primOf(e).toLowerCase().includes(q) || (/^trap[eè]z/.test(q) && /haussement|shrug|trap[eè]z|scapul|tirage haut|rowing vertical|élévation en y|face pull/i.test(e.name));
   const list = allEx().filter(e => (exFilter.m==="Tous" || e.muscle===exFilter.m) && (!q || qm(e)) && (!only || only[e.id]) && (only || exFilter.all || usableEx(e)))
     .sort((a,b) => a.name.localeCompare(b.name,"fr"));
   if(!list.length) return `<div class="item"><span class="t muted">${only ? "Aucun exercice pratiqué ne correspond à ce filtre." : "Aucun exercice ne correspond. Créez-le avec le bouton ci-dessous."}</span></div>`;
