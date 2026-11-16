@@ -130,6 +130,7 @@ button.thumb{padding:0}
 .gy-pop.pop-pr{background:linear-gradient(90deg,#ffe27a,#ffb347);color:#1b1b1f}
 .gy-pop.pop-crit{background:linear-gradient(90deg,#8B5CF6,#ff5fa2);color:#fff}
 .gy-pop.out{opacity:0;transition:opacity .3s}
+.rest.pop-only{pointer-events:none}   /* annonce seule : elle ne bloque pas les touchers sur le carnet */
 .rest-in.only{padding:6px 8px}.rest-in.only .gy-pop{margin:0}
 @keyframes popin{from{transform:translateX(-50%) translateY(20px) scale(.8);opacity:0}to{transform:translateX(-50%) translateY(0) scale(1);opacity:1}}
 .set.crit{background:linear-gradient(90deg,rgba(139,92,246,.22),rgba(255,95,162,.18))}
@@ -4245,13 +4246,13 @@ function setReaction(ex, s){
 function gyPop(c, msg, kind){
   const host = document.getElementById("rest"); if(!host) return;
   const old = document.getElementById("gy-pop"); if(old) old.remove();
-  let box = host.querySelector(".rest-in"); if(!box){ host.innerHTML = `<div class="rest-in only"></div>`; box = host.firstChild; }
+  let box = host.querySelector(".rest-in"); if(!box){ host.innerHTML = `<div class="rest-in only"></div>`; box = host.firstChild; host.classList.add("pop-only"); }
   host.hidden = false;
   const el = document.createElement("div"); el.id = "gy-pop"; el.className = "gy-pop" + (kind ? " pop-" + kind : ""); el.setAttribute("role", "status");
   el.innerHTML = `<span class="gp-av">${creatureSVG(c, true, false, {noFx:true, eyeState:c.dead ? undefined : "happy"})}</span><p>${esc(msg)}</p>`;
   box.prepend(el); clearTimeout(popT);
   popT = setTimeout(() => { el.classList.add("out"); setTimeout(() => { el.remove();
-    const h = document.getElementById("rest"), only = h && h.querySelector(".rest-in.only"); if(only && !only.children.length){ h.innerHTML = ""; if(!restState) h.hidden = true; } }, 320); }, (kind ? 7000 : 5000) + Math.max(0, msg.length - 40) * 40);   // le temps de lire : 5 s (7 s record ou critique), plus pour les longs messages
+    const h = document.getElementById("rest"), only = h && h.querySelector(".rest-in.only"); if(only && !only.children.length){ h.innerHTML = ""; h.classList.remove("pop-only"); if(!restState) h.hidden = true; } }, 320); }, (kind ? 7000 : 5000) + Math.max(0, msg.length - 40) * 40);   // le temps de lire : 5 s (7 s record ou critique), plus pour les longs messages
 }
 // Repas du Gymon (pastille à côté du chrono, sans prendre de hauteur) : volume avec les coups critiques / moyenne des 5 dernières séances
 function mealInfo(){
@@ -4567,9 +4568,9 @@ function drawRest(){
   if(restState.warned){ const n = document.getElementById("fl-n"); if(n) n.textContent = Math.ceil(left/1000); }
   el.hidden = false;
   // Les boutons ne sont créés qu'une fois : les reconstruire 4 fois par seconde faisait perdre des touchers
-  if(!el.querySelector(".rest-t")) el.innerHTML = `<div class="rest-in"><div class="rest-row"><span class="small rest-l">Repos</span><span class="rest-t"></span><span class="spacer"></span>
+  if(!el.querySelector(".rest-t")){ el.classList.remove("pop-only"); el.innerHTML = `<div class="rest-in"><div class="rest-row"><span class="small rest-l">Repos</span><span class="rest-t"></span><span class="spacer"></span>
     <button class="btn sm" data-act="rest-minus">−15 s</button><button class="btn sm" data-act="rest-plus">+15 s</button><button class="btn sm" data-act="rest-skip">Passer</button></div>
-    <div class="rest-bar"></div></div>`;
+    <div class="rest-bar"></div></div>`; }
   const t = fmtClock(left), tt = el.querySelector(".rest-t"); if(tt.textContent !== t) tt.textContent = t;
   el.querySelector(".rest-bar").style.width = (100*left/restState.total).toFixed(1) + "%";
 }
