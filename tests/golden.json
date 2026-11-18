@@ -710,6 +710,54 @@
     "Machine"
    ],
    [
+    "extension-dos-ballon",
+    "Extension du dos sur ballon",
+    "Dos",
+    "Autre"
+   ],
+   [
+    "good-morning-assis",
+    "Good morning assis (barre)",
+    "Dos",
+    "Barre"
+   ],
+   [
+    "souleve-deficit",
+    "Soulevé de terre en déficit",
+    "Dos",
+    "Barre"
+   ],
+   [
+    "rouleau-poignets",
+    "Rouleau à poignets",
+    "Biceps",
+    "Autre"
+   ],
+   [
+    "pronation-haltere",
+    "Pronation de l'avant-bras (haltère)",
+    "Biceps",
+    "Haltères"
+   ],
+   [
+    "supination-haltere",
+    "Supination de l'avant-bras (haltère)",
+    "Biceps",
+    "Haltères"
+   ],
+   [
+    "curl-doigts",
+    "Curl des doigts (barre)",
+    "Biceps",
+    "Barre"
+   ],
+   [
+    "curl-poignets-dos",
+    "Curl des poignets derrière le dos (barre)",
+    "Biceps",
+    "Barre"
+   ],
+   [
     "shrug-smith",
     "Haussement d'épaules à la Smith (derrière le dos)",
     "Dos",
@@ -2446,6 +2494,62 @@
     ]
    ],
    [
+    "extension-dos-ballon",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "good-morning-assis",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "souleve-deficit",
+    [
+     4,
+     6
+    ]
+   ],
+   [
+    "rouleau-poignets",
+    [
+     3,
+     6
+    ]
+   ],
+   [
+    "pronation-haltere",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "supination-haltere",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "curl-doigts",
+    [
+     12,
+     20
+    ]
+   ],
+   [
+    "curl-poignets-dos",
+    [
+     12,
+     20
+    ]
+   ],
+   [
     "shrug-smith",
     [
      10,
@@ -4084,6 +4188,40 @@
    },
    "shrug-machine": {
     "Haut du dos": 1
+   },
+   "extension-dos-ballon": {
+    "Lombaires": 1,
+    "Fessiers": 0.5,
+    "Ischios": 0.4
+   },
+   "good-morning-assis": {
+    "Lombaires": 1,
+    "Fessiers": 0.3
+   },
+   "souleve-deficit": {
+    "Lombaires": 1,
+    "Ischios": 0.8,
+    "Fessiers": 0.8,
+    "Quadriceps": 0.5,
+    "Haut du dos": 0.6,
+    "Avant-bras": 0.5
+   },
+   "rouleau-poignets": {
+    "Avant-bras": 1,
+    "Deltoïde avant": 0.2
+   },
+   "pronation-haltere": {
+    "Avant-bras": 1
+   },
+   "supination-haltere": {
+    "Avant-bras": 1,
+    "Biceps": 0.2
+   },
+   "curl-doigts": {
+    "Avant-bras": 1
+   },
+   "curl-poignets-dos": {
+    "Avant-bras": 1
    },
    "shrug-smith": {
     "Haut du dos": 1,
