@@ -383,6 +383,7 @@ table.hist{width:100%;border-collapse:collapse;font-size:15px;font-variant-numer
 .chip.sm{padding:5px 10px;font-size:13px}
 .tsel{gap:6px}
 .wu-hint{margin:6px 2px 0;font-size:13px;color:var(--muted);line-height:1.35}
+.kg-per{display:block;font-size:10px;line-height:1.1;font-weight:400;opacity:.85;white-space:nowrap}
 .plates{display:block;font-size:10.5px;line-height:1.1;color:var(--muted);text-align:center;margin-top:2px;font-variant-numeric:tabular-nums}
 .coach .fat{font-weight:500;color:var(--muted);font-size:12px}
 .wn{display:flex;flex-direction:column;gap:8px}
@@ -772,7 +773,7 @@ body::before{display:none}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-18 g";
+const APP_VERSION = "2026-11-18 h";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -3943,6 +3944,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-18", t:"⚖️ Charge par haltère", x:"Sur les exercices où la charge pouvait prêter à confusion, une petite mention sous « kg » précise ce qu'il faut noter : le poids d'un seul haltère (pas des deux), ou d'un seul côté pour les machines iso-latérales et les écartés à deux poulies."},
   {d:"2026-11-18", t:"👥 Séance en équipe", x:"Entraînez-vous avec un ami, chacun sur son téléphone. Lancez votre séance et touchez « Partager ma séance » : votre ami scanne le QR code (Gymon › Sociabiliser › Rejoindre la séance d'un ami). Il a les mêmes exercices, avec ses propres charges, et vos deux Gymon s'affichent côte à côte. Sans serveur : un seul scan, puis chaque téléphone est autonome. En fin de séance, il peut vous montrer son Gymon pour que vous deveniez amis Gymon."},
   {d:"2026-11-18", t:"🏋️ Toutes les machines de la salle", x:"16 exercices de plus pour couvrir les machines courantes : rowing iso-latéral, pull-over, lombaires, élévations latérales, machine à fessiers, hip thrust, belt squat, pendulum squat, soulevé de terre à la machine, chaise romaine, rotation du buste, vélo semi-allongé, vélo à air, SkiErg… Et dans Exercices, de nouveaux filtres par matériel : machine, poulie, charge libre, sur banc, sans matériel, cardio."},
   {d:"2026-11-18", t:"💬 Votre avis sur les nouveautés", x:"Cette fenêtre s'affiche désormais à chaque mise à jour, même pour plusieurs nouveautés le même jour. Touchez « Donner mon avis » pour nous dire ce que vous en pensez : vos retours guident les prochaines versions."},
@@ -4367,7 +4369,7 @@ function viewActive(){
       ${(() => { const nums = ex.sets.filter(x => !x.warm).map((x, k) => x.crit && !x.done ? k + 1 : 0).filter(Boolean);
         return nums.length && !creatureState().dead ? `<p class="crit-hint">⚡ Série${nums.length > 1 ? "s" : ""} ${nums.join(" et ")} : coup critique ! Sors de ta zone de confort : objectif atteint, ${nums.length > 1 ? "elles nourrissent" : "elle nourrit"} double ton Gymon.</p>` : ""; })()}
       ${wu.length ? `<p class="wu-hint">🔥 Échauffement d'abord (séries « É ») : ${wu.map(x => `${fmtN(x.w)} kg × ${x.r}`).join(" puis ")}. Sans minuteur, ne compte pas dans le volume.</p>` : ""}
-      <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>${isCardio(e) ? "" : "kg"}</th><th>${TIMED.has(e.id) ? "Sec." : isCardio(e) ? "Min." : "Reps"}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+      <table class="sets"><thead><tr><th>Série</th><th>Précédent</th><th>${isCardio(e) ? "" : loadUnit(e) ? `kg<small class="kg-per">${loadUnit(e)}</small>` : "kg"}</th><th>${TIMED.has(e.id) ? "Sec." : isCardio(e) ? "Min." : "Reps"}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div class="ex-actions"><button class="btn sm" data-act="add-set" data-i="${i}">+ Série</button>
         ${ex.sets.length>1?`<button class="btn sm ghost" data-act="del-set" data-i="${i}">− Série</button>`:""}
         ${ex.sets.some(s => s.warm && !s.done) ? `<button class="btn sm ghost" data-act="del-warm" data-i="${i}">− Échauffement</button>` : ""}
@@ -5611,6 +5613,15 @@ function cleanCreature(x){
 
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if(b && ACT[b.dataset.act]) ACT[b.dataset.act](b, e); });
 document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if(!b) return; tab = b.dataset.tab; if(tab === "creature") gyTalk = 0; render(); window.scrollTo(0,0); maybeAppGuide(); });
+// Charge ambiguë : on note le poids d'UN haltère ou d'UN côté (convention du coach : ratios par haltère). Rien sur les exercices à un seul haltère.
+const ONE_DB = new Set(["rowing-haltere", "ext-nuque", "pullover-haltere", "pronation-haltere", "supination-haltere", "elev-lat-inclinee", "rotation-externe-haltere", "curl-concentre", "kickback", "squat-sumo-haltere", "flexion-laterale"]);
+const PER_SIDE = new Set(["rowing-iso-machine", "tirage-haut-machine", "ecarte-poulie", "gx-ecarte-a-la-poulie-vis-a-vis-basse", "ecarte-poulie-incline", "ecarte-poulie-banc", "dc-poulie", "dm-poulie", "gx-ecarte-inverse-a-la-poulie-pour-deltoides-posterieurs"]);
+function loadUnit(e){
+  if(!e) return "";
+  if(PER_SIDE.has(e.id)) return "par côté";
+  if(e.equip !== "Haltères" || ONE_DB.has(e.id) || /\bun bras\b|une main|haltère(?!s)/i.test(e.name)) return "";
+  return "par haltère";
+}
 // Charge par côté de la barre : (total − barre) ÷ 2. Barre droite 20 kg et barre EZ 10 kg par défaut (réglables)
 const barWeight = e => /\bez\b/i.test(e.name) ? (S.profile.barEz || 10) : (S.profile.bar || 20);
 function plateText(e, total){
