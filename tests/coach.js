@@ -308,6 +308,24 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
       wCalories(w(["pompes", "tractions"], 3, 60)).kcal, wCalories(w(["curl-barre"], 3, 600)).kcal];
     S.profile.bw = 0; const none = wCalories(w(["curl-barre"], 3, 60)); S.profile.bw = bw0; return {r, none}; });
   ok(KC.r.join() === "280,400,480,240,700" && KC.none === null, "calories : 3,5 MET classique, 5 jambes lourdes, 6 effort dur, 3 poids du corps ; durée plafonnée à 2 h 30 ; rien sans poids de corps", KC);
+  // Favoris (18 nov. 2026) : fréquents automatiquement, étoile à la main, en premier dans les listes
+  const FV = await p.evaluate(() => { const W = S.workouts, f0 = S.profile.favs, ef = {...exFilter}, now = Date.now(), D = 86400000;
+    S.workouts = [0,1,2].map(i => ({id:"fv" + i, name:"P", start:now - (i + 1) * 10 * D, end:now - (i + 1) * 10 * D + 3600000, prs:[], exercises:[{exId:"dc-barre", sets:[{w:"60", r:"8", done:true}]}, ...(i < 2 ? [{exId:"rowing-barre", sets:[{w:"50", r:"8", done:true}]}] : [])]}));
+    S.workouts.push({id:"fvold", name:"P", start:now - 200 * D, end:now - 200 * D, prs:[], exercises:[{exId:"rowing-barre", sets:[{w:"50", r:"8", done:true}]}]});
+    S.profile.favs = []; favCache = null;
+    const freq = [isFav("dc-barre"), isFav("rowing-barre")];   // 3 séances en 90 jours / 2 seulement (la 3e est trop vieille)
+    exFilter.m = "Tous"; exFilter.q = "curl"; exFilter.all = true;
+    const order = l => [...l.matchAll(/data-id="([^"]+)"/g)].map(m => m[1]);
+    const before = order(exListHTML(null, "browse"));
+    openSheet("<div></div>"); document.body.insertAdjacentHTML("beforeend", '<button id="fvb" data-act="fav-toggle" data-id="curl-marteau"></button>'); document.getElementById("fvb").click();
+    const after = order(exListHTML(null, "browse")), head = /Favoris/.test(exListHTML(null, "browse")), pick = order(exListHTML(new Set(), "pick"))[0];
+    document.getElementById("fvb").click(); const off = !isFav("curl-marteau"); document.getElementById("fvb").remove(); closeSheet();
+    ACT["ex-info"]({dataset:{id:"dc-barre"}}); const locked = !document.querySelector('.sheet [data-act="fav-toggle"]') && /souvent/.test(document.querySelector(".sheet").textContent); closeSheet();
+    S.workouts = W; S.profile.favs = f0; Object.assign(exFilter, ef); favCache = null;
+    return {freq, first:before[0], after0:after[0], head, pick, off, locked}; });
+  ok(FV.freq[0] && !FV.freq[1], "favori automatique : 3 séances ou plus sur 90 jours", FV.freq);
+  ok(FV.first !== "curl-marteau" && FV.after0 === "curl-marteau" && FV.head && FV.pick === "curl-marteau" && FV.off, "étoile à la main : l'exercice passe en tête (recherche et ajout à une séance), sous « Favoris » ; on peut le retirer", FV);
+  ok(FV.locked, "exercice fréquent : favori d'office, sans bouton pour le retirer", FV.locked);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);

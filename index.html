@@ -238,6 +238,10 @@ textarea{min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:13p
 /* Progrès */
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .tile{background:var(--surface);border-radius:var(--r);padding:12px 14px}
+.list-h{margin:10px 2px 4px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fav-star,.item .t .fav-star{display:inline;color:#ffc83d;margin-right:5px;font-size:inherit}
+.fav-btn{align-self:flex-start}.fav-btn.on{color:#1b1b1f;background:#ffc83d;border-color:#ffc83d}
+.fav-line{margin:0;font-size:13px;font-weight:600;color:#ffc83d}
 .tile-kcal{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;text-align:left;border:0;color:var(--fg);font:inherit}
 .tile-kcal strong.small{font-size:13px;font-weight:600;color:var(--accent)}
 .tile span{font-size:13px;color:var(--muted);display:block}
@@ -741,7 +745,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-16 c";
+const APP_VERSION = "2026-11-18 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -3824,6 +3828,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-18", t:"★ Exercices favoris", x:"Les exercices que vous faites souvent (3 séances ou plus en 90 jours) deviennent favoris tout seuls. Pour en ajouter d'autres : ouvrez un exercice dans l'onglet Exercices et touchez « ☆ Ajouter aux favoris ». Les favoris sortent en premier dans les listes et la recherche."},
   {d:"2026-11-16", t:"🔥 Calories brûlées", x:"En fin de séance, une estimation des calories brûlées, selon votre poids de corps, la durée et l'intensité de la séance (méthode des METs). Touchez-la pour voir le calcul. Renseignez votre poids dans Réglages pour l'obtenir."},
   {d:"2026-11-16", t:"🏔️ Plus d'exercices pour les trapèzes", x:"6 nouveaux exercices avec photos : haussements d'épaules à la Smith, derrière le dos, prise large, à la machine à mollets, tractions scapulaires (sans matériel) et tirage haut sumo au kettlebell. Dans Exercices, tapez « trapèze » pour tous les retrouver."},
   {d:"2026-11-16", t:"⚡ Coup critique plus rare, plus corsé", x:"Le coup critique devient plus rare (environ deux séances sur cinq, une seule fois) et tombe sur la dernière série de l'exercice le plus exigeant du jour, là où le coach vous demande de progresser. Atteignez l'objectif et votre Gymon mange double."},
@@ -4405,21 +4410,38 @@ function lineChart(h){
 }
 
 let exFilter = {q:"", m:"Tous", all:false};
+/* Favoris (18 nov. 2026, demande du propriétaire) : un exercice est favori s'il est fréquent (fait dans 3 séances ou plus sur les
+   90 derniers jours ; on ne peut pas le retirer) ou marqué à la main (étoile dans sa fiche, S.profile.favs). Les favoris sortent
+   en premier dans les listes et la recherche (Exercices, ajout d'exercices à une séance ou une routine). */
+const FAV = {minSessions:3, days:90};
+let favCache = null;
+function favCounts(){
+  const key = dayNum() + ":" + S.workouts.length + ":" + S.workouts.reduce((t, w) => Math.max(t, w.start), 0);
+  if(favCache && favCache.key === key) return favCache.n;
+  const since = Date.now() - FAV.days * 86400000, n = {};
+  S.workouts.forEach(w => { if(w.start < since) return; new Set(w.exercises.filter(ex => workSets(ex).length).map(ex => ex.exId)).forEach(id => n[id] = (n[id] || 0) + 1); });
+  favCache = {key, n}; return n;
+}
+const favFreq = id => (favCounts()[id] || 0) >= FAV.minSessions;
+const favManual = id => (S.profile.favs || []).includes(id);
+const isFav = id => favFreq(id) || favManual(id);
 function exListHTML(sel, mode){
   const q = exFilter.q.trim().toLowerCase();
   const only = mode==="pick" && picker && picker.only;
   // Recherche (16 nov. 2026) : dans le nom, mais aussi le muscle principal ; « trapèze » trouve les exercices du haut du dos
   const qm = e => e.name.toLowerCase().includes(q) || primOf(e).toLowerCase().includes(q) || (/^trap[eè]z/.test(q) && /haussement|shrug|trap[eè]z|scapul|tirage haut|rowing vertical|élévation en y|face pull/i.test(e.name));
+  const fav = new Set(only ? [] : allEx().filter(e => isFav(e.id)).map(e => e.id));
   const list = allEx().filter(e => (exFilter.m==="Tous" || e.muscle===exFilter.m) && (!q || qm(e)) && (!only || only[e.id]) && (only || exFilter.all || usableEx(e)))
-    .sort((a,b) => a.name.localeCompare(b.name,"fr"));
+    .sort((a,b) => (fav.has(b.id) - fav.has(a.id)) || a.name.localeCompare(b.name,"fr"));
   if(!list.length) return `<div class="item"><span class="t muted">${only ? "Aucun exercice pratiqué ne correspond à ce filtre." : "Aucun exercice ne correspond. Créez-le avec le bouton ci-dessous."}</span></div>`;
-  return list.map(e => {
+  const nFav = list.filter(e => fav.has(e.id)).length, star = e => fav.has(e.id) ? `<span class="fav-star" aria-label="Favori">★</span>` : "";
+  return list.map((e, k) => (nFav && k === 0 ? `<p class="list-h">★ Favoris</p>` : nFav && k === nFav ? `<p class="list-h">Tous les exercices</p>` : "") + (() => {
     if(only) return `<button class="item ${e.id===progEx?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(primOf(e))} · ${only[e.id]} séance${only[e.id]>1?"s":""}</span></span>${e.id===progEx?'<span class="tick">✓</span>':'<span class="chev">›</span>'}</button>`;
     if(mode==="pick"){ const on = sel.has(e.id);
-      return `<button class="item ${on?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(primOf(e))} · ${esc(e.equip)}</span></span><span class="tick">${on?"✓":""}</span></button>`; }
+      return `<button class="item ${on?"sel":""}" data-act="pick-toggle" data-id="${e.id}">${thumb(e)}<span class="t"><b>${star(e)}${esc(e.name)}</b><span>${esc(primOf(e))} · ${esc(e.equip)}</span></span><span class="tick">${on?"✓":""}</span></button>`; }
     const h = exHistory(e.id), best = h.length ? Math.max(...h.map(x=>x.best)) : 0;
-    return `<button class="item" data-act="ex-info" data-id="${e.id}">${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>${esc(primOf(e))} · ${esc(e.equip)}${h.length?` · ${h.length} séance${h.length>1?"s":""}`:""}</span></span>${best?`<span class="small num muted">${fmtN(best)} kg</span>`:""}<span class="chev">›</span></button>`;
-  }).join("");
+    return `<button class="item" data-act="ex-info" data-id="${e.id}">${thumb(e)}<span class="t"><b>${star(e)}${esc(e.name)}</b><span>${esc(primOf(e))} · ${esc(e.equip)}${h.length?` · ${h.length} séance${h.length>1?"s":""}`:""}</span></span>${best?`<span class="small num muted">${fmtN(best)} kg</span>`:""}<span class="chev">›</span></button>`;
+  })()).join("");
 }
 function chipsHTML(){
   return `<div class="chips">${["Tous",...MUSCLES].map(m => `<button class="chip" data-act="filter-m" data-m="${m}" aria-pressed="${exFilter.m===m}">${m}</button>`).join("")}</div>`
@@ -4798,11 +4820,17 @@ const ACT = {
   "set-range": b => { const id = b.dataset.id, v = b.dataset.v; S.profile.ranges = S.profile.ranges || {};
     if(v==="auto") delete S.profile.ranges[id]; else S.profile.ranges[id] = v.split("-").map(Number);
     touchProfile(); ACT["ex-info"](b); if(A()) render(); },
+  "fav-toggle": b => { const id = b.dataset.id, was = favManual(id);
+    S.profile.favs = (S.profile.favs || []).filter(x => x !== id); if(!was) S.profile.favs.push(id);
+    touchProfile(); const on = favManual(id); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); b.textContent = on ? "★ Favori · retirer" : "☆ Ajouter aux favoris";
+    const el = document.getElementById("ex-list"); if(el) el.innerHTML = exListHTML(null, "browse"); toast(on ? "Ajouté aux favoris" : "Retiré des favoris"); },
   "ex-info": b => { const e = exById(b.dataset.id), h = exHistory(e.id), last = h[h.length-1];
     const best = h.length ? h.reduce((a,x) => x.best>a.best ? x : a) : null;
     openSheet(`${e.img ? `<div class="demo"><img src="img/${e.id}-0.jpg" alt="Position de départ"><img src="img/${e.id}-1.jpg" alt="Position d'arrivée"><span class="cap">Départ ⇄ arrivée</span></div>` : ""}
       <h3>${esc(e.name)}</h3>
       <p class="muted" style="margin:-6px 0 0"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(primOf(e))} · ${esc(e.equip)}</p>
+      ${favFreq(e.id) ? `<p class="fav-line">★ Favori : vous le faites souvent (${favCounts()[e.id]} séances en ${FAV.days} jours)</p>`
+        : `<button class="btn sm fav-btn${favManual(e.id) ? " on" : ""}" data-act="fav-toggle" data-id="${e.id}" aria-pressed="${favManual(e.id)}">${favManual(e.id) ? "★ Favori · retirer" : "☆ Ajouter aux favoris"}</button>`}
       ${(() => { const w = exWork(e), o = Object.keys(w).filter(m => m !== primOf(e)).sort((a,b) => w[b]-w[a]);
         return o.length ? `<p class="small muted" style="margin:0">Travaille aussi : ${o.map(m => `${esc(m.toLowerCase())} ${Math.round(w[m]*100)} %`).join(", ")}</p>` : ""; })()}
       ${(() => { const c = coach(e.id), auto = !(S.profile.ranges||{})[e.id];
@@ -4941,6 +4969,7 @@ async function importText(txt){
     c.custom.forEach(e => { if(!S.profile.custom.some(x=>x.id===e.id)) S.profile.custom.push(e); });
     c.routines.forEach(r => { if(!S.profile.routines.some(x=>x.id===r.id)) S.profile.routines.push(r); });
     S.workouts.push(...fresh);
+    if(Array.isArray((d.profile || {}).favs)) S.profile.favs = [...new Set([...(S.profile.favs || []), ...d.profile.favs.filter(id => safeId(id) && allEx().some(e => e.id === id))])].slice(0, 400);
     const p = d.profile || {};   // poids, taille, sexe : repris seulement si ce téléphone ne les a pas encore
     if(!S.profile.bw && num(p.bw) > 0 && num(p.bw) < 400){ S.profile.bw = num(p.bw); if(p.sex === "h" || p.sex === "f") S.profile.sex = p.sex; }
     if(!S.profile.height && num(p.height) > 0 && num(p.height) < 260) S.profile.height = num(p.height);
