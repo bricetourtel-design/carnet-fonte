@@ -326,6 +326,12 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(FV.freq[0] && !FV.freq[1], "favori automatique : 3 séances ou plus sur 90 jours", FV.freq);
   ok(FV.first !== "curl-marteau" && FV.after0 === "curl-marteau" && FV.head && FV.pick === "curl-marteau" && FV.off, "étoile à la main : l'exercice passe en tête (recherche et ajout à une séance), sous « Favoris » ; on peut le retirer", FV);
   ok(FV.locked, "exercice fréquent : favori d'office, sans bouton pour le retirer", FV.locked);
+  // Lombaires et avant-bras, muscles à part entière (18 nov. 2026)
+  const LA = await p.evaluate(() => { const g = generatePlan({days:[{dow:0, muscles:["Dos","Biceps"], off:{}, min:60}], novOff:0, noNovelty:true});
+    return {minor:[MINOR.has("Lombaires"), MINOR.has("Avant-bras")], lag:!!(M_LAG.Lombaires && M_LAG["Avant-bras"]), comp:isCompound(exById("rouleau-poignets")), dead:isCompound(exById("souleve-deficit")),
+      lomb:allEx().filter(e => primOf(e) === "Lombaires").length, fore:allEx().filter(e => primOf(e) === "Avant-bras").length, inPlan:"Lombaires" in g.weeklyFine && "Avant-bras" in g.weeklyFine}; });
+  ok(!LA.minor[0] && !LA.minor[1] && LA.lag && LA.inPlan, "lombaires et avant-bras : muscles à part entière (volume, phrases du Gymon)", LA);
+  ok(LA.lomb >= 8 && LA.fore >= 10 && !LA.comp && LA.dead, "lombaires et avant-bras : 8 exercices de plus ; le rouleau à poignets n'est pas un polyarticulaire", LA);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);
