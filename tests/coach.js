@@ -219,7 +219,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   // Bibliothèque de 200+ exercices (14 nov. 2026) : complète, cohérente, photos présentes, classiques d'abord, imports fusionnés
   const LIB = await p.evaluate(async () => {
     const names = new Set(EX.map(e => e.name.toLowerCase())), bad = EX.filter(e => !WORK[e.id] || GROUP_OF[primOf(e)] !== e.muscle || !(defaultRange(e)[1] > defaultRange(e)[0]));
-    const miss = []; await Promise.all(EX.flatMap(e => [0, 1].map(k => fetch(`img/${e.id}-${k}.jpg`, {method:"HEAD"}).then(r => { if(!r.ok) miss.push(`${e.id}-${k}`); }))));
+    const miss = []; await Promise.all(EX.filter(e => e.img).flatMap(e => [0, 1].map(k => fetch(`img/${e.id}-${k}.jpg`, {method:"HEAD"}).then(r => { if(!r.ok) miss.push(`${e.id}-${k}`); }))));
     const comp = ["rowing-2-halteres", "squat-goblet", "arnold", "tirage-vertical-serre"].every(id => isCompound(exById(id))) && !isCompound(exById("kickback")) && !isCompound(exById("elev-lat-inclinee"));
     const saved = {w:S.workouts, c:S.profile.custom};
     S.workouts = []; const first = candidatesFor("Biceps", {}).slice(0, 2).map(c => c.e.id);
@@ -300,7 +300,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   const TR = await p.evaluate(() => { const f = {...exFilter}; exFilter.m = "Tous"; exFilter.all = true; exFilter.q = "trapèze";
     const h = exListHTML(null, "browse"), ids = [...h.matchAll(/data-id="([^"]+)"/g)].map(m => m[1]); exFilter.q = "haut du dos"; const h2 = (exListHTML(null, "browse").match(/data-id=/g) || []).length;
     Object.assign(exFilter, f); return {ids, n2:h2}; });
-  ok(["shrug-barre","shrug-smith","shrug-dos","shrug-arrache","shrug-mollets","tractions-scapulaires","tirage-haut-kb"].every(id => TR.ids.includes(id)) && !TR.ids.includes("rowing-barre") && TR.ids.length <= 16 && TR.n2 > 0, "trapèzes : 6 nouveaux exercices, « trapèze » ou « haut du dos » dans la recherche les retrouve", TR);
+  ok(["shrug-barre","shrug-smith","shrug-dos","shrug-arrache","shrug-mollets","tractions-scapulaires","tirage-haut-kb"].every(id => TR.ids.includes(id)) && !TR.ids.includes("rowing-barre") && TR.ids.length <= 18 && TR.n2 > 0, "trapèzes : 6 nouveaux exercices, « trapèze » ou « haut du dos » dans la recherche les retrouve", TR);
   // Calories (16 nov. 2026) : MET × poids de corps × durée
   const KC = await p.evaluate(() => { const bw0 = S.profile.bw, now = Date.now(); S.profile.bw = 80;
     const w = (ids, feel, min) => ({id:"k", start:now - min * 60000, end:now, exercises:ids.map(id => ({exId:id, feel, sets:[1,2,3].map(() => ({w:"40", r:"10", done:true}))}))});
@@ -332,6 +332,18 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
       lomb:allEx().filter(e => primOf(e) === "Lombaires").length, fore:allEx().filter(e => primOf(e) === "Avant-bras").length, inPlan:"Lombaires" in g.weeklyFine && "Avant-bras" in g.weeklyFine}; });
   ok(!LA.minor[0] && !LA.minor[1] && LA.lag && LA.inPlan, "lombaires et avant-bras : muscles à part entière (volume, phrases du Gymon)", LA);
   ok(LA.lomb >= 8 && LA.fore >= 10 && !LA.comp && LA.dead, "lombaires et avant-bras : 8 exercices de plus ; le rouleau à poignets n'est pas un polyarticulaire", LA);
+  // Filtres par matériel et machines de salle (18 nov. 2026)
+  const EQF = await p.evaluate(() => { const f = {...exFilter}; exFilter.m = "Tous"; exFilter.q = ""; exFilter.all = true;
+    const ids = eq => { exFilter.eq = eq; return [...exListHTML(null, "browse").matchAll(/data-id="([^"]+)"/g)].map(m => m[1]); };
+    const r = {mach:ids("Machine"), poulie:ids("Poulie"), libre:ids("Charge libre"), banc:ids("Sur banc"), pdc:ids("Sans matériel"), cardio:ids("Cardio")};
+    exFilter.eq = "Cardio"; exFilter.m = "Dos"; const dosCardio = [...exListHTML(null, "browse").matchAll(/data-id="([^"]+)"/g)].map(m => m[1]);
+    Object.assign(exFilter, f);
+    const chk = (l, fn) => l.length > 5 && l.every(id => fn(exById(id)));
+    return {mach:chk(r.mach, e => e.equip === "Machine"), poulie:chk(r.poulie, e => e.equip === "Poulie"), libre:chk(r.libre, e => ["Barre","Haltères","Kettlebell","Autre"].includes(e.equip)),
+      pdc:chk(r.pdc, e => e.equip === "Poids du corps"), cardio:r.cardio.length === 13, banc:r.banc.includes("dc-barre") && r.banc.includes("hip-thrust") && !r.banc.includes("tractions-assistees") && !r.banc.includes("ecarte-poulie") && !r.banc.includes("dc-machine"),
+      dosCardio:dosCardio.join(), noimg:EX.filter(e => !e.img).length, machines:["elev-lat-machine","pullover-machine","kickback-machine","hip-thrust-machine","belt-squat","rowing-iso-machine"].every(id => EX.some(e => e.id === id))}; });
+  ok(EQF.mach && EQF.poulie && EQF.libre && EQF.pdc && EQF.cardio && EQF.banc, "filtres par matériel : machine, poulie, charge libre, sur banc, sans matériel, cardio", EQF);
+  ok(EQF.dosCardio === "ski-erg" && EQF.noimg === 10 && EQF.machines, "machines de salle ajoutées (10 sans photo) ; muscle + matériel se combinent", EQF);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close(); srv.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests du coach passent"); process.exit(fails ? 1 : 0);
