@@ -710,6 +710,102 @@
     "Machine"
    ],
    [
+    "rowing-iso-machine",
+    "Rowing iso-latéral (machine à disques)",
+    "Dos",
+    "Machine"
+   ],
+   [
+    "pullover-machine",
+    "Pull-over à la machine",
+    "Dos",
+    "Machine"
+   ],
+   [
+    "lombaires-machine",
+    "Extension lombaire à la machine (assis)",
+    "Dos",
+    "Machine"
+   ],
+   [
+    "elev-lat-machine",
+    "Élévations latérales à la machine",
+    "Épaules",
+    "Machine"
+   ],
+   [
+    "rowing-vertical-smith",
+    "Rowing vertical à la Smith",
+    "Épaules",
+    "Machine"
+   ],
+   [
+    "dc-smith-serre",
+    "Développé couché prise serrée à la Smith",
+    "Triceps",
+    "Machine"
+   ],
+   [
+    "kickback-machine",
+    "Machine à fessiers (kickback)",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "hip-thrust-machine",
+    "Hip thrust à la machine",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "belt-squat",
+    "Belt squat (machine)",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "pendulum-squat",
+    "Pendulum squat (machine)",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "sdt-machine",
+    "Soulevé de terre à la machine",
+    "Jambes",
+    "Machine"
+   ],
+   [
+    "chaise-romaine",
+    "Relevé de genoux à la chaise romaine",
+    "Abdos",
+    "Poids du corps"
+   ],
+   [
+    "rotation-buste-machine",
+    "Rotation du buste à la machine",
+    "Abdos",
+    "Machine"
+   ],
+   [
+    "velo-allonge",
+    "Vélo semi-allongé",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "velo-air",
+    "Vélo à air (assault bike)",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "ski-erg",
+    "SkiErg",
+    "Dos",
+    "Cardio"
+   ],
+   [
     "marche",
     "Marche (extérieur, randonnée)",
     "Jambes",
@@ -2554,6 +2650,118 @@
     ]
    ],
    [
+    "rowing-iso-machine",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "pullover-machine",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "lombaires-machine",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "elev-lat-machine",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "rowing-vertical-smith",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "dc-smith-serre",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "kickback-machine",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "hip-thrust-machine",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "belt-squat",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "pendulum-squat",
+    [
+     8,
+     12
+    ]
+   ],
+   [
+    "sdt-machine",
+    [
+     6,
+     10
+    ]
+   ],
+   [
+    "chaise-romaine",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "rotation-buste-machine",
+    [
+     10,
+     15
+    ]
+   ],
+   [
+    "velo-allonge",
+    [
+     20,
+     45
+    ]
+   ],
+   [
+    "velo-air",
+    [
+     10,
+     20
+    ]
+   ],
+   [
+    "ski-erg",
+    [
+     10,
+     20
+    ]
+   ],
+   [
     "marche",
     [
      30,
@@ -4318,6 +4526,81 @@
    },
    "shrug-machine": {
     "Haut du dos": 1
+   },
+   "rowing-iso-machine": {
+    "Grand dorsal": 1,
+    "Haut du dos": 0.7,
+    "Biceps": 0.4,
+    "Deltoïde arrière": 0.3
+   },
+   "pullover-machine": {
+    "Grand dorsal": 1,
+    "Pectoraux": 0.3,
+    "Triceps": 0.2
+   },
+   "lombaires-machine": {
+    "Lombaires": 1,
+    "Fessiers": 0.3
+   },
+   "elev-lat-machine": {
+    "Deltoïde latéral": 1
+   },
+   "rowing-vertical-smith": {
+    "Deltoïde latéral": 1,
+    "Haut du dos": 0.7,
+    "Biceps": 0.3
+   },
+   "dc-smith-serre": {
+    "Triceps": 1,
+    "Pectoraux": 0.6,
+    "Deltoïde avant": 0.3
+   },
+   "kickback-machine": {
+    "Fessiers": 1,
+    "Ischios": 0.3
+   },
+   "hip-thrust-machine": {
+    "Fessiers": 1,
+    "Ischios": 0.3,
+    "Quadriceps": 0.2
+   },
+   "belt-squat": {
+    "Quadriceps": 1,
+    "Fessiers": 0.7,
+    "Adducteurs": 0.3
+   },
+   "pendulum-squat": {
+    "Quadriceps": 1,
+    "Fessiers": 0.5
+   },
+   "sdt-machine": {
+    "Fessiers": 1,
+    "Ischios": 0.7,
+    "Quadriceps": 0.6,
+    "Lombaires": 0.6
+   },
+   "chaise-romaine": {
+    "Abdos": 1,
+    "Obliques": 0.3
+   },
+   "rotation-buste-machine": {
+    "Obliques": 1,
+    "Abdos": 0.4
+   },
+   "velo-allonge": {
+    "Quadriceps": 0.5,
+    "Fessiers": 0.3,
+    "Mollets": 0.1
+   },
+   "velo-air": {
+    "Quadriceps": 0.5,
+    "Fessiers": 0.3,
+    "Deltoïde avant": 0.1
+   },
+   "ski-erg": {
+    "Grand dorsal": 0.4,
+    "Triceps": 0.2,
+    "Abdos": 0.2
    },
    "marche": {
     "Mollets": 0.4,
