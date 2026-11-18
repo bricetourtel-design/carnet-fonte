@@ -239,6 +239,26 @@ textarea{min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:13p
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .tile{background:var(--surface);border-radius:var(--r);padding:12px 14px}
 .chips-eq{margin-top:-4px}.chips-eq .chip{font-size:13px;padding:6px 12px}
+/* Séance en équipe (18 nov. 2026) */
+.team-duo{display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:8px 6px 6px;border-radius:18px;background:var(--fill);pointer-events:none}
+.duo-g{display:flex;flex-direction:column;align-items:center;min-width:0;flex:1}
+.duo-g b{font-size:14px;margin-top:2px}.duo-g small{font-size:11.5px;color:var(--muted);text-align:center;line-height:1.2}
+.duo-svg{height:96px;display:flex;align-items:flex-end;justify-content:center;animation:duo 2.4s ease-in-out infinite}
+.duo-svg.b{animation-delay:1.2s}.duo-svg .creature{height:96px;width:auto;max-width:100%}
+.team-duo.sm .duo-svg,.team-duo.sm .duo-svg .creature{height:78px}
+.duo-svg.unknown,.team-duo.sm .duo-svg.unknown{width:56px;height:56px;font-size:30px;font-weight:800;color:var(--muted);align-items:center;border:2px dashed var(--glass-line);border-radius:50%;margin-bottom:10px;animation:none}
+.duo-x{font-size:22px;align-self:center}
+@keyframes duo{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.qr-box{background:#fff;border-radius:16px;padding:10px;display:flex;justify-content:center}.qr-box .qr{width:100%;max-width:300px;height:auto}
+.qr-txt{width:100%;min-height:70px;font-size:12px;font-family:ui-monospace,monospace;margin:6px 0}
+.scan-box{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:4/3}.scan-box video{width:100%;height:100%;object-fit:cover;display:block}
+.scan-frame{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
+.team-ex{margin:0;padding-left:22px;font-size:14px;line-height:1.5}
+.friends{display:flex;flex-direction:column;gap:6px}.friend{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:12px;background:var(--fill)}
+.friend .fr-svg{height:46px;width:40px;display:flex;align-items:flex-end;justify-content:center}.friend .fr-svg .creature{height:46px;width:auto}
+.friend small{display:block;color:var(--muted);font-size:12px}
+.celeb-team{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}.celeb-team .team-duo{background:rgba(255,255,255,.08);width:100%}
+@media (prefers-reduced-motion: reduce){.duo-svg{animation:none}}
 .list-h{margin:10px 2px 4px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .fav-star,.item .t .fav-star{display:inline;color:#ffc83d;margin-right:5px;font-size:inherit}
 .fav-btn{align-self:flex-start}.fav-btn.on{color:#1b1b1f;background:#ffc83d;border-color:#ffc83d}
@@ -538,12 +558,12 @@ main{padding-bottom:calc(var(--nav-h) + 150px + env(safe-area-inset-bottom,0px))
 .gy-form{margin:2px 0 0;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .gy-hint{margin:0;font-size:15px;font-weight:500;letter-spacing:-.01em;text-align:center;text-wrap:balance}
 .gy-cta{margin-top:8px;min-width:72%}
-.gy-acts{display:flex;justify-content:center;align-items:flex-start;gap:6px;margin:10px 0 2px}
-.gy-act{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;padding:0;background:none;border:0;color:var(--fg)}
-.ga-i{position:relative;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;font-size:26px;background:var(--glass);border:1.5px solid var(--glass-line);
+.gy-acts{display:flex;justify-content:center;align-items:flex-start;gap:3px;margin:10px 0 2px}
+.gy-act{display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;padding:0;background:none;border:0;color:var(--fg)}
+.ga-i{position:relative;display:grid;place-items:center;width:50px;height:50px;border-radius:50%;font-size:24px;background:var(--glass);border:1.5px solid var(--glass-line);
   box-shadow:0 4px 14px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .12s}
 .gy-act:active .ga-i{transform:scale(.9)}
-.ga-l{font-size:11.5px;font-weight:700;line-height:1.15;text-align:center;color:var(--muted)}
+.ga-l{font-size:10.5px;font-weight:700;line-height:1.15;text-align:center;color:var(--muted);width:66px;margin:0 -5px}
 .gy-act.go .ga-i{background:var(--grad, linear-gradient(135deg,#8b5cf6,#ec4899));border-color:transparent}
 .gy-act.go .ga-l{color:var(--fg)}
 .hs-h{margin:10px 0 0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -747,7 +767,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-18 e";
+const APP_VERSION = "2026-11-18 f";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2637,7 +2657,7 @@ function creatureSVG(c, small, back, opt){
   // Bras selon la satiété (0 levés, 1 mi-hauteur, 2 le long du corps, 3 ballants) et regard selon la forme (validés le 12 nov. 2026 ;
   // seuils abaissés le 13 nov. avec la satiété, qui oscille normalement entre 40 et 100 %)
   opt = {...opt, armLevel: opt.armLevel ?? (dead ? 3 : vit >= 70 ? 0 : vit >= 45 ? 1 : vit >= 25 ? 2 : 3), eyeState: opt.eyeState !== undefined ? opt.eyeState : gymonEyes(c)};
-  const amb = AMB[S.profile.gymonStyle] ? S.profile.gymonStyle : "aesthetic", GC = gymColor(c);
+  const amb = AMB[opt.amb] ? opt.amb : AMB[S.profile.gymonStyle] ? S.profile.gymonStyle : "aesthetic", GC = gymColor(c);
   const shorts = GYM_SHORTS[(c.look||{}).shorts] || AMB[amb].shorts, A = {...AMB[amb], shorts, shoes:"#ffffff", sole: shorts==="#f2f2f2" || shorts==="#161616" ? "#ff6b35" : shorts};
   // Effets : muscles qui viennent de grossir en rouge (24 h), fumée sur les muscles en récupération
   // (un muscle « pompé » colore sa partie du dessin ; les parties encore étiquetées par catégorie suivent tous ses muscles)
@@ -3002,7 +3022,7 @@ document.addEventListener("touchend", e => { if(!gyTouch) return; const t = e.ch
    GY_FILL : part de la hauteur du dessin occupée par chaque forme (mesurée) ; le dessin reste posé au sol. */
 const GY_FILL = [0.49, 0.49, 0.65, 0.74, 0.86, 0.95, 0.97, 0.83, 0.89, 0.96, 0.98, 0.98, 1.02];
 function gyZoom(svg, c){
-  const cm = Math.max(6, creatureHeight(c)), f = 0.30 + 0.70 * Math.min(1, Math.log(cm / 6) / Math.log(350 / 6));
+  const cm = Math.max(6, c.heightCm || creatureHeight(c)), f = 0.30 + 0.70 * Math.min(1, Math.log(cm / 6) / Math.log(350 / 6));
   const z = f / (0.96 * (GY_FILL[c.stage] || 1)), h = 344 / z, w = 240 / z;
   return svg.replace('viewBox="0 -24 240 344"', `viewBox="${(120 - w/2).toFixed(1)} ${(320 - h).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}"`);
 }
@@ -3182,7 +3202,8 @@ function gyActionsHTML(c, v){
     {act:"fridge", e:"🍗", l:"Nourrir", a:v < 50 ? "!" : v < 100 && food ? "•" : "", w:v < 30, s:`Satiété ${v} %`},
     {act:"gy-wash", e:"🚿", l:"Laver", a:smelly ? "!" : sweaty ? "•" : "", w:smelly, s:smelly ? "il sent mauvais" : sweaty ? "il transpire" : "propre"},
     {act:"gy-pet", e:"💜", l:"Câlin", a:"", s:"un câlin"},
-    {act:"gy-journal", e:"🩺", l:"Carnet de santé", a:newJ ? "•" : "", s:newJ ? "nouveau fait marquant" : "courbes et faits marquants"}];
+    {act:"gy-journal", e:"🩺", l:"Carnet de santé", a:newJ ? "•" : "", s:newJ ? "nouveau fait marquant" : "courbes et faits marquants"},
+    {act:"gy-social", e:"🤝", l:"Sociabiliser", a:"", s:"séance en équipe, amis Gymon"}];
   return `<nav class="gy-acts" aria-label="S'occuper de ${esc(c.name || "ton Gymon")}">${A.map(x => `<button class="gy-act${x.cls || ""}${x.a ? " on" : ""}${x.w ? " warn" : ""}" data-act="${x.act}"${x.tab ? ` data-tab="${x.tab}"` : ""} aria-label="${x.l} : ${esc(x.s)}">
     <span class="ga-i">${x.e}${x.a ? `<b class="ga-b">${x.a === "!" ? "!" : ""}</b>` : ""}</span><span class="ga-l">${x.l}</span></button>`).join("")}</nav>`;
 }
@@ -3341,6 +3362,10 @@ function celebHTML(w, cr, hatch){
       ${w.prs.length ? `<p class="celeb-sub">🏆 Record : ${w.prs.map(id => esc(exById(id).name)).join(", ")}</p>` : ""}
       ${cr.mile ? `<p class="celeb-sat">🏅 ${cr.mile} séances ensemble !</p>` : ""}
       ${c.stage >= 2 ? `<button class="btn celeb-wash" data-act="celeb-wash">🚿 Une douche ?</button>` : ""}
+      ${w.team ? `<div class="celeb-team">${teamDuoHTML(w.team.friend ? friendFromCard(w.team.friend) : null, true)}
+        <p class="celeb-sub">👥 Séance en équipe${w.team.friend ? ` avec ${esc(w.team.friend.name)}` : ""}</p>
+        ${w.team.role === "maitre" && !w.team.friend ? `<button class="btn celeb-wash" data-act="celeb-team" data-k="scan">📷 Scanner le Gymon de ton coéquipier (facultatif)</button>`
+          : w.team.role === "suiveur" ? `<button class="btn celeb-wash" data-act="celeb-team" data-k="card">🤝 Montrer mon Gymon à ${esc(w.team.friend ? w.team.friend.name : "ton coéquipier")}</button>` : ""}</div>` : ""}
       </div>
       ${hatch ? `<div class="row celeb-name"><input id="celeb-name" class="name-input" maxlength="16" placeholder="Donne-lui un nom" aria-label="Nom du Gymon"><button class="btn" data-act="celeb-rand" aria-label="Nom au hasard">🎲</button></div>` : ""}
       <div class="celeb-btns" id="celeb-btns" hidden><button class="btn" data-act="celeb-share">📸 Partager</button><button class="btn primary" data-act="celeb-close">Continuer</button></div>
@@ -3913,6 +3938,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-18", t:"👥 Séance en équipe", x:"Entraînez-vous avec un ami, chacun sur son téléphone. Lancez votre séance et touchez « Partager ma séance » : votre ami scanne le QR code (Gymon › Sociabiliser › Rejoindre la séance d'un ami). Il a les mêmes exercices, avec ses propres charges, et vos deux Gymon s'affichent côte à côte. Sans serveur : un seul scan, puis chaque téléphone est autonome. En fin de séance, il peut vous montrer son Gymon pour que vous deveniez amis Gymon."},
   {d:"2026-11-18", t:"🏋️ Toutes les machines de la salle", x:"16 exercices de plus pour couvrir les machines courantes : rowing iso-latéral, pull-over, lombaires, élévations latérales, machine à fessiers, hip thrust, belt squat, pendulum squat, soulevé de terre à la machine, chaise romaine, rotation du buste, vélo semi-allongé, vélo à air, SkiErg… Et dans Exercices, de nouveaux filtres par matériel : machine, poulie, charge libre, sur banc, sans matériel, cardio."},
   {d:"2026-11-18", t:"💬 Votre avis sur les nouveautés", x:"Cette fenêtre s'affiche désormais à chaque mise à jour, même pour plusieurs nouveautés le même jour. Touchez « Donner mon avis » pour nous dire ce que vous en pensez : vos retours guident les prochaines versions."},
   {d:"2026-11-18", t:"🏃 Cardio", x:"10 exercices de cardio avec photos : marche, marche sur tapis, footing, course, escaliers, vélo d'appartement ou extérieur, rameur, elliptique, corde à sauter (filtre « Cardio » dans Exercices). Notez la durée en minutes ; le ressenti règle l'intensité. Les calories brûlées comptent en fin de séance et nourrissent votre Gymon, qui se muscle aussi un peu les jambes. Et quand ses fessiers travaillent, on les voit rougir à travers le short (vue de dos)."},
@@ -4300,6 +4326,7 @@ function viewHome(){
       <p class="small muted" style="margin:10px 0 0">Calculé muscle par muscle sur 30 à 66 h, ajusté au nombre de séries, au ressenti et au travail indirect (ex. triceps dans les développés).</p>
     </section>
     <button class="btn primary wide" data-act="start-empty">Démarrer une séance libre</button>
+    <button class="btn ghost wide" data-act="team-join">👥 Rejoindre la séance d'un ami</button>
     <h2 class="big">${ord.length ? "Ma semaine" : "Mes programmes"}</h2>
     ${ord.length ? "" : `<button class="btn ghost wide" data-act="goto" data-tab="routine">Créer ma routine de la semaine</button>`}
     ${routines}
@@ -4352,8 +4379,10 @@ function viewActive(){
       ${mealBar()}<div class="clock" id="clock">0:00</div>
     </section>
     <div class="live-meta" id="live-meta">${liveMeta()}</div>
+    ${a.team ? teamDuoHTML(a.team.friend ? friendFromCard(a.team.friend) : null, true) : ""}
     ${exs || `<div class="card empty"><b>Séance vide</b><span class="muted">Ajoutez votre premier exercice pour commencer à noter vos séries.</span></div>`}
     <button class="btn wide" data-act="pick-ex">+ Ajouter des exercices</button>
+    ${a.team && a.team.role === "suiveur" ? "" : `<button class="btn ghost wide" data-act="team-share">👥 Partager ma séance avec un ami</button>`}
     <div class="row"><button class="btn ghost danger" data-act="cancel-w">Abandonner</button>
       <button class="btn ok" style="flex:1" data-act="finish-w">Terminer la séance</button></div>`;
 }
@@ -4577,6 +4606,7 @@ function viewSettings(){
       <label class="field">Repos par défaut après une série
         <select id="rest-default">${[-1,0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s<0?"Auto selon l'exercice (1 min 30 à 3 min)":s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
       <div class="row wrap">
+        <label class="field" style="flex:1;min-width:130px">Prénom (séance en équipe)<input id="first-name" maxlength="16" value="${esc(S.profile.firstName || "")}" placeholder="Ex. Alex" autocomplete="given-name"></label>
         <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="bw" inputmode="decimal" value="${esc(S.profile.bw||"")}" placeholder="${detectBodyweight() ? fmtN(detectBodyweight())+" (détecté)" : "Ex. 80"}"></label>
         <label class="field" style="flex:1;min-width:130px">Barre droite<select id="bar">${[20,15,10].map(v => `<option value="${v}" ${(S.profile.bar||20)===v?"selected":""}>${v} kg</option>`).join("")}</select></label>
         <label class="field" style="flex:1;min-width:130px">Barre EZ<select id="bar-ez">${[10,8,7,12].map(v => `<option value="${v}" ${(S.profile.barEz||10)===v?"selected":""}>${v} kg</option>`).join("")}</select></label>
@@ -4679,7 +4709,7 @@ function finishWorkout(){
   const a = S.profile.active;
   const exercises = a.exercises.map(ex => ({exId:ex.exId, feel:ex.feel||0, sets:ex.sets.filter(s=>s.done).map(s=>({w:s.w, r:s.r, done:true, warm:!!s.warm, ...(critHit(s) && !s.warm ? {crit:1} : {})}))})).filter(ex => ex.sets.length);
   if(!exercises.length){ toast("Validez au moins une série avec ✓ avant de terminer"); return; }
-  const w = {id:a.id, name:a.name.trim()||"Séance", start:a.start, end:Date.now(), routineId:a.routineId, exercises, prs:[]};
+  const w = {id:a.id, name:a.name.trim()||"Séance", start:a.start, end:Date.now(), routineId:a.routineId, exercises, prs:[], ...(a.team ? {team:teamRecord(a.team)} : {})};
   exercises.forEach(ex => {
     const prev = exHistory(ex.exId); if(!prev.length) return;
     const pb = Math.max(...prev.map(x=>x.best)), pw = Math.max(...prev.map(x=>x.maxW));
@@ -4687,7 +4717,7 @@ function finishWorkout(){
     if(cb > pb+0.01 || cw > pw+0.01) w.prs.push(ex.exId);
   });
   w.rating = rateWorkout(w);
-  S.workouts.push(w); S.profile.active = null; stopRest(); flash(null);
+  S.workouts.push(w); teamLog(w); S.profile.active = null; stopRest(); flash(null);
   touchProfile(); saveWorkout(w);
   const cr = creatureFeed(w); render(); gcRetention();
   openSheet(`<div class="rating"><span class="remo">${w.rating.e}</span><div><h3>${esc(w.rating.label)}</h3>
@@ -5082,6 +5112,427 @@ const ACT = {
       <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Annuler</button><button class="btn" style="flex:1" data-act="do-import">Importer le texte</button></div>`),
   "do-import": () => importText(document.getElementById("imp-txt").value)
 };
+/* ---------- QR code maison (18 nov. 2026) : encodeur et lecteur, sans dépendance ----------
+   Pour la séance en équipe : on ne lit que nos propres codes (mode octets, correction M, versions 1 à 15).
+   Encodeur d'après la norme ISO/IEC 18004 ; lecteur : seuillage local, repères 1:1:3:1:1, perspective,
+   lecture du format, démasquage, désentrelacement et correction d'erreurs Reed-Solomon (Berlekamp-Massey + Forney). */
+const QR = (() => {
+  // Corps de Galois GF(256), polynôme 0x11d
+  const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+  for(let i = 0, x = 1; i < 255; i++){ EXP[i] = x; LOG[x] = i; x <<= 1; if(x & 256) x ^= 0x11d; }
+  for(let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+  const mul = (a, b) => a && b ? EXP[LOG[a] + LOG[b]] : 0, div = (a, b) => a ? EXP[(LOG[a] + 255 - LOG[b]) % 255] : 0;
+  // Correction M : [codes de correction par bloc, blocs groupe 1, données par bloc g1, blocs g2, données g2]
+  const ECM = [null, [10,1,16,0,0], [16,1,28,0,0], [26,1,44,0,0], [18,2,32,0,0], [24,2,43,0,0], [16,4,27,0,0], [18,4,31,0,0],
+    [22,2,38,2,39], [22,3,36,2,37], [26,4,43,1,44], [30,1,50,4,51], [22,6,36,2,37], [22,8,37,1,38], [24,4,40,5,41], [24,5,41,5,42]];
+  const ALIGN = [null, [], [6,18], [6,22], [6,26], [6,30], [6,34], [6,22,38], [6,24,42], [6,26,46], [6,28,50], [6,30,54], [6,32,58], [6,34,62], [6,26,46,66], [6,26,48,70]];
+  const MAXV = 15, dataBytes = v => { const e = ECM[v]; return e[1] * e[2] + e[3] * e[4]; };
+  const MASKS = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, (x, y) => x % 3 === 0, (x, y) => (x + y) % 3 === 0,
+    (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => x * y % 2 + x * y % 3 === 0,
+    (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+  const fmtBits = mask => { const d = (0 << 3) | mask; let r = d; for(let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537); return ((d << 10) | r) ^ 0x5412; };
+  const verBits = v => { let r = v; for(let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1f25); return (v << 12) | r; };
+  // Gabarit d'une version : modules de fonction (repères, séparations, rythme, alignement, format, version) et leur couleur
+  function skeleton(v){
+    const n = v * 4 + 17, m = new Uint8Array(n * n), fn = new Uint8Array(n * n), set = (x, y, d) => { m[y * n + x] = d ? 1 : 0; fn[y * n + x] = 1; };
+    for(let i = 0; i < n; i++){ set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+    [[3, 3], [n - 4, 3], [3, n - 4]].forEach(([cx, cy]) => { for(let dy = -4; dy <= 4; dy++) for(let dx = -4; dx <= 4; dx++){ const x = cx + dx, y = cy + dy;
+      if(x >= 0 && x < n && y >= 0 && y < n){ const d = Math.max(Math.abs(dx), Math.abs(dy)); set(x, y, d !== 2 && d !== 4); } } });
+    const al = ALIGN[v], L = al.length;
+    for(let i = 0; i < L; i++) for(let j = 0; j < L; j++){ if((i === 0 && j === 0) || (i === 0 && j === L - 1) || (i === L - 1 && j === 0)) continue;
+      for(let dy = -2; dy <= 2; dy++) for(let dx = -2; dx <= 2; dx++) set(al[i] + dx, al[j] + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1); }
+    for(let i = 0; i < 9; i++){ fn[8 * n + i] = 1; fn[i * n + 8] = 1; } for(let i = 0; i < 8; i++){ fn[8 * n + (n - 1 - i)] = 1; fn[(n - 1 - i) * n + 8] = 1; }
+    set(8, n - 8, true);
+    if(v >= 7){ const b = verBits(v); for(let i = 0; i < 18; i++){ const d = (b >>> i) & 1, a = n - 11 + i % 3, c = Math.floor(i / 3); set(a, c, d); set(c, a, d); } }
+    return {n, m, fn};
+  }
+  function drawFormat(m, n, mask){ const b = fmtBits(mask), g = i => (b >>> i) & 1, s = (x, y, d) => m[y * n + x] = d;
+    for(let i = 0; i <= 5; i++) s(8, i, g(i)); s(8, 7, g(6)); s(8, 8, g(7)); s(7, 8, g(8)); for(let i = 9; i < 15; i++) s(14 - i, 8, g(i));
+    for(let i = 0; i < 8; i++) s(n - 1 - i, 8, g(i)); for(let i = 8; i < 15; i++) s(8, n - 15 + i, g(i)); s(8, n - 8, 1); }
+  // Ordre de lecture des modules de données (zigzag de droite à gauche, deux colonnes à la fois)
+  function order(n, fn){ const out = [];
+    for(let right = n - 1; right >= 1; right -= 2){ if(right === 6) right = 5;
+      for(let vert = 0; vert < n; vert++) for(let j = 0; j < 2; j++){ const x = right - j, up = ((right + 1) & 2) === 0, y = up ? n - 1 - vert : vert; if(!fn[y * n + x]) out.push(y * n + x); } }
+    return out; }
+  function rsGen(deg){ let g = [1]; for(let i = 0, r = 1; i < deg; i++, r = mul(r, 2)){ const ng = new Array(g.length + 1).fill(0);
+    for(let j = 0; j < g.length; j++){ ng[j] ^= g[j]; ng[j + 1] ^= mul(g[j], r); } g = ng; } return g; }
+  function rsEnc(data, deg){ const g = rsGen(deg), r = new Array(deg).fill(0);
+    for(const b of data){ const f = b ^ r.shift(); r.push(0); for(let i = 0; i < deg; i++) r[i] ^= mul(g[i + 1], f); } return r; }
+  function penalty(m, n){ let p = 0; const at = (x, y) => m[y * n + x];
+    for(let pass = 0; pass < 2; pass++) for(let a = 0; a < n; a++){ let run = 1, hist = "";
+      for(let b = 0; b < n; b++){ const v = pass ? at(a, b) : at(b, a); hist += v; if(b && v === (pass ? at(a, b - 1) : at(b - 1, a))){ run++; if(run === 5) p += 3; else if(run > 5) p++; } else run = 1; }
+      let i = -1; while((i = hist.indexOf("1011101", i + 1)) >= 0){ if(hist.slice(Math.max(0, i - 4), i) === "0000" || hist.slice(i + 7, i + 11) === "0000") p += 40; } }
+    for(let y = 0; y < n - 1; y++) for(let x = 0; x < n - 1; x++){ const c = at(x, y); if(c === at(x + 1, y) && c === at(x, y + 1) && c === at(x + 1, y + 1)) p += 3; }
+    let dark = 0; for(let i = 0; i < n * n; i++) dark += m[i]; p += Math.floor(Math.abs(dark * 20 - n * n * 10) / (n * n)) * 10;
+    return p; }
+  // Encodage : texte (UTF-8) → {n, m} (1 = module foncé)
+  function encode(text){
+    const bytes = Array.from(new TextEncoder().encode(text));
+    let v = 1; while(v <= MAXV && dataBytes(v) * 8 < 4 + (v < 10 ? 8 : 16) + bytes.length * 8) v++;
+    if(v > MAXV) throw new Error("trop long");
+    const cap = dataBytes(v), bits = []; const put = (val, len) => { for(let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+    put(4, 4); put(bytes.length, v < 10 ? 8 : 16); bytes.forEach(b => put(b, 8)); put(0, Math.min(4, cap * 8 - bits.length));
+    while(bits.length % 8) bits.push(0);
+    const data = []; for(let i = 0; i < bits.length; i += 8) data.push(parseInt(bits.slice(i, i + 8).join(""), 2));
+    for(let pad = 0xec; data.length < cap; pad ^= 0xec ^ 0x11) data.push(pad);
+    const [ec, b1, d1, b2, d2] = ECM[v], blocks = []; let k = 0;
+    for(let i = 0; i < b1 + b2; i++){ const len = i < b1 ? d1 : d2, d = data.slice(k, k + len); k += len; blocks.push({d, e:rsEnc(d, ec)}); }
+    const cw = []; for(let i = 0; i < Math.max(d1, d2); i++) blocks.forEach(b => { if(i < b.d.length) cw.push(b.d[i]); });
+    for(let i = 0; i < ec; i++) blocks.forEach(b => cw.push(b.e[i]));
+    const sk = skeleton(v), {n, fn} = sk, ord = order(n, fn), base = sk.m.slice();
+    ord.forEach((p, i) => base[p] = i < cw.length * 8 ? (cw[i >>> 3] >>> (7 - (i & 7))) & 1 : 0);
+    let best = null;
+    for(let mk = 0; mk < 8; mk++){ const m = base.slice(); ord.forEach(p => { if(MASKS[mk](p % n, Math.floor(p / n))) m[p] ^= 1; }); drawFormat(m, n, mk);
+      const s = penalty(m, n); if(!best || s < best.s) best = {s, m}; }
+    return {n, v, m:best.m};
+  }
+  // Reed-Solomon : corrige le bloc en place, renvoie false si trop d'erreurs
+  function rsFix(cw, ec){
+    const S = []; let bad = false;
+    for(let i = 0; i < ec; i++){ let s = 0; const a = EXP[i]; for(const c of cw) s = mul(s, a) ^ c; S.push(s); if(s) bad = true; }
+    if(!bad) return true;
+    let C = [1], B = [1], L = 0, m = 1, b = 1;
+    for(let n = 0; n < ec; n++){ let d = S[n]; for(let i = 1; i <= L; i++) d ^= mul(C[i] || 0, S[n - i]);
+      if(d === 0){ m++; continue; }
+      const T = C.slice(), coef = div(d, b), need = B.length + m; while(C.length < need) C.push(0);
+      for(let i = 0; i < B.length; i++) C[i + m] ^= mul(coef, B[i]);
+      if(2 * L <= n){ L = n + 1 - L; B = T; b = d; m = 1; } else m++; }
+    const N = cw.length, pos = [];
+    for(let j = 0; j < N; j++){ const xi = EXP[(255 - (N - 1 - j)) % 255]; let v = 0; for(let i = C.length - 1; i >= 0; i--) v = mul(v, xi) ^ C[i]; if(v === 0) pos.push(j); }
+    if(pos.length !== L || L * 2 > ec) return false;
+    const O = new Array(ec).fill(0); for(let i = 0; i < ec; i++) for(let j = 0; j <= i && j < C.length; j++) O[i] ^= mul(C[j], S[i - j]);
+    for(const j of pos){ const X = EXP[(N - 1 - j) % 255], Xi = div(1, X);
+      let num = 0; for(let i = O.length - 1; i >= 0; i--) num = mul(num, Xi) ^ O[i];
+      let den = 0; for(let i = 1; i < C.length; i += 2){ let t = C[i]; for(let k = 0; k < i - 1; k++) t = mul(t, Xi); den ^= t; }
+      if(!den) return false; cw[j] ^= mul(X, div(num, den)); }
+    for(let i = 0; i < ec; i++){ let s = 0; const a = EXP[i]; for(const c of cw) s = mul(s, a) ^ c; if(s) return false; }
+    return true;
+  }
+  // Grille de modules lue (n×n, 1 = foncé) → texte, ou null
+  function decodeGrid(n, grid){
+    const v = (n - 17) / 4; if(v < 1 || v > MAXV || v % 1) return null;
+    const rd = (x, y) => grid[y * n + x], fb = [];
+    const c1 = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+    const c2 = [[n-1,8],[n-2,8],[n-3,8],[n-4,8],[n-5,8],[n-6,8],[n-7,8],[n-8,8],[8,n-7],[8,n-6],[8,n-5],[8,n-4],[8,n-3],[8,n-2],[8,n-1]];
+    let best = null;
+    [c1, c2].forEach(c => { let b = 0; c.forEach(([x, y], i) => b |= rd(x, y) << i);
+      for(let mk = 0; mk < 8; mk++){ let d = b ^ fmtBits(mk), h = 0; while(d){ h += d & 1; d >>>= 1; } if(!best || h < best.h) best = {h, mk}; } });
+    if(!best || best.h > 3) return null;
+    const {fn} = skeleton(v), ord = order(n, fn), raw = new Array(Math.floor(ord.length / 8)).fill(0);
+    ord.forEach((p, i) => { if(i >= raw.length * 8) return; const bit = grid[p] ^ (MASKS[best.mk](p % n, Math.floor(p / n)) ? 1 : 0); raw[i >>> 3] |= bit << (7 - (i & 7)); });
+    const [ec, b1, d1, b2, d2] = ECM[v], nb = b1 + b2, blocks = [];
+    for(let i = 0; i < nb; i++) blocks.push({d:i < b1 ? d1 : d2, c:[]});
+    let k = 0; for(let i = 0; i < Math.max(d1, d2); i++) blocks.forEach(b => { if(i < b.d) b.c.push(raw[k++]); });
+    for(let i = 0; i < ec; i++) blocks.forEach(b => b.c.push(raw[k++]));
+    const data = [];
+    for(const b of blocks){ if(!rsFix(b.c, ec)) return null; data.push(...b.c.slice(0, b.d)); }
+    let p = 0; const take = len => { let r = 0; for(let i = 0; i < len; i++, p++) r = (r << 1) | ((data[p >>> 3] >>> (7 - (p & 7))) & 1); return r; };
+    if(take(4) !== 4) return null;
+    const len = take(v < 10 ? 8 : 16); if(p + len * 8 > data.length * 8) return null;
+    const out = new Uint8Array(len); for(let i = 0; i < len; i++) out[i] = take(8);
+    try{ return new TextDecoder("utf-8", {fatal:true}).decode(out); }catch(e){ return null; }
+  }
+  // ---------- Lecture d'une image (ImageData) ----------
+  function binarize(img){
+    const {width:w, height:h, data} = img, g = new Uint8Array(w * h);
+    for(let i = 0, j = 0; i < w * h; i++, j += 4) g[i] = (data[j] * 77 + data[j + 1] * 150 + data[j + 2] * 29) >> 8;
+    const I = new Uint32Array((w + 1) * (h + 1));
+    for(let y = 0; y < h; y++){ let row = 0; for(let x = 0; x < w; x++){ row += g[y * w + x]; I[(y + 1) * (w + 1) + x + 1] = I[y * (w + 1) + x + 1] + row; } }
+    const r = Math.max(8, Math.round(Math.min(w, h) / 16)), bin = new Uint8Array(w * h);
+    for(let y = 0; y < h; y++){ const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+      for(let x = 0; x < w; x++){ const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1);
+        const s = I[y1 * (w + 1) + x1] - I[y0 * (w + 1) + x1] - I[y1 * (w + 1) + x0] + I[y0 * (w + 1) + x0], mean = s / ((x1 - x0) * (y1 - y0));
+        bin[y * w + x] = g[y * w + x] < mean - 6 ? 1 : 0; } }
+    return {w, h, bin};
+  }
+  const ratioOk = (c, tol) => { const t = c[0] + c[1] + c[2] + c[3] + c[4]; if(t < 7) return 0; const u = t / 7, e = u * tol;
+    return Math.abs(u - c[0]) < e && Math.abs(u - c[1]) < e && Math.abs(3 * u - c[2]) < 3 * e && Math.abs(u - c[3]) < e && Math.abs(u - c[4]) < e ? u : 0; };
+  // Le long d'une direction (dx, dy) passant par (x, y) : mesure 1:1:3:1:1 centré ; renvoie le centre corrigé (t le long de la direction) et la taille d'un module
+  function cross(B, x, y, dx, dy, max){
+    const {w, h, bin} = B, at = t => { const X = Math.round(x + dx * t), Y = Math.round(y + dy * t); return X >= 0 && Y >= 0 && X < w && Y < h ? bin[Y * w + X] : -1; };
+    if(at(0) !== 1) return null;
+    const run = (t0, sgn, col) => { let t = t0, k = 0; while(at(t) === col && k <= max){ t += sgn; k++; } return {k, t}; };
+    const up2 = run(0, -1, 1), up1 = run(up2.t, -1, 0), up0 = run(up1.t, -1, 1);
+    const dn2 = run(1, 1, 1), dn3 = run(dn2.t, 1, 0), dn4 = run(dn3.t, 1, 1);
+    const c = [up0.k, up1.k, up2.k + dn2.k, dn3.k, dn4.k]; if(c.some(v => !v || v > max)) return null;
+    const u = ratioOk(c, 0.75); if(!u) return null;
+    return {t:((up2.t + 1) + (dn2.t - 1)) / 2, u};
+  }
+  function finders(B){
+    const {w, h, bin} = B, found = [], step = Math.max(1, Math.floor(h / 300));
+    for(let y = 0; y < h; y += step){
+      const runs = [], cols = []; let x = 0;
+      while(x < w){ const c = bin[y * w + x]; let k = 0; while(x < w && bin[y * w + x] === c){ x++; k++; } runs.push(k); cols.push(c); }
+      let pos = 0;
+      for(let i = 0; i + 4 < runs.length; pos += runs[i], i++){
+        if(cols[i] !== 1) continue; const c = runs.slice(i, i + 5), u = ratioOk(c, 0.6); if(!u) continue;
+        let cx = pos + c[0] + c[1] + c[2] / 2;
+        const vt = cross(B, cx, y, 0, 1, c[2] * 3); if(!vt) continue; const cy = y + vt.t;
+        const hz = cross(B, cx, cy, 1, 0, c[2] * 3); if(!hz) continue; cx += hz.t;
+        const vt2 = cross(B, cx, cy, 0, 1, c[2] * 3); if(!vt2) continue;
+        const um = (u + vt.u + hz.u + vt2.u) / 4, fy = cy + vt2.t, f = found.find(p => Math.hypot(p.x - cx, p.y - fy) < um * 3);
+        if(f){ f.x = (f.x * f.n + cx) / (f.n + 1); f.y = (f.y * f.n + fy) / (f.n + 1); f.u = (f.u * f.n + um) / (f.n + 1); f.n++; } else found.push({x:cx, y:fy, u:um, n:1}); } }
+    return found.filter(f => f.n >= 2).sort((a, b) => b.n - a.n).slice(0, 8);
+  }
+  // Perspective : carré unité → quadrilatère (p0 → p1 → p2 → p3 dans l'ordre (0,0) (1,0) (1,1) (0,1))
+  function sqToQuad(q){ const [x0, y0, x1, y1, x2, y2, x3, y3] = q, dx3 = x0 - x1 + x2 - x3, dy3 = y0 - y1 + y2 - y3;
+    if(Math.abs(dx3) < 1e-9 && Math.abs(dy3) < 1e-9) return [x1 - x0, x3 - x0, x0, y1 - y0, y3 - y0, y0, 0, 0, 1];
+    const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, den = dx1 * dy2 - dx2 * dy1, g = (dx3 * dy2 - dx2 * dy3) / den, hh = (dx1 * dy3 - dx3 * dy1) / den;
+    return [x1 - x0 + g * x1, x3 - x0 + hh * x3, x0, y1 - y0 + g * y1, y3 - y0 + hh * y3, y0, g, hh, 1]; }
+  const inv3 = m => { const [a, b, c, d, e, f, g, h, i] = m, A = e * i - f * h, B2 = c * h - b * i, C = b * f - c * e, D = f * g - d * i, E = a * i - c * g, F = c * d - a * f, G = d * h - e * g, H = b * g - a * h, I = a * e - b * d; return [A, B2, C, D, E, F, G, H, I]; };
+  const mul3 = (m, n) => [0, 1, 2].flatMap(r => [0, 1, 2].map(c => m[r * 3] * n[c] + m[r * 3 + 1] * n[3 + c] + m[r * 3 + 2] * n[6 + c]));
+  // Points de l'image (tl, tr, br, bl) ↔ points de la grille de modules (même ordre) → lecture des n×n modules
+  function grid(B, img4, mod4, n){
+    const H = mul3(sqToQuad(img4), inv3(sqToQuad(mod4))), out = new Uint8Array(n * n), {w, h, bin} = B;
+    for(let y = 0; y < n; y++) for(let x = 0; x < n; x++){ const X = x + 0.5, Y = y + 0.5, d = H[6] * X + H[7] * Y + H[8];
+      const ix = Math.round((H[0] * X + H[1] * Y + H[2]) / d), iy = Math.round((H[3] * X + H[4] * Y + H[5]) / d);
+      out[y * n + x] = ix >= 0 && iy >= 0 && ix < w && iy < h ? bin[iy * w + ix] : 0; }
+    return out;
+  }
+  // Motif d'alignement : un module foncé, un anneau clair, un anneau foncé (cherché autour de la position attendue)
+  function align(B, ex, ey, u, R){
+    const {w, h, bin} = B, at = (x, y) => { x = Math.round(x); y = Math.round(y); return x >= 0 && y >= 0 && x < w && y < h ? bin[y * w + x] : 0; };
+    const st = Math.max(1, Math.round(u / 3)), found = [];
+    for(let dy = -R; dy <= R; dy += st) for(let dx = -R; dx <= R; dx += st){ const x = ex + dx, y = ey + dy; if(!at(x, y)) continue;
+      let s = 0; for(const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]){ s += at(x + a * u, y + b * u) ? -1 : 1; s += at(x + a * 2 * u, y + b * 2 * u) ? 1 : -1; }
+      if(s >= 12) found.push({x, y, sc:s - Math.hypot(dx, dy) / (u * 6)}); }
+    found.sort((a, b) => b.sc - a.sc); const out = [];
+    for(const f of found){ if(out.length >= 4) break; if(out.some(o => Math.hypot(o.x - f.x, o.y - f.y) < u * 2)) continue; out.push(cross1(B, f.x, f.y, u)); }
+    return out;
+  }
+  const cross1 = (B, x, y, u) => { // recentre sur le module central foncé
+    const {w, h, bin} = B, at = (X, Y) => { X = Math.round(X); Y = Math.round(Y); return X >= 0 && Y >= 0 && X < w && Y < h ? bin[Y * w + X] : 0; };
+    let l = 0, r = 0, t = 0, b = 0; while(at(x - l - 1, y) && l < u * 2) l++; while(at(x + r + 1, y) && r < u * 2) r++; while(at(x, y - t - 1) && t < u * 2) t++; while(at(x, y + b + 1) && b < u * 2) b++;
+    return {x:x + (r - l) / 2, y:y + (b - t) / 2}; };
+  function decode(img){
+    const B = binarize(img), F = finders(B); if(F.length < 3) return null;
+    const tries = [];
+    for(let a = 0; a < F.length; a++) for(let b = a + 1; b < F.length; b++) for(let c = b + 1; c < F.length; c++){
+      const P = [F[a], F[b], F[c]];
+      for(let t = 0; t < 3; t++){ const tl = P[t], A = P[(t + 1) % 3], C = P[(t + 2) % 3];
+        const ax = A.x - tl.x, ay = A.y - tl.y, cx = C.x - tl.x, cy = C.y - tl.y, la = Math.hypot(ax, ay), lc = Math.hypot(cx, cy);
+        const cos = (ax * cx + ay * cy) / (la * lc), ratio = Math.min(la, lc) / Math.max(la, lc), us = Math.max(tl.u, A.u, C.u) / Math.min(tl.u, A.u, C.u);
+        if(Math.abs(cos) > 0.3 || ratio < 0.7 || us > 2) continue;
+        const z = ax * cy - ay * cx, tr = z > 0 ? A : C, bl = z > 0 ? C : A;
+        tries.push({tl, tr, bl, sc:Math.abs(cos) + (1 - ratio)}); } }
+    tries.sort((x, y) => x.sc - y.sc);
+    for(const {tl, tr, bl} of tries.slice(0, 6)){
+      // Taille d'un module mesurée le long des droites entre repères (mesurée à l'horizontale, elle est fausse si le code est tourné)
+      const along = (p, q) => { const L = Math.hypot(q.x - p.x, q.y - p.y), dx = (q.x - p.x) / L, dy = (q.y - p.y) / L, a = cross(B, p.x, p.y, dx, dy, p.u * 6), b = cross(B, q.x, q.y, -dx, -dy, q.u * 6);
+        return a && b ? {u:(a.u + b.u) / 2, L} : {u:(p.u + q.u) / 2, L}; };
+      const m1 = along(tl, tr), m2 = along(tl, bl), u = (m1.u + m2.u) / 2, d = (m1.L / m1.u + m2.L / m2.u) / 2 + 7;
+      const n0 = Math.round((Math.round(d) - 17) / 4) * 4 + 17;
+      for(const n of [n0, n0 + 4, n0 - 4]){ if(n < 21 || n > 17 + 4 * MAXV) continue;
+        const v = (n - 17) / 4, quads = [], D = n - 7;
+        // Perspective estimée par la taille apparente des repères : en biais, le plus lointain paraît plus petit
+        // (homographie : taille linéaire ∝ w^-3/2) → position probable du 4e coin et du motif d'alignement
+        const gD = Math.pow(tl.u / tr.u, 2 / 3) - 1, hD = Math.pow(tl.u / bl.u, 2 / 3) - 1;
+        const at = (fx, fy) => { const w = 1 + gD * fx + hD * fy, ax = tr.x * (1 + gD) - tl.x, bx = bl.x * (1 + hD) - tl.x, ay = tr.y * (1 + gD) - tl.y, by = bl.y * (1 + hD) - tl.y;
+          return {x:(tl.x + ax * fx + bx * fy) / w, y:(tl.y + ay * fx + by * fy) / w}; };
+        const aff = (fx, fy) => ({x:tl.x + fx * (tr.x - tl.x) + fy * (bl.x - tl.x), y:tl.y + fx * (tr.y - tl.y) + fy * (bl.y - tl.y)});
+        const MOD_BR = [3.5, 3.5, n - 3.5, 3.5, n - 3.5, n - 3.5, 3.5, n - 3.5], MOD_AL = [3.5, 3.5, n - 3.5, 3.5, n - 6.5, n - 6.5, 3.5, n - 3.5];
+        if(v >= 2){ const f = (D - 3) / D, seen = [];
+          for(const e of [at(f, f), aff(f, f)]) align(B, e.x, e.y, u, Math.round(u * 10)).forEach(al => { if(!seen.some(o => Math.hypot(o.x - al.x, o.y - al.y) < u)){ seen.push(al); quads.push([[tl, tr, al, bl], MOD_AL]); } }); }
+        quads.push([[tl, tr, at(1, 1), bl], MOD_BR], [[tl, tr, aff(1, 1), bl], MOD_BR]);
+        const tryQ = (pts, mod) => decodeGrid(n, grid(B, pts.flatMap(p => [p.x, p.y]), mod, n));
+        for(const [pts, mod] of quads){ const r = tryQ(pts, mod); if(r !== null) return r; }
+        // Dernier recours pour les petits codes : on balaie la position du 4e coin autour de l'estimation
+        if(v <= 6){ const c = at(1, 1);
+          for(let r = 1; r <= 4; r++) for(let dy = -r; dy <= r; dy++) for(let dx = -r; dx <= r; dx++){ if(Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+            const res = tryQ([tl, tr, {x:c.x + dx * u * 0.7, y:c.y + dy * u * 0.7}, bl], MOD_BR); if(res !== null) return res; } } } }
+    return null;
+  }
+  return {encode, decode, decodeGrid, rsFix, rsEnc, MAXV};
+})();
+
+/* ---------- Séance en équipe et amis Gymon (18 nov. 2026, décisions du propriétaire) ----------
+   Deux amis font la même séance, chacun sur son téléphone. Aucun serveur, aucun Bluetooth : un seul échange, le scan d'un QR code.
+   Le « maître » partage sa séance (exercices dans l'ordre, prénom, niveau, apparence complète de son Gymon) ; le « suiveur » scanne :
+   mêmes exercices, mais charges et reps recalculées par son propre coach (charge prudente si l'exercice est nouveau), séance modifiable.
+   Deuxième scan facultatif : le suiveur montre son Gymon au maître, qui sait alors avec qui il s'est entraîné.
+   Trace « séance en équipe » (w.team, S.profile.teams) et amis (S.profile.friends) stockés, versionnés, sans exploitation pour l'instant
+   (jauge sociale et jeu plus tard). Format du QR : texte compact « GYT1|… » (séance) ou « GYF1|… » (Gymon seul) ; version dans le préfixe. */
+const TEAM_V = 1, TEAM_TAGS = {GYT:"session", GYF:"friend"};
+const teamClean = (s, n) => String(s ?? "").replace(/[|.,~\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, n || 16);
+function myUid(){ if(!S.profile.uid){ S.profile.uid = Math.random().toString(36).slice(2, 10); touchProfile(); } return S.profile.uid; }
+// Code court et stable d'un exercice de la bibliothèque (identifiants inchangés ; collision vérifiée par les tests)
+function exCode(id){ let h = 2166136261; for(const ch of String(id)){ h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return (h % 1679616).toString(36).padStart(4, "0"); }
+function myLevel(){ const a = strengthByMuscle().avg; return a === null || a === undefined ? -1 : Math.max(0, Math.min(4, Math.floor(a))); }
+const levelTxt = l => l >= 0 && LEVELS[l] ? LEVELS[l] : "Niveau inconnu";
+// Apparence complète du Gymon : stade, couleur, short, poids, taille, expression, niveau de chaque muscle (au 1/7), mort, nom
+function gymonCard(){ const c = creatureState();
+  return [c.stage, (c.look || {}).col ?? 0, (c.look || {}).shorts ?? 0, Math.round((c.weight || 0) * 1000).toString(36), Math.round(creatureHeight(c)),
+    S.profile.gymonStyle === "competition" ? "c" : "a", MUSC.map(m => Math.min(35, Math.round(muscleLevel(c, m) * 7)).toString(36)).join(""), c.dead ? 1 : 0, teamClean(c.name)].join("."); }
+function teamPayload(kind){
+  const c = creatureState(), head = [(kind === "session" ? "GYT" : "GYF") + TEAM_V, myUid(), Date.now().toString(36), teamClean(S.profile.firstName), myLevel(), c.fidelity || 0, gymonCard()];
+  if(kind === "session") head.push(A().exercises.map(ex => { const e = exById(ex.exId); return EX_IDS.has(e.id) ? exCode(e.id) : "~" + teamClean(e.name, 24); }).join(","));
+  return head.join("|");
+}
+// Lecture d'un partage → {kind, uid, name, lvl, n, gy, ex, unknown} ou {error}
+function teamParse(txt){
+  txt = String(txt || "").trim(); const m = /^(GY[TF])(\d+)\|/.exec(txt);
+  if(!m) return {error: /^GY/.test(txt) ? "illisible" : "autre"};
+  if(+m[2] !== TEAM_V) return {error:"version"};
+  const f = txt.split("|"), kind = TEAM_TAGS[m[1]];
+  if(f.length < (kind === "session" ? 8 : 7)) return {error:"illisible"};
+  const g = f[6].split("."); if(g.length < 9 || g[6].length !== MUSC.length) return {error:"illisible"};
+  const gy = {stage:Math.max(0, Math.min(CREATURE_CFG.stages.length - 1, parseInt(g[0]) || 0)), col:Math.max(0, Math.min(GYM_COLORS.length - 1, parseInt(g[1]) || 0)),
+    sh:Math.max(0, Math.min(GYM_SHORTS.length - 1, parseInt(g[2]) || 0)), weight:(parseInt(g[3], 36) || 0) / 1000, height:Math.max(6, parseInt(g[4]) || 6),
+    style:g[5] === "c" ? "competition" : "aesthetic", lv:Object.fromEntries(MUSC.map((mm, i) => [mm, (parseInt(g[6][i], 36) || 0) / 7])), dead:g[7] === "1", gname:teamClean(g.slice(8).join(" "))};
+  const lvl = parseInt(f[4]);
+  const out = {kind, v:TEAM_V, uid:teamClean(f[1], 12), ts:parseInt(f[2], 36) || Date.now(), name:teamClean(f[3]) || "Ton ami", lvl:isNaN(lvl) ? -1 : Math.max(-1, Math.min(4, lvl)), n:Math.max(0, parseInt(f[5]) || 0), gy, card:f[6]};
+  if(kind === "session"){
+    const codes = {}; allEx().forEach(e => (codes[exCode(e.id)] = codes[exCode(e.id)] || []).push(e.id));
+    out.ex = []; out.unknown = [];
+    f[7].split(",").filter(Boolean).forEach(c => { if(c[0] === "~"){ const nm = c.slice(1), e = allEx().find(x => x.name.toLowerCase() === nm.toLowerCase()); if(e) out.ex.push(e.id); else out.unknown.push(nm); }
+      else { const l = codes[c]; if(l && l.length === 1) out.ex.push(l[0]); else out.unknown.push("exercice inconnu"); } });
+    if(!out.ex.length) out.error = "vide";
+  }
+  return out;
+}
+const TEAM_ERR = {illisible:"Code illisible : rapprochez-vous, évitez les reflets, ou collez le code texte.", autre:"Ce QR code ne vient pas de Gymon.",
+  version:"Ce partage vient d'une version plus récente de Gymon : mettez l'app à jour (fermez-la et rouvrez-la), puis réessayez.", vide:"Cette séance est vide : aucun exercice reconnu. Demandez à votre ami d'ajouter ses exercices, puis de repartager."};
+// Gymon d'un ami, redessiné à partir de ses paramètres (aucune image transmise)
+function friendCreature(gy){ return {stage:gy.stage, look:{col:gy.col, shorts:gy.sh}, weight:gy.weight, levels:gy.lv, dead:gy.dead, heightCm:gy.height, name:gy.gname,
+  fidelity:0, born:0, sv:1, sat:100, satT:Date.now(), full:Date.now(), fed:[], pending:[]}; }
+const friendSVG = (gy, small) => { const fc = friendCreature(gy); return gyZoom(creatureSVG(fc, !!small, false, {noFx:true, eyeState:gy.dead ? undefined : "happy", armLevel:gy.dead ? 3 : 0, amb:gy.style}), fc); };
+const mySVG = small => { const c = creatureState(); return gyZoom(creatureSVG(c, !!small, false, {noFx:true, eyeState:c.dead ? undefined : "happy", armLevel:c.dead ? 3 : 0}), c); };
+function qrSVG(text){
+  const q = QR.encode(text), N = q.n + 8; let d = "";
+  for(let y = 0; y < q.n; y++) for(let x = 0; x < q.n; x++) if(q.m[y * q.n + x]) d += `M${x + 4} ${y + 4}h1v1h-1z`;
+  return `<svg class="qr" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${N} ${N}" shape-rendering="crispEdges" role="img" aria-label="QR code"><rect width="${N}" height="${N}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+// Duo décoratif : les deux Gymon côte à côte, avec leur niveau (ne réagit à rien)
+function teamDuoHTML(friend, small){
+  const me = `<div class="duo-g"><div class="duo-svg">${mySVG(small)}</div><b>${esc(teamClean(S.profile.firstName) || "Toi")}</b><small>${myLevel() >= 0 ? esc(levelTxt(myLevel())) + " · " : ""}${creatureState().fidelity || 0} séances</small></div>`;
+  const fr = friend ? `<div class="duo-g"><div class="duo-svg b">${friendSVG(friend.gy, small)}</div><b>${esc(friend.name)}</b><small>${friend.lvl >= 0 ? esc(levelTxt(friend.lvl)) + " · " : ""}${friend.n} séances</small></div>`
+    : `<div class="duo-g"><div class="duo-svg b unknown">?</div><b>Ton coéquipier</b><small>scan de son Gymon facultatif</small></div>`;
+  return `<div class="team-duo${small ? " sm" : ""}" aria-hidden="true">${me}<span class="duo-x">🤝</span>${fr}</div>`;
+}
+// Amis : un par identifiant, mis à jour à chaque rencontre (structure versionnée, prête pour la jauge sociale)
+function addFriend(p, together){
+  const l = S.profile.friends = Array.isArray(S.profile.friends) ? S.profile.friends : [], now = Date.now();
+  let f = l.find(x => x.uid === p.uid);
+  if(!f){ f = {v:1, uid:p.uid, first:now, together:0}; l.push(f); }
+  Object.assign(f, {name:p.name, lvl:p.lvl, n:p.n, card:p.card, last:now}); if(together) f.together = (f.together || 0) + 1;
+  if(l.length > 200) l.splice(0, l.length - 200); touchProfile(); return f;
+}
+const friendOf = p => p ? {uid:p.uid, name:p.name, lvl:p.lvl, n:p.n, card:p.card} : null;
+function friendFromCard(f){ if(!f || !f.card) return null; const r = teamParse(["GYF" + TEAM_V, f.uid, "0", f.name, f.lvl, f.n, f.card].join("|")); return r.error ? null : r; }
+// Prénom demandé au premier partage
+function needName(then){
+  if(teamClean(S.profile.firstName)) return then();
+  openSheet(`<h3>Ton prénom</h3><p class="small muted" style="margin:0">Il s'affiche chez ton ami, à côté de ton Gymon. Modifiable dans Réglages.</p>
+    <input id="team-name" class="name-input" maxlength="16" placeholder="Ton prénom" autocomplete="given-name">
+    <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Annuler</button><button class="btn primary" style="flex:1" data-act="team-name-ok">Continuer</button></div>`);
+  ACT["team-name-ok"] = () => { const v = teamClean(document.getElementById("team-name").value); if(!v){ toast("Écris ton prénom"); return; } S.profile.firstName = v; touchProfile(); closeSheet(); then(); };
+}
+function showQR(kind){
+  needName(() => {
+    if(kind === "session"){ const a = A(); if(!a){ toast("Démarre d'abord ta séance, puis partage-la"); return; }
+      if(!a.exercises.length){ toast("Ta séance est vide : ajoute d'abord des exercices"); return; }
+      if(!a.team) a.team = {v:TEAM_V, role:"maitre", ts:Date.now(), friend:null}; touchProfile(); }
+    const txt = teamPayload(kind);
+    openSheet(`<h3>${kind === "session" ? "👥 Partager ma séance" : "🤝 Mon Gymon"}</h3>
+      <p class="small muted" style="margin:0">${kind === "session" ? "Ton ami scanne ce code (Gymon › Sociabiliser › Rejoindre la séance d'un ami). Il aura tes exercices, avec ses propres charges." : "Ton ami scanne ce code (Gymon › Sociabiliser › Scanner un Gymon) : vous devenez amis Gymon."}</p>
+      <div class="qr-box">${qrSVG(txt)}</div>
+      <details class="small"><summary>Le scan ne marche pas ? Code à envoyer</summary><textarea readonly class="qr-txt" id="qr-txt">${esc(txt)}</textarea>
+        <button class="btn sm" data-act="team-copy">Copier le code</button></details>
+      <button class="btn primary" data-act="close">Fermer</button>`);
+    render();
+  });
+}
+// Scanner : caméra arrière, une image toutes les 250 ms ; code texte en secours
+let scanStream = null, scanT = null;
+function stopScan(){ clearTimeout(scanT); scanT = null; if(scanStream){ scanStream.getTracks().forEach(t => t.stop()); scanStream = null; } }
+function openScanner(){
+  openSheet(`<h3>📷 Scanner le code de ton ami</h3>
+    <div class="scan-box"><video id="scan-v" playsinline muted autoplay></video><span class="scan-frame"></span></div>
+    <p class="small muted" id="scan-msg" style="margin:0">Vise le QR code affiché sur le téléphone de ton ami.</p>
+    <details class="small"><summary>Ou coller le code texte</summary><textarea id="scan-txt" class="qr-txt" placeholder="GYT1|…"></textarea><button class="btn sm" data-act="team-paste">Valider le code</button></details>
+    <button class="btn" data-act="close">Annuler</button>`, stopScan);
+  const msg = t => { const m = document.getElementById("scan-msg"); if(m) m.textContent = t; };
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ msg("Caméra indisponible ici : collez le code texte que votre ami vous envoie."); return; }
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}, width:{ideal:1280}, height:{ideal:720}}, audio:false}).then(st => {
+    const v = document.getElementById("scan-v"); if(!v || document.getElementById("sheet").hidden){ st.getTracks().forEach(t => t.stop()); return; }
+    scanStream = st; v.srcObject = st; v.play().catch(() => {});
+    const cv = document.createElement("canvas"), cx = cv.getContext("2d", {willReadFrequently:true}); let tries = 0;
+    const tick = () => { if(!scanStream) return;
+      if(v.videoWidth){ const k = Math.min(1, 720 / Math.max(v.videoWidth, v.videoHeight)); cv.width = Math.round(v.videoWidth * k); cv.height = Math.round(v.videoHeight * k);
+        cx.drawImage(v, 0, 0, cv.width, cv.height); let txt = null; try{ txt = QR.decode(cx.getImageData(0, 0, cv.width, cv.height)); }catch(e){}
+        if(txt){ stopScan(); teamReceive(txt); return; }
+        if(++tries === 40) msg("Toujours rien… Rapproche-toi, évite les reflets, ou colle le code texte."); }
+      scanT = setTimeout(tick, 250); };
+    tick();
+  }).catch(() => msg("Accès à la caméra refusé : autorisez-le dans les réglages de l'iPhone, ou collez le code texte."));
+}
+// Réception d'un partage (scan ou code collé)
+function teamReceive(txt){
+  const p = teamParse(txt);
+  stopScan(); closeSheet();
+  if(p.error){ toast(TEAM_ERR[p.error] || TEAM_ERR.illisible); return p; }
+  if(p.uid === S.profile.uid){ toast("C'est ton propre code 😄 Fais-le scanner par ton ami."); return p; }
+  if(p.kind === "friend"){ teamFriendCard(p); return p; }
+  const names = p.ex.map(id => `<li>${esc(exById(id).name)}</li>`).join(""), busy = !!S.profile.active;
+  openSheet(`<h3>Séance ${/^[aeiouyhàâäéèêëîïôöûüœ]/i.test(p.name) ? "d'" : "de "}${esc(p.name)}</h3>${teamDuoHTML(p, true)}
+    <ol class="team-ex">${names}</ol>
+    ${p.unknown.length ? `<p class="small muted" style="margin:0">Pas dans ton app, ignoré${p.unknown.length > 1 ? "s" : ""} : ${esc(p.unknown.join(", "))}.</p>` : ""}
+    <p class="small muted" style="margin:0">Mêmes exercices, dans le même ordre ; tes charges et tes répétitions sont calculées par ton coach. Tu peux retirer, remplacer ou ajuster.</p>
+    ${busy ? `<p class="alert warn" style="margin:0">Tu as déjà une séance en cours : termine-la ou abandonne-la d'abord.</p>` : ""}
+    <div class="row"><button class="btn ghost" style="flex:1" data-act="close">Annuler</button><button class="btn primary" style="flex:1" data-act="team-start" ${busy ? "disabled" : ""}>Commencer avec ${esc(p.name)}</button></div>`);
+  ACT["team-start"] = () => { if(S.profile.active) return; closeSheet();
+    const exs = p.ex.map(id => ({exId:id, sets:Array.from({length:coach(id).sets}, blankSet)}));
+    startWorkout(`Avec ${p.name}`, exs);
+    if(S.profile.active){ A().team = {v:TEAM_V, role:"suiveur", ts:Date.now(), code:p.ts, friend:friendOf(p)}; addFriend(p, false); touchProfile(); render(); } };
+  return p;
+}
+// Gymon d'un ami scanné : amitié ; si une séance partagée n'a pas encore de coéquipier, il y est rattaché (deuxième scan facultatif)
+function teamFriendCard(p){
+  addFriend(p, false); let linked = null;
+  const a = S.profile.active;
+  if(a && a.team && a.team.role === "maitre" && !a.team.friend){ a.team.friend = friendOf(p); linked = "séance en cours"; }
+  else { const w = sortW(S.workouts.slice()).find(x => x.team && x.team.role === "maitre" && !x.team.friend && Date.now() - (x.end || x.start) < 12 * 3600000);
+    if(w){ w.team.friend = friendOf(p); const t = (S.profile.teams || []).find(x => x.wid === w.id); if(t) t.friend = {uid:p.uid, name:p.name, lvl:p.lvl};
+      const f = (S.profile.friends || []).find(x => x.uid === p.uid); if(f) f.together = (f.together || 0) + 1; saveWorkout(w); linked = "dernière séance"; } }
+  touchProfile(); render();
+  openSheet(`<h3>🤝 Toi et ${esc(p.name)}</h3>${teamDuoHTML(p, false)}
+    <p class="small" style="margin:0">${linked ? `Ajouté à ta ${linked} en équipe.` : "Vous êtes amis Gymon."} L'amitié est gardée dans ton téléphone ; elle servira dans le jeu plus tard.</p>
+    <button class="btn primary" data-act="close">Super !</button>`);
+}
+// Fin de séance : trace « séance en équipe » (structure versionnée, pas encore exploitée)
+function teamRecord(team){ if(!team) return null; return {v:team.v || TEAM_V, role:team.role === "suiveur" ? "suiveur" : "maitre", ts:team.ts || Date.now(), friend:team.friend ? friendOf(team.friend) : null}; }
+function teamLog(w){ if(!w.team) return; const l = S.profile.teams = Array.isArray(S.profile.teams) ? S.profile.teams : [];
+  l.push({v:TEAM_V, wid:w.id, ts:w.start, role:w.team.role, friend:w.team.friend ? {uid:w.team.friend.uid, name:w.team.friend.name, lvl:w.team.friend.lvl} : null});
+  if(l.length > 500) l.splice(0, l.length - 500);
+  if(w.team.friend){ const f = (S.profile.friends || []).find(x => x.uid === w.team.friend.uid); if(f) f.together = (f.together || 0) + 1; } }
+function sanitizeTeam(t){ if(!t || typeof t !== "object") return undefined;
+  const fr = t.friend && typeof t.friend === "object" ? {uid:teamClean(t.friend.uid, 12), name:teamClean(t.friend.name), lvl:Math.max(-1, Math.min(4, Math.round(num(t.friend.lvl)))), n:Math.max(0, Math.round(num(t.friend.n))), card:typeof t.friend.card === "string" ? t.friend.card.slice(0, 120) : ""} : null;
+  return {v:Math.round(num(t.v)) || 1, role:t.role === "suiveur" ? "suiveur" : "maitre", ts:isTime(t.ts) ? t.ts : Date.now(), friend:fr}; }
+// Le bouton « Sociabiliser » de la page Gymon : point de départ des échanges entre Gymon
+function socialSheet(){
+  const a = S.profile.active, fr = (Array.isArray(S.profile.friends) ? S.profile.friends : []).slice().sort((x, y) => y.last - x.last);
+  openSheet(`<h3>🤝 Sociabiliser</h3>
+    <p class="small muted" style="margin:0">Entraîne-toi avec un ami et fais rencontrer vos Gymon. Un seul scan, aucun serveur : tout reste dans vos téléphones.</p>
+    <label class="field">Ton prénom<input id="first-name" maxlength="16" value="${esc(S.profile.firstName || "")}" placeholder="Pour tes amis" autocomplete="given-name"></label>
+    <button class="btn primary" data-act="team-share" ${a ? "" : "disabled"}>👥 Partager ma séance</button>
+    ${a ? "" : `<p class="small muted" style="margin:-6px 0 0">Démarre ta séance, puis partage-la à ton ami.</p>`}
+    <button class="btn" data-act="team-join">📷 Rejoindre la séance d'un ami</button>
+    <div class="row"><button class="btn" style="flex:1" data-act="team-mycard">🤝 Montrer mon Gymon</button><button class="btn" style="flex:1" data-act="team-scan">📷 Scanner un Gymon</button></div>
+    ${fr.length ? `<p class="hs-h">Mes amis Gymon (${fr.length})</p><div class="friends">${fr.map(f => { const p = friendFromCard(f);
+      return `<div class="friend">${p ? `<span class="fr-svg">${friendSVG(p.gy, true)}</span>` : ""}<span><b>${esc(f.name)}</b><small>${f.lvl >= 0 ? esc(levelTxt(f.lvl)) : "Ami Gymon"}${f.together ? ` · ${f.together} séance${f.together > 1 ? "s" : ""} ensemble` : ""}</small></span></div>`; }).join("")}</div>` : ""}
+    <button class="btn ghost" data-act="close">Fermer</button>`);
+}
+Object.assign(ACT, {
+  "gy-social": (b, e) => { if(e) e.stopPropagation(); socialSheet(); },
+  "team-share": () => { closeSheet(); showQR("session"); },
+  "team-mycard": () => { closeSheet(); showQR("friend"); },
+  "team-join": () => { closeSheet(); openScanner(); },
+  "team-scan": () => { closeSheet(); openScanner(); },
+  "team-paste": () => { const t = (document.getElementById("scan-txt") || {}).value || ""; if(!t.trim()){ toast("Collez le code reçu"); return; } teamReceive(t); },
+  "team-copy": () => { const t = (document.getElementById("qr-txt") || {}).value || "";
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Code copié : envoie-le à ton ami"), () => { const el = document.getElementById("qr-txt"); if(el){ el.focus(); el.select(); } toast("Sélectionne le code et copie-le"); }); },
+  "celeb-team": b => { const k = b.dataset.k; celebClose(true); if(k === "scan") openScanner(); else showQR("friend"); }
+});
 let expFile = null;
 const exportText = () => JSON.stringify({app:"carnet-fonte", exported:new Date().toISOString(), profile:{...S.profile, active:null}, workouts:S.workouts});
 async function importText(txt){
@@ -5091,6 +5542,14 @@ async function importText(txt){
     c.custom.forEach(e => { if(!S.profile.custom.some(x=>x.id===e.id)) S.profile.custom.push(e); });
     c.routines.forEach(r => { if(!S.profile.routines.some(x=>x.id===r.id)) S.profile.routines.push(r); });
     S.workouts.push(...fresh);
+    // Séance en équipe : amis et traces fusionnés (18 nov. 2026)
+    if(Array.isArray((d.profile || {}).friends)) d.profile.friends.filter(f => f && typeof f.uid === "string" && typeof f.card === "string").slice(0, 200).forEach(f => {
+      const l = S.profile.friends = Array.isArray(S.profile.friends) ? S.profile.friends : [];
+      if(!l.some(x => x.uid === f.uid)) l.push({v:1, uid:teamClean(f.uid, 12), name:teamClean(f.name), lvl:Math.max(-1, Math.min(4, Math.round(num(f.lvl)))), n:Math.max(0, Math.round(num(f.n))), card:f.card.slice(0, 120), first:isTime(f.first) ? f.first : Date.now(), last:isTime(f.last) ? f.last : Date.now(), together:Math.max(0, Math.round(num(f.together)))}); });
+    if(Array.isArray((d.profile || {}).teams)) d.profile.teams.filter(t => t && isTime(t.ts)).slice(-500).forEach(t => {
+      const l = S.profile.teams = Array.isArray(S.profile.teams) ? S.profile.teams : [];
+      if(!l.some(x => x.ts === t.ts && x.wid === t.wid)) l.push({v:1, wid:safeId(t.wid) ? t.wid : null, ts:t.ts, role:t.role === "suiveur" ? "suiveur" : "maitre", friend:t.friend ? {uid:teamClean(t.friend.uid, 12), name:teamClean(t.friend.name), lvl:Math.round(num(t.friend.lvl))} : null}); });
+    if(!S.profile.firstName && typeof (d.profile || {}).firstName === "string") S.profile.firstName = teamClean(d.profile.firstName);
     if(Array.isArray((d.profile || {}).favs)) S.profile.favs = [...new Set([...(S.profile.favs || []), ...d.profile.favs.filter(id => safeId(id) && allEx().some(e => e.id === id))])].slice(0, 400);
     const p = d.profile || {};   // poids, taille, sexe : repris seulement si ce téléphone ne les a pas encore
     if(!S.profile.bw && num(p.bw) > 0 && num(p.bw) < 400){ S.profile.bw = num(p.bw); if(p.sex === "h" || p.sex === "f") S.profile.sex = p.sex; }
@@ -5201,6 +5660,7 @@ document.addEventListener("change", e => {
     return;
   }
   if(e.target.id==="bw"){ S.profile.bw = num(e.target.value) || ""; touchProfile(); pendingRender = true; setTimeout(flushPending, 50); }
+  if(e.target.id==="first-name"){ S.profile.firstName = teamClean(e.target.value); touchProfile(); }
   else if(e.target.id==="stats-on"){ S.profile.noStats = !e.target.checked; touchProfile(); toast(e.target.checked ? "Statistiques anonymes activées" : "Statistiques désactivées"); }
   else if(e.target.id==="bar"){ S.profile.bar = +e.target.value; touchProfile(); }
   else if(e.target.id==="bar-ez"){ S.profile.barEz = +e.target.value; touchProfile(); }
@@ -5225,7 +5685,7 @@ function cleanImport(d){
     () => ({id:r.id, name:r.name, items:r.items.filter(it => it && safeId(it.exId)).map(it => ({exId:it.exId, sets:Math.min(10, Math.max(1, Math.round(num(it.sets)) || 3))}))}))).filter(Boolean);
   const workouts = d.workouts.map(w => keep(w && safeId(w.id) && isTime(w.start) && Array.isArray(w.exercises), () => ({...w,
     name:typeof w.name==="string" ? w.name : "Séance", end:isTime(w.end) ? w.end : w.start,
-    routineId:safeId(w.routineId) ? w.routineId : null, prs:Array.isArray(w.prs) ? w.prs.filter(safeId) : [],
+    routineId:safeId(w.routineId) ? w.routineId : null, prs:Array.isArray(w.prs) ? w.prs.filter(safeId) : [], team:sanitizeTeam(w.team),
     exercises:w.exercises.filter(ex => ex && safeId(ex.exId) && Array.isArray(ex.sets)).map(ex => ({...ex,
       feel:Math.min(5, Math.max(0, Math.round(num(ex.feel)))),
       sets:ex.sets.filter(st => st && typeof st==="object").map(st => ({...st, w:String(st.w ?? "").replace(/[^\d.,]/g,""), r:String(st.r ?? "").replace(/[^\d.,]/g,""), done:!!st.done, warm:!!st.warm}))}))}))).filter(Boolean);

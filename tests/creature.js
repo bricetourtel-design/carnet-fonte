@@ -481,7 +481,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     gyMsg = null; document.querySelector('.gy-act[data-act="goto"]').click(); const go = tab; tab = "creature";
     S.profile.creature = JSON.parse(saved); saveLocal(); render();
     return {curves, tip, go, labels, washWarn, jOff, jOn, jRead, hungry, fridge, pet}; });
-  ok(ac.labels === "S'entraîner,Nourrir,Laver,Câlin,Carnet de santé" && ac.go === "seance", "barre d'actions : S'entraîner (mène à la séance), Nourrir, Laver, Câlin, Carnet de santé", ac);
+  ok(ac.labels === "S'entraîner,Nourrir,Laver,Câlin,Carnet de santé,Sociabiliser" && ac.go === "seance", "barre d'actions : S'entraîner (mène à la séance), Nourrir, Laver, Câlin, Carnet de santé, Sociabiliser", ac);
   ok(ac.curves === 2 && /kg|g/.test(ac.tip), "carnet de santé : deux courbes touchables (masse et taille)", ac);
   ok(ac.washWarn && ac.hungry && ac.jOff && ac.jOn && ac.jRead, "pastilles : il sent mauvais, il a faim, nouveau souvenir (effacée une fois le journal lu)", ac);
   ok(ac.fridge && ac.pet, "Nourrir ouvre le frigo, Câlin le fait ronronner", ac);
