@@ -32,13 +32,13 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const wn = await p.evaluate(() => { closeSheet();
     const fresh = S.profile.wnSeen === versionDate(APP_VERSION) && document.getElementById("sheet").hidden;
     const born0 = S.profile.creature.born; S.profile.creature.born = new Date(2026, 10, 1).getTime();
-    S.profile.wnSeen = undefined; S.workouts = [{id:"old", name:"x", start:new Date(2026, 10, 5, 18).getTime(), end:new Date(2026, 10, 5, 19).getTime(), exercises:[{exId:"squat", sets:[{w:"100", r:"5", done:true}]}]}];
+    S.profile.wnSeen = undefined; delete S.profile.wnKeys; S.workouts = [{id:"old", name:"x", start:new Date(2026, 10, 5, 18).getTime(), end:new Date(2026, 10, 5, 19).getTime(), exercises:[{exId:"squat", sets:[{w:"100", r:"5", done:true}]}]}];
     maybeWhatsNew(); const shown = !document.getElementById("sheet").hidden, items = document.querySelectorAll(".wn-i").length, oldest = [...document.querySelectorAll(".wn-d")].pop().textContent;
     // rechargement (mise à jour) avant de fermer : la fenêtre revient
     document.getElementById("sheet").hidden = true; maybeWhatsNew(); const back = !document.getElementById("sheet").hidden;
     closeSheet(); maybeWhatsNew(); const again = !document.getElementById("sheet").hidden;
     // testeur sans séance, Gymon né il y a 10 jours : nouveautés depuis sa naissance
-    S.profile.wnSeen = undefined; S.workouts = []; const keep = S.profile.creature.born; S.profile.creature.born = Date.now() - 10*864e5; const fid = S.profile.creature.fidelity; S.profile.creature.fidelity = 0;
+    S.profile.wnSeen = undefined; delete S.profile.wnKeys; S.workouts = []; const keep = S.profile.creature.born; S.profile.creature.born = Date.now() - 10*864e5; const fid = S.profile.creature.fidelity; S.profile.creature.fidelity = 0;
     maybeWhatsNew(); const noSession = !document.getElementById("sheet").hidden; closeSheet(); S.profile.creature.born = keep; S.profile.creature.fidelity = fid;
     S.profile.creature.born = born0;
     return {fresh, shown, items, oldest, back, again, noSession, after:WHATS_NEW.filter(x => x.d > "2026-11-05").length}; });
@@ -46,6 +46,21 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(wn.shown && wn.items === wn.after && /6 novembre/.test(wn.oldest), "testeur dont la dernière séance date du 5 nov. : nouveautés depuis le 6 nov.", wn);
   ok(wn.back && !wn.again, "marquée « vue » seulement à la fermeture : un rechargement de mise à jour ne la fait plus disparaître", wn);
   ok(wn.noSession, "testeur sans séance : nouveautés depuis la naissance de son Gymon", wn);
+  // 18 nov. 2026 : une nouveauté publiée plus tard le même jour s'affiche aussi ; la fenêtre ne se ferme que par un bouton ; si une autre fenêtre est ouverte, on réessaie
+  const wn2 = await p.evaluate(async () => { closeSheet(); const W0 = WHATS_NEW.slice();
+    WHATS_NEW.unshift({d:WHATS_NEW[0].d, t:"Test du même jour", x:"…"}); maybeWhatsNew();
+    const same = !document.getElementById("sheet").hidden && /Test du même jour/.test(document.querySelector(".wn").textContent) && document.querySelectorAll(".wn-i").length === 1;
+    document.getElementById("sheet").click(); const locked = !document.getElementById("sheet").hidden, avis = !!document.querySelector('[data-act="wn-avis"]');
+    closeSheet(); maybeWhatsNew(); const once = document.getElementById("sheet").hidden;
+    WHATS_NEW.unshift({d:WHATS_NEW[0].d, t:"Test réessai", x:"…"}); openSheet("<p>autre</p>"); maybeWhatsNew(); const waits = !document.querySelector(".wn"); closeSheet();
+    await new Promise(r => setTimeout(r, 2800)); const retried = !!document.querySelector(".wn") && /Test réessai/.test(document.querySelector(".wn").textContent);
+    document.querySelector('[data-act="wn-avis"]').click(); const idea = /Boîte à idées/.test(document.querySelector(".sheet").textContent) && /Test réessai/.test((document.querySelector(".sheet textarea") || {}).value || "");
+    closeSheet(); try{ localStorage.removeItem("gymon.idea"); }catch(e){}
+    WHATS_NEW.splice(0, WHATS_NEW.length, ...W0); return {same, locked, avis, once, waits, retried, idea}; });
+  ok(wn2.same && wn2.once, "nouveauté publiée plus tard le même jour : affichée, une seule fois", wn2);
+  ok(wn2.locked && wn2.avis, "nouveautés : fermeture par bouton seulement, bouton « Donner mon avis »", wn2);
+  ok(wn2.waits && wn2.retried, "une autre fenêtre ouverte au démarrage : les nouveautés s'affichent juste après", wn2);
+  ok(wn2.idea, "« Donner mon avis » ouvre la boîte à idées avec un message prérempli", wn2);
   await p.click('.top [data-act="settings"]'); await p.click('[data-act="whats-new"]');
   ok(await p.evaluate(() => document.querySelectorAll(".wn-i").length === WHATS_NEW.length), "Réglages : « Les nouveautés » rouvre la liste complète");
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
