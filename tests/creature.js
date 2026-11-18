@@ -577,6 +577,30 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(cp.where.every(x => x === "dc-barre:last"), "coup critique sur la dernière série de l'exercice où l'on progresse (pas sur celui qu'on consolide)", cp.where);
   ok(cp.freq > 0.34 && cp.freq < 0.46, "coup critique dans environ 40 % des séances, un seul", cp.freq);
 
+  // Cardio (18 nov. 2026) : minutes, calories, repas du Gymon, un peu de jambes ; fessiers rouges à travers le short
+  const cd = await p.evaluate(async () => {
+    const W = JSON.stringify(S.workouts), c = creatureState(), saved = JSON.stringify(c), bw0 = S.profile.bw; c.stage = Math.max(2, c.stage); c.dead = null; S.profile.bw = 80;
+    S.profile.active = null; startWorkout("Cardio", [{exId:"course", sets:[blankSet()]}]); tab = "seance"; render();
+    const a = A(), sets = a.exercises[0].sets.length, warm = a.exercises[0].sets.some(x => x.warm), head = document.querySelector(".sets thead").textContent, kgOff = !!document.querySelector(".kg-off");
+    const noSwap = !document.querySelector('[data-act="ex-swap"]'), noCrit = !a.exercises[0].sets.some(x => x.crit);
+    a.start = Date.now() - 40 * 60000; a.exercises[0].feel = 3; const x = a.exercises[0].sets[0]; x.r = "30"; render(); ACT.check(document.querySelector('tr[data-i="0"][data-j="0"] .check'));
+    const pop = (document.getElementById("gy-pop") || {}).textContent || "", rest = restState === null;
+    const lv0 = (creatureState().levels || {}).Mollets || 0;
+    finishWorkout(); const w = S.workouts[S.workouts.length - 1], k = wCalories(w), lm = creatureState().lastMeal, lv1 = (creatureState().levels || {}).Mollets || 0;
+    celebClose(true); closeSheet();
+    const next = coach("course");
+    // fessiers sollicités : dessin de dos avec le voile rouge sur le short
+    const c2 = creatureState(); c2.lastMeal = {...(c2.lastMeal || {}), ts:Date.now(), ups:["Fessiers"]};
+    const backRed = (creatureSVG(c2, false, true).match(/p\)" opacity="\.62"/g) || []).length, c3 = creatureState(); c3.lastMeal = {...c3.lastMeal, ups:["Biceps"]};
+    const backNo = (creatureSVG(c3, false, true).match(/p\)" opacity="\.62"/g) || []).length;
+    S.profile.bw = bw0; S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {sets, warm, head, kgOff, noSwap, noCrit, pop, rest, kcal:k.kcal, cardio:k.cardio, vol:wVolume(w), food:lm.vol, lvUp:lv1 > lv0, next:[next.r, next.unit, next.tag], backRed, backNo}; });
+  ok(cd.sets === 1 && !cd.warm && /Min\./.test(cd.head) && cd.kgOff && cd.noSwap && cd.noCrit, "cardio : une série en minutes, sans charge, sans échauffement, sans ↻ ni coup critique", cd);
+  ok(/kcal/.test(cd.pop) && cd.rest && cd.cardio === 392 && cd.kcal === 390, "cardio : 30 min de course à 80 kg ≈ 392 kcal (9,8 MET), pas de repos chronométré", cd);
+  ok(cd.vol === 0 && cd.food === 392 * 15 && cd.lvUp, "cardio : nourrit le Gymon (1 kcal = 15 kg de poulet) et lui muscle un peu les jambes", cd);
+  ok(cd.next[0] === 32 && cd.next[1] === "min" && /\+2 min/.test(cd.next[2]), "cardio : la prochaine fois, le coach propose 2 min de plus (ressenti idéal)", cd.next);
+  ok(cd.backRed === 2 && cd.backNo === 0, "fessiers sollicités : rouges à travers le short, de dos", cd);
+
   // Idées gaming 1 (12 nov. 2026) : réaction en direct, coup critique, repas du Gymon
   const g1 = await p.evaluate(async () => {
     const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts); c.stage = Math.max(2, c.stage); c.dead = false;

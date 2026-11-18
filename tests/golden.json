@@ -710,6 +710,66 @@
     "Machine"
    ],
    [
+    "marche",
+    "Marche (extérieur, randonnée)",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "marche-tapis",
+    "Marche sur tapis (inclinable)",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "footing",
+    "Footing (course lente)",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "course",
+    "Course à pied",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "escaliers",
+    "Escaliers (marches ou stepper)",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "velo-appart",
+    "Vélo d'appartement",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "velo",
+    "Vélo (extérieur)",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "rameur",
+    "Rameur",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "elliptique",
+    "Vélo elliptique",
+    "Jambes",
+    "Cardio"
+   ],
+   [
+    "corde-sauter",
+    "Corde à sauter",
+    "Jambes",
+    "Cardio"
+   ],
+   [
     "extension-dos-ballon",
     "Extension du dos sur ballon",
     "Dos",
@@ -2494,6 +2554,76 @@
     ]
    ],
    [
+    "marche",
+    [
+     30,
+     60
+    ]
+   ],
+   [
+    "marche-tapis",
+    [
+     20,
+     45
+    ]
+   ],
+   [
+    "footing",
+    [
+     20,
+     40
+    ]
+   ],
+   [
+    "course",
+    [
+     20,
+     40
+    ]
+   ],
+   [
+    "escaliers",
+    [
+     10,
+     25
+    ]
+   ],
+   [
+    "velo-appart",
+    [
+     20,
+     45
+    ]
+   ],
+   [
+    "velo",
+    [
+     30,
+     90
+    ]
+   ],
+   [
+    "rameur",
+    [
+     10,
+     30
+    ]
+   ],
+   [
+    "elliptique",
+    [
+     20,
+     45
+    ]
+   ],
+   [
+    "corde-sauter",
+    [
+     5,
+     15
+    ]
+   ],
+   [
     "extension-dos-ballon",
     [
      10,
@@ -4188,6 +4318,58 @@
    },
    "shrug-machine": {
     "Haut du dos": 1
+   },
+   "marche": {
+    "Mollets": 0.4,
+    "Quadriceps": 0.3,
+    "Fessiers": 0.3
+   },
+   "marche-tapis": {
+    "Mollets": 0.4,
+    "Fessiers": 0.4,
+    "Quadriceps": 0.3
+   },
+   "footing": {
+    "Mollets": 0.5,
+    "Quadriceps": 0.4,
+    "Fessiers": 0.3,
+    "Ischios": 0.3
+   },
+   "course": {
+    "Mollets": 0.5,
+    "Quadriceps": 0.4,
+    "Fessiers": 0.4,
+    "Ischios": 0.3
+   },
+   "escaliers": {
+    "Quadriceps": 0.6,
+    "Fessiers": 0.6,
+    "Mollets": 0.4
+   },
+   "velo-appart": {
+    "Quadriceps": 0.6,
+    "Mollets": 0.2,
+    "Fessiers": 0.2
+   },
+   "velo": {
+    "Quadriceps": 0.6,
+    "Mollets": 0.2,
+    "Fessiers": 0.3
+   },
+   "rameur": {
+    "Quadriceps": 0.4,
+    "Grand dorsal": 0.3,
+    "Haut du dos": 0.3,
+    "Biceps": 0.1
+   },
+   "elliptique": {
+    "Quadriceps": 0.4,
+    "Fessiers": 0.3,
+    "Mollets": 0.2
+   },
+   "corde-sauter": {
+    "Mollets": 0.6,
+    "Quadriceps": 0.3
    },
    "extension-dos-ballon": {
     "Lombaires": 1,
