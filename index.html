@@ -746,7 +746,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-18 c";
+const APP_VERSION = "2026-11-18 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const EX = [
@@ -3887,6 +3887,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-18", t:"💬 Votre avis sur les nouveautés", x:"Cette fenêtre s'affiche désormais à chaque mise à jour, même pour plusieurs nouveautés le même jour. Touchez « Donner mon avis » pour nous dire ce que vous en pensez : vos retours guident les prochaines versions."},
   {d:"2026-11-18", t:"🏃 Cardio", x:"10 exercices de cardio avec photos : marche, marche sur tapis, footing, course, escaliers, vélo d'appartement ou extérieur, rameur, elliptique, corde à sauter (filtre « Cardio » dans Exercices). Notez la durée en minutes ; le ressenti règle l'intensité. Les calories brûlées comptent en fin de séance et nourrissent votre Gymon, qui se muscle aussi un peu les jambes. Et quand ses fessiers travaillent, on les voit rougir à travers le short (vue de dos)."},
   {d:"2026-11-18", t:"💪 Lombaires et avant-bras", x:"Les lombaires et les avant-bras deviennent des muscles à part entière : volume de la semaine, récupération, niveaux de votre Gymon. Et 8 nouveaux exercices avec photos : extension du dos sur ballon, good morning assis, soulevé de terre en déficit, rouleau à poignets, pronation et supination à l'haltère, curl des doigts, curl des poignets derrière le dos."},
   {d:"2026-11-18", t:"★ Exercices favoris", x:"Les exercices que vous faites souvent (3 séances ou plus en 90 jours) deviennent favoris tout seuls. Pour en ajouter d'autres : ouvrez un exercice dans l'onglet Exercices et touchez « ☆ Ajouter aux favoris ». Les favoris sortent en premier dans les listes et la recherche."},
@@ -3934,28 +3935,39 @@ const WHATS_NEW = [
   {d:"2026-11-04", t:"🐔 Nouveau look du Gymon", x:"Corps musclé détaillé, tête de mascotte, vue de dos (bouton « Dos »), nouvelle vitalité et une phrase motivante par jour."}
 ];
 const versionDate = v => String(v || "").slice(0, 10);
-function whatsNewSince(since){ return WHATS_NEW.filter(x => x.d > since); }
+/* Nouveautés vues (18 nov. 2026) : retenues une par une (date + titre), plus seulement la date, sinon les nouveautés publiées
+   plus tard le même jour ne s'affichaient jamais. Migration : ce qui est daté d'avant l'ancien repère est vu ; le jour même est remontré. */
+const wnKey = x => x.d + "|" + x.t;
+function wnSeenSet(){
+  if(!Array.isArray(S.profile.wnKeys)) S.profile.wnKeys = WHATS_NEW.filter(x => S.profile.wnSeen && x.d < S.profile.wnSeen).map(wnKey);
+  return new Set(S.profile.wnKeys);
+}
+function whatsNewSince(){ const seen = wnSeenSet(); return WHATS_NEW.filter(x => !seen.has(wnKey(x))); }
 function whatsNewSheet(list, all, onClose){
   const by = {}; list.forEach(x => (by[x.d] = by[x.d] || []).push(x));
+  // À la mise à jour, la fenêtre ne se ferme que par un bouton (ni glissement ni toucher à côté), pour être sûr qu'elle est lue
   openSheet(`<h3>${all ? "Les nouveautés" : "Quoi de neuf depuis votre dernière visite ?"}</h3>
     <div class="wn">${Object.keys(by).sort().reverse().map(d => `<p class="wn-d">${esc(fmtDate(new Date(d + "T12:00").getTime(), {day:"numeric", month:"long"}))}</p>
       ${by[d].map(x => `<div class="wn-i"><b>${esc(x.t)}</b><span>${esc(x.x)}</span></div>`).join("")}`).join("")}</div>
-    <button class="btn primary" data-act="close">C'est parti !</button>`, onClose);
+    ${all ? "" : `<p class="small muted" style="margin:0">Votre avis compte : dites-nous ce que vous en pensez.</p>`}
+    <div class="row">${all ? "" : `<button class="btn" style="flex:1" data-act="wn-avis">💬 Donner mon avis</button>`}<button class="btn primary" style="flex:1" data-act="close">C'est parti !</button></div>`, onClose, all ? "" : "locked");
 }
 const isoDay = ts => new Date(ts - new Date(ts).getTimezoneOffset()*60000).toISOString().slice(0, 10);
+let wnRetry = null;
 function maybeWhatsNew(){
-  const latest = versionDate(APP_VERSION);
+  const latest = versionDate(APP_VERSION); clearTimeout(wnRetry);
   if(!S.profile.wnSeen){
     // Point de départ : dernière séance, sinon naissance du Gymon. Un tout nouvel utilisateur ne voit rien.
     const lastW = S.workouts.reduce((t,w) => Math.max(t, w.start), 0), cr = S.profile.creature, born = cr && cr.born || 0;
     const fresh = !lastW && !(cr && cr.fidelity) && (!born || Date.now() - born < 86400000);
-    S.profile.wnSeen = fresh ? latest : isoDay(Math.max(lastW, born)); saveLocal();
+    S.profile.wnSeen = fresh ? latest : isoDay(Math.max(lastW, born)); if(fresh) S.profile.wnKeys = WHATS_NEW.map(wnKey); saveLocal();
   }
-  const list = whatsNewSince(S.profile.wnSeen); if(!list.length) return;
-  // pas par-dessus l'accueil, un tuto ou une autre fenêtre : on réessaiera plus tard
-  if(!S.profile.onboarded || !S.profile.tutoDone || !document.getElementById("tuto").hidden || !document.getElementById("sheet").hidden) return;
+  const list = whatsNewSince(); if(!list.length) return;
+  // pas par-dessus l'accueil, un tuto, une autre fenêtre ou une fête plein écran : on réessaie quelques secondes plus tard
+  if(!S.profile.onboarded || !S.profile.tutoDone || !document.getElementById("tuto").hidden || !document.getElementById("sheet").hidden || document.getElementById("celebrate")){
+    if(document.visibilityState === "visible") wnRetry = setTimeout(maybeWhatsNew, 2500); return; }
   // « vu » seulement quand on ferme la fenêtre : un rechargement de mise à jour ne la fait plus disparaître
-  whatsNewSheet(list, false, () => { S.profile.wnSeen = latest; saveLocal(); });
+  whatsNewSheet(list, false, () => { S.profile.wnSeen = latest; S.profile.wnKeys = [...new Set([...(S.profile.wnKeys || []), ...list.map(wnKey)])]; saveLocal(); });
 }
 // Retour dans l'app (iPhone : elle reste souvent ouverte en arrière-plan) : on cherche une mise à jour et on montre les nouveautés
 document.addEventListener("visibilitychange", () => {
@@ -4546,7 +4558,8 @@ function viewSettings(){
 }
 
 /* ---------- Feuilles, toasts ---------- */
-function openSheet(html, onClose, cls){ sheetOnClose = onClose||null; const el = document.getElementById("sheet-in");
+let sheetLocked = false;
+function openSheet(html, onClose, cls){ sheetOnClose = onClose||null; sheetLocked = /\blocked\b/.test(cls || ""); const el = document.getElementById("sheet-in");
   el.className = "sheet-in" + (cls ? " "+cls : ""); el.innerHTML = html; el.scrollTop = 0; el.style.transform = ""; el.style.transition = "";
   document.getElementById("sheet").hidden = false; lockBody(); }
 let lockY = null;
@@ -4554,15 +4567,16 @@ function lockBody(){ if(lockY!==null) return; lockY = window.scrollY; const b = 
   b.position = "fixed"; b.top = -lockY + "px"; b.left = "0"; b.right = "0"; b.width = "100%"; }
 function unlockBody(){ if(lockY===null) return; const b = document.body.style, y = lockY; lockY = null;
   b.position = b.top = b.left = b.right = b.width = ""; window.scrollTo(0, y); }
-function closeSheet(){ document.getElementById("sheet").hidden = true; unlockBody();
+function closeSheet(){ document.getElementById("sheet").hidden = true; unlockBody(); sheetLocked = false;
   picker = null; const f = sheetOnClose; sheetOnClose = null; if(f) f(); }
-document.getElementById("sheet").addEventListener("click", e => { if(e.target.id==="sheet") closeSheet(); });
+document.getElementById("sheet").addEventListener("click", e => { if(e.target.id==="sheet" && !sheetLocked) closeSheet(); });
 /* Glisser une fenêtre vers le bas la ferme (14 nov. 2026) : seulement quand son contenu est tout en haut (sinon on fait défiler),
    la fenêtre suit le doigt ; fermée au-delà de 110 px ou d'un geste rapide, sinon elle revient en place. */
 let shDrag = null;
 (() => { const box = document.getElementById("sheet-in");
   const atTop = t => { for(let el = t; el && el !== box.parentElement; el = el.parentElement){ if(el.scrollTop > 0) return false; } return true; };
   box.addEventListener("touchstart", e => { shDrag = null; if(e.touches.length !== 1 || e.target.closest("input,textarea,select,.curve-box,.celeb-food") || !atTop(e.target)) return;
+    if(sheetLocked) return;   // fenêtre à fermer par un bouton (nouveautés)
     shDrag = {x:e.touches[0].clientX, y:e.touches[0].clientY, t:Date.now(), dy:0, on:false}; }, {passive:true});
   box.addEventListener("touchmove", e => { if(!shDrag) return;
     const dy = e.touches[0].clientY - shDrag.y, dx = e.touches[0].clientX - shDrag.x;
@@ -4774,6 +4788,10 @@ const ACT = {
   "celeb-rand": () => { const i = document.getElementById("celeb-name"); if(i) i.value = GYM_NAMES[Math.floor(Math.random()*GYM_NAMES.length)]; },
   "celeb-share": () => { const id = (celebState||{}).w; celebClose(); shareSheet("session", id); },
   // Boîte à idées : le message est préparé puis envoyé par le partage de l'iPhone (aucun serveur)
+"wn-avis": () => { const t = (whatsNewSince()[0] || WHATS_NEW[0] || {}).t || "";
+    closeSheet();   // vaut lecture
+    try{ localStorage.setItem("gymon.idea", JSON.stringify({kind:"idee", txt:`Mon avis sur les nouveautés (${t}) : `})); }catch(e){}
+    ACT.idea(); },
   idea: () => {
     let draft = {kind:"idee", txt:""}; try{ draft = {...draft, ...JSON.parse(localStorage.getItem("gymon.idea")||"{}")}; }catch(e){}
     const kinds = [["idee","💡 Une idée"],["manque","🧩 Il manque…"],["bug","🐞 Un bug"],["top","❤️ J'adore"]];
