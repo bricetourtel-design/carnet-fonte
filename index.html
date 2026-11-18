@@ -737,8 +737,14 @@ button.gy-chip.tr{text-align:right}
 .curve-ax{font-size:11px;fill:var(--muted)}
 .curve-now{margin:-4px 0 0;font-size:28px;font-weight:700;letter-spacing:-.02em}
 .curve-tip{margin:6px 0 0;min-height:1.3em}
-/* Titre collé en haut : fond de verre dépoli, pour que le contenu qui défile dessous ne se mélange pas au titre */
-.top{background:color-mix(in srgb,var(--bg) 96%,transparent);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
+/* Titre collé en haut : voile de verre qui part de la barre d'état et se fond dans le décor (pas de bandeau opaque) */
+.top{background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.top::before{content:"";position:absolute;z-index:-1;pointer-events:none;left:calc(50% - 50vw);width:100vw;top:calc(-1 * env(safe-area-inset-top,0px));bottom:-22px;
+  background:linear-gradient(to bottom,color-mix(in srgb,var(--bg) 62%,transparent),color-mix(in srgb,var(--bg) 30%,transparent) 72%,transparent);
+  -webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);
+  -webkit-mask-image:linear-gradient(#000 62%,transparent);mask-image:linear-gradient(#000 62%,transparent)}
+body::before{display:none}
+.top-r .idea-btn{box-shadow:var(--glass-hi),var(--glass-shadow)}
 </style>
 </head>
 <body>
@@ -747,7 +753,6 @@ button.gy-chip.tr{text-align:right}
 <header class="top">
   <h1 id="title">Séance</h1>
   <div class="top-r">
-    <div class="status" id="status"><i></i><span>Sur cet iPhone</span></div>
     <button class="idea-btn" data-act="settings" aria-label="Réglages"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     <button class="idea-btn" data-act="idea" aria-label="Boîte à idées"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg></button>
   </div>
@@ -767,7 +772,7 @@ button.gy-chip.tr{text-align:right}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-18 f";
+const APP_VERSION = "2026-11-18 g";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
