@@ -1,0 +1,126 @@
+// Tests du Pr Noxwell, étape 1 (Node + Playwright) : arrivée sur la page Gymon, premier examen, protocole,
+// bloc labo de la page Routine, objectif et ressenti en séance, effets de l'objectif sur le programme.
+// Usage : node tests/noxwell.js
+const {chromium, devices} = require("playwright");
+const path = require("path");
+const URL = "file://" + path.resolve(__dirname, "..", "index.html");
+let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  " : "ÉCHEC"} ${label}${extra!==undefined ? " → " + JSON.stringify(extra).slice(0, 400) : ""}`); if(!cond) fails++; };
+
+(async () => {
+  const b = await chromium.launch(), errs = [];
+  const phone = async (setup) => {
+    const ctx = await b.newContext({...devices["iPhone 13"]}), p = await ctx.newPage(); p.on("pageerror", e => errs.push(e.message));
+    await p.addInitScript(() => addEventListener("DOMContentLoaded", () => { gyHourFix = 12; }));
+    await p.goto(URL); await p.waitForTimeout(300);
+    await p.evaluate(setup || (() => {}));
+    return p;
+  };
+  const base = () => { S.profile.tutoDone = true; S.profile.tutoAppDone = true; S.profile.onboarded = true; S.profile.welcomed = true; S.profile.installHintOff = true;
+    S.profile.wnKeys = WHATS_NEW.map(wnKey); S.profile.wnSeen = versionDate(APP_VERSION); closeSheet(); document.getElementById("tuto").hidden = true; };
+
+  // 1. Pas d'arrivée tant que le Gymon est petit
+  const p0 = await phone(base);
+  await p0.evaluate(() => { const c = creatureState(); c.stage = 2; c.fidelity = 3; saveLocal(); tab = "creature"; render(); });
+  await p0.waitForTimeout(1800);
+  ok(await p0.$("#nox-layer") === null, "Gymon au stade 2 : Noxwell n'arrive pas");
+  await p0.evaluate(() => { tab = "routine"; render(); });
+  ok(await p0.$(".nox-hero") === null && await p0.$(".tpls") !== null, "avant son arrivée, la page Routine est inchangée");
+
+  // 2. Arrivée à une visite calme (stade 3), nouveau joueur
+  await p0.evaluate(() => { const c = creatureState(); c.stage = 3; c.fidelity = 5; c.journal = []; saveLocal(); tab = "creature"; render(); });
+  await p0.waitForTimeout(2800);
+  ok(await p0.$("#nox-layer .nox-bub.in") !== null, "stade 3 : Noxwell surgit sur la page Gymon");
+  const t1 = await p0.$eval(".nox-txt", e => e.textContent);
+  ok(/FASCINANT/.test(t1), "première bulle « FASCINANT ! »", t1);
+  for(let k = 0; k < 3; k++){ await p0.click(".nox-bub"); await p0.waitForTimeout(150); }
+  ok(await p0.$eval(".nox-btns", e => !e.hidden), "dernière bulle : « Passer l'examen » ou « Plus tard »");
+  const noStage = await p0.$eval(".nox-layer", e => !/Poussin|Poule|Dinosaure|Dragon/.test(e.textContent));
+  ok(noStage, "aucun nom de stade dans sa présentation");
+  await p0.click('[data-nox="later"]'); await p0.waitForTimeout(2600);
+  ok(await p0.$("#nox-layer") === null && await p0.evaluate(() => !!S.profile.nox.intro && !!S.profile.nox.later), "« Plus tard » : il repart, présentation vue une fois");
+  await p0.evaluate(() => render()); await p0.waitForTimeout(1800);
+  ok(await p0.$("#nox-layer") === null, "il ne revient pas à la visite suivante");
+
+  // 3. La page Routine devient son labo, avec l'invitation à l'examen
+  await p0.evaluate(() => { tab = "routine"; render(); });
+  ok(await p0.$(".nox-hero") !== null && await p0.$('.nox-hero [data-act="nox-exam"]') !== null, "Routine : bloc Noxwell avec « Passer l'examen »");
+  ok(await p0.$(".tpls") !== null, "sans examen, l'organisation proposée reste affichée");
+
+  // 4. Premier examen complet : prise de muscle, haut du corps, 4 séances, 45 min, avec matériel, deux fois par semaine
+  await p0.click('.nox-hero [data-act="nox-exam"]'); await p0.waitForTimeout(300);
+  ok(await p0.$("#nox-exam") !== null, "l'examen s'ouvre en plein écran");
+  const next = async () => { await p0.click('[data-nxe="next"]'); await p0.waitForTimeout(120); };
+  await next();
+  ok(await p0.$eval('[data-nxe="next"]', e => e.disabled), "« Continuer » bloqué tant qu'aucun objectif n'est choisi");
+  await p0.click('[data-set="obj"][data-v="muscle"]');
+  ok(/CROISSANCE/.test(await p0.$eval(".nxe-bub", e => e.textContent)), "il réagit au choix de l'objectif");
+  await next(); await p0.click('[data-set="prec"][data-v="haut"]'); await next();
+  await p0.click('[data-set="exp"][data-v="mid"]'); await next();
+  await p0.click('[data-nxn="1"]'); await next();
+  await p0.click('[data-set="dur"][data-v="1"]'); await next();
+  await p0.click('[data-set="lieu"][data-v="salle"]'); await next();
+  await p0.click('[data-set="org"][data-v="un"]');
+  ok(/Ce que dit la science/.test(await p0.$eval(".nxe-body", e => e.textContent)), "« un muscle par séance » : les risques sont expliqués");
+  await p0.click('[data-set="org"][data-v="deux"]'); await next();
+  await p0.fill('[data-in="bw"]', "80"); await p0.fill('[data-in="height"]', "180"); await p0.click('[data-set="sexe"][data-v="h"]'); await next();
+  const recap = await p0.$eval(".nxe-body", e => e.textContent);
+  ok(/Prendre du muscle/.test(recap) && /4 séances/.test(recap), "récapitulatif de ce qu'il a compris", recap.slice(0, 160));
+  await next();
+  ok(/Priorité au haut du corps/.test(await p0.$eval(".nxe-body", e => e.textContent)), "protocole : leviers annoncés selon l'objectif");
+  await next(); await p0.waitForTimeout(300);
+  const after = await p0.evaluate(() => ({goal:S.profile.goal, ex:S.profile.nox.exam, tpl:S.profile.plan && S.profile.plan.tpl, n:(S.profile.plan || {days:[]}).days.length, min:(S.profile.plan || {days:[{}]}).days[0].min,
+    bw:S.profile.bw, h:S.profile.height, routines:S.profile.routines.filter(r => r.plan).length, tab}));
+  ok(after.goal.obj === "muscle" && after.tpl === "ul2" && after.n === 4 && after.min === 45 && after.bw === 80 && after.h === 180 && after.routines === 4 && after.tab === "routine", "accepter : programme haut/bas sur 4 séances de 45 min enregistré, mesures gardées", after);
+
+  // 5. Effet réel de l'objectif : au moins 14 séries par semaine pour le haut du corps
+  const vol = await p0.evaluate(() => { const d = newDraft(3); d.days.forEach(x => x.min = 75); const up = () => { const g = generatePlan(d); return NOX_UPPER.reduce((t, m) => t + g.weekly[m], 0); };
+    const haut = up(); S.profile.goal = {obj:"muscle", prec:"equi"}; const equi = up(); S.profile.goal = {obj:"muscle", prec:"haut"}; return {haut, equi}; });
+  ok(vol.haut > vol.equi, "zone haut du corps (full body, 1 h 15) : plus de séries pour le haut qu'en équilibré", vol);
+
+  // 6. Labo après l'examen : protocole, organisation dans le diagnostic, sources
+  ok(await p0.$(".nox-proto") !== null && await p0.$(".tpls") === null, "Routine : bloc protocole, plus d'« Organisation proposée »");
+  await p0.click('[data-act="nox-org"]'); await p0.waitForTimeout(200);
+  await p0.click('[data-act="nox-org-set"][data-v="un"]'); await p0.waitForTimeout(200);
+  ok(await p0.evaluate(() => S.profile.plan.tpl === "duo4"), "« changer » l'organisation : un muscle par séance → séances en duos");
+  await p0.evaluate(() => document.querySelector('.nox-two [data-act="nox-src"]').click()); await p0.waitForTimeout(250);
+  ok(/Pelland/.test(await p0.$eval("#sheet-in", e => e.textContent)), "« Mes sources » cite les études");
+  await p0.evaluate(() => closeSheet());
+  ok(await p0.evaluate(() => { tab = "reglages"; render(); return document.getElementById("bw").closest("label").hidden && /Pr Noxwell/.test(document.getElementById("view").textContent); }), "Réglages : mesures et lieu passés chez Noxwell");
+
+  // 7. En séance : objectif signé 🧪, réponse au ressenti puis ligne compacte, « Comment répondre ? »
+  await p0.evaluate(() => { S.workouts.push({id:"w0", name:"Test", start:Date.now() - 3 * 86400000, end:Date.now() - 3 * 86400000 + 3600000, exercises:[{exId:"dc-barre", feel:3, sets:[{w:"60", r:"8", done:true}, {w:"60", r:"8", done:true}]}], prs:[]});
+    S.profile.active = {id:"a1", name:"Test", start:Date.now(), exercises:[{exId:"dc-barre", sets:[{w:"62.5", r:"8", done:true}, {w:"62.5", r:"8", done:true}]}]}; tab = "seance"; render(); });
+  ok(await p0.$(".coach.nx .nox-fio") !== null, "objectif de l'exercice signé 🧪 en cyan");
+  ok(await p0.$(".ex .nox-mini, .ex .nox-face") === null, "pas de tête de Noxwell à l'écran tant qu'il ne parle pas");
+  await p0.click('[data-act="feel"][data-v="2"]'); await p0.waitForTimeout(200);
+  const rep = await p0.$eval(".nox-reply", e => e.textContent).catch(() => "");
+  ok(/Facile, noté/.test(rep) && /La prochaine fois : \d/.test(rep), "ressenti : il répond ce qu'il change la prochaine fois", rep);
+  ok(await p0.evaluate(() => S.workouts.every(w => w.id !== "nox-tmp")), "le calcul de la prochaine charge ne laisse rien dans l'historique");
+  await p0.waitForTimeout(4300);
+  ok(await p0.$(".nox-reply") === null && /Facile · La prochaine fois/.test(await p0.$eval(".nox-compact", e => e.textContent)), "après 4 s, sa réponse se range en une ligne 🧪");
+  await p0.click('[data-act="nox-how"]'); await p0.waitForTimeout(200);
+  ok(/reps aurais-tu encore pu faire/.test(await p0.$eval("#sheet-in", e => e.textContent)), "« Comment répondre ? » explique l'échelle");
+  await p0.evaluate(() => closeSheet());
+  await p0.click('[data-act="coach-why"]'); await p0.waitForTimeout(200);
+  const why = await p0.$eval("#sheet-in", e => e.textContent);
+  ok(/\.nox-face|PR|Ta dernière|tu /i.test(why) && !/\bvous\b/i.test(why), "« pourquoi ? » dans sa voix, au tutoiement", why.slice(0, 200));
+  await p0.evaluate(() => closeSheet());
+
+  // 8. Ancien joueur : présentation adaptée, sans nom de stade ; objectif sèche : cardio en fin de séance
+  const p1 = await phone(base);
+  await p1.evaluate(() => { const c = creatureState(); c.stage = 6; c.fidelity = 42; c.name = "Pioupiou"; c.journal = []; saveLocal(); tab = "creature"; render(); });
+  await p1.waitForTimeout(2800);
+  for(let k = 0; k < 2; k++){ await p1.click(".nox-bub"); await p1.waitForTimeout(150); }
+  const t2 = await p1.$eval(".nox-txt", e => e.textContent);
+  ok(/Pioupiou/.test(t2), "ancien joueur : il connaît déjà le Gymon", t2);
+  await p1.evaluate(() => { S.profile.goal = {obj:"seche", prec:"partout"}; S.profile.nox.exam = {done:Date.now(), obj:"seche", prec:"partout", n:3, days:[0,2,4], dur:2, org:"deux", exp:"mid"}; });
+  const card = await p1.evaluate(() => { const g = generatePlan(newDraft(3)); return g.days.map(d => d.items.filter(it => it.cardio).length); });
+  ok(card.every(n => n === 1), "sèche : un cardio en fin de chaque séance", card);
+  const noGoal = await p1.evaluate(() => { S.profile.goal = null; const g = generatePlan(newDraft(3)); return g.days.some(d => d.items.some(it => it.cardio)); });
+  ok(!noGoal, "sans objectif : programme inchangé, pas de cardio ajouté");
+
+  ok(errs.length === 0, "aucune erreur JavaScript", errs);
+  await b.close();
+  console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");
+  process.exit(fails ? 1 : 0);
+})();

@@ -15,7 +15,7 @@ Ce dépôt est **public** et ne contient que l'application. Règles du coach et 
 
 ## Livrer
 1. Changement de calcul voulu : `node tests/regression.js --update` avant, comparer après.
-2. Tests : `node tests/regression.js`, `coach.js`, `creature.js`, `guide.js`, `idees.js`, `taps.js`, `team.js`, `options.js` (Node + Playwright, Chromium).
+2. Tests : `node tests/regression.js`, `coach.js`, `creature.js`, `guide.js`, `idees.js`, `taps.js`, `team.js`, `options.js`, `noxwell.js` (Node + Playwright, Chromium).
 3. Incrémenter `APP_VERSION` (`index.html`) et `CACHE` (`sw.js`).
 4. Commit en français, signé avec l'adresse personnelle du propriétaire.
 5. Un push sur `main` déploie chez les testeurs (GitHub Pages) : seulement après accord du propriétaire, tests verts.
