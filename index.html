@@ -756,6 +756,128 @@ button.gy-chip.tr{text-align:right}
   -webkit-mask-image:linear-gradient(#000 62%,transparent);mask-image:linear-gradient(#000 62%,transparent)}
 body::before{display:none}
 .top-r .idea-btn{box-shadow:var(--glass-hi),var(--glass-shadow)}
+/* Professeur Noxwell (19 nov. 2026) : signature cyan + fiole 🧪 ; sa tête n'apparaît que quand il parle */
+.nox .m-smirk{display:none}
+.smirk .nox .m-grin{display:none}.smirk .nox .m-smirk{display:inline}
+.nox .eyes{animation:nxblink 4.6s infinite;transform-origin:160px 148px}
+@keyframes nxblink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.nox .bub{animation:nxbub 1.6s ease-in infinite}.nox .b2{animation-delay:.5s}.nox .b3{animation-delay:1s}
+@keyframes nxbub{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-22px);opacity:0}}
+.nox .sp{opacity:0;animation:nxspark 1.8s infinite}.nox .s2{animation-delay:.6s}.nox .s3{animation-delay:1.2s}
+@keyframes nxspark{0%,60%,100%{opacity:0}65%,80%{opacity:1}}
+.nox .flask{transform-origin:58px 230px;animation:nxfloat 3s ease-in-out infinite}
+@keyframes nxfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px) rotate(-3deg)}}
+/* Apparition sur la page Gymon */
+.nox-layer{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden}
+.nox-layer.on{pointer-events:auto}
+.nox-dim{position:absolute;inset:0;background:radial-gradient(120% 70% at 30% 85%,rgba(163,230,53,.18),transparent 60%),rgba(9,5,22,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .35s}
+.nox-layer.on .nox-dim{opacity:1}
+body.nox-shake main{animation:nxshake .38s linear}
+@keyframes nxshake{0%,100%{transform:none}20%{transform:translate(-6px,3px)}40%{transform:translate(5px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+.nox-smoke{position:absolute;left:50%;bottom:22%;width:0;height:0}
+.nox-smoke i{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff 0,#e9e3ff 35%,rgba(196,181,253,.55) 70%,rgba(196,181,253,0) 72%);transform:translate(-50%,-50%) scale(0);opacity:0}
+.nox-smoke.go i{animation:nxpuff 1.25s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes nxpuff{0%{transform:translate(-50%,-50%) scale(0);opacity:0}25%{opacity:.95}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(var(--s));opacity:0}}
+.nox-char{position:absolute;left:50%;width:min(112vw,560px);bottom:-2%;transform:translate(-50%,110%) rotate(6deg);transform-origin:50% 100%}
+.nox-char svg{display:block;width:100%;height:auto;filter:drop-shadow(0 -6px 30px rgba(34,211,238,.25))}
+.nox-char.in{animation:nxrise .75s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes nxrise{0%{transform:translate(-50%,110%) rotate(8deg)}100%{transform:translate(-50%,0) rotate(0)}}
+.nox-char.idle{transform:translate(-50%,0)}.nox-char.idle svg{animation:nxbreathe 3.2s ease-in-out infinite}
+@keyframes nxbreathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.2%)}}
+.nox-char.hop svg{animation:nxhop .5s ease-out}
+@keyframes nxhop{35%{transform:translateY(-4%) rotate(-2deg)}70%{transform:translateY(0) rotate(1deg)}}
+.nox-char.out{animation:nxout .6s cubic-bezier(.6,-.4,.8,.6) forwards}
+@keyframes nxout{0%{transform:translate(-50%,0)}100%{transform:translate(-50%,115%) rotate(-10deg) scale(.9)}}
+.nox-bub{position:absolute;left:max(16px,calc(50% - 300px));right:max(16px,calc(50% - 300px));top:calc(env(safe-area-inset-top,0px) + 9vh);background:#fff;color:#1e1538;border-radius:24px;padding:22px 20px 16px;box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 3px rgba(139,92,246,.35);transform:scale(.4) translateY(30%);opacity:0;transform-origin:30% 100%}
+.nox-bub.in{animation:nxpop .45s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes nxpop{to{transform:none;opacity:1}}
+.nox-bub::after{content:"";position:absolute;left:30%;bottom:-20px;border:12px solid transparent;border-top:18px solid #fff;border-bottom:0}
+.nox-tag,.nox-chip{display:inline-block;background:linear-gradient(135deg,#8b5cf6,#22d3ee);color:#fff;font-weight:800;font-size:13px;padding:4px 12px;border-radius:99px;letter-spacing:.02em}
+.nox-bub .nox-tag{position:absolute;top:-14px;left:18px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.nox-txt{font-size:19px;line-height:1.32;font-weight:600;min-height:76px}.nox-txt b{font-weight:900;color:#7c3aed}
+.nox-txt.boom{font-size:27px;font-weight:900;color:#7c3aed;animation:nxboom .5s}
+@keyframes nxboom{0%{transform:scale(.7)}60%{transform:scale(1.08)}100%{transform:none}}
+.nox-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.nox-dots{display:flex;gap:6px}.nox-dots i{width:8px;height:8px;border-radius:50%;background:#d8d2ee}.nox-dots i.on{background:#8b5cf6}
+.nox-hint{font-size:13px;color:#8a83a3;font-weight:600;animation:nxhint 1.4s ease-in-out infinite}
+@keyframes nxhint{50%{opacity:.35}}
+.nox-btns{display:flex;flex-direction:column;gap:10px;margin-top:14px}.nox-btns .btn{width:100%}
+.nox-btns .btn:not(.primary){background:#efeafc;color:#6d28d9}
+/* Examen */
+.nox-exam{position:fixed;inset:0;z-index:61;display:flex;flex-direction:column;background:radial-gradient(60% 35% at 10% 5%,color-mix(in srgb,#8b5cf6 30%,transparent),transparent 70%),radial-gradient(50% 30% at 95% 30%,color-mix(in srgb,#22d3ee 18%,transparent),transparent 70%),var(--bg);color:var(--fg);max-width:672px;margin:0 auto}
+.nxe-top{padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 6px;display:flex;align-items:center;gap:12px}
+.nxe-back,.nxe-x{width:36px;height:36px;border-radius:50%;border:1px solid var(--glass-line);background:var(--glass);color:var(--accent);font-size:18px}
+.nxe-prog{flex:1}.nxe-prog small{display:block;color:var(--muted);font-size:12.5px;font-weight:600;margin-bottom:5px}
+.nxe-bar,.nox-bar{height:7px;border-radius:99px;background:var(--fill);overflow:hidden}.nxe-bar i,.nox-bar i{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#22d3ee);transition:width .35s}
+.nxe-nox{display:flex;gap:10px;align-items:flex-end;padding:8px 16px 4px}
+.nxe-face,.nox-face{width:84px;height:92px;flex-shrink:0;border-radius:22px;overflow:hidden;background:linear-gradient(160deg,rgba(34,211,238,.25),rgba(139,92,246,.35));border:1.5px solid rgba(34,211,238,.45)}
+.nxe-face svg,.nox-face svg{display:block;width:100%;height:100%}
+.nxe-face.hop,.nox-mini.hop{animation:nxfhop .45s ease-out}@keyframes nxfhop{40%{transform:translateY(-6px) rotate(-3deg)}}
+.nxe-bub,.nox-sb{flex:1;background:#fff;color:#1e1538;border-radius:18px;padding:11px 13px;font-size:15.5px;line-height:1.34;font-weight:600;position:relative;box-shadow:0 8px 20px rgba(0,0,0,.25);min-height:64px}
+.nxe-bub::before,.nox-sb::before{content:"";position:absolute;left:-8px;bottom:16px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.nxe-bub b,.nox-sb b{color:#7c3aed}.nxe-tag{display:block;font-size:11px;font-weight:800;color:#0891b2;margin-bottom:2px;letter-spacing:.03em}
+.nxe-react{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed #d8d2ee;color:#0e7490;animation:nxpop2 .35s}
+@keyframes nxpop2{from{transform:scale(.92);opacity:0}}
+.nxe-body{flex:1;overflow-y:auto;padding:14px 16px 10px;-webkit-overflow-scrolling:touch}
+.nxe-q{font-size:22px;font-weight:800;margin:4px 2px 12px;letter-spacing:-.01em}
+.nxe-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--glass);border:1.5px solid var(--glass-line);border-radius:18px;padding:13px 14px;margin-bottom:9px;color:var(--fg);font:inherit;position:relative}
+.nxe-opt .e{font-size:28px;width:36px;text-align:center}.nxe-opt b{display:block;font-size:16.5px}.nxe-opt small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px;line-height:1.3}
+.nxe-opt[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.nxe-opt.rec::after{content:"Conseillé";position:absolute;right:12px;top:-9px;background:#22d3ee;color:#0b2530;font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px}
+.nxe-chips{display:flex;flex-wrap:wrap;gap:8px}.nxe-chips button{padding:11px 15px;border-radius:99px;border:1.5px solid var(--glass-line);background:var(--glass);color:var(--fg);font:inherit;font-weight:700;font-size:15px}
+.nxe-chips button[aria-pressed="true"],.nxe-days button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.nxe-stp{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0 16px}.nxe-stp button{width:48px;height:48px;border-radius:14px;border:1px solid var(--glass-line);background:var(--glass);color:var(--fg);font-size:24px}.nxe-stp b{font-size:40px;width:48px;text-align:center}
+.nxe-days{display:flex;gap:6px}.nxe-days button{flex:1;padding:12px 0;border-radius:12px;border:1px solid var(--glass-line);background:var(--glass);color:var(--fg);font:inherit;font-weight:700;font-size:14px}
+.nxe-sub{color:var(--muted);font-size:14px;margin:16px 2px 8px;font-weight:600}
+.nxe-fld{display:flex;gap:10px}.nxe-fld label{flex:1;color:var(--muted);font-size:13.5px;font-weight:600}
+.nxe-fld input{display:block;width:100%;margin-top:6px;font:inherit;font-size:22px;font-weight:700;color:var(--fg);background:var(--glass);border:1.5px solid var(--glass-line);border-radius:14px;padding:12px;text-align:center}
+.nxe-warn{background:color-mix(in srgb,var(--warm) 14%,transparent);border:1px solid color-mix(in srgb,var(--warm) 40%,transparent);border-radius:16px;padding:12px 14px;font-size:14px;line-height:1.45}
+.nxe-sum{background:var(--glass);border:1px solid var(--glass-line);border-radius:18px;padding:4px 14px}
+.nxe-sum div{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px}.nxe-sum div:last-child{border:0}
+.nxe-sum span{color:var(--muted)}.nxe-sum b{text-align:right}
+.nxe-proto{background:linear-gradient(160deg,rgba(34,211,238,.16),rgba(139,92,246,.22));border:1.5px solid rgba(34,211,238,.4);border-radius:20px;padding:14px}
+.nxe-proto h3{margin:0 0 2px;font-size:19px}.nxe-proto .s{color:var(--muted);font-size:13.5px;margin-bottom:8px}
+.nxe-lev,.nox-levs div{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.35;margin:8px 0}.nxe-lev i,.nox-levs i{font-style:normal;font-size:17px}
+.nxe-src{font-size:12px;color:var(--muted);margin-top:8px}
+.nxe-foot{padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 18px)}
+/* Bloc labo (page Routine) */
+.nox-hero{display:flex;gap:10px;align-items:flex-end;padding:0;overflow:hidden;background:linear-gradient(160deg,rgba(34,211,238,.16),rgba(139,92,246,.2) 45%,var(--glass));border-color:rgba(34,211,238,.35)}
+.nox-pic{width:124px;flex-shrink:0;align-self:stretch;position:relative;min-height:160px}
+.nox-pic svg{position:absolute;left:-8px;bottom:-4px;width:142px;height:auto}
+.nox-say{flex:1;padding:14px 14px 14px 0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.nox-hb{background:#fff;color:#1e1538;border-radius:16px;padding:10px 12px;font-size:14.5px;line-height:1.32;font-weight:600;position:relative;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.nox-hb::before{content:"";position:absolute;left:-8px;bottom:14px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.nox-hb b{color:#7c3aed}
+.nox-proto h3{margin:0;font-size:18px}
+.nox-org{display:flex;justify-content:space-between;align-items:center;width:100%;background:var(--fill);border:1px solid var(--glass-line);border-radius:14px;padding:10px 12px;margin:10px 0 12px;font:inherit;font-size:14.5px;color:var(--fg);text-align:left;gap:8px}
+.nox-org span:last-child{color:var(--accent);font-weight:600;white-space:nowrap}
+.nox-barl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin:6px 0 10px}
+.nox-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.nox-tiles div{background:var(--fill);border-radius:14px;padding:9px 6px;text-align:center}
+.nox-tiles strong{display:block;font-size:18px;color:var(--ok)}.nox-tiles span{font-size:11.5px;color:var(--muted);line-height:1.2;display:block;margin-top:2px}
+.nox-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.nox-sheet-h{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.nox-sheet-h .nox-face{width:58px;height:64px;border-radius:16px}
+.nox-src{margin:0 0 6px;padding-left:18px}.nox-src li{margin:0 0 10px;line-height:1.35}.nox-src small{display:block;color:var(--muted)}
+.nox-orgs{display:flex;flex-direction:column;gap:8px}.nox-orgs .tpl,.nox-all .tpl{display:flex;flex-direction:column;gap:3px;text-align:left;width:100%}
+.nox-all{margin-top:10px}.nox-all summary{color:var(--accent);font-weight:600;padding:6px 2px}.nox-all .tpl{margin-top:8px}
+.nox-scale div{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}.nox-scale i{width:40px;height:22px;border-radius:7px;flex-shrink:0}.nox-scale b{width:84px}
+/* En séance : signature discrète */
+.coach.nx{background:color-mix(in srgb,#22d3ee 9%,transparent);border:1px solid color-mix(in srgb,#22d3ee 35%,transparent);border-left:3px solid #22d3ee}
+.coach.nx .cwhy{color:#0891b2}
+:root:not([data-theme="light"]) .coach.nx .cwhy{color:#67e8f9}
+.nox-fio{font-size:15px;filter:drop-shadow(0 0 4px rgba(163,230,53,.6))}
+.feel-how{margin-left:auto;font-size:12.5px;font-weight:700;color:#0891b2;background:none;border:0;padding:0}
+:root:not([data-theme="light"]) .feel-how{color:#67e8f9}
+.nox-reply{display:flex;gap:8px;align-items:flex-start;margin-top:10px;animation:nxpop2 .35s}
+.nox-mini{width:32px;height:32px;border-radius:50%;overflow:hidden;background:#2a1d4a;border:1.5px solid rgba(34,211,238,.6);flex-shrink:0}
+.nox-mini svg{display:block;width:100%;height:100%}
+.nox-rb{flex:1;background:#fff;color:#1e1538;border-radius:14px;padding:9px 11px;font-size:14px;line-height:1.35;font-weight:600;position:relative}
+.nox-rb::before{content:"";position:absolute;left:-7px;top:10px;border:7px solid transparent;border-right-color:#fff;border-left:0}
+.nox-rb .muted{color:#6b6385;font-weight:500}.nox-nx{display:block;margin-top:4px;color:#0e7490}.nox-nx b,.nox-compact b{color:#7c3aed}
+.nox-compact{margin-top:8px;font-size:13.5px;color:#0e7490;display:flex;gap:6px;align-items:center;animation:nxpop2 .35s}
+:root:not([data-theme="light"]) .nox-compact{color:#a5f3fc}:root:not([data-theme="light"]) .nox-compact b{color:#fff}
+@media (prefers-reduced-motion: reduce){.nox-layer *,.nox .eyes,.nox .bub,.nox .sp,.nox .flask{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 </style>
 </head>
 <body>
@@ -783,7 +905,7 @@ body::before{display:none}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-18 j";
+const APP_VERSION = "2026-11-19 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1616,7 +1738,7 @@ function coach(exId, beforeTs, planned, pre){
     r = Math.max(1, Math.min(c.hi, r)); }
   else r = Math.max(1, Math.floor(c.r * f));
   return {...c, w: W ? +w.toFixed(2) : c.w, r, fatigue:pct,
-    notes:(c.notes || []).concat(`Vous avez déjà fait ${fmtN(pre, 1)} série${pre > 1 ? "s" : ""} pour ce muscle aujourd'hui : l'objectif passe de ${W ? fmtN(W)+" kg × " : ""}${c.r} à ${W ? fmtN(w)+" kg × " : ""}${r} reps (environ −${pct} % ; chez vous, la performance baisse d'environ ${fmtN(k*100, 1)} % par série déjà faite). Faire un peu moins en fin de séance est normal, ce n'est pas un recul.`)};
+    notes:(c.notes || []).concat(`Tu as déjà fait ${fmtN(pre, 1)} série${pre > 1 ? "s" : ""} pour ce muscle aujourd'hui : l'objectif passe de ${W ? fmtN(W)+" kg × " : ""}${c.r} à ${W ? fmtN(w)+" kg × " : ""}${r} reps (environ −${pct} % ; chez toi, la performance baisse d'environ ${fmtN(k*100, 1)} % par série déjà faite). Faire un peu moins en fin de séance est normal, ce n'est pas un recul.`)};
 }
 // Proposition « à frais » : l'historique est ramené à un début de séance avant d'appliquer les règles
 function coachFresh(exId, beforeTs, planned){
@@ -1632,15 +1754,15 @@ function coachFresh(exId, beforeTs, planned){
   const MW = mode==="lourd" ? "Cet exercice alterne une séance lourde (peu de reps, grosse charge, pour la force) et une séance volume (plus de reps, pour le muscle). Aujourd'hui : séance lourde. " : mode ? "Cet exercice alterne une séance lourde (peu de reps, grosse charge, pour la force) et une séance volume (plus de reps, pour le muscle). Aujourd'hui : séance volume. " : "";
   if(isCardio(e)){   // cardio : durée en minutes ; trop facile → +5 min, idéal → +2, dur → pareil, trop dur → −3
     if(!hist.length) return {lo, hi, rest:0, w:"", r:"", sets:planned||1, unit:"min", tag:"Nouveau",
-      why:`Cardio : notez la durée en minutes (${lo} à ${hi} min pour commencer), sans charge. Le ressenti règle l'intensité et le coach ajuste la durée la prochaine fois.`};
+      why:`Cardio : note la durée en minutes (${lo} à ${hi} min pour commencer), sans charge. Le ressenti règle l'intensité, et j'ajuste la durée la prochaine fois.`};
     const m0 = Math.max(...hist[0].sets.map(x => num(x.r))), fl = hist[0].feel || 3, r = Math.max(5, m0 + ({1:5, 2:5, 3:2, 4:0, 5:-3})[fl]);
     return {lo, hi, rest:0, w:"", r, sets:planned||1, unit:"min", tag: r > m0 ? `+${r - m0} min` : r < m0 ? `${r - m0} min` : "Consolider",
-      why:`Cardio : la dernière fois ${m0} min, ressenti « ${FEEL[fl - 1].label} ». On vise ${r} min. Plus long ou plus intense, vous brûlez plus de calories.`}; }
+      why:`Cardio : la dernière fois ${m0} min, ressenti « ${FEEL[fl - 1].label} ». On vise ${r} min. Plus long ou plus intense, tu brûles plus de calories.`}; }
   if(!hist.length){ const est = estimateNew(e, lo);
     if(est) return {lo, hi, rest, w:est.w, r:lo, sets:planned||3, tag:"Estimé", est:true,
-      why:`Vous n'avez jamais fait cet exercice : la charge est une estimation, volontairement prudente. ${est.txt} Arrêtez chaque série 2 ou 3 reps avant de ne plus pouvoir. Trop facile ou trop dur ? Ajustez dès la 2e série : la prochaine fois, le coach partira de ce que vous aurez vraiment fait.`};
+      why:`Tu n'as jamais fait cet exercice : la charge est une estimation, volontairement prudente. ${est.txt} Arrête chaque série 2 ou 3 reps avant de ne plus pouvoir. Trop facile ou trop dur ? Ajuste dès la 2e série : la prochaine fois, je partirai de ce que tu auras vraiment fait.`};
     return {lo, hi, rest, w:"", r:"", sets:planned||3, tag:"Nouveau",
-      why:`Première fois sur cet exercice : choisissez une charge avec laquelle vous faites ${lo} à ${hi} reps, en vous arrêtant 1 ou 2 reps avant de ne plus pouvoir. Le coach calculera la suite à partir de ce que vous aurez noté.`}; }
+      why:`Première fois sur cet exercice : choisis une charge avec laquelle tu fais ${lo} à ${hi} reps, en t'arrêtant 1 ou 2 reps avant de ne plus pouvoir. Je calculerai la suite à partir de ce que tu auras noté.`}; }
   const last = hist[0];
   let feel = last.feel || inferFeel(last, lo), f = FEEL[feel-1];
   let W = Math.max(...last.sets.map(s => num(s.w))), top = last.sets.filter(s => num(s.w)===W);
@@ -1652,7 +1774,7 @@ function coachFresh(exId, beforeTs, planned){
   if(!W && TIMED.has(e.id)){
     let r = Math.max(5, minR + ({1:15,2:10,3:5,4:0,5:-5})[feel]); if(gapDays > 21) r = Math.max(5, minR - 5);
     return {lo, hi, rest, w:"", r, sets, unit:"s", tag: gapDays > 21 ? "Reprise" : r > minR ? `+${r-minR} s` : r < minR ? `${r-minR} s` : "Consolider",
-      why: gapDays > 21 ? `Vous n'avez pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend avec 5 secondes de moins.`
+      why: gapDays > 21 ? `Tu n'as pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend avec 5 secondes de moins.`
         : r > minR ? `Exercice tenu en secondes : on vise ${r} s, ${r-minR} de plus que la dernière fois (${minR} s).` : r < minR ? `La dernière fois, c'était trop dur : on tient ${r} s.` : `C'était dur : on garde ${r} s pour les rendre plus faciles avant d'en ajouter.`};
   }
   if(!W || e.equip==="Poids du corps"){
@@ -1660,7 +1782,7 @@ function coachFresh(exId, beforeTs, planned){
     if(gapDays > 21) r = Math.max(1, minR - 1);
     // Charge notée = poids de corps : on propose le poids de corps actuel, pas l'ancien (une case laissée vide reste vide)
     return {lo, hi, rest, w: W && isBWX(e) && bodyweight() ? bodyweight() : W || "", r, sets, tag: gapDays > 21 ? "Reprise" : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider",
-      why: (gapDays > 21 ? `Vous n'avez pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend avec une rep de moins. ` : r > minR ? `Exercice au poids du corps : on progresse en reps. On vise ${r} reps, ${r-minR} de plus que la dernière fois. ` : `Exercice au poids du corps : on garde ${r} reps pour les rendre plus faciles avant d'en ajouter. `) + (r>hi+5 ? "Vous dépassez largement l'objectif : ajoutez du lest (gilet, ceinture, haltère)." : r<lo ? `À terme, l'objectif est ${lo} reps et plus.` : "")};
+      why: (gapDays > 21 ? `Tu n'as pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend avec une rep de moins. ` : r > minR ? `Exercice au poids du corps : on progresse en reps. On vise ${r} reps, ${r-minR} de plus que la dernière fois. ` : `Exercice au poids du corps : on garde ${r} reps pour les rendre plus faciles avant d'en ajouter. `) + (r>hi+5 ? "Tu dépasses largement l'objectif : ajoute du lest (gilet, ceinture, haltère)." : r<lo ? `À terme, l'objectif est ${lo} reps et plus.` : "")};
   }
   let st = stepFor(e, W);
   // 1RM estimé corrigé par les reps en réserve (Epley)
@@ -1670,7 +1792,7 @@ function coachFresh(exId, beforeTs, planned){
   if(gapDays > 21){
     const w = Math.max(st, roundTo(W*0.9, st)), r = Math.max(lo, Math.min(hi, repsAt(w)));
     return {lo, hi, rest, w, r, sets:Math.max(2, Math.min(sets, 3)), tag:"Reprise", deload:true,
-      why:`Vous n'avez pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend un peu plus léger (environ −10 %) pour réhabituer le corps sans risque. La progression normale repart dès la séance suivante.`};
+      why:`Tu n'as pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend un peu plus léger (environ −10 %) pour réhabituer le corps sans risque. La progression normale repart dès la séance suivante.`};
   }
   // Décharge : 3 séances d'affilée notées « Dur/Trop dur » ou 1RM estimé en baisse sur 3 séances
   const e1 = s => { const ww = Math.max(...s.sets.map(x=>num(x.w))), rr = num(s.sets.filter(x=>num(x.w)===ww).slice(-1)[0].r);
@@ -1680,28 +1802,28 @@ function coachFresh(exId, beforeTs, planned){
   if(close3 && (hist.slice(0,3).every(s => s.feel>=4) || (e1(hist[0]) < e1(hist[1]) && e1(hist[1]) < e1(hist[2]) && e1(hist[0]) < e1(hist[2])*0.95))){
     const w = Math.max(st, roundTo(W*0.9, st));
     return {lo, hi, rest, w, r:lo, sets:Math.max(2, sets-1), tag:"Décharge", deload:true,
-      why:"Vos 3 dernières séances sur cet exercice étaient trop dures ou en baisse : c'est un signe de fatigue accumulée. On allège cette fois (environ −10 % et une série de moins) pour récupérer, puis on repart plus fort."};
+      why:"Tes 3 dernières séances sur cet exercice étaient trop dures ou en baisse : c'est un signe de fatigue accumulée. On allège cette fois (environ −10 % et une série de moins) pour récupérer, puis on repart plus fort."};
   }
   // Lourd / Volume : charge calée sur la force la plus récente (1RM estimé de la dernière séance, corrigé par le ressenti),
   // sans jamais reculer par rapport à la dernière séance du même type réussie
   if(mode){
     const target = mode==="lourd" ? lo : lo + 2;   // lourd : on vise le bas de la fourchette avec la charge la plus haute possible
     let x = Math.max(st, roundTo(E / (1 + (target + 1.5)/30), st)); while(repsAt(x) < target && x - st >= st) x -= st;
-    let note = `Charge calculée d'après votre force mesurée la dernière fois (vous pourriez soulever environ ${fmtN(E,0)} kg une seule fois).`, ref0 = null, minRep = 0;
+    let note = `Charge calculée d'après ta force mesurée la dernière fois (tu pourrais soulever environ ${fmtN(E,0)} kg une seule fois).`, ref0 = null, minRep = 0;
     if(!fromEst){
       const rW = Math.max(...ref.sets.map(s => num(s.w))), rTop = ref.sets.filter(s => num(s.w)===rW), rMin = Math.min(...rTop.map(s => num(s.r))), rFeel = ref.feel || 3;
       ref0 = rW;
-      if(rFeel <= 3 && rMin >= hi && x <= rW){ x = rW + stepFor(e, rW); note = `Votre dernière séance ${mode==="lourd"?"lourde":"volume"} : ${rMin} reps à ${fmtN(rW)} kg, le haut de l'objectif est atteint : on monte la charge.`; }
+      if(rFeel <= 3 && rMin >= hi && x <= rW){ x = rW + stepFor(e, rW); note = `Ta dernière séance ${mode==="lourd"?"lourde":"volume"} : ${rMin} reps à ${fmtN(rW)} kg, le haut de l'objectif est atteint : on monte la charge.`; }
       else if(rFeel <= 3 && rMin >= lo && x <= rW){ x = rW; minRep = Math.min(hi, rMin + 1);
-        note = `Même charge que votre dernière séance ${mode==="lourd"?"lourde":"volume"} (${fmtN(rW)} kg × ${rMin}) : on vise une rep de plus.`; }
+        note = `Même charge que ta dernière séance ${mode==="lourd"?"lourde":"volume"} (${fmtN(rW)} kg × ${rMin}) : on vise une rep de plus.`; }
     }
     const wk = muscleSetsThisWeek(primOf(e), last.ts + 1);
     const notes = [];
-    if(!planned && feel <= 3 && wk < 10 && sets < 4){ sets++; notes.push(`Vous avez fait ${fmtN(wk, 1)} série${wk>1?"s":""} de ${primOf(e).toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
+    if(!planned && feel <= 3 && wk < 10 && sets < 4){ sets++; notes.push(`Tu as fait ${fmtN(wk, 1)} série${wk>1?"s":""} de ${primOf(e).toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
     const r0 = Math.max(lo, minRep, Math.min(hi, repsAt(x))), d = ref0 === null ? null : x - ref0;
     return {lo, hi, rest, w:+x.toFixed(2), r:r0, sets, mode,
       tag: ML.replace(" · ", "") + (d === null ? "" : d > 0 ? ` · +${fmtN(d)} kg` : d < 0 ? ` · ${fmtN(d)} kg` : minRep ? " · +1 rep" : " · même charge"),
-      why: MW + note + ` Objectif : ${r0} reps, en vous arrêtant 1 ou 2 reps avant de ne plus pouvoir.`, notes, from:{W, minR, feel}};
+      why: MW + note + ` Objectif : ${r0} reps, en t'arrêtant 1 ou 2 reps avant de ne plus pouvoir.`, notes, from:{W, minR, feel}};
   }
   let w = W, r, why;
   // Baisse jusqu'à retrouver le bas de la fourchette, 15 % maximum
@@ -1742,7 +1864,7 @@ function coachFresh(exId, beforeTs, planned){
   // Volume hebdo du muscle : en dessous de 10 séries, une série de plus si la récupération suit
   const wk = muscleSetsThisWeek(primOf(e), last.ts + 1);
   const notes = [];
-  if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; notes.push(`Vous avez fait ${fmtN(wk, 1)} série${wk>1?"s":""} de ${primOf(e).toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
+  if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; notes.push(`Tu as fait ${fmtN(wk, 1)} série${wk>1?"s":""} de ${primOf(e).toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
   if(feel===5 && hist[1] && (hist[1].feel||0)===5 && sets > 2){ sets--; notes.push("Deux séances trop dures de suite : une série de moins pour récupérer."); }
   const dW = w - W, tag = ML + (dW>0 ? `+${fmtN(dW)} kg` : dW<0 ? `${fmtN(dW)} kg` : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider");
   return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, notes, mode, from:{W, minR, feel}};
@@ -1885,7 +2007,8 @@ function estMinutes(items){
     return t + (it.sets*(40 + rest) + 90)/60; }, 0);
 }
 function generatePlan(d){
-  const st = exStats(), seen = {}, days = d.days.slice().sort((a,b)=>a.dow-b.dow);
+  const st = exStats(), seen = {}, days = d.days.slice().sort((a,b)=>a.dow-b.dow), lifts = goalLifts();
+  const prefer = arr => lifts.length ? arr.slice().sort((a, b) => lifts.includes(b.e.id) - lifts.includes(a.e.id)) : arr;   // force : les mouvements choisis d'abord
   const out = days.map(day => {
     const ms = day.muscles.slice().sort((a,b) => PRIO.indexOf(a)-PRIO.indexOf(b));
     const mins = day.min || 60, sumW = ms.reduce((t,m) => t+WEIGHT[m], 0);
@@ -1894,7 +2017,7 @@ function generatePlan(d){
     ms.forEach(m => {
       const k = seen[m] = (seen[m]||0) + 1;           // k-ième séance de la semaine pour ce muscle
       const cnt = m==="Abdos" ? (slots>=5 ? 1 : 0) : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
-      const all = candidatesFor(m, st), done = all.filter(c => c.n>0);
+      const all = prefer(candidatesFor(m, st)), done = all.filter(c => c.n>0 || lifts.includes(c.e.id));
       const pool = done.length >= cnt ? done : all;
       for(let j=0;j<cnt;j++){
         const off = day.off[m+":"+j] || 0;
@@ -1934,22 +2057,26 @@ function generatePlan(d){
   out.forEach(day => day.items.forEach(it => weekly[it.muscle] += it.sets));
   MUSCLES.forEach(m => {
     const its = out.flatMap(day => day.items.filter(it => it.muscle===m));
-    while(weekly[m] < 10 && its.some(it => it.sets < 4)){ const it = its.filter(x => x.sets<4).sort((a,b) => a.sets-b.sets || b.comp-a.comp)[0]; it.sets++; weekly[m]++; }
-    while(weekly[m] > 20 && its.some(it => it.sets > 2)){ const it = its.filter(x => x.sets>2).sort((a,b) => b.sets-a.sets || a.comp-b.comp)[0]; it.sets--; weekly[m]--; }
+    const [vLo, vHi] = goalVolume(m), cap = goalPrio(m) ? 5 : 4;   // 10 à 20 par défaut ; objectif et expérience de l'examen de Noxwell
+    while(weekly[m] < vLo && its.some(it => it.sets < cap)){ const it = its.filter(x => x.sets<cap).sort((a,b) => a.sets-b.sets || b.comp-a.comp)[0]; it.sets++; weekly[m]++; }
+    while(weekly[m] > vHi && its.some(it => it.sets > 2)){ const it = its.filter(x => x.sets>2).sort((a,b) => b.sets-a.sets || a.comp-b.comp)[0]; it.sets--; weekly[m]--; }
   });
+  // Cardio de l'objectif (sèche, endurance) : en fin de séance, sur les premières séances de la semaine ; son temps est réservé
+  const nCardio = goalCardioDays(out.length), cardioEx = nCardio ? goalCardioEx() : null, cardioDow = new Set(cardioEx ? out.slice(0, nCardio).map(x => x.dow) : []);
   // Temps disponible : on retire des séries d'isolation, puis des exercices, si la séance déborde
   out.forEach(day => {
-    while(estMinutes(day.items) > day.min*1.05){
-      const iso = day.items.filter(it => it.sets>2).sort((a,b) => a.comp-b.comp || b.sets-a.sets)[0];
+    while(estMinutes(day.items) > (day.min - (cardioDow.has(day.dow) ? NOX_CARDIO_MIN : 0))*1.05){
+      const iso = day.items.filter(it => it.sets>2).sort((a,b) => goalPrio(a.muscle)-goalPrio(b.muscle) || a.comp-b.comp || b.sets-a.sets)[0];
       if(iso){ iso.sets--; weekly[iso.muscle]--; continue; }
       if(day.items.length <= 2) break;
-      const drop = day.items.slice().reverse().find(it => !it.comp) || day.items[day.items.length-1];
+      const drop = day.items.slice().reverse().find(it => !it.comp && !goalPrio(it.muscle)) || day.items.slice().reverse().find(it => !it.comp) || day.items[day.items.length-1];
       day.items.splice(day.items.indexOf(drop),1); weekly[drop.muscle] -= drop.sets;
     }
     day.est = Math.round(estMinutes(day.items));
   });
   // Ordre : polyarticulaires d'abord, gros muscles avant petits, abdos en dernier
   out.forEach(day => day.items.sort((a,b) => (a.muscle==="Abdos")-(b.muscle==="Abdos") || b.comp-a.comp || PRIO.indexOf(a.muscle)-PRIO.indexOf(b.muscle)));
+  out.forEach(day => { if(cardioDow.has(day.dow) && day.items.length){ day.items.push({exId:cardioEx.id, muscle:"Cardio", slot:"cardio", comp:false, n:0, sets:1, cardio:true}); day.est += NOX_CARDIO_MIN; } });
   // Alertes de récupération entre jours consécutifs
   const alerts = [], dset = new Set(out.map(x => x.dow));
   out.forEach(a => {
@@ -1977,6 +2104,388 @@ function generatePlan(d){
   return {days:out, weekly, weeklyFine, alerts, notes, novelty, freq};
 }
 
+/* ---------- Professeur Noxwell, étape 1 (19 nov. 2026) ----------
+   Coach sportif « savant fou ». Arrive sur la page Gymon (Gymon au moins au stade 3, visite calme, une seule fois),
+   fait passer un premier examen (objectif physique, semaine, durée, lieu, rythme par muscle, mesures), propose un protocole
+   (le programme de la page Routine) et signe ses objectifs en séance (🧪, cyan). Il propose, le joueur décide.
+   Données : S.profile.nox {v, intro, later, exam, proto}, S.profile.goal {obj, prec}. Règles : document privé du propriétaire. */
+const NOX = {stage:3, weeks:6, oldFid:10};
+const NOX_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360"><defs><linearGradient id="nxHair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#e6e9f3"/><stop offset="1" stop-color="#bcc3da"/></linearGradient><linearGradient id="nxSilver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cffafe"/><stop offset="1" stop-color="#22d3ee"/></linearGradient><linearGradient id="nxSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9b892"/><stop offset="1" stop-color="#d49a72"/></linearGradient><linearGradient id="nxArm" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c98c64"/><stop offset=".5" stop-color="#e3ad86"/><stop offset="1" stop-color="#c98c64"/></linearGradient><linearGradient id="nxCoat" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6d2ec"/></linearGradient><linearGradient id="nxPec" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6553c4"/><stop offset="1" stop-color="#3d2e8c"/></linearGradient><linearGradient id="nxShirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4b3a9a"/><stop offset="1" stop-color="#2a1f63"/></linearGradient><radialGradient id="nxBrew" cx=".5" cy=".6" r=".6"><stop offset="0" stop-color="#ecfccb"/><stop offset=".45" stop-color="#a3e635"/><stop offset="1" stop-color="#4d7c0f"/></radialGradient><radialGradient id="nxGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#bef264" stop-opacity=".7"/><stop offset="1" stop-color="#bef264" stop-opacity="0"/></radialGradient><radialGradient id="nxLens" cx=".35" cy=".35" r=".7"><stop offset="0" stop-color="#cffafe"/><stop offset=".5" stop-color="#22d3ee"/><stop offset="1" stop-color="#0e7490"/></radialGradient></defs><g stroke="#1e1538" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"><path d="M2 362 C2 300 30 262 92 244 C112 238 128 230 134 220 L186 220 C192 230 208 238 228 244 C290 262 318 300 318 362 Z" fill="url(#nxShirt)"/><path d="M160 258 C146 255 128 260 112 272 L106 300 C118 320 146 324 160 308 Z" fill="url(#nxPec)" stroke="none"/><path d="M 160 258 C 174 255 192 260 208 272 L 214 300 C 202 320 174 324 160 308 Z" fill="url(#nxPec)" stroke="none"/><path d="M106 300 C118 320 146 324 160 308 C160 320 146 332 126 330 C114 328 108 316 106 300 Z" fill="#120b36" fill-opacity=".6" stroke="none"/><path d="M 214 300 C 202 320 174 324 160 308 C 160 320 174 332 194 330 C 206 328 212 316 214 300 Z" fill="#120b36" fill-opacity=".6" stroke="none"/><path d="M108 301 C120 319 146 322 158 309" fill="none" stroke="#1e1538" stroke-width="2.6"/><path d="M 212 301 C 200 319 174 322 162 309" fill="none" stroke="#1e1538" stroke-width="2.6"/><path d="M124 271 C134 265 147 264 155 266" fill="none" stroke="#a99cf5" stroke-width="2.4" stroke-opacity=".7"/><path d="M 196 271 C 186 265 173 264 165 266" fill="none" stroke="#a99cf5" stroke-width="2.4" stroke-opacity=".7"/><path d="M160 268 L160 304" fill="none" stroke="#1e1538" stroke-width="2" stroke-opacity=".55"/><path d="M140 236 C148 246 172 246 180 236" fill="none" stroke="#1e1538" stroke-width="2.4"/><path d="M2 362 C2 300 30 262 92 244 C108 240 122 232 130 224 L136 244 L104 300 L86 362 Z" fill="url(#nxCoat)"/><path d="M318 362 C318 300 290 262 228 244 C212 240 198 232 190 224 L184 244 L216 300 L234 362 Z" fill="url(#nxCoat)"/><path d="M130 224 L116 222 L96 262 L106 296 L136 244 Z" fill="#efedf9"/><path d="M190 224 L204 222 L224 262 L214 296 L184 244 Z" fill="#efedf9"/><path d="M56 262 C74 270 88 290 94 318" fill="none" stroke="#a9a2cc" stroke-width="3"/><path d="M264 262 C246 270 232 290 226 318" fill="none" stroke="#a9a2cc" stroke-width="3"/><path d="M240 318 L274 314 L276 344 L242 348 Z" fill="#e7e4f6"/><rect x="245" y="296" width="7" height="26" rx="3" fill="#ff4d6d"/><rect x="255" y="292" width="7" height="30" rx="3" fill="#22d3ee"/><path d="M265 290 L273 290 L273 318 C273 324 265 324 265 318 Z" fill="#c4b5fd"/><path d="M266 306 L272 306 L272 318 C272 322 266 322 266 318 Z" fill="#a3e635" stroke-width="2"/><path d="M130 192 L130 226 C142 240 178 240 190 226 L190 192 Z" fill="url(#nxSkin)"/><path d="M140 222 C150 228 170 228 180 222" fill="none" stroke="#a8714e" stroke-width="2" stroke-opacity=".6"/><path d="M160 236 L136 225 L136 249 Z" fill="#ff4d6d"/><path d="M160 236 L184 225 L184 249 Z" fill="#ff4d6d"/><circle cx="160" cy="236" r="6" fill="#e11d48"/><ellipse cx="102" cy="150" rx="8" ry="13" fill="url(#nxSkin)"/><ellipse cx="218" cy="150" rx="8" ry="13" fill="url(#nxSkin)"/><path d="M104 118 C104 78 130 60 160 60 C190 60 216 78 216 118 C216 146 214 168 206 186 C198 202 182 216 168 222 C163 224 157 224 152 222 C138 216 122 202 114 186 C106 168 104 146 104 118 Z" fill="url(#nxSkin)"/><path d="M112 160 C118 174 126 184 138 190" fill="none" stroke="#b97c56" stroke-width="2.6" stroke-opacity=".55"/><path d="M208 160 C202 174 194 184 182 190" fill="none" stroke="#b97c56" stroke-width="2.6" stroke-opacity=".55"/><path d="M110 168 C114 190 132 210 152 220 C157 223 163 223 168 220 C188 210 206 190 210 168 C202 184 192 192 182 196 C172 190 148 190 138 196 C128 192 118 184 110 168 Z" fill="#6b6478" fill-opacity=".26" stroke="none"/><path d="M143 186 C151 181 169 181 177 186 C169 189 151 189 143 186 Z" fill="#6b6478" fill-opacity=".26" stroke="none"/><path d="M160 213 L160 218" fill="none" stroke="#9a6142" stroke-width="1.8" stroke-opacity=".6"/><path d="M106 132 L76 128 L92 118 L58 108 L88 100 L64 84 L96 82 L84 62 L112 66 L112 44 L130 56 L140 34 L152 52 L166 30 L174 50 L192 34 L194 56 L214 46 L210 66 L238 62 L224 82 L258 84 L232 100 L264 110 L230 118 L246 128 L214 128 C214 112 212 104 210 100 C196 92 180 98 168 94 C164 96 162 98 160 102 C158 98 156 96 152 94 C140 98 124 92 110 102 C108 110 107 122 106 132 Z" fill="url(#nxHair)"/><path d="M100 104 L74 96 M100 90 L80 78 M220 104 L246 96 M220 90 L242 78 M150 66 L154 50 M176 66 L184 52" fill="none" stroke="#9aa3c4" stroke-width="2.4" stroke-opacity=".9"/><path d="M105 128 C104 118 106 109 111 103 C111 112 111 120 113 129 Z" fill="#f1f4fa" stroke-width="2"/><path d="M214 122 C215 112 214 105 210 100 C210 108 210 116 208 127 Z" fill="#f1f4fa" stroke-width="2"/><g class="sparks" stroke="#67e8f9" stroke-width="3.4" fill="none"><path class="sp s1" d="M262 34 L276 30 L270 42 L286 38"/><path class="sp s2" d="M48 70 L36 62 L48 58 L36 48"/><path class="sp s3" d="M240 0 L250 -10 L252 4 L264 -6"/></g><path d="M108 90 C134 76 186 76 214 90" fill="none" stroke="#3b2a12" stroke-width="6"/><circle cx="138" cy="76" r="14" fill="url(#nxLens)" stroke="#b7791f" stroke-width="4.5"/><circle cx="182" cy="76" r="14" fill="url(#nxLens)" stroke="#b7791f" stroke-width="4.5"/><path d="M131 69 C134 66 137 66 140 67" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-opacity=".9"/><path d="M175 69 C178 66 181 66 184 67" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-opacity=".9"/><path class="brow-l" d="M115 133 C125 124 140 121 153 127 L151 133 C140 129 128 130 118 137 Z" fill="#231d3a" stroke-width="2"/><path class="brow-r" d="M167 127 C180 121 195 123 205 131 L202 136 C192 130 180 129 169 133 Z" fill="#231d3a" stroke-width="2"/><g class="eyes"><path d="M122 147 C128 139 146 139 152 147 C146 153 128 153 122 147 Z" fill="#ffffff" stroke-width="2"/><path d="M168 147 C174 139 192 139 198 147 C192 153 174 153 168 147 Z" fill="#ffffff" stroke-width="2"/><circle cx="139" cy="146.5" r="5.8" fill="#0f9e9a" stroke="none"/><circle cx="185" cy="146.5" r="5.8" fill="#0f9e9a" stroke="none"/><circle cx="139" cy="146.5" r="2.8" fill="#0f172a" stroke="none"/><circle cx="185" cy="146.5" r="2.8" fill="#0f172a" stroke="none"/><circle cx="141" cy="144.5" r="1.7" fill="#ffffff" stroke="none"/><circle cx="187" cy="144.5" r="1.7" fill="#ffffff" stroke="none"/><path d="M119 147 C126 136 147 136 155 145" fill="none" stroke="#1e1538" stroke-width="4.2"/><path d="M165 145 C173 136 194 136 201 147" fill="none" stroke="#1e1538" stroke-width="4.2"/></g><path d="M116 150 L110 152" fill="none" stroke="#a8714e" stroke-width="1.8" stroke-opacity=".7"/><path d="M204 150 L210 152" fill="none" stroke="#a8714e" stroke-width="1.8" stroke-opacity=".7"/><path d="M163 148 C164 160 166 168 168 173" fill="none" stroke="#a8714e" stroke-width="2.6"/><path d="M152 177 C156 180 164 180 168 177" fill="none" stroke="#9a6142" stroke-width="2.4"/><g class="m-grin"><path d="M142 193 C152 201 170 200 180 189 C178 203 168 209 160 209 C150 209 144 203 142 193 Z" fill="#ffffff" stroke-width="2.8"/><path d="M151 214 C157 216 165 216 170 213" fill="none" stroke="#a0614a" stroke-width="2" stroke-opacity=".5"/></g><g class="m-smirk"><path d="M144 197 C153 200 166 199 180 190" fill="none" stroke-width="3.6"/><path d="M151 204 C157 206 165 206 171 202" fill="none" stroke="#a0614a" stroke-width="2.2" stroke-opacity=".55"/></g><path d="M185 186 C189 191 189 197 186 201" fill="none" stroke="#9a6142" stroke-width="2" stroke-opacity=".55"/><g transform="translate(20 68)"><g class="flask"><circle cx="58" cy="236" r="58" fill="url(#nxGlow)" stroke="none"/><path d="M48 180 L68 180 L68 204 L90 254 C94 264 88 274 78 274 L38 274 C28 274 22 264 26 254 L48 204 Z" fill="#ecebff" fill-opacity=".85"/><path d="M34 240 L82 240 L90 256 C92 264 88 270 80 270 L36 270 C28 270 24 264 26 256 Z" fill="url(#nxBrew)" stroke-width="2.4"/><rect x="44" y="172" width="28" height="10" rx="4" fill="#c4b5fd"/><circle class="bub b1" cx="50" cy="252" r="4" fill="#f7fee7" stroke="none"/><circle class="bub b2" cx="64" cy="258" r="3" fill="#f7fee7" stroke="none"/><circle class="bub b3" cx="74" cy="250" r="2.5" fill="#f7fee7" stroke="none"/><g transform="rotate(-4 58 238)"><path d="M44 222 Q58 219 72 222 L89 252 Q58 257 27 252 Z" fill="#000" fill-opacity=".18" stroke="none" transform="translate(1.5 2)"/><path d="M44 222 Q58 219 72 222 L89 252 Q58 257 27 252 Z" fill="#f4ecd6" stroke="#8a7550" stroke-width="1.4"/><path d="M41 228 Q58 225.5 75 228 M32 247 Q58 251 84 247" fill="none" stroke="#b9a274" stroke-width=".9"/><text x="58" y="241" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="8.2" font-weight="700" letter-spacing=".5" fill="#3b2a12" stroke="none">PROTÉINE</text><text x="58" y="246.6" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="3.9" font-style="italic" fill="#6b5634" stroke="none">Lab. Noxwell · lot n° 42</text><path d="M38 233 L41 230 M76 230 L79 233" fill="none" stroke="#8a7550" stroke-width=".8"/></g></g></g></g></svg>`;
+let noxN = 0;
+// Chaque dessin a ses propres identifiants de dégradés (un dessin masqué ne doit pas casser les autres)
+const noxSVG = (view, cls) => { const k = ++noxN; return NOX_SVG.replace('viewBox="0 0 320 360"', `viewBox="${view || "0 0 320 360"}" class="nox ${cls || ""}" aria-hidden="true" focusable="false"`).replace(/nx([A-Z][a-z]+)/g, `nx$1${k}`); };
+const NOX_FACE = "90 104 140 140", NOX_HEAD = "78 44 164 180", NOX_BUST = "20 -24 280 384";
+const noxSt = () => (S.profile.nox && typeof S.profile.nox === "object") ? S.profile.nox : (S.profile.nox = {v:1});
+const noxMet = () => !!(S.profile.nox && S.profile.nox.intro);
+const noxExam = () => S.profile.nox && S.profile.nox.exam && S.profile.nox.exam.done ? S.profile.nox.exam : null;
+const NOX_OBJ = {
+  muscle:{e:"💪", l:"Prendre du muscle", d:"Grossir et se muscler, façon bodybuilding", r:"Hypothèse de départ notée : CROISSANCE !"},
+  seche:{e:"🔥", l:"Sécher, perdre du poids", d:"Perdre du gras sans perdre ses muscles", r:"Affûter le spécimen… intéressant. L'assiette, ce n'est pas mon labo, mais je m'occupe du reste !"},
+  force:{e:"🏋️", l:"Devenir plus fort", d:"Soulever plus lourd sur les grands mouvements", r:"On ne négocie pas avec la gravité !"},
+  endu:{e:"🫀", l:"Gagner en endurance", d:"Plus de souffle, tenir l'effort plus longtemps", r:"Du souffle ! Mes poumons de laboratoire applaudissent."}
+};
+const NOX_LIFTS = {dc:["dc-barre","Développé couché"], sq:["squat","Squat"], sdt:["souleve-terre","Soulevé de terre"], trac:["tractions","Tractions"], dm:["dm-barre","Développé militaire"]};
+const NOX_UPPER = ["Pectoraux","Dos","Épaules","Biceps","Triceps"], NOX_LOWER = ["Jambes"];
+const NOX_DUR = [30, 45, 60, 75, 90];
+// Rythme par muscle → organisation (TEMPLATES existants), selon le nombre de séances
+const NOX_TPL = {deux:{2:"f2", 3:"f3", 4:"ul2", 5:"ulppl", 6:"ppl2"}, un:{2:"f2", 3:"ppl", 4:"duo4", 5:"duo5", 6:"ppl2"}};
+const noxTplName = (n, org) => { const t = (TEMPLATES[n] || []).find(x => x.id === (NOX_TPL[org] || {})[n]); return t ? t.name : ""; };
+
+/* --- Effets de l'objectif sur le programme (generatePlan) --- */
+const goal = () => S.profile.goal && NOX_OBJ[S.profile.goal.obj] ? S.profile.goal : null;
+// Séries visées par muscle et par semaine : plus pour la zone choisie (prise de muscle), selon l'expérience
+function goalVolume(m){
+  const g = goal(), ex = noxExam(), exp = ex && ex.exp;
+  let lo = exp === "pro" ? 12 : 10, hi = exp === "deb" ? 16 : 20;
+  if(g && g.obj === "muscle" && ((g.prec === "haut" && NOX_UPPER.includes(m)) || (g.prec === "bas" && NOX_LOWER.includes(m)))) lo = Math.max(lo, 14);
+  return [lo, Math.max(lo, hi)];
+}
+// Muscles de la zone choisie (prise de muscle) : protégés quand une séance doit être raccourcie
+const goalPrio = m => { const g = goal(); return !!(g && g.obj === "muscle" && ((g.prec === "haut" && NOX_UPPER.includes(m)) || (g.prec === "bas" && NOX_LOWER.includes(m)))); };
+// Mouvements choisis pour la force : en tête de liste pour leur muscle
+const goalLifts = () => { const g = goal(); return g && g.obj === "force" && Array.isArray(g.prec) ? g.prec.map(k => (NOX_LIFTS[k] || [])[0]).filter(id => id && exById(id)) : []; };
+// Cardio en fin de séance : chaque séance (sèche), ou 1 à 3 séances par semaine (endurance)
+function goalCardioDays(nDays){
+  const g = goal(); if(!g) return 0;
+  if(g.obj === "seche") return nDays;
+  if(g.obj === "endu") return Math.min(nDays, Math.max(1, Math.round(num(g.prec)) || 1));
+  return 0;
+}
+function goalCardioEx(){
+  const st = exStats(), list = allEx().filter(e => isCardio(e) && usableEx(e));
+  const best = list.slice().sort((a, b) => ((st[b.id] || {}).n || 0) - ((st[a.id] || {}).n || 0))[0];
+  return best && (st[best.id] || {}).n ? best : exById(atHome() ? "footing" : "rameur") || list[0] || null;
+}
+const NOX_CARDIO_MIN = 12;
+
+/* --- Leviers affichés : uniquement ce que le programme fait vraiment --- */
+function noxLevers(g){
+  if(!g) return [];
+  const L = {
+    muscle:[["🎯","Séries arrêtées 1 à 2 reps avant l'échec : la zone où le muscle grossit le plus"],["📈","10 à 20 séries par muscle et par semaine"]],
+    seche:[["🏋️","Charges gardées lourdes pour ne pas perdre de muscle"],["🔥",`Environ ${NOX_CARDIO_MIN} min de cardio en fin de chaque séance`],["🍽️","L'assiette compte énormément : ce n'est pas mon labo"]],
+    force:[["🏋️",`Au programme chaque semaine, en début de séance : ${(Array.isArray(g.prec) ? g.prec : []).map(k => (NOX_LIFTS[k] || [,""])[1]).filter(Boolean).join(", ") || "les grands mouvements"}`],["🎯","Charges lourdes : 5 à 8 reps sur les grands mouvements à la barre"],["📊","Ce sont eux qui prouveront tes progrès"]],
+    endu:[["🫀",`${Math.max(1, Math.round(num(g.prec)) || 1)} bloc${num(g.prec) > 1 ? "s" : ""} de cardio par semaine, en fin de séance`],["📈","10 à 20 séries par muscle et par semaine"]]
+  }[g.obj].slice();
+  if(g.obj === "muscle" && (g.prec === "haut" || g.prec === "bas")) L.push(["⬆️", `Priorité au ${g.prec === "haut" ? "haut" : "bas"} du corps : plus de séries par semaine quand le temps de séance le permet`]);
+  return L;
+}
+
+/* --- Preuves de progrès depuis le début du protocole (données du joueur uniquement) --- */
+function noxProof(){
+  const ex = noxExam(), p = noxSt().proto; if(!ex || !p) return null;
+  const since = S.workouts.filter(w => w.start >= p.start), weeks = Math.max(1, Math.ceil((Date.now() - p.start) / (7 * 86400000)));
+  const out = {weeks:Math.min(weeks, NOX.weeks), week:weeks, done:since.length, want:ex.n * Math.min(weeks, NOX.weeks), tiles:[], line:""};
+  const recs = since.reduce((t, w) => t + (w.prs || []).length, 0);
+  if(p.obj === "force"){
+    const lifts = (Array.isArray(p.prec) ? p.prec : []).map(k => NOX_LIFTS[k]).filter(Boolean);
+    let best = null;
+    lifts.forEach(([id, name]) => { const h = exHistory(id), b = h.filter(x => x.ts < p.start && x.ts > p.start - 120 * 86400000), a = h.filter(x => x.ts >= p.start);
+      if(!b.length || !a.length) return; const d = Math.max(...a.map(x => x.best)) - Math.max(...b.map(x => x.best));
+      if(!best || d > best.d) best = {d, name}; });
+    if(best) { out.tiles.push([`${best.d >= 0 ? "+" : ""}${fmtN(best.d, 1)} kg`, `1RM estimé · ${best.name.toLowerCase()}`]); if(best.d > 0) out.line = `+${fmtN(best.d, 1)} kg au ${best.name.toLowerCase()} depuis le début. Hypothèse confirmée : tu es plus fort !`; }
+  } else if(p.obj === "seche" || p.obj === "endu"){
+    const min = since.reduce((t, w) => t + w.exercises.reduce((u, x) => u + (isCardio(exById(x.exId)) ? cardioMin(x) : 0), 0), 0);
+    out.tiles.push([`${fmtN(min, 0)} min`, "de cardio depuis le début"]);
+    if(min >= 30) out.line = `${fmtN(min, 0)} minutes de cardio depuis le début du protocole. Le souffle se construit !`;
+  } else {
+    const avg = list => { if(!list.length) return 0; const span = Math.max(1, (Math.max(...list.map(w => w.start)) - Math.min(...list.map(w => w.start))) / (7 * 86400000)); return list.reduce((t, w) => t + wVolume(w), 0) / Math.max(1, span); };
+    const before = S.workouts.filter(w => w.start < p.start && w.start >= p.start - 28 * 86400000);
+    if(before.length >= 2 && since.length >= 2){ const a = avg(since), b = avg(before), pct = b ? Math.round((a / b - 1) * 100) : 0;
+      out.tiles.push([`${pct >= 0 ? "+" : ""}${pct} %`, "volume par semaine"]); if(pct > 0) out.line = `Volume par semaine +${pct} % depuis le début. Le protocole fonctionne !`; }
+  }
+  out.tiles.push([`${out.done}`, `séance${out.done > 1 ? "s" : ""} sur ${out.want} prévue${out.want > 1 ? "s" : ""}`]);
+  out.tiles.push([`${recs}`, `record${recs > 1 ? "s" : ""} battu${recs > 1 ? "s" : ""}`]);
+  if(!out.line && recs) out.line = `${recs} record${recs > 1 ? "s" : ""} depuis le début du protocole. FASCINANT !`;
+  return out;
+}
+
+/* --- Arrivée : présentation sur la page Gymon, une seule fois, à une visite calme --- */
+let noxTimer = null;
+function noxSchedule(){ clearTimeout(noxTimer); if(noxMet()) return; noxTimer = setTimeout(noxMaybeIntro, 1200); }
+function noxCalm(){
+  if(tab !== "creature" || S.profile.active || document.visibilityState !== "visible") return false;
+  if(document.getElementById("celebrate") || document.getElementById("nox-layer") || !document.getElementById("sheet").hidden || !document.getElementById("tuto").hidden) return false;
+  if(!S.profile.onboarded || !S.profile.tutoDone || whatsNewSince().length) return false;
+  const c = creatureState(); if(c.dead || c.stage < NOX.stage) return false;
+  // pas le jour d'une évolution : la fête du Gymon reste à lui
+  const d0 = new Date(); d0.setHours(0, 0, 0, 0);
+  return !(c.journal || []).some(j => j.k && /^evo/.test(j.k) && j.ts >= d0.getTime());
+}
+function noxMaybeIntro(){ if(noxMet() || !noxCalm()) return; const c = creatureState(); noxIntro(c.fidelity >= NOX.oldFid ? "old" : "new"); }
+function noxIntro(kind){
+  const c = creatureState(), n = c.fidelity || 0, name = c.name ? esc(c.name) : "Ton Gymon";
+  const st = noxSt(); st.intro = Date.now(); touchProfile();
+  const steps = kind === "old" ? [
+    {t:`FASCINANT ! Un spécimen de <b>${n} séances</b> !`, f:"grin", boom:true},
+    {t:`Professeur <b>Noxwell</b>. Je t'observe depuis ${n} séances, caché derrière la machine à mollets. Pardon. C'était pour la science.`, f:"smirk"},
+    {t:`<b>${name}</b> est le spécimen le plus intrigant de ma carrière. Et je ne comprends pas encore tout…`, f:"smirk"},
+    {t:`Viens à mon labo, dans <b>Routine</b>. J'ai déjà noté beaucoup de choses sur toi : tu n'auras qu'à confirmer.`, f:"grin", end:true}
+  ] : [
+    {t:"FASCINANT ! Absolument fascinant !", f:"grin", boom:true},
+    {t:"Professeur <b>Noxwell</b>, spécialiste des Gymons. Je traque cette espèce depuis des années… et toi, tu en as fait éclore un !", f:"smirk"},
+    {t:"Il grandit à chaque répétition que <b>TU</b> fais. Ton corps est mon laboratoire… et le sien aussi !", f:"grin"},
+    {t:"Viens me voir dans <b>Routine</b> : un premier examen, quelques questions, et je te concocte un protocole sur mesure. Mouahahaha !", f:"grin", end:true}
+  ];
+  const el = document.createElement("div"); el.id = "nox-layer"; el.className = "nox-layer";
+  el.innerHTML = `<div class="nox-dim"></div><div class="nox-smoke"></div><div class="nox-char">${noxSVG()}</div>
+    <div class="nox-bub"><span class="nox-tag">Pr Noxwell</span><div class="nox-txt"></div>
+      <div class="nox-foot"><div class="nox-dots"></div><span class="nox-hint">Toucher pour continuer ›</span></div>
+      <div class="nox-btns" hidden><button class="btn primary" data-nox="exam">🧪 Passer l'examen</button><button class="btn" data-nox="later">Plus tard</button></div></div>`;
+  document.body.appendChild(el); lockBody();
+  const ch = el.querySelector(".nox-char"), bub = el.querySelector(".nox-bub"), txt = el.querySelector(".nox-txt");
+  let i = 0, busy = true;
+  const face = f => { ch.classList.remove("grin", "smirk"); ch.classList.add(f); ch.classList.remove("hop"); void ch.offsetWidth; ch.classList.add("hop"); };
+  const show = k => { const s = steps[k]; face(s.f); txt.className = "nox-txt" + (s.boom ? " boom" : ""); txt.innerHTML = s.t;
+    el.querySelector(".nox-dots").innerHTML = steps.map((_, j) => `<i class="${j <= k ? "on" : ""}"></i>`).join("");
+    el.querySelector(".nox-foot").hidden = !!s.end; el.querySelector(".nox-btns").hidden = !s.end; };
+  const smoke = () => { const sm = el.querySelector(".nox-smoke"); sm.innerHTML = ""; sm.classList.remove("go");
+    for(let k = 0; k < 10; k++){ const p = document.createElement("i"), a = Math.random() * Math.PI * 2, r = 18 + Math.random() * 26;
+      p.style.cssText = `width:${26 + Math.random() * 22}vw;height:${26 + Math.random() * 22}vw;--dx:${Math.cos(a) * r}vw;--dy:${Math.sin(a) * r * .7 - 8}vw;--s:${1.2 + Math.random() * .8};animation-delay:${Math.random() * .15}s`; sm.appendChild(p); }
+    void sm.offsetWidth; sm.classList.add("go"); };
+  const leave = (msg, then) => { busy = true; el.querySelector(".nox-btns").hidden = true; el.querySelector(".nox-foot").hidden = true; face("smirk"); txt.className = "nox-txt"; txt.innerHTML = msg;
+    setTimeout(() => { smoke(); bub.classList.remove("in"); ch.classList.remove("idle"); ch.classList.add("out"); }, 1600);
+    setTimeout(() => { el.remove(); unlockBody(); if(then) then(); }, 2300); };
+  document.body.classList.add("nox-shake"); setTimeout(() => document.body.classList.remove("nox-shake"), 420);
+  setTimeout(() => { el.classList.add("on"); smoke(); }, 120);
+  setTimeout(() => ch.classList.add("in"), 380);
+  setTimeout(() => { ch.classList.remove("in"); ch.classList.add("idle"); bub.classList.add("in"); show(0); busy = false; }, 1150);
+  el.addEventListener("click", e => {
+    const b = e.target.closest("[data-nox]");
+    if(b){ if(b.dataset.nox === "exam") leave("Excellent ! Je prépare les électrodes…", () => noxExamOpen());
+      else { noxSt().later = Date.now(); touchProfile(); leave("Soit. La science sait attendre… un peu. Je t'attends dans <b>Routine</b>."); } return; }
+    if(busy || steps[i].end) return; show(++i);
+  });
+}
+
+/* --- Premier examen : plein écran, une question à la fois --- */
+let noxA = null, noxStep = 0;
+function noxPrefill(){
+  const ex = noxExam(), p = S.profile.plan, first = S.workouts.reduce((t, w) => Math.min(t, w.start), Infinity);
+  const months = isFinite(first) ? (Date.now() - first) / (30.4 * 86400000) : 0;
+  const days = p && p.days && p.days.length ? p.days.map(d => d.dow).sort((a, b) => a - b) : DEFAULT_DAYS[3].slice();
+  const n = Math.min(6, Math.max(2, days.length)), min = p && p.days && p.days.length ? p.days[0].min || 60 : 60;
+  const dur = NOX_DUR.reduce((b, v, i) => Math.abs(v - min) < Math.abs(NOX_DUR[b] - min) ? i : b, 2);
+  const a = {n, days:days.slice(0, n), dur, lieu:atHome() ? "rien" : "salle", sexe:S.profile.sex === "f" ? "f" : S.profile.sex === "h" ? "h" : undefined,
+    bw:S.profile.bw || "", height:S.profile.height || "", exp:S.workouts.length ? (months < 6 ? "deb" : months < 24 ? "mid" : "pro") : undefined,
+    org:p && /^(ppl|duo4|duo5)$/.test(p.tpl || "") ? "un" : p ? "deux" : undefined};
+  if(a.days.length < n) a.days = DEFAULT_DAYS[n].slice();
+  return ex ? {...a, ...ex, days:(ex.days || a.days).slice()} : a;
+}
+function noxExamOpen(at){
+  noxA = noxPrefill(); noxStep = at ? Math.max(0, NOX_STEPS.findIndex(s => s.k === at)) : 0;
+  let el = document.getElementById("nox-exam"); if(el) el.remove();
+  el = document.createElement("div"); el.id = "nox-exam"; el.className = "nox-exam";
+  el.innerHTML = `<div class="nxe-top"><button class="nxe-back" data-nxe="back" aria-label="Question précédente">‹</button><div class="nxe-prog"><small></small><div class="nxe-bar"><i></i></div></div><button class="nxe-x" data-nxe="close" aria-label="Fermer">✕</button></div>
+    <div class="nxe-nox"><div class="nxe-face">${noxSVG(NOX_HEAD)}</div><div class="nxe-bub"></div></div><div class="nxe-body"></div><div class="nxe-foot"></div>`;
+  document.body.appendChild(el); lockBody(); noxDraw(false);
+  el.addEventListener("click", noxExamClick);
+  el.addEventListener("input", e => { const k = e.target.dataset.in; if(k){ noxA[k] = e.target.value.replace(/[^\d.,]/g, ""); } });
+}
+function noxExamClose(){ const el = document.getElementById("nox-exam"); if(el) el.remove(); unlockBody(); render(); }
+const noxRec = n => n <= 3 ? "Full body" : n === 4 ? "du haut / bas" : n === 5 ? "du haut / bas + push / pull / jambes" : "du push / pull / jambes deux fois";
+const noxOrgSay = () => noxA.org === "deux" ? `${noxA.n} séances, chaque muscle deux fois : je te prépare <b>${noxA.n <= 3 ? "du full body" : noxRec(noxA.n)}</b>. Je l'aurais parié !`
+  : noxA.org === "un" ? "Populaire, je sais. Mon conseil reste « deux fois par semaine ». Tu insistes ? Soit, je m'adapte et je répartis tes séries au mieux." : "";
+function noxPrecTxt(a){
+  const p = a.prec;
+  if(a.obj === "muscle") return {haut:"Surtout le haut du corps", bas:"Surtout le bas du corps", equi:"Équilibré"}[p] || "";
+  if(a.obj === "seche") return {ventre:"Surtout le ventre", partout:"Partout"}[p] || "";
+  if(a.obj === "force") return (Array.isArray(p) ? p : []).map(k => (NOX_LIFTS[k] || [,""])[1]).join(", ");
+  return p ? `${p} fois du cardio par semaine` : "";
+}
+const NOX_STEPS = [
+  {k:"intro", say:() => "Premier examen ! Détends-toi, ça ne pique pas. Enfin, <b>presque</b> pas. Quelques questions, et je te concocte un protocole sur mesure.", f:"grin",
+   html:() => `<div class="nxe-q">🩺 Le diagnostic</div><div class="nxe-sum"><div><span>Durée</span><b>2 minutes</b></div><div><span>Ce que tu obtiens</span><b>Ton protocole sur mesure</b></div><div><span>Le dernier mot</span><b>C'est toujours toi</b></div></div>`,
+   ok:() => true, btn:"C'est parti !"},
+  {k:"obj", q:true, say:() => "Question capitale : qu'est-ce que tu veux changer dans ton corps ? <b>Un seul choix</b>, on se concentre !", f:"smirk",
+   html:() => `<div class="nxe-q">Ton objectif</div>` + Object.entries(NOX_OBJ).map(([k, o]) => `<button class="nxe-opt" data-set="obj" data-v="${k}" aria-pressed="${noxA.obj === k}"><span class="e">${o.e}</span><span><b>${o.l}</b><small>${o.d}</small></span></button>`).join(""),
+   react:() => noxA.obj && NOX_OBJ[noxA.obj].r, ok:() => !!noxA.obj},
+  {k:"prec", q:true, f:"smirk",
+   say:() => ({muscle:"Précisons l'hypothèse : où veux-tu en voir le plus ?", seche:"Où veux-tu que ça fonde en priorité ?", force:"Sur quels mouvements veux-tu devenir redoutable ? <b>Jusqu'à 3.</b>", endu:"Combien de cardio es-tu prêt à faire par semaine ?"})[noxA.obj],
+   html:() => { const L = {muscle:[["haut","Haut du corps","Pecs, dos, épaules, bras"],["bas","Bas du corps","Fessiers, cuisses, mollets"],["equi","Équilibré","Tout le corps à parts égales"]],
+       seche:[["ventre","Surtout le ventre",""],["partout","Partout",""]],
+       force:Object.entries(NOX_LIFTS).map(([k, [, l]]) => [k, l, ""]),
+       endu:[["1","1 fois","Un bloc de cardio par semaine"],["2","2 fois",""],["3","3 fois ou plus",""]]}[noxA.obj] || [];
+     const multi = noxA.obj === "force", sel = multi ? (Array.isArray(noxA.prec) ? noxA.prec : []) : [noxA.prec];
+     return `<div class="nxe-q">${({muscle:"La zone à faire grossir", seche:"La zone à affiner", force:"Tes mouvements cobayes", endu:"Ton cardio par semaine"})[noxA.obj] || ""}</div>` +
+       L.map(([v, l, d]) => `<button class="nxe-opt" data-set="prec" data-v="${v}" ${multi ? 'data-multi="3"' : ""} aria-pressed="${sel.includes(v)}"><span><b>${l}</b>${d ? `<small>${d}</small>` : ""}</span></button>`).join(""); },
+   react:() => noxA.obj === "force" ? ((noxA.prec || []).length ? "Ces mouvements seront mes cobayes préférés. Ils prouveront tes progrès !" : "")
+     : noxA.prec ? ({muscle:"Notez ça dans le protocole !", seche:"Le cardio va chauffer, la fonte reste lourde : on garde tes muscles !", endu:"PLUS DE PUISSANCE… et de souffle !"})[noxA.obj] : "",
+   ok:() => noxA.obj === "force" ? Array.isArray(noxA.prec) && noxA.prec.length > 0 : !!noxA.prec},
+  {k:"exp", q:true, say:() => S.workouts.length > 5 && noxA.exp ? "Depuis combien de temps soulèves-tu de la fonte ? D'après mes notes, je pencherais pour la réponse cochée. Je me trompe ?" : "Depuis combien de temps soulèves-tu de la fonte ?", f:"smirk",
+   html:() => `<div class="nxe-q">Ton expérience</div>` + [["deb","Moins de 6 mois","Je découvre"],["mid","6 mois à 2 ans","J'ai mes bases"],["pro","Plus de 2 ans","Je connais la maison"]].map(([v, l, d]) => `<button class="nxe-opt" data-set="exp" data-v="${v}" aria-pressed="${noxA.exp === v}"><span><b>${l}</b><small>${d}</small></span></button>`).join(""),
+   react:() => ({deb:"Un sujet neuf ! Le plus beau des terrains d'expérience !", mid:"De bonnes bases. On va pouvoir pousser les curseurs.", pro:"Un vétéran… Tes muscles ont de la mémoire, moi j'ai des électrodes."})[noxA.exp] || "", ok:() => !!noxA.exp},
+  {k:"days", q:true, say:() => "Combien de séances par semaine, et quels jours ? Je réserve le labo.", f:"grin",
+   html:() => `<div class="nxe-q">Ta semaine</div><div class="nxe-stp"><button data-nxn="-1" aria-label="Une séance de moins">−</button><b>${noxA.n}</b><button data-nxn="1" aria-label="Une séance de plus">+</button></div>
+     <div class="nxe-sub">Tes jours d'entraînement (${noxA.days.length} sur ${noxA.n})</div><div class="nxe-days">${DOWS.map((d, i) => `<button data-nxd="${i}" aria-pressed="${noxA.days.includes(i)}">${d.slice(0, 3)}</button>`).join("")}</div>`,
+   react:() => noxA.n <= 2 ? "Deux séances bien dosées valent mieux que cinq bâclées." : noxA.n <= 4 ? "Le rythme idéal pour la science !" : "PLUS DE PUISSANCE, MOINS DE DISCUSSION ! Je répartis bien les muscles, promis.",
+   ok:() => noxA.days.length === noxA.n},
+  {k:"dur", q:true, say:() => "Combien de temps peux-tu me consacrer par séance ?", f:"smirk",
+   html:() => `<div class="nxe-q">Durée d'une séance</div><div class="nxe-chips">${NOX_DUR.map((m, i) => `<button data-set="dur" data-v="${i}" aria-pressed="${noxA.dur === i}">${m < 60 ? m + " min" : m === 60 ? "1 h" : "1 h " + (m - 60)}</button>`).join("")}</div>`,
+   react:() => noxA.dur === undefined ? "" : noxA.dur === 0 ? "Court mais intense. Pas une seconde de bavardage !" : noxA.dur >= 4 ? "Une éternité de science ! Je prépare les électrodes." : "Parfait pour mes protocoles.",
+   ok:() => noxA.dur !== undefined},
+  {k:"lieu", q:true, say:() => "Où se trouve ton laboratoire ?", f:"smirk",
+   html:() => `<div class="nxe-q">Ton lieu d'entraînement</div>` + [["salle","🏢","Avec du matériel","Salle de sport, ou maison équipée"],["rien","🤸","Sans matériel","Au poids du corps"]].map(([v, e, l, d]) => `<button class="nxe-opt" data-set="lieu" data-v="${v}" aria-pressed="${noxA.lieu === v}"><span class="e">${e}</span><span><b>${l}</b><small>${d}</small></span></button>`).join(""),
+   react:() => ({salle:"Toutes ces machines… FASCINANT !", rien:"Le corps est le premier instrument du savant !"})[noxA.lieu] || "", ok:() => !!noxA.lieu},
+  {k:"org", q:true, say:() => "Tu préfères travailler chaque muscle comment ?", f:"smirk",
+   html:() => `<div class="nxe-q">Ton rythme par muscle</div>
+     <button class="nxe-opt rec" data-set="org" data-v="deux" aria-pressed="${noxA.org === "deux"}"><span class="e">🔁</span><span><b>Deux fois par semaine</b><small>Le plus efficace pour progresser</small></span></button>
+     <button class="nxe-opt" data-set="org" data-v="un" aria-pressed="${noxA.org === "un"}"><span class="e">🎯</span><span><b>Un muscle par séance, à fond</b><small>Comme beaucoup de bodybuilders</small></span></button>` +
+     (noxA.org === "un" ? `<div class="nxe-warn">⚠️ <b>Ce que dit la science</b><br>• Chaque muscle ne travaille qu'une fois par semaine : en général moins de croissance qu'en deux fois.<br>• Beaucoup de séries d'un coup : les dernières servent peu, et les courbatures sont plus fortes.<br>• Une séance ratée = un muscle oublié pendant deux semaines.<br>• Beaucoup de pros récupèrent avec l'aide de produits dopants, ce qui change tout.</div>` : ""),
+   react:noxOrgSay, ok:() => !!noxA.org},
+  {k:"mes", q:true, say:() => "Dernière mesure. Monte sur la balance… Je ne regarde pas. Si, je regarde : <b>c'est pour la science.</b>", f:"smirk",
+   html:() => `<div class="nxe-q">Tes mesures</div><div class="nxe-fld"><label>Poids (kg)<input inputmode="decimal" data-in="bw" value="${esc(String(noxA.bw || ""))}" placeholder="Ex. 75"></label><label>Taille (cm)<input inputmode="numeric" data-in="height" value="${esc(String(noxA.height || ""))}" placeholder="Ex. 175"></label></div>
+     <div class="nxe-sub">Pour mes tables de force</div><div class="nxe-chips"><button data-set="sexe" data-v="h" aria-pressed="${noxA.sexe === "h"}">Homme</button><button data-set="sexe" data-v="f" aria-pressed="${noxA.sexe === "f"}">Femme</button></div>`,
+   react:() => noxA.sexe ? "J'adore quand la physiologie coopère !" : "", ok:() => !!noxA.sexe},
+  {k:"recap", say:() => `Si je résume : tu veux <b>${NOX_OBJ[noxA.obj].l.toLowerCase()}</b>${noxPrecTxt(noxA) ? ` (${noxPrecTxt(noxA).toLowerCase()})` : ""}, <b>${noxA.n} séances</b> par semaine. C'est bien ça ?`, f:"smirk",
+   html:() => `<div class="nxe-q">Ce que j'ai compris</div><div class="nxe-sum">
+     <div><span>Objectif</span><b>${NOX_OBJ[noxA.obj].e} ${NOX_OBJ[noxA.obj].l}</b></div>
+     <div><span>Précision</span><b>${esc(noxPrecTxt(noxA))}</b></div>
+     <div><span>Expérience</span><b>${({deb:"Moins de 6 mois", mid:"6 mois à 2 ans", pro:"Plus de 2 ans"})[noxA.exp]}</b></div>
+     <div><span>Semaine</span><b>${noxA.n} séances · ${noxA.days.map(i => DOWS[i].slice(0, 3)).join(", ")}</b></div>
+     <div><span>Durée</span><b>${NOX_DUR[noxA.dur] < 60 ? NOX_DUR[noxA.dur] + " min" : NOX_DUR[noxA.dur] === 60 ? "1 h" : "1 h " + (NOX_DUR[noxA.dur] - 60)}</b></div>
+     <div><span>Lieu</span><b>${noxA.lieu === "rien" ? "Sans matériel" : "Avec du matériel"}</b></div>
+     <div><span>Rythme</span><b>${noxA.org === "un" ? "Un muscle par séance" : "Chaque muscle 2 fois / sem."}</b></div></div>
+     <button class="btn wide" data-nxe="fix" style="margin-top:10px">✏️ Corriger une réponse</button>`, ok:() => true, btn:"C'est ça, au protocole !"},
+  {k:"proto", say:() => "Analyse terminée… Intéressant… le sujet évolue… Voici ton <b>protocole</b> !", f:"grin",
+   html:() => { const g = {obj:noxA.obj, prec:noxA.prec}, tn = noxTplName(noxA.n, noxA.org);
+     return `<div class="nxe-proto"><h3>Protocole n° ${((noxSt().proto || {}).k || 0) + 1} · ${NOX_OBJ[noxA.obj].l}</h3><div class="s">${NOX.weeks} semaines · ${noxA.n} séances · ${esc(tn)}</div>
+       ${noxLevers(g).map(([i, t]) => `<div class="nxe-lev"><i>${i}</i><span>${esc(t)}</span></div>`).join("")}
+       <div class="nxe-src">📚 Construit d'après la recherche en musculation : fourchettes de reps (Schoenfeld 2017, 2021), reps en réserve (Helms 2016, Robinson 2024), volume par muscle (Pelland 2025).</div></div>
+       <button class="btn wide" data-nxe="edit" style="margin-top:10px">✏️ Accepter et ajuster dans Routine</button><button class="btn wide ghost" data-nxe="keep" style="margin-top:8px">Garder mon programme actuel</button>`; },
+   ok:() => true, btn:"Accepter le protocole"}
+];
+function noxDraw(reactNow){
+  const el = document.getElementById("nox-exam"); if(!el) return;
+  const s = NOX_STEPS[noxStep], say = s.say(), r = reactNow && s.react ? s.react() : "";
+  el.querySelector(".nxe-bub").innerHTML = `<span class="nxe-tag">PR NOXWELL</span>${say}${r ? `<span class="nxe-react">${r}</span>` : ""}`;
+  el.querySelector(".nxe-body").innerHTML = s.html();
+  const qs = NOX_STEPS.filter(x => x.q), qi = qs.indexOf(s);
+  el.querySelector(".nxe-prog small").textContent = qi >= 0 ? `Question ${qi + 1} sur ${qs.length}` : s.k === "intro" ? "Premier examen" : s.k === "recap" ? "Récapitulatif" : "Ton protocole";
+  el.querySelector(".nxe-bar i").style.width = Math.round(100 * noxStep / (NOX_STEPS.length - 1)) + "%";
+  el.querySelector(".nxe-foot").innerHTML = `<button class="btn primary wide" data-nxe="next" ${s.ok() ? "" : "disabled"}>${s.btn || "Continuer"}</button>`;
+  el.querySelector(".nxe-back").style.visibility = noxStep > 0 ? "visible" : "hidden";
+  const f = el.querySelector(".nxe-face"); f.className = "nxe-face " + (r && s.k === "obj" ? "grin" : s.f); f.classList.remove("hop"); void f.offsetWidth; f.classList.add("hop");
+}
+function noxExamClick(e){
+  const b = e.target.closest("button"); if(!b) return; const a = noxA;
+  if(b.dataset.nxe === "close"){ noxExamClose(); return; }
+  if(b.dataset.nxe === "back"){ noxStep = Math.max(0, noxStep - 1); noxDraw(false); return; }
+  if(b.dataset.nxe === "fix"){ noxStep = 1; noxDraw(false); return; }
+  if(b.dataset.nxe === "next"){ if(NOX_STEPS[noxStep].k === "proto"){ noxApply("accept"); return; } noxStep = Math.min(NOX_STEPS.length - 1, noxStep + 1); noxDraw(false); document.querySelector(".nxe-body").scrollTop = 0; return; }
+  if(b.dataset.nxe === "edit"){ noxApply("edit"); return; }
+  if(b.dataset.nxe === "keep"){ noxApply("keep"); return; }
+  if(b.dataset.set){ const k = b.dataset.set; let v = b.dataset.v; if(k === "dur") v = +v;
+    if(b.dataset.multi){ const l = Array.isArray(a.prec) ? a.prec : (a.prec = []); const i = l.indexOf(v); if(i >= 0) l.splice(i, 1); else if(l.length < +b.dataset.multi) l.push(v); }
+    else { if(k === "obj" && a.obj !== v) delete a.prec; a[k] = v; }
+    noxDraw(true); return; }
+  if(b.dataset.nxn){ const n = Math.min(6, Math.max(2, a.n + +b.dataset.nxn)); if(n !== a.n){ a.n = n; a.days = DEFAULT_DAYS[n].slice(); } noxDraw(true); return; }
+  if(b.dataset.nxd !== undefined){ const i = +b.dataset.nxd, j = a.days.indexOf(i); if(j >= 0) a.days.splice(j, 1); else if(a.days.length < a.n) a.days.push(i); a.days.sort((x, y) => x - y); noxDraw(true); }
+}
+// Fin de l'examen : le protocole devient le programme (accepter), un brouillon à ajuster (edit), ou on garde le programme actuel (keep)
+function noxApply(mode){
+  const a = noxA, st = noxSt();
+  st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, org:a.org};
+  S.profile.goal = {obj:a.obj, prec:a.prec};
+  st.proto = {k:((st.proto || {}).k || 0) + 1, start:Date.now(), obj:a.obj, prec:a.prec};
+  S.profile.equip = a.lieu === "rien" ? "maison" : "salle"; S.profile.sex = a.sexe;
+  if(num(a.bw)) S.profile.bw = num(a.bw); if(num(a.height)) S.profile.height = Math.round(num(a.height));
+  let msg = "Protocole lancé ! ENCORE UNE ! C'EST POUR LA SCIENCE !";
+  if(mode !== "keep"){
+    const n = a.n, tpl = (TEMPLATES[n] || []).find(t => t.id === NOX_TPL[a.org][n]) || TEMPLATES[n][0];
+    planDraft = {n, tpl:tpl.id, days:a.days.map((dow, i) => ({dow, muscles:tpl.days[i].slice(), off:{}, min:NOX_DUR[a.dur] || 60})), novOff:0};
+    if(mode === "accept") planSave(); else msg = "Ajuste ton protocole, puis touche « Valider la routine ».";
+  } else msg = "Soit ! Je garde ton programme, et j'observe. Fascinant quand même.";
+  touchProfile();
+  const el = document.getElementById("nox-exam"); if(el) el.remove(); unlockBody();
+  tab = "routine"; render(); window.scrollTo(0, 0); toast(msg);
+}
+
+/* --- Bloc labo en haut de la page Routine --- */
+function noxHeroLine(){
+  const ex = noxExam();
+  if(!ex) return `Le premier examen t'attend ! Quelques questions, et je te concocte un protocole sur mesure.`;
+  const pr = noxProof();
+  if(pr && pr.line) return `Semaine ${pr.week} du protocole. ${pr.line}`;
+  if(pr && pr.week > NOX.weeks) return `Ton protocole a ${pr.week} semaines. Toujours au rendez-vous ? <b>Refais l'examen</b> si tes objectifs ont changé.`;
+  return pr && pr.done ? `Semaine ${pr.week} du protocole. Le sujet évolue… J'observe. FASCINANT !` : `Protocole prêt ! La première séance dira tout. ENCORE UNE ! C'EST POUR LA SCIENCE !`;
+}
+function noxBlock(){
+  const ex = noxExam(), pr = noxProof(), p = noxSt().proto, g = goal();
+  const plan = S.profile.plan, tn = plan ? ((TEMPLATES[(plan.days || []).length] || []).find(t => t.id === plan.tpl) || {}).name : "";
+  return `<section class="card nox-hero"><div class="nox-pic">${noxSVG(NOX_BUST)}</div>
+      <div class="nox-say"><span class="nox-chip">Pr Noxwell</span><div class="nox-hb">${noxHeroLine()}</div>
+        ${ex ? `<button class="btn sm" data-act="nox-talk">💬 Parler à Noxwell</button>` : `<button class="btn primary sm" data-act="nox-exam">🩺 Passer l'examen</button>`}</div></section>
+    ${ex && g ? `<section class="card nox-proto"><h3>Protocole n° ${p ? p.k : 1} · ${esc(NOX_OBJ[g.obj].l)}</h3>
+      <div class="small muted">Commencé le ${esc(fmtDate(p ? p.start : ex.done, {day:"numeric", month:"long"}))} · d'après ton examen${noxPrecTxt({obj:g.obj, prec:g.prec}) ? " · " + esc(noxPrecTxt({obj:g.obj, prec:g.prec}).toLowerCase()) : ""}</div>
+      <button class="nox-org" data-act="nox-org"><span>🧬 Organisation : <b>${esc(tn || "à définir")}</b></span><span>changer ›</span></button>
+      ${pr ? `<div class="nox-bar"><i style="width:${Math.min(100, Math.round(pr.weeks / NOX.weeks * 100))}%"></i></div><div class="nox-barl"><span>Semaine ${Math.min(pr.week, NOX.weeks)} sur ${NOX.weeks}</span><span>${pr.done} séance${pr.done > 1 ? "s" : ""} faite${pr.done > 1 ? "s" : ""}</span></div>
+        <div class="nox-tiles">${pr.tiles.slice(0, 3).map(([v, l]) => `<div><strong>${esc(v)}</strong><span>${esc(l)}</span></div>`).join("")}</div>` : ""}
+      <div class="nox-levs">${noxLevers(g).map(([i, t]) => `<div><i>${i}</i><span>${esc(t)}</span></div>`).join("")}</div></section>` : ""}`;
+}
+function noxFooter(){
+  return `<div class="nox-two"><button class="btn" data-act="nox-src">📚 Mes sources</button><button class="btn" data-act="nox-exam">🩺 ${noxExam() ? "Refaire l'examen" : "Passer l'examen"}</button></div>`;
+}
+const noxSays = (html, more) => `<div class="nox-sheet-h"><div class="nox-face">${noxSVG(NOX_HEAD)}</div><div class="nox-sb">${html}</div></div>${more || ""}`;
+function noxSources(){
+  openSheet(noxSays("Mes protocoles ne sortent pas de mon chapeau : ils suivent la recherche en musculation.",
+    `<ul class="nox-src">
+      <li>Fourchettes de répétitions selon l'exercice<small>Schoenfeld et al. 2017 (J Strength Cond Res) et 2021 (Sports)</small></li>
+      <li>Le ressenti en « reps en réserve »<small>Helms et al. 2016 ; Zourdos et al. 2021</small></li>
+      <li>S'arrêter 1 à 2 reps avant l'échec<small>Robinson et al. 2024 ; Refalo et al. 2023</small></li>
+      <li>10 à 20 séries par muscle et par semaine<small>Pelland et al. 2025</small></li>
+      <li>Chaque muscle 2 fois par semaine plutôt qu'une<small>Schoenfeld et al. 2016 et 2019</small></li>
+      <li>Surcharge progressive et allègement quand la fatigue s'accumule<small>Principes de préparation physique</small></li></ul>
+    <button class="btn" data-act="close">Compris</button>`));
+}
+function noxOrgSheet(){
+  const plan = S.profile.plan, n = plan && plan.days ? plan.days.length : (planDraft || initDraft()).n;
+  const cur = plan && /^(ppl|duo4|duo5)$/.test(plan.tpl || "") ? "un" : "deux";
+  openSheet(noxSays(`Tu t'entraînes <b>${n} fois</b> par semaine. Mon conseil : chaque muscle <b>deux fois</b> par semaine, c'est ce qui fait le plus progresser.`,
+    `<div class="nox-orgs">
+      <button class="card tpl" data-act="nox-org-set" data-v="deux" aria-pressed="${cur === "deux"}"><span class="row"><b style="flex:1">Deux fois par semaine</b><span class="ctag">Conseillé</span></span><span class="small muted">${esc(noxTplName(n, "deux"))}</span></button>
+      <button class="card tpl" data-act="nox-org-set" data-v="un" aria-pressed="${cur === "un"}"><span class="row"><b style="flex:1">Un muscle par séance, à fond</b></span><span class="small muted">${esc(noxTplName(n, "un"))} · chaque muscle une fois par semaine : moins de croissance en général, et une séance ratée laisse un muscle de côté deux semaines</span></button>
+    </div><details class="nox-all"><summary>Toutes les organisations</summary>${(TEMPLATES[n] || []).map(t => `<button class="card tpl" data-act="nox-tpl" data-t="${t.id}" aria-pressed="${plan && plan.tpl === t.id}"><b>${esc(t.name)}</b><span class="small muted">${esc(t.desc)}</span></button>`).join("")}</details>`));
+}
+function noxSetTpl(id){
+  const d = planDraft || (planDraft = initDraft()), tp = (TEMPLATES[d.n] || []).find(t => t.id === id); if(!tp) return;
+  d.tpl = tp.id; d.days.forEach((x, i) => { x.muscles = (tp.days[i] || tp.days[0]).slice(); x.off = {}; });
+  planSave(); closeSheet(); render(); toast(`Organisation : ${tp.name}`);
+}
+
+/* --- En séance : réponse au ressenti --- */
+// Prochaine charge : le coach est rejoué comme si la séance en cours était déjà enregistrée (rien n'est gardé)
+function noxNext(i){
+  const a = A(); if(!a) return "";
+  const ex = a.exercises[i], e = exById(ex.exId);
+  const tmp = {id:"nox-tmp", start:a.start, end:Date.now(), exercises:a.exercises.map(x => ({exId:x.exId, feel:x.feel || 0, ...(sideMul(x, a) > 1 ? {uni:1} : {}), sets:x.sets.filter(s => s.done).map(s => ({w:s.w, r:s.r, done:true, warm:!!s.warm}))})).filter(x => x.sets.length), prs:[]};
+  let c = null; S.workouts.push(tmp);
+  try{ c = coach(ex.exId, a.start + 3600000); } catch(err){ c = null; } finally { const k = S.workouts.indexOf(tmp); if(k >= 0) S.workouts.splice(k, 1); }
+  if(!c) return "";
+  if(isCardio(e)) return c.r ? `La prochaine fois : <b>${c.r} min</b>.` : "";
+  if(c.w) return `La prochaine fois : <b>${fmtN(c.w)} kg</b> × ${c.r || c.lo}.`;
+  if(c.r) return `La prochaine fois : <b>${c.r} ${unitOf(e)}</b>.`;
+  return "";
+}
+const NOX_FEEL_SAY = ["Trop facile ? FASCINANT !", "Facile, noté !", "Idéal ! J'adore quand la physiologie coopère.", "Dur, mais tenu. Respect.", "Trop dur ? Une donnée, pas une défaite."];
+let noxReply = null;
+function noxFeel(i){
+  const ex = A().exercises[i]; if(!ex.feel){ delete ex.noxNext; noxReply = null; return; }
+  ex.noxNext = noxNext(i); noxReply = {i, ts:Date.now()};
+  setTimeout(() => { if(noxReply && Date.now() - noxReply.ts >= 3900){ noxReply = null; softRender(); } }, 4000);
+}
+function noxFeelHTML(i, ex, e){
+  if(!noxMet() || !ex.feel) return "";
+  const f = FEEL[ex.feel - 1], nx = ex.noxNext || "";
+  if(noxReply && noxReply.i === i && Date.now() - noxReply.ts < 4000)
+    return `<div class="nox-reply"><div class="nox-mini hop">${noxSVG(NOX_FACE)}</div><div class="nox-rb">${esc(NOX_FEEL_SAY[ex.feel - 1])} <span class="muted">(${esc(isCardio(e) ? CARDIO_TALK[ex.feel - 1] : f.hint)})</span>${nx ? `<span class="nox-nx">${nx}</span>` : ""}</div></div>`;
+  return nx ? `<div class="nox-compact"><span class="nox-fio">🧪</span><span>${esc(f.label)} · ${nx}</span></div>` : "";
+}
+function noxHow(){
+  openSheet(noxSays("Après le dernier effort, demande-toi : <b>combien de reps aurais-tu encore pu faire</b> avec une bonne technique ? Sois honnête, c'est pour la science !",
+    `<div class="nox-scale">${FEEL.map(f => `<div><i style="background:var(${f.col})"></i><b>${esc(f.label)}</b><span>${esc(f.hint)}</span></div>`).join("")}</div><button class="btn" data-act="close">Compris</button>`));
+}
+
 function viewPlan(){
   const d = planDraft || (planDraft = initDraft()), g = generatePlan(d), tpls = TEMPLATES[d.n] || [];
   const dayCards = g.days.map(day => {
@@ -1988,20 +2497,21 @@ function viewPlan(){
       <div class="chips wrapc">${MUSCLES.map(m => `<button class="chip" data-act="plan-muscle" data-k="${k}" data-m="${m}" aria-pressed="${day.muscles.includes(m)}" style="${mc(m)}"><span class="mdot"></span>${m}</button>`).join("")}</div>
       <details class="duos"><summary>Duos conseillés</summary><div class="duo-list">${DUOS.map((u,ui) => `<button class="duo" data-act="plan-duo" data-k="${k}" data-u="${ui}"><b>${esc(u.label)}</b><span>${esc(u.why)}</span></button>`).join("")}</div></details>
       ${day.items.length ? `<ol class="plist">${day.items.map(it => { const e = exById(it.exId);
+        if(it.cardio) return `<li>${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>🧪 ≈ ${NOX_CARDIO_MIN} min de cardio en fin de séance</span></span></li>`;
         return `<li>${thumb(e)}<span class="t"><b>${esc(e.name)}${it.novel?'<span class="new">Nouveau</span>':""}</b><span>${it.sets} séries · ${esc(primOf(e))}${it.comp?" · polyarticulaire":""}${it.n?` · fait ${it.n} fois`:""}</span></span>
           <button class="icon-btn" data-act="${it.novel?"plan-nov":"plan-swap"}" data-k="${k}" data-s="${it.slot}" aria-label="Proposer un autre exercice">↻</button></li>`; }).join("")}</ol>`
         : `<p class="small muted" style="margin:0">Choisissez les muscles de cette séance.</p>`}
     </section>`;
   }).join("");
-  return `
+  return `${noxMet() ? noxBlock() : ""}
     <section class="card" style="display:flex;flex-direction:column;gap:12px">
       <div class="row"><b style="flex:1">Séances par semaine</b>
         <span class="stepper"><button data-act="plan-n" data-d="-1" aria-label="Une séance de moins">−</button><span>${d.n}</span><button data-act="plan-n" data-d="1" aria-label="Une séance de plus">+</button></span></div>
       <div class="dows">${DOWS.map((l,i) => `<button data-act="plan-dow" data-i="${i}" aria-pressed="${d.days.some(x=>x.dow===i)}" class="${i===todayDow()?"today":""}">${l.slice(0,3)}</button>`).join("")}</div>
     </section>
-    <h2>Organisation proposée</h2>
+    ${noxExam() ? "" : `<h2>Organisation proposée</h2>
     <div class="tpls">${tpls.map(t => `<button class="card tpl" data-act="plan-tpl" data-t="${t.id}" aria-pressed="${d.tpl===t.id}">
-      <span class="row"><b style="flex:1">${esc(t.name)}</b>${t.rec?'<span class="ctag">Conseillé</span>':""}</span><span class="small muted">${esc(t.desc)}</span></button>`).join("")}</div>
+      <span class="row"><b style="flex:1">${esc(t.name)}</b>${t.rec?'<span class="ctag">Conseillé</span>':""}</span><span class="small muted">${esc(t.desc)}</span></button>`).join("")}</div>`}
     ${g.notes.map(n => `<div class="alert warn">ⓘ ${esc(n)}</div>`).join("")}
     <h2>Vos séances</h2>
     ${dayCards}
@@ -2011,7 +2521,8 @@ function viewPlan(){
       <p class="small muted" style="margin:8px 0 0">Séries par semaine et par muscle, travail indirect compté au prorata (un développé couché compte une demi-série de triceps). Cible 10 à 20 (trait pointillé : 10). ${g.days.length ? "Fréquence : " + MUSCLES.filter(m=>g.freq[m]).map(m => `${m} ${g.freq[m]}×`).join(", ") + "." : ""}</p></section>
     <button class="btn primary wide" data-act="plan-save" ${g.days.some(x=>x.items.length)?"":"disabled"}>Valider la routine</button>
     <p class="foot">Les exercices les plus pratiqués passent en premier, polyarticulaires en tête de séance.
-      Une nouveauté au plus par mois. Touchez ↻ pour changer un exercice.<br>Assisté par IA · aide à la décision, à adapter à vos sensations.</p>`;
+      Une nouveauté au plus par mois. Touchez ↻ pour changer un exercice.<br>Assisté par IA · aide à la décision, à adapter à vos sensations.</p>
+    ${noxMet() ? noxFooter() : ""}`;
 }
 function planSave(){
   const g = generatePlan(planDraft);
@@ -2071,7 +2582,7 @@ function estimateNew(e, lo){
   const st = stepFor(e, oneRM), w = Math.floor(oneRM / (1 + (lo + 2.5)/30) * 0.9 / st + 1e-9) * st;
   if(w < st) return null;
   const lv = LEVELS[Math.min(4, Math.floor(L))] || LEVELS[0];
-  return {w:+w.toFixed(2), oneRM, txt:`Elle part de votre niveau ${own ? `en ${pm.toLowerCase()}, mesuré sur vos autres exercices` : grp ? `en ${e.muscle.toLowerCase()}, mesuré sur vos autres exercices` : "moyen, mesuré sur vos autres exercices"} (${lv.toLowerCase()}), et de votre poids de corps (${fmtN(bw)} kg) : vous pourriez soulever environ ${fmtN(oneRM, 1)} kg une seule fois, et on retire 10 % par prudence.`};
+  return {w:+w.toFixed(2), oneRM, txt:`Elle part de ton niveau ${own ? `en ${pm.toLowerCase()}, mesuré sur tes autres exercices` : grp ? `en ${e.muscle.toLowerCase()}, mesuré sur tes autres exercices` : "moyen, mesuré sur tes autres exercices"} (${lv.toLowerCase()}), et de ton poids de corps (${fmtN(bw)} kg) : tu pourrais soulever environ ${fmtN(oneRM, 1)} kg une seule fois, et on retire 10 % par prudence.`};
 }
 function strengthByMuscle(){
   // Par muscle (13 nov. 2026) : chaque exercice compte pour son muscle principal ; resG = moyenne par catégorie (silhouette, choix de séance)
@@ -3989,6 +4500,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-19", t:"🧪 Un visiteur inattendu", x:"Quelqu'un s'intéresse de très près à ton Gymon… Il se présentera sur la page Gymon dès que ton Gymon aura un peu grandi. Il connaît la musculation sur le bout des doigts : écoute ses conseils, mais c'est toi qui as le dernier mot. Au passage, le coach te tutoie désormais."},
   {d:"2026-11-18", t:"🛠️ Vos exercices, à votre façon", x:"Sur la fiche d'un exercice, « Mes réglages » : ajoutez une photo de la machine de votre salle, indiquez si vous le faites en unilatéral (un côté puis l'autre : le volume compte les deux) et réglez le poids à vide de la barre, du chariot ou de la Smith (l'app indique ce qu'il faut ajouter). Vos exercices créés se renomment et acceptent maintenant des muscles secondaires. Merci pour vos retours !"},
   {d:"2026-11-18", t:"⚖️ Charge par haltère", x:"Sur les exercices où la charge pouvait prêter à confusion, une petite mention sous « kg » précise ce qu'il faut noter : le poids d'un seul haltère (pas des deux), ou d'un seul côté pour les machines iso-latérales et les écartés à deux poulies."},
   {d:"2026-11-18", t:"👥 Séance en équipe", x:"Entraînez-vous avec un ami, chacun sur son téléphone. Lancez votre séance et touchez « Partager ma séance » : votre ami scanne le QR code (Gymon › Sociabiliser › Rejoindre la séance d'un ami). Il a les mêmes exercices, avec ses propres charges, et vos deux Gymon s'affichent côte à côte. Sans serveur : un seul scan, puis chaque téléphone est autonome. En fin de séance, il peut vous montrer son Gymon pour que vous deveniez amis Gymon."},
@@ -4292,7 +4804,7 @@ function render(){
   document.querySelector('.tabs [data-tab="creature"]').classList.toggle("sick", !!sick);
   v.innerHTML = installHint() + (tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : gymonHealthAlert() + viewHome())
     : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : tab==="reglages" ? viewSettings() : viewExercises());
-  delete document.body.dataset.fit; if(tab === "creature") fitGymon();
+  delete document.body.dataset.fit; if(tab === "creature"){ fitGymon(); noxSchedule(); }
   tickClock(); wakeLock();
 }
 
@@ -4408,8 +4920,8 @@ function viewActive(){
       <div class="ex-head">${thumb(e,"ex-info")}<div class="tt"><h3>${esc(e.name)}</h3><span class="tag"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(primOf(e))} · ${esc(e.equip)}</span></div>
         ${ex.sets.some(s => s.done && !s.warm) || isCardio(e) ? "" : `<button class="icon-btn" data-act="ex-swap" data-i="${i}" aria-label="Remplacer par un autre exercice du même muscle">↻</button>`}
         <button class="icon-btn" data-act="ex-menu" data-i="${i}" aria-label="Options de l'exercice">⋯</button></div>
-      <button class="coach ${c.deload?"deload":""}" data-act="coach-why" data-i="${i}">
-        <span class="ctag">${esc(c.tag)}</span>
+      <button class="coach ${c.deload?"deload":""} ${noxMet()?"nx":""}" data-act="coach-why" data-i="${i}">
+        ${noxMet() ? '<span class="nox-fio">🧪</span>' : ""}<span class="ctag">${esc(c.tag)}</span>
         <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:unitOf(e)}` : `Objectif ${c.lo}–${c.hi} ${unitOf(e)}`}${c.fatigue ? `<small class="fat"> · fatigue −${c.fatigue} %</small>` : ""}</span>
         <span class="cwhy">pourquoi ?</span></button>
       ${(() => { const nums = ex.sets.filter(x => !x.warm).map((x, k) => x.crit && !x.done ? k + 1 : 0).filter(Boolean);
@@ -4421,9 +4933,9 @@ function viewActive(){
         ${ex.sets.some(s => s.warm && !s.done) ? `<button class="btn sm ghost" data-act="del-warm" data-i="${i}">− Échauffement</button>` : ""}
         ${!hasWarm && c.w && !ex.sets.some(s => s.done) ? `<button class="btn sm ghost" data-act="add-warm" data-i="${i}">+ Échauffement</button>` : ""}</div>
       ${ex.sets.some(s=>s.done) ? `<div class="feel" role="group" aria-label="Ressenti sur cet exercice">
-        <div class="feel-l"><span>Ressenti</span><b>${ex.feel ? esc(FEEL[ex.feel-1].label)+" · "+esc(isCardio(e) ? CARDIO_TALK[ex.feel-1] : FEEL[ex.feel-1].hint) : "Comment c'était ?"}</b></div>
+        <div class="feel-l"><span>Ressenti</span><b>${ex.feel ? esc(FEEL[ex.feel-1].label)+" · "+esc(isCardio(e) ? CARDIO_TALK[ex.feel-1] : FEEL[ex.feel-1].hint) : "Comment c'était ?"}</b>${noxMet() ? '<button class="feel-how" data-act="nox-how">Comment répondre ?</button>' : ""}</div>
         <div class="feel-bar">${FEEL.map(f => `<button data-act="feel" data-i="${i}" data-v="${f.v}" aria-pressed="${ex.feel===f.v}" style="--fc:var(${f.col})" aria-label="${f.label}"></button>`).join("")}</div>
-        <div class="feel-ends"><span>Trop facile</span><span>Trop dur</span></div></div>` : ""}
+        <div class="feel-ends"><span>Trop facile</span><span>Trop dur</span></div>${noxFeelHTML(i, ex, e)}</div>` : ""}
     </article>`;
   }).join("");
   return `
@@ -4684,18 +5196,19 @@ function viewSettings(){
     <section class="card" id="reglages" style="display:flex;flex-direction:column;gap:12px">
       <label class="field">Apparence
         <select id="theme">${[["dark","Sombre (par défaut)"],["light","Clair"],["auto","Automatique, comme l'iPhone"]].map(([v,l]) => `<option value="${v}" ${(S.profile.theme||"dark")===v?"selected":""}>${l}</option>`).join("")}</select></label>
-      <label class="field">Mes entraînements
+      ${noxExam() ? `<div class="row" style="gap:10px"><span style="flex:1"><b>Mesures et lieu d'entraînement</b><small class="muted" style="display:block">Réglés avec le Pr Noxwell : ${esc([S.profile.bw ? fmtN(num(S.profile.bw)) + " kg" : "", S.profile.height ? S.profile.height + " cm" : "", atHome() ? "sans matériel" : "avec matériel"].filter(Boolean).join(" · "))}</small></span><button class="btn sm" data-act="nox-exam">Modifier</button></div>` : ""}
+      <label class="field" ${noxExam() ? "hidden" : ""}>Mes entraînements
         <select id="equip-mode"><option value="salle" ${atHome() ? "" : "selected"}>Avec matériel (salle ou maison équipée)</option><option value="maison" ${atHome() ? "selected" : ""}>Sans matériel : au poids du corps</option></select>
         <small class="muted">Avec matériel, les exercices au poids du corps restent proposés. Sans matériel, le programme, le bouton ↻ et les listes ne proposent que des exercices au poids du corps.</small></label>
       <label class="field">Repos par défaut après une série
         <select id="rest-default">${[-1,0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s<0?"Auto selon l'exercice (1 min 30 à 3 min)":s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
       <div class="row wrap">
         <label class="field" style="flex:1;min-width:130px">Prénom (séance en équipe)<input id="first-name" maxlength="16" value="${esc(S.profile.firstName || "")}" placeholder="Ex. Alex" autocomplete="given-name"></label>
-        <label class="field" style="flex:1;min-width:130px">Poids de corps (kg)<input id="bw" inputmode="decimal" value="${esc(S.profile.bw||"")}" placeholder="${detectBodyweight() ? fmtN(detectBodyweight())+" (détecté)" : "Ex. 80"}"></label>
+        <label class="field" style="flex:1;min-width:130px" ${noxExam() ? "hidden" : ""}>Poids de corps (kg)<input id="bw" inputmode="decimal" value="${esc(S.profile.bw||"")}" placeholder="${detectBodyweight() ? fmtN(detectBodyweight())+" (détecté)" : "Ex. 80"}"></label>
         <label class="field" style="flex:1;min-width:130px">Barre droite<select id="bar">${[20,15,10].map(v => `<option value="${v}" ${(S.profile.bar||20)===v?"selected":""}>${v} kg</option>`).join("")}</select></label>
         <label class="field" style="flex:1;min-width:130px">Barre EZ<select id="bar-ez">${[10,8,7,12].map(v => `<option value="${v}" ${(S.profile.barEz||10)===v?"selected":""}>${v} kg</option>`).join("")}</select></label>
-        <label class="field" style="flex:1;min-width:130px">Taille (cm)<input id="height" inputmode="numeric" value="${esc(S.profile.height||"")}" placeholder="Ex. 178"></label>
-        <label class="field" style="flex:1;min-width:130px">Vous êtes<select id="sex"><option value="h" ${S.profile.sex!=="f"?"selected":""}>Un homme</option><option value="f" ${S.profile.sex==="f"?"selected":""}>Une femme</option></select></label></div>
+        <label class="field" style="flex:1;min-width:130px" ${noxExam() ? "hidden" : ""}>Taille (cm)<input id="height" inputmode="numeric" value="${esc(S.profile.height||"")}" placeholder="Ex. 178"></label>
+        <label class="field" style="flex:1;min-width:130px" ${noxExam() ? "hidden" : ""}>Vous êtes<select id="sex"><option value="h" ${S.profile.sex!=="f"?"selected":""}>Un homme</option><option value="f" ${S.profile.sex==="f"?"selected":""}>Une femme</option></select></label></div>
       <div class="row wrap"><button class="btn sm" data-act="whats-new">Les nouveautés</button><button class="btn sm" data-act="tuto-app">Revoir le guide de l'app</button><button class="btn sm" data-act="tuto">Revoir le tuto du Gymon</button></div>
       <div class="row wrap"><button class="btn sm" data-act="export">Sauvegarder mes données</button><button class="btn sm" data-act="import">Restaurer une sauvegarde</button>
         <label class="btn sm" for="gravl-file">Importer depuis Gravl (CSV)</label><input id="gravl-file" class="vh" type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain"></div>
@@ -5034,20 +5547,31 @@ const ACT = {
       toast("Exercice créé");
     };
   },
-  feel: b => { const i = +b.dataset.i, ex = A().exercises[i], v = +b.dataset.v; ex.feel = ex.feel===v ? 0 : v; touchProfile(); render();
+  feel: b => { const i = +b.dataset.i, ex = A().exercises[i], v = +b.dataset.v; ex.feel = ex.feel===v ? 0 : v; if(noxMet()) noxFeel(i); touchProfile(); render();
     if(ex.feel === 5) feelCheck(i); },
   // « Trop dur » (13 nov. 2026) : faire vérifier la saisie, car le coach s'en sert pour la prochaine séance
   "feel-fix": b => { const i = +b.dataset.i; closeSheet(); const rows = [...document.querySelectorAll(`.ex[data-i="${i}"] tr.set.done:not(.warm)`)];
     rows.forEach(r => { r.classList.add("check-me"); setTimeout(() => r.classList.remove("check-me"), 4000); });
     const last = rows[rows.length-1]; if(last){ last.scrollIntoView({block:"center", behavior:"smooth"}); const r = last.querySelector('[data-f="r"]'); if(r) r.focus(); } },
+  "nox-exam": () => noxExamOpen(),
+  "nox-src": () => noxSources(),
+  "nox-how": () => noxHow(),
+  "nox-org": () => noxOrgSheet(),
+  "nox-org-set": b => { const plan = S.profile.plan, n = plan && plan.days ? plan.days.length : (planDraft || initDraft()).n;
+    const ex = noxExam(); if(ex){ ex.org = b.dataset.v; } noxSetTpl(NOX_TPL[b.dataset.v][n] || (TEMPLATES[n] || [{}])[0].id); },
+  "nox-tpl": b => noxSetTpl(b.dataset.t),
+  "nox-talk": () => openSheet(noxSays("Que veux-tu, sujet ?", `<div class="nox-orgs">
+      <button class="card tpl" data-act="nox-exam"><b>🩺 Refaire l'examen</b><span class="small muted">Tes objectifs ont changé ? Je recalcule le protocole.</span></button>
+      <button class="card tpl" data-act="nox-org"><b>🧬 Organisation des séances</b><span class="small muted">Deux fois par semaine, ou un muscle par séance.</span></button>
+      <button class="card tpl" data-act="nox-src"><b>📚 Mes sources</b><span class="small muted">Les études derrière mes protocoles.</span></button></div>`)),
   "coach-why": b => { const ex = A().exercises[+b.dataset.i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan, preLoad(A().exercises, +b.dataset.i, true));
     const fr = c.from, lastTxt = fr ? (fr.W ? `${fmtN(fr.W)} kg × ${fr.minR}` : `${fr.minR} reps`) : "—";
-    openSheet(`<h3>${esc(e.name)}</h3>
+    openSheet(`<h3>${esc(e.name)}</h3>${noxMet() ? noxSays(`${esc(c.why)}${(c.notes || []).length ? `<br><span style="font-weight:500">${(c.notes || []).map(n => esc(n)).join(" ")}</span>` : ""}`) : ""}
       <div class="tiles"><div class="tile"><span>Aujourd'hui</span><strong>${c.w||c.r ? `${c.sets} × ${c.r||c.lo}` : `${c.lo}–${c.hi}`}</strong><small>${c.w ? fmtN(c.w)+" kg" : "reps"}</small></div>
         <div class="tile"><span>La dernière fois</span><strong>${lastTxt}</strong><small>${fr ? `ressenti : ${esc(FEEL[fr.feel-1].label.toLowerCase())}` : "jamais fait"}</small></div></div>
-      <p style="margin:0">${esc(c.why)}</p>
-      ${(c.notes || []).map(n => `<p class="small" style="margin:0">• ${esc(n)}</p>`).join("")}
-      <p class="small muted" style="margin:0">Sur cet exercice, on vise ${c.lo} à ${c.hi} reps par série. Repos conseillé : ${fmtClock(c.rest*1000)}. Les chiffres en gris dans les cases sont la proposition : touchez ✓ pour la valider, ou tapez ce que vous avez vraiment fait.</p>
+      ${noxMet() ? "" : `<p style="margin:0">${esc(c.why)}</p>
+      ${(c.notes || []).map(n => `<p class="small" style="margin:0">• ${esc(n)}</p>`).join("")}`}
+      <p class="small muted" style="margin:0">Sur cet exercice, on vise ${c.lo} à ${c.hi} reps par série. Repos conseillé : ${fmtClock(c.rest*1000)}. Les chiffres en gris dans les cases sont la proposition : touche ✓ pour la valider, ou tape ce que tu as vraiment fait.</p>
       <button class="btn" data-act="close">Compris</button>`); },
   "set-range": b => { const id = b.dataset.id, v = b.dataset.v; S.profile.ranges = S.profile.ranges || {};
     if(v==="auto") delete S.profile.ranges[id]; else S.profile.ranges[id] = v.split("-").map(Number);
@@ -5652,6 +6176,17 @@ async function importText(txt){
       if(o.uni) setExOpt(id, "uni", 1); const v = Math.min(500, Math.max(0, num(o.empty))); if(v) setExOpt(id, "empty", v); });
     if(d.photos && typeof d.photos === "object"){ Object.entries(d.photos).slice(0, 300).forEach(([id, ph]) => { if(safeId(id) && typeof ph === "string" && ph.length < 400000 && PH_RE.test(ph) && !photos()[id]) photos()[id] = ph; });
       if(!savePhotos()) toast("Toutes les photos n'ont pas pu être gardées (place)"); }
+    // Pr Noxwell (19 nov. 2026) : présentation, examen et protocole repris d'une sauvegarde si ce téléphone ne l'a pas encore vu
+    const nx = (d.profile || {}).nox;
+    if(!noxMet() && nx && typeof nx === "object" && isTime(nx.intro)){
+      const ex = nx.exam && typeof nx.exam === "object" && NOX_OBJ[nx.exam.obj] ? nx.exam : null, pr = nx.proto && typeof nx.proto === "object" && isTime(nx.proto.start) ? nx.proto : null;
+      const prec = v => Array.isArray(v) ? v.filter(k => NOX_LIFTS[k]).slice(0, 3) : typeof v === "string" ? v.slice(0, 10) : undefined;
+      S.profile.nox = {v:1, intro:nx.intro, ...(isTime(nx.later) ? {later:nx.later} : {}),
+        ...(ex ? {exam:{v:1, done:isTime(ex.done) ? ex.done : Date.now(), obj:ex.obj, prec:prec(ex.prec), exp:["deb","mid","pro"].includes(ex.exp) ? ex.exp : "mid",
+          n:Math.min(6, Math.max(2, Math.round(num(ex.n)) || 3)), days:Array.isArray(ex.days) ? ex.days.map(Number).filter(x => x >= 0 && x <= 6).slice(0, 6) : [], dur:Math.min(4, Math.max(0, Math.round(num(ex.dur)))), lieu:ex.lieu === "rien" ? "rien" : "salle", org:ex.org === "un" ? "un" : "deux"}} : {}),
+        ...(pr && NOX_OBJ[pr.obj] ? {proto:{k:Math.max(1, Math.round(num(pr.k)) || 1), start:pr.start, obj:pr.obj, prec:prec(pr.prec)}} : {})};
+      const g = (d.profile || {}).goal; if(g && NOX_OBJ[g.obj]) S.profile.goal = {obj:g.obj, prec:prec(g.prec)};
+    }
     if(Array.isArray((d.profile || {}).favs)) S.profile.favs = [...new Set([...(S.profile.favs || []), ...d.profile.favs.filter(id => safeId(id) && allEx().some(e => e.id === id))])].slice(0, 400);
     const p = d.profile || {};   // poids, taille, sexe : repris seulement si ce téléphone ne les a pas encore
     if(!S.profile.bw && num(p.bw) > 0 && num(p.bw) < 400){ S.profile.bw = num(p.bw); if(p.sex === "h" || p.sex === "f") S.profile.sex = p.sex; }

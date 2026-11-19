@@ -1,5 +1,5 @@
 // Garde l'app en cache pour qu'elle s'ouvre sans réseau
-const CACHE = "carnet-fonte-v102";
+const CACHE = "carnet-fonte-v103";
 const FILES = ["./", "index.html", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png"];
 // Photos : cache à part, gardé d'une version à l'autre (14 nov. 2026) ; seules les photos absentes sont téléchargées
 const IMG_CACHE = "gymon-img-v1";

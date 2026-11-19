@@ -8,7 +8,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
 (async () => {
   const b = await chromium.launch(), ctx = await b.newContext({...devices["iPhone 13"]}), p = await ctx.newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message));
-  await p.addInitScript(() => addEventListener("DOMContentLoaded", () => { gyHourFix = 12; }));   // midi : le Gymon est réveillé, quelle que soit l'heure du test
+  await p.addInitScript(() => addEventListener("DOMContentLoaded", () => { gyHourFix = 12; noxMaybeIntro = () => {}; }));   // midi : le Gymon est réveillé ; le Pr Noxwell (testé dans noxwell.js) ne surgit pas
   await p.goto(URL); await p.waitForTimeout(300);
   // Premier lancement : bienvenue, puis tuto du Gymon (5 écrans)
   await p.click('.sheet [data-act="close"]').catch(()=>{});
