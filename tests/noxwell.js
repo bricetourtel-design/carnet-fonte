@@ -124,6 +124,29 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const noGoal = await p1.evaluate(() => { S.profile.goal = null; const g = generatePlan(newDraft(3)); return g.days.some(d => d.items.some(it => it.cardio)); });
   ok(!noGoal, "sans objectif : programme inchangé, pas de cardio ajouté");
 
+  // 9. Étape 3 : apparition pour expliquer un phénomène vu pour la première fois, une par jour au plus
+  await p1.evaluate(() => { const c = creatureState(); document.getElementById("nox-layer") && document.getElementById("nox-layer").remove(); unlockBody();
+    S.profile.nox = {v:1, intro:Date.now(), seen:{}, stageSeen:c.stage}; c.washTs = Date.now() - 9 * 86400000; c.fridge = []; S.workouts = []; S.profile.friends = []; saveLocal(); tab = "creature"; render(); });
+  await p1.waitForTimeout(2800);
+  const pop = await p1.$eval(".nox-txt", e => e.textContent).catch(() => "");
+  ok(/vapeurs vertes/.test(pop), "première odeur : Noxwell surgit et l'explique", pop);
+  await p1.click(".nox-bub"); await p1.waitForTimeout(150);
+  ok(!/\d+ ?(jours|heures|%)/.test(await p1.$eval(".nox-txt", e => e.textContent)), "explication en mots, sans chiffres");
+  await p1.click('[data-nox="ok"]'); await p1.waitForTimeout(2500);
+  await p1.evaluate(() => { const c = creatureState(); c.fridge = [{id:"f1", k:"poulet", kg:500, t:Date.now()}]; render(); }); await p1.waitForTimeout(2000);
+  ok(await p1.$("#nox-layer") === null, "pas plus d'une apparition par jour");
+  // Rapport d'expérience
+  const rap = await p1.evaluate(() => { const D = 86400000, now = Date.now(), st = now - 30 * D;
+    S.profile.nox.exam = {done:st, obj:"force", prec:["dc"], exp:"mid", n:3, days:[0,2,4], dur:2, lieu:"salle", org:"deux"}; S.profile.nox.proto = {k:1, start:st, obj:"force", prec:["dc"]};
+    S.workouts = [-40, -10, 5, 15, 25].map((d, k) => ({id:"r" + k, name:"T", start:st + d * D, end:st + d * D + 3600000, prs:[], exercises:[{exId:"dc-barre", feel:3, sets:[{w:String(80 + k * 2.5), r:"6", done:true}]}]}));
+    const d = noxReportData(); noxReport(); return {up:d.up, n:d.gains.length, done:d.done, txt:document.getElementById("sheet-in").textContent}; });
+  ok(rap.up === 1 && rap.done === 3 && /Rapport d'expérience/.test(rap.txt) && /Développé couché/.test(rap.txt), "rapport d'expérience : force avant/pendant, séances faites", rap);
+  await p1.evaluate(() => closeSheet());
+  // Un muscle par séance sur 5 jours
+  const bro = await p1.evaluate(() => { const t = TEMPLATES[5].find(x => x.id === NOX_TPL.un[5]); const d = newDraft(5); d.tpl = t.id; d.days.forEach((x, i) => x.muscles = t.days[i].slice());
+    const g = generatePlan(d); return {name:t.name, days:g.days.map(x => x.name), items:g.days[0].items.length}; });
+  ok(bro.name === "Un muscle par séance" && bro.days[0] === "Pectoraux" && bro.items >= 3, "un muscle par séance sur 5 jours : une séance pecs avec plusieurs exercices", bro);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");

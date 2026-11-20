@@ -857,6 +857,8 @@ body.nox-shake main{animation:nxshake .38s linear}
 .nox-tiles strong{display:block;font-size:18px;color:var(--ok)}.nox-tiles span{font-size:11.5px;color:var(--muted);line-height:1.2;display:block;margin-top:2px}
 .nox-xp{border-color:rgba(34,211,238,.5);background:linear-gradient(160deg,rgba(34,211,238,.12),var(--glass))}
 .nox-xp h3{margin:0 0 6px;font-size:16.5px}.nox-xp p{margin:0 0 8px;font-size:14.5px;line-height:1.38}.nox-xp p.why{font-size:12.5px;color:var(--muted)}
+.nox-gains div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.nox-gains b.up{color:var(--ok)}.nox-gains b.down{color:var(--danger)}
 .nox-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .nox-sheet-h{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
 .nox-sheet-h .nox-face{width:58px;height:64px;border-radius:16px}
@@ -919,7 +921,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 b";
+const APP_VERSION = "2026-11-20 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2002,9 +2004,10 @@ const G = {
   push:["Pectoraux","Épaules","Triceps"], pull:["Dos","Biceps"], legs:["Jambes","Abdos"],
   upper:["Pectoraux","Dos","Épaules","Biceps","Triceps"], lower:["Jambes","Abdos"],
   full:["Jambes","Pectoraux","Dos","Épaules","Biceps","Triceps"],
+  pec:["Pectoraux"], dos:["Dos"], epa:["Épaules"], bras:["Biceps","Triceps"], jab:["Jambes","Abdos"], jam:["Jambes"],
   pt:["Pectoraux","Triceps"], db:["Dos","Biceps"], sa:["Épaules","Biceps","Triceps","Abdos"], ja:["Jambes","Abdos"], pd:["Pectoraux","Dos"]
 };
-const DAY_NAMES = [[G.push,"Push"],[G.pull,"Pull"],[G.legs,"Jambes"],[G.upper,"Haut du corps"],[G.full,"Full body"],[G.pt,"Pecs + Triceps"],[G.db,"Dos + Biceps"],[G.sa,"Épaules + Bras"],[G.pd,"Pecs + Dos"]];
+const DAY_NAMES = [[G.bras,"Bras"],[G.push,"Push"],[G.pull,"Pull"],[G.legs,"Jambes"],[G.upper,"Haut du corps"],[G.full,"Full body"],[G.pt,"Pecs + Triceps"],[G.db,"Dos + Biceps"],[G.sa,"Épaules + Bras"],[G.pd,"Pecs + Dos"]];
 const DUOS = [
   {m:G.pt, label:"Pecs + Triceps", why:"Les triceps travaillent déjà dans les développés : on les finit dans la foulée."},
   {m:G.db, label:"Dos + Biceps", why:"Les biceps participent aux tirages : même logique de muscles synergiques."},
@@ -2024,9 +2027,11 @@ const TEMPLATES = {
   4:[{id:"ul2", name:"Haut / Bas ×2", rec:true, desc:"Le grand classique : chaque muscle 2 fois, 48 h de récupération faciles à tenir.", days:[G.upper,G.lower,G.upper,G.lower]},
      {id:"duo4", name:"Duos : Pecs-Triceps / Dos-Biceps / Jambes / Épaules-Bras", desc:"Séances par duos de muscles synergiques, chaque muscle 1 à 2 fois.", days:[G.pt,G.db,G.ja,G.sa]}],
   5:[{id:"ulppl", name:"Haut / Bas + Push / Pull / Jambes", rec:true, desc:"Chaque muscle 2 fois avec plus de volume.", days:[G.upper,G.lower,G.push,G.pull,G.legs]},
-     {id:"duo5", name:"Duos sur 5 jours", desc:"Pecs-Triceps, Dos-Biceps, Jambes, Épaules-Bras, Pecs-Dos.", days:[G.pt,G.db,G.ja,G.sa,G.pd]}],
+     {id:"duo5", name:"Duos sur 5 jours", desc:"Pecs-Triceps, Dos-Biceps, Jambes, Épaules-Bras, Pecs-Dos.", days:[G.pt,G.db,G.ja,G.sa,G.pd]},
+     {id:"bro5", name:"Un muscle par séance", desc:"Pecs, Dos, Jambes, Épaules, Bras : chaque muscle une seule fois par semaine, avec beaucoup de séries d'un coup.", days:[G.pec,G.dos,G.jab,G.epa,G.bras]}],
   6:[{id:"ppl2", name:"Push / Pull / Jambes ×2", rec:true, desc:"Chaque muscle 2 fois, volume élevé : pour bien récupérer, dormez et mangez en conséquence.", days:[G.push,G.pull,G.legs,G.push,G.pull,G.legs]},
-     {id:"ul3", name:"Haut / Bas ×3", desc:"Chaque muscle 3 fois par semaine.", days:[G.upper,G.lower,G.upper,G.lower,G.upper,G.lower]}]
+     {id:"ul3", name:"Haut / Bas ×3", desc:"Chaque muscle 3 fois par semaine.", days:[G.upper,G.lower,G.upper,G.lower,G.upper,G.lower]},
+     {id:"bro6", name:"Un muscle par séance", desc:"Pecs, Dos, Jambes, Épaules, Bras, puis Jambes : un muscle par jour, les jambes deux fois.", days:[G.pec,G.dos,G.jab,G.epa,G.bras,G.jam]}]
 };
 const DEFAULT_DAYS = {1:[0],2:[0,3],3:[0,2,4],4:[0,1,3,4],5:[0,1,2,4,5],6:[0,1,2,3,4,5]};
 const sameSet = (a,b) => a.length===b.length && a.every(x => b.includes(x));
@@ -2217,7 +2222,8 @@ const NOX_LIFTS = {dc:["dc-barre","Développé couché"], sq:["squat","Squat"], 
 const NOX_UPPER = ["Pectoraux","Dos","Épaules","Biceps","Triceps"], NOX_LOWER = ["Jambes"];
 const NOX_DUR = [30, 45, 60, 75, 90];
 // Rythme par muscle → organisation (TEMPLATES existants), selon le nombre de séances
-const NOX_TPL = {deux:{2:"f2", 3:"f3", 4:"ul2", 5:"ulppl", 6:"ppl2"}, un:{2:"f2", 3:"ppl", 4:"duo4", 5:"duo5", 6:"ppl2"}};
+const NOX_TPL = {deux:{2:"f2", 3:"f3", 4:"ul2", 5:"ulppl", 6:"ppl2"}, un:{2:"f2", 3:"ppl", 4:"duo4", 5:"bro5", 6:"bro6"}};
+const NOX_UN = /^(ppl|duo4|duo5|bro5|bro6)$/;
 const noxTplName = (n, org) => { const t = (TEMPLATES[n] || []).find(x => x.id === (NOX_TPL[org] || {})[n]); return t ? t.name : ""; };
 
 /* --- Effets de l'objectif sur le programme (generatePlan) --- */
@@ -2292,7 +2298,7 @@ function noxProof(){
 
 /* --- Arrivée : présentation sur la page Gymon, une seule fois, à une visite calme --- */
 let noxTimer = null;
-function noxSchedule(){ clearTimeout(noxTimer); if(noxMet()) return; noxTimer = setTimeout(noxMaybeIntro, 1200); }
+function noxSchedule(){ clearTimeout(noxTimer); noxTimer = setTimeout(noxMet() ? noxMaybePop : noxMaybeIntro, 1200); }
 function noxCalm(){
   if(tab !== "creature" || S.profile.active || document.visibilityState !== "visible") return false;
   if(document.getElementById("celebrate") || document.getElementById("nox-layer") || !document.getElementById("sheet").hidden || !document.getElementById("tuto").hidden) return false;
@@ -2305,7 +2311,7 @@ function noxCalm(){
 function noxMaybeIntro(){ if(noxMet() || !noxCalm()) return; const c = creatureState(); noxIntro(c.fidelity >= NOX.oldFid ? "old" : "new"); }
 function noxIntro(kind){
   const c = creatureState(), n = c.fidelity || 0, name = c.name ? esc(c.name) : "Ton Gymon";
-  const st = noxSt(); st.intro = Date.now(); touchProfile();
+  const st = noxSt(); st.intro = Date.now(); st.stageSeen = c.stage; st.seen = st.seen || {}; NOX_PHEN.forEach(ph => { if(ph.on(c)) st.seen[ph.k] = Date.now(); }); touchProfile();
   const steps = kind === "old" ? [
     {t:`FASCINANT ! Un spécimen de <b>${n} séances</b> !`, f:"grin", boom:true},
     {t:`Professeur <b>Noxwell</b>. Je t'observe depuis ${n} séances, caché derrière la machine à mollets. Pardon. C'était pour la science.`, f:"smirk"},
@@ -2317,11 +2323,17 @@ function noxIntro(kind){
     {t:"Il grandit à chaque répétition que <b>TU</b> fais. Ton corps est mon laboratoire… et le sien aussi !", f:"grin"},
     {t:"Viens me voir dans <b>Routine</b> : un premier examen, quelques questions, et je te concocte un protocole sur mesure. Mouahahaha !", f:"grin", end:true}
   ];
+  noxStage(steps, [["exam", "🧪 Passer l'examen", true], ["later", "Plus tard"]], (k, leave) => {
+    if(k === "exam") leave("Excellent ! Je prépare les électrodes…", () => noxExamOpen());
+    else { noxSt().later = Date.now(); touchProfile(); leave("Soit. La science sait attendre… un peu. Je t'attends dans <b>Routine</b>."); } });
+}
+// Scène plein écran : fumée, Noxwell monte, bulles à toucher, boutons sur la dernière bulle
+function noxStage(steps, btns, onPick){
   const el = document.createElement("div"); el.id = "nox-layer"; el.className = "nox-layer";
   el.innerHTML = `<div class="nox-dim"></div><div class="nox-smoke"></div><div class="nox-char">${noxSVG()}</div>
     <div class="nox-bub"><span class="nox-tag">Pr Noxwell</span><div class="nox-txt"></div>
       <div class="nox-foot"><div class="nox-dots"></div><span class="nox-hint">Toucher pour continuer ›</span></div>
-      <div class="nox-btns" hidden><button class="btn primary" data-nox="exam">🧪 Passer l'examen</button><button class="btn" data-nox="later">Plus tard</button></div></div>`;
+      <div class="nox-btns" hidden>${btns.map(([k, l, pr]) => `<button class="btn ${pr ? "primary" : ""}" data-nox="${k}">${l}</button>`).join("")}</div></div>`;
   document.body.appendChild(el); lockBody();
   const ch = el.querySelector(".nox-char"), bub = el.querySelector(".nox-bub"), txt = el.querySelector(".nox-txt");
   let i = 0, busy = true;
@@ -2342,10 +2354,48 @@ function noxIntro(kind){
   setTimeout(() => { ch.classList.remove("in"); ch.classList.add("idle"); bub.classList.add("in"); show(0); busy = false; }, 1150);
   el.addEventListener("click", e => {
     const b = e.target.closest("[data-nox]");
-    if(b){ if(b.dataset.nox === "exam") leave("Excellent ! Je prépare les électrodes…", () => noxExamOpen());
-      else { noxSt().later = Date.now(); touchProfile(); leave("Soit. La science sait attendre… un peu. Je t'attends dans <b>Routine</b>."); } return; }
+    if(b){ onPick(b.dataset.nox, leave); return; }
     if(busy || steps[i].end) return; show(++i);
   });
+}
+/* Apparitions surprises (étape 3, 20 nov. 2026) : au plus une par jour, à une visite calme de la page Gymon.
+   1) La première fois qu'un phénomène arrive, Noxwell l'explique (en mots, sans chiffres, sans nom de stade).
+   2) Une nouvelle expérience à proposer (semaine légère, plateau). 3) La fin d'un protocole : rapport disponible. */
+const NOX_PHEN = [
+  {k:"evo", on:c => c.stage > (noxSt().stageSeen ?? c.stage), t:["FASCINANT ! Il a muté !", "Sa forme change avec ta fidélité : chaque séance validée le rapproche de la suivante. Le moment exact ? Propre à chaque spécimen. Même moi, je l'ignore."]},
+  {k:"grandefaim", on:c => !c.dead && creatureSatiety(c) < 30, t:["Alerte au labo : le spécimen a très faim !", "Sans séance, sa satiété descend jusqu'à zéro… et là, c'est fini. Une séance le nourrit, et ton frigo peut l'aider à tenir."]},
+  {k:"faim", on:c => !c.dead && creatureSatiety(c) < 50, t:["Intéressant… il a un petit creux.", "Ce qu'il mange, c'est la fonte que tu soulèves. Après un repas, il est calé quelques heures, puis la faim monte doucement. Regarde ses bras : plus ils tombent, plus il a faim."]},
+  {k:"odeur", on:c => isSmelly(c), t:["Pouah ! Ces vapeurs vertes… et cette mouche !", "Après une bonne semaine sans douche, le spécimen sent. Aucun danger pour sa santé, beaucoup pour mon nez. Une douche, et c'est réglé."]},
+  {k:"sueur", on:c => isSweaty(c), t:["Il transpire ! Signe d'un bon effort.", "Après une séance, il sue un moment. Une petite douche le remet à neuf."]},
+  {k:"frigo", on:c => (c.fridge || []).length > 0, t:["Tiens, des restes au frigo !", "Ce qu'il ne mange pas tout de suite part au frigo. Ça se garde quelques jours, le plus ancien d'abord. Ne laisse rien périmer !"]},
+  {k:"crit", on:() => S.workouts.some(w => w.exercises.some(x => x.sets.some(y => y.crit))), t:["Coup critique réussi ! J'ai vu l'éclair ⚡", "Certaines séances cachent une série critique, sur un exercice qui te sort de ta zone de confort. Atteins l'objectif, et il mange double."]},
+  {k:"record", on:() => S.workouts.some(w => (w.prs || []).length), t:["UN RECORD ! FASCINANT !", "Chaque record lui donne un bonus de muscle et un steak qui le cale longtemps. Ta force et la sienne sont liées."]},
+  {k:"festin", on:c => (c.journal || []).some(j => j.k && /^f\d/.test(j.k)), t:["Un festin ! Quelle semaine…", "Une semaine sans jamais le laisser avoir faim, et le dimanche il a droit à un festin. La régularité, ça se mange."]},
+  {k:"pois", on:c => !!c.peas || (c.journal || []).some(j => /pois chiches/.test(j.t || "")), t:["Une boîte de pois chiches ? Mystérieux…", "Elles arrivent rarement. Quand il est à bout de forces, il l'ouvre tout seul pour tenir. Garde-la précieusement."]},
+  {k:"ami", on:() => (S.profile.friends || []).length > 0, t:["Un autre spécimen ! Pour la science, c'est inestimable.", "S'entraîner à deux, c'est plus de régularité. Et voir son Gymon à côté d'un autre… très instructif."]}
+];
+function noxMaybePop(){
+  if(!noxMet() || !noxCalm()) return;
+  const st = noxSt(), c = creatureState(), today = dayKey(); st.seen = st.seen || {};
+  if(st.popDay === today) return;
+  const go = (steps, btns, onPick) => { st.popDay = today; touchProfile(); noxStage(steps, btns, onPick); };
+  const ph = NOX_PHEN.find(x => !st.seen[x.k] && x.on(c));
+  if(ph){ st.seen[ph.k] = Date.now(); if(ph.k === "evo") st.stageSeen = c.stage;
+    return go([{t:ph.t[0], f:"grin", boom:true}, {t:ph.t[1], f:"smirk", end:true}], [["ok", "Compris !", true]], (k, leave) => leave("La science avance. J'observe !")); }
+  if(c.stage > (st.stageSeen ?? c.stage)) st.stageSeen = c.stage;   // évolution déjà expliquée une fois : on suit sans revenir
+  const ex = noxExam(), pr = noxProof(), p = st.proto; if(!ex || !p) return;
+  if(pr && pr.week > NOX.weeks && !(st.report || {})[p.k]){ (st.report = st.report || {})[p.k] = Date.now();
+    return go([{t:`Ton protocole n° ${p.k} est terminé ! FASCINANT !`, f:"grin", boom:true}, {t:"J'ai compilé toutes mes mesures : le <b>rapport d'expérience</b> est prêt. Alors, hypothèse confirmée ?", f:"smirk", end:true}],
+      [["rep", "📊 Voir le rapport", true], ["later", "Plus tard"]], (k, leave) => leave(k === "rep" ? "Accroche-toi à ta blouse…" : "Il t'attend dans <b>Routine</b>.", k === "rep" ? () => { tab = "routine"; render(); noxReport(); } : null)); }
+  const key = noxProposalKey(); if(key && !(st.props || {})[key]){ (st.props = st.props || {})[key] = Date.now();
+    return go([{t:"Psst… J'ai une nouvelle expérience à te proposer.", f:"smirk", boom:false}, {t:key.startsWith("light") ? "Une <b>semaine allégée</b> pour faire retomber la fatigue et repartir plus fort." : `Un exercice stagne : j'ai une idée pour le relancer.`, f:"grin", end:true}],
+      [["lab", "🧪 Voir au labo", true], ["later", "Plus tard"]], (k, leave) => leave(k === "lab" ? "Suis-moi !" : "Soit. Elle t'attend dans <b>Routine</b>.", k === "lab" ? () => { tab = "routine"; render(); window.scrollTo(0, 0); } : null)); }
+}
+function noxProposalKey(){
+  const st = noxSt(), pr = noxProof(), snooze = st.lightSnooze && Date.now() - st.lightSnooze < 4 * 86400000;
+  if(lightOn(Date.now())) return "";
+  if(!snooze && ((pr && pr.week > NOX.weeks) || tiredCount() >= 3)) return "light" + ((st.proto || {}).k || 1) + (pr && pr.week > NOX.weeks ? "" : ":" + dayKey().slice(0, 7));
+  const pl = plateaus()[0]; return pl ? "plateau:" + pl.id : "";
 }
 
 /* --- Premier examen : plein écran, une question à la fois --- */
@@ -2358,7 +2408,7 @@ function noxPrefill(){
   const dur = NOX_DUR.reduce((b, v, i) => Math.abs(v - min) < Math.abs(NOX_DUR[b] - min) ? i : b, 2);
   const a = {n, days:days.slice(0, n), dur, lieu:atHome() ? "rien" : "salle", sexe:S.profile.sex === "f" ? "f" : S.profile.sex === "h" ? "h" : undefined,
     bw:S.profile.bw || "", height:S.profile.height || "", exp:S.workouts.length ? (months < 6 ? "deb" : months < 24 ? "mid" : "pro") : undefined,
-    org:p && /^(ppl|duo4|duo5)$/.test(p.tpl || "") ? "un" : p ? "deux" : undefined, ss:S.profile.ssPref};
+    org:p && NOX_UN.test(p.tpl || "") ? "un" : p ? "deux" : undefined, ss:S.profile.ssPref};
   if(a.days.length < n) a.days = DEFAULT_DAYS[n].slice();
   return ex ? {...a, ...ex, days:(ex.days || a.days).slice()} : a;
 }
@@ -2537,6 +2587,38 @@ function noxProposals(){
   return out.slice(0, 2).join("");
 }
 
+/* --- Rapport d'expérience (étape 3) : bilan du protocole avec les seules données du joueur --- */
+function noxReportData(){
+  const ex = noxExam(), p = noxSt().proto; if(!ex || !p) return null;
+  const since = S.workouts.filter(w => w.start >= p.start), weeks = Math.max(1, Math.min(NOX.weeks, Math.ceil((Date.now() - p.start) / (7 * 86400000))));
+  const want = ex.n * weeks, recs = since.reduce((t, w) => t + (w.prs || []).length, 0);
+  const ids = [...new Set(since.flatMap(w => w.exercises.map(x => x.exId)))];
+  const gains = ids.map(id => { const e = exById(id); if(!e || isCardio(e)) return null; const h = exHistory(id);
+    const b = h.filter(x => x.ts < p.start && x.ts > p.start - 120 * 86400000), a = h.filter(x => x.ts >= p.start); if(!b.length || !a.length) return null;
+    const B = Math.max(...b.map(x => x.best)), A = Math.max(...a.map(x => x.best)); return B > 0 ? {e, pct:Math.round((A / B - 1) * 100), kg:A - B} : null; }).filter(Boolean).sort((x, y) => y.pct - x.pct);
+  const before = S.workouts.filter(w => w.start < p.start && w.start >= p.start - 28 * 86400000), volW = l => l.reduce((t, w) => t + wVolume(w), 0);
+  const vB = before.length ? volW(before) / 4 : 0, vA = since.length ? volW(since) / weeks : 0;
+  const cardio = since.reduce((t, w) => t + w.exercises.reduce((u, x) => u + (isCardio(exById(x.exId)) ? cardioMin(x) : 0), 0), 0);
+  return {p, ex, weeks, done:since.length, want, recs, gains, up:gains.filter(g => g.pct > 0).length, vB, vA, cardio};
+}
+function noxReport(){
+  const d = noxReportData(); if(!d){ toast("Passe d'abord l'examen du Pr Noxwell"); return; }
+  const reg = d.want ? Math.round(d.done / d.want * 100) : 0, okPlan = reg >= 60, good = d.gains.length ? d.up >= Math.ceil(d.gains.length / 2) : d.recs > 0;
+  const verdict = !d.done ? "Pas encore de séance dans ce protocole : la science a besoin de données !"
+    : !okPlan ? `Protocole suivi à ${reg} % : trop peu pour conclure. Hypothèse : la régularité d'abord, les résultats suivront.`
+    : good ? "Hypothèse confirmée : le protocole fonctionne ! FASCINANT. On continue, ou on change d'objectif ?"
+    : "Résultats timides malgré ta régularité. Hypothèse : changer de stimulus. Refais l'examen, j'ajusterai le protocole.";
+  const vPct = d.vB ? Math.round((d.vA / d.vB - 1) * 100) : null;
+  openSheet(noxSays(verdict, `<h3 style="margin:4px 0 8px">📊 Rapport d'expérience · protocole n° ${d.p.k}</h3>
+    <div class="small muted" style="margin-bottom:10px">${esc(NOX_OBJ[d.p.obj] ? NOX_OBJ[d.p.obj].l : "")} · depuis le ${esc(fmtDate(d.p.start, {day:"numeric", month:"long"}))} · ${d.weeks} semaine${d.weeks > 1 ? "s" : ""}</div>
+    <div class="nox-tiles"><div><strong>${d.done}/${d.want}</strong><span>séances faites</span></div><div><strong>${d.recs}</strong><span>record${d.recs > 1 ? "s" : ""}</span></div>
+      <div><strong>${vPct === null ? "—" : (vPct >= 0 ? "+" : "") + vPct + " %"}</strong><span>volume par semaine</span></div></div>
+    ${d.gains.length ? `<div class="small muted" style="margin:12px 0 4px">Force estimée (1RM), avant → pendant le protocole</div><div class="nox-gains">${d.gains.slice(0, 5).map(g => `<div><span>${esc(g.e.name)}</span><b class="${g.pct > 0 ? "up" : g.pct < 0 ? "down" : ""}">${g.pct > 0 ? "+" : ""}${g.pct} %</b></div>`).join("")}</div>
+      <p class="small muted" style="margin:6px 0 0">${d.up} exercice${d.up > 1 ? "s" : ""} sur ${d.gains.length} en progrès.</p>` : `<p class="small muted">Pas encore d'exercice comparable avant et pendant le protocole.</p>`}
+    ${d.cardio ? `<p class="small" style="margin:10px 0 0">🫀 ${fmtN(d.cardio, 0)} min de cardio pendant le protocole.</p>` : ""}
+    <div class="row" style="margin-top:14px;gap:8px"><button class="btn" style="flex:1" data-act="nox-exam">🩺 Refaire l'examen</button><button class="btn primary" style="flex:1" data-act="close">On continue !</button></div>`));
+}
+
 /* --- Bloc labo en haut de la page Routine --- */
 function noxHeroLine(){
   const ex = noxExam();
@@ -2559,7 +2641,8 @@ function noxBlock(){
       <button class="nox-org" data-act="nox-org"><span>🧬 Organisation : <b>${esc(tn || "à définir")}</b></span><span>changer ›</span></button>
       ${pr ? `<div class="nox-bar"><i style="width:${Math.min(100, Math.round(pr.weeks / NOX.weeks * 100))}%"></i></div><div class="nox-barl"><span>Semaine ${Math.min(pr.week, NOX.weeks)} sur ${NOX.weeks}</span><span>${pr.done} séance${pr.done > 1 ? "s" : ""} faite${pr.done > 1 ? "s" : ""}</span></div>
         <div class="nox-tiles">${pr.tiles.slice(0, 3).map(([v, l]) => `<div><strong>${esc(v)}</strong><span>${esc(l)}</span></div>`).join("")}</div>` : ""}
-      <div class="nox-levs">${noxLevers(g).map(([i, t]) => `<div><i>${i}</i><span>${esc(t)}</span></div>`).join("")}</div></section>` : ""}`;
+      <div class="nox-levs">${noxLevers(g).map(([i, t]) => `<div><i>${i}</i><span>${esc(t)}</span></div>`).join("")}</div>
+      <button class="btn sm wide" data-act="nox-report" style="margin-top:6px">📊 Rapport d'expérience${pr && pr.week > NOX.weeks ? " · prêt" : ""}</button></section>` : ""}`;
 }
 function noxFooter(){
   return `<div class="nox-two"><button class="btn" data-act="nox-src">📚 Mes sources</button><button class="btn" data-act="nox-exam">🩺 ${noxExam() ? "Refaire l'examen" : "Passer l'examen"}</button></div>`;
@@ -2578,7 +2661,7 @@ function noxSources(){
 }
 function noxOrgSheet(){
   const plan = S.profile.plan, n = plan && plan.days ? plan.days.length : (planDraft || initDraft()).n;
-  const cur = plan && /^(ppl|duo4|duo5)$/.test(plan.tpl || "") ? "un" : "deux";
+  const cur = plan && NOX_UN.test(plan.tpl || "") ? "un" : "deux";
   openSheet(noxSays(`Tu t'entraînes <b>${n} fois</b> par semaine. Mon conseil : chaque muscle <b>deux fois</b> par semaine, c'est ce qui fait le plus progresser.`,
     `<div class="nox-orgs">
       <button class="card tpl" data-act="nox-org-set" data-v="deux" aria-pressed="${cur === "deux"}"><span class="row"><b style="flex:1">Deux fois par semaine</b><span class="ctag">Conseillé</span></span><span class="small muted">${esc(noxTplName(n, "deux"))}</span></button>
@@ -4656,6 +4739,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-20", t:"🧪 Le labo s'agrandit", x:"Le Pr Noxwell passe désormais te voir de temps en temps sur la page Gymon : pour t'expliquer ce qui arrive à ton Gymon la première fois que ça se produit, ou pour te proposer une nouvelle expérience. En fin de protocole, il publie son rapport d'expérience (aussi dans Routine › Parler à Noxwell). Et l'organisation « un muscle par séance » existe maintenant sur 5 et 6 jours."},
   {d:"2026-11-20", t:"⛓ Les supersets", x:"Deux exercices enchaînés sans pause, repos seulement après le 2e : la séance est plus courte. Le Pr Noxwell te demande dans son examen si ça te tente. Tu peux aussi en créer ou en retirer à la main : dans Routine, touche « ⛓ Superset » entre deux exercices ; en séance, menu ⋯ d'un exercice. Et la reprise allégée ne se déclenche plus si le muscle a travaillé récemment avec un autre exercice."},
   {d:"2026-11-20", t:"🏋️ Un coach plus malin", x:"Le coach suit mieux ta vraie force : fini les charges qui tournent en rond ou qui redescendent après une semaine plus légère. Si ta 1re série dépasse nettement l'objectif (ou en est loin), il recalcule la charge des séries suivantes sur-le-champ. Sur la fiche d'un exercice, indique le palier de ta machine (de 5 en 5 kg…) : il ne proposera que des charges possibles. Les débutants progressent plus vite, la reprise après une longue pause est plus douce, et en isolation on va un peu plus près de l'échec."},
   {d:"2026-11-19", t:"🧪 Un visiteur inattendu", x:"Quelqu'un s'intéresse de très près à ton Gymon… Il se présentera sur la page Gymon dès que ton Gymon aura un peu grandi. Il connaît la musculation sur le bout des doigts : écoute ses conseils, mais c'est toi qui as le dernier mot. Au passage, le coach te tutoie désormais."},
@@ -5735,6 +5819,7 @@ const ACT = {
   "nox-org-set": b => { const plan = S.profile.plan, n = plan && plan.days ? plan.days.length : (planDraft || initDraft()).n;
     const ex = noxExam(); if(ex){ ex.org = b.dataset.v; } noxSetTpl(NOX_TPL[b.dataset.v][n] || (TEMPLATES[n] || [{}])[0].id); },
   "nox-tpl": b => noxSetTpl(b.dataset.t),
+  "nox-report": () => noxReport(),
   "nox-ss": () => { S.profile.ssPref = S.profile.ssPref === "oui" ? "non" : "oui"; const ex = noxExam(); if(ex) ex.ss = S.profile.ssPref;
     planDraft = initDraft(); planDraft.days.forEach(x => delete x.ss); if(S.profile.plan) planSave(); closeSheet(); render();
     toast(S.profile.ssPref === "oui" ? "Supersets ajoutés à ton programme" : "Supersets retirés de ton programme"); },
@@ -5746,6 +5831,7 @@ const ACT = {
   "nox-plateau-no": b => { (noxSt().dis = noxSt().dis || {})[b.dataset.id] = Date.now(); touchProfile(); render(); },
   "nox-talk": () => openSheet(noxSays("Que veux-tu, sujet ?", `<div class="nox-orgs">
       <button class="card tpl" data-act="nox-exam"><b>🩺 Refaire l'examen</b><span class="small muted">Tes objectifs ont changé ? Je recalcule le protocole.</span></button>
+      <button class="card tpl" data-act="nox-report"><b>📊 Rapport d'expérience</b><span class="small muted">Mes mesures depuis le début du protocole : hypothèse confirmée ?</span></button>
       <button class="card tpl" data-act="nox-ss"><b>⛓ Supersets : ${S.profile.ssPref === "oui" ? "oui" : "non"}</b><span class="small muted">${S.profile.ssPref === "oui" ? "Je les retire de ton programme." : "Je les ajoute à ton programme pour gagner du temps."}</span></button>
       <button class="card tpl" data-act="nox-org"><b>🧬 Organisation des séances</b><span class="small muted">Deux fois par semaine, ou un muscle par séance.</span></button>
       <button class="card tpl" data-act="nox-src"><b>📚 Mes sources</b><span class="small muted">Les études derrière mes protocoles.</span></button></div>`)),
