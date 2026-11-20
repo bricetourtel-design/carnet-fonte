@@ -24,7 +24,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p0.waitForTimeout(1800);
   ok(await p0.$("#nox-layer") === null, "Gymon au stade 2 : Noxwell n'arrive pas");
   await p0.evaluate(() => { tab = "routine"; render(); });
-  ok(await p0.$(".nox-hero") === null && await p0.$(".tpls") !== null, "avant son arrivée, la page Routine est inchangée");
+  ok(await p0.$(".nox-hero") === null && await p0.$(".tpls") === null, "avant son arrivée : pas de bloc Noxwell, pas d'« Organisation proposée » (choisie au bilan)");
 
   // 2. Arrivée à une visite calme (stade 3), nouveau joueur
   await p0.evaluate(() => { const c = creatureState(); c.stage = 3; c.fidelity = 5; c.journal = []; saveLocal(); tab = "creature"; render(); });
@@ -44,7 +44,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   // 3. La page Routine devient son labo, avec l'invitation à l'examen
   await p0.evaluate(() => { tab = "routine"; render(); });
   ok(await p0.$(".nox-hero") !== null && await p0.$('.nox-hero [data-act="nox-exam"]') !== null, "Routine : bloc Noxwell avec « Passer l'examen »");
-  ok(await p0.$(".tpls") !== null, "sans examen, l'organisation proposée reste affichée");
+  ok(await p0.$(".tpls") === null, "sans examen : pas d'« Organisation proposée » sur la page");
 
   // 4. Premier examen complet : prise de muscle, haut du corps, 4 séances, 45 min, avec matériel, deux fois par semaine
   await p0.click('.nox-hero [data-act="nox-exam"]'); await p0.waitForTimeout(300);
