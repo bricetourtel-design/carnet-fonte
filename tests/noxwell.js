@@ -180,6 +180,16 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return r; });
   ok(ssNo.accept === 0 && ssNo.edit === 0 && ssNo.keep === 0, "supersets refusés au 2e examen : plus aucun superset, même en gardant le programme", ssNo);
 
+  // 11. Routine enregistrée automatiquement : plus de bouton « Valider la routine », chaque réglage sauvegarde
+  const auto = await p1.evaluate(() => { tab = "routine"; planDraft = null; render(); const r = {btn:!!document.querySelector('[data-act="plan-save"]')};
+    const before = JSON.stringify(S.profile.routines.filter(x => x.plan).map(x => x.items.map(i => i.exId)));
+    document.querySelector('[data-act="plan-min"][data-t="30"]').click();
+    r.min = S.profile.plan.days[0].min; r.changed = JSON.stringify(S.profile.routines.filter(x => x.plan).map(x => x.items.map(i => i.exId))) !== before;
+    S.profile.novelty = null; planDraft.days[0].muscles = ["Biceps", "Triceps"]; planSave(); const nov = S.profile.novelty && S.profile.novelty.exId; document.querySelector('[data-act="plan-min"][data-t="60"]').click(); planDraft = null; render();
+    r.novKept = !!nov && (S.profile.novelty.exId === nov && S.profile.routines.some(x => x.plan && x.items.some(i => i.exId === nov)));
+    r.label = /Enregistré automatiquement/.test(document.getElementById("view").textContent); return r; });
+  ok(!auto.btn && auto.min === 30 && auto.changed && auto.novKept && auto.label, "routine : enregistrement automatique, la nouveauté du mois ne change pas", auto);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");

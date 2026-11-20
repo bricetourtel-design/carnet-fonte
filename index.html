@@ -921,7 +921,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 f";
+const APP_VERSION = "2026-11-20 g";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2146,7 +2146,16 @@ function generatePlan(d){
   });
   // Nouveauté : une par mois au plus, sur un exercice d'isolation de la plus grosse séance
   const nov = S.profile.novelty, due = !d.noNovelty && (!nov || Date.now() - nov.date > 30*86400000);
+  // Routine enregistrée automatiquement (20 nov. 2026) : la nouveauté du mois reste la même d'un enregistrement à l'autre
+  const keepNov = !d.noNovelty && !due && !d.novOff && nov && nov.exId;
   let novelty = null;
+  if(keepNov && out.length){   // la nouveauté déjà choisie reprend une place d'isolation de son muscle, où qu'elle soit
+    const usedAll = new Set(out.flatMap(x => x.items.map(y => y.exId))), ke = exById(nov.exId);
+    const kc = ke && usableEx(ke) && candidatesFor(ke.muscle, st).find(c => c.e.id === ke.id);
+    if(kc && !usedAll.has(ke.id)) for(const day of out.slice().sort((a,b) => b.items.length-a.items.length)){
+      const si = [...day.items.keys()].reverse().find(i => !day.items[i].comp && !day.items[i].cardio && day.items[i].muscle === ke.muscle);
+      if(si !== undefined){ day.items[si] = {...day.items[si], exId:ke.id, comp:kc.comp, n:kc.n, novel:true}; novelty = {exId:ke.id, dow:day.dow}; break; } }
+  }
   if(due && out.length){
     const day = out.slice().sort((a,b) => b.items.length-a.items.length)[0];
     const slotIdx = [...day.items.keys()].reverse().find(i => !day.items[i].comp && day.items[i].muscle!=="Abdos") ?? day.items.length-1;
@@ -2560,7 +2569,7 @@ function noxApply(mode){
   if(mode !== "keep"){
     const n = a.n, tpl = (TEMPLATES[n] || []).find(t => t.id === NOX_TPL[a.org][n]) || TEMPLATES[n][0];
     planDraft = {n, tpl:tpl.id, days:a.days.map((dow, i) => ({dow, muscles:tpl.days[i].slice(), off:{}, min:NOX_DUR[a.dur] || 60})), novOff:0};
-    if(mode === "accept") planSave(); else msg = "Ajuste ton protocole, puis touche « Valider la routine ».";
+    planSave(); if(mode !== "accept") msg = "Ajuste ton protocole ici : chaque changement est enregistré automatiquement.";
   } else { msg = "Soit ! Je garde ton programme, et j'observe. Fascinant quand même.";
     // Programme gardé : la réponse sur les supersets s'applique quand même (« non » retire tous ceux du programme)
     if(S.profile.ssPref === "non"){ ((S.profile.plan || {}).days || []).forEach(x => delete x.ss); S.profile.routines.forEach(r => { if(r.plan) r.items.forEach(it => delete it.ss); }); }
@@ -2746,6 +2755,7 @@ function noxHow(){
 
 function viewPlan(){
   const d = planDraft || (planDraft = initDraft()), g = generatePlan(d);
+  if(!S.profile.plan && g.days.some(x => x.items.length)) planSave();
   const dayCards = g.days.map(day => {
     const k = d.days.findIndex(x => x.dow===day.dow), al = g.alerts.filter(a => a.dow===day.dow);
     return `<section class="card pday">
@@ -2776,17 +2786,19 @@ function viewPlan(){
     <section class="card"><div class="vol">${MUSC.filter(m => !MINOR.has(m)).map(m => { const n = g.weeklyFine[m], pct = Math.min(100, n/20*100);
       return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${pct}%;${mcF(m)}"></i><em></em></div><b class="num">${fmtN(n, 1)}</b></div>`; }).join("")}</div>
       <p class="small muted" style="margin:8px 0 0">Séries par semaine et par muscle, travail indirect compté au prorata (un développé couché compte une demi-série de triceps). Cible 10 à 20 (trait pointillé : 10). ${g.days.length ? "Fréquence : " + MUSCLES.filter(m=>g.freq[m]).map(m => `${m} ${g.freq[m]}×`).join(", ") + "." : ""}</p></section>
-    <button class="btn primary wide" data-act="plan-save" ${g.days.some(x=>x.items.length)?"":"disabled"}>Valider la routine</button>
+    <p class="small muted" style="text-align:center;margin:4px 0 0">✓ Enregistré automatiquement</p>
     <p class="foot">Les exercices les plus pratiqués passent en premier, polyarticulaires en tête de séance.
       Une nouveauté au plus par mois. Touchez ↻ pour changer un exercice.<br>Assisté par IA · aide à la décision, à adapter à vos sensations.</p>
     ${noxMet() ? noxFooter() : ""}`;
 }
+// Enregistrement automatique de la routine à chaque réglage (plus de bouton « Valider la routine »)
+function planAuto(){ if(planDraft && generatePlan(planDraft).days.some(x => x.items.length)) planSave(); }
 function planSave(){
   const g = generatePlan(planDraft);
   S.profile.routines = S.profile.routines.filter(r => !r.plan).concat(g.days.filter(x => x.items.length).map(day => ({
     id:"plan-"+day.dow, plan:true, dow:day.dow, name:`${DOWS[day.dow]} · ${day.name}`, items:day.items.map(it => ({exId:it.exId, sets:it.sets, ...(it.ss ? {ss:it.ss} : {})}))})));
   S.profile.plan = {tpl:planDraft.tpl, created:Date.now(), days:planDraft.days.map(x => ({dow:x.dow, muscles:x.muscles.slice(), off:{...x.off}, min:x.min||60, ...(Array.isArray(x.ss) ? {ss:x.ss.map(p => p.slice())} : {})}))};
-  if(g.novelty) S.profile.novelty = {exId:g.novelty.exId, date:Date.now()};
+  if(g.novelty && (S.profile.novelty || {}).exId !== g.novelty.exId) S.profile.novelty = {exId:g.novelty.exId, date:Date.now()};
   touchProfile();
 }
 // Séances de la routine dans l'ordre : aujourd'hui d'abord, puis les prochains jours
@@ -4757,6 +4769,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-20", t:"💾 Routine enregistrée toute seule", x:"Plus de bouton « Valider la routine » : chaque réglage (jours, muscles, temps dispo, ↻, supersets) est enregistré aussitôt, et tes séances suivent."},
   {d:"2026-11-20", t:"🏠 Quatre lieux d'entraînement", x:"Salle complète, petite salle (sans machines), maison avec haltères (avec ou sans banc) ou sans matériel : le Pr Noxwell te le demande dans son examen, et le programme, le bouton ↻ et les listes ne proposent que des exercices faisables avec ton matériel. Les exercices qui demandent un appareil de salle (dips aux barres, GHD…) ne sont plus proposés à la maison."},
   {d:"2026-11-20", t:"🧪 Le labo s'agrandit", x:"Le Pr Noxwell passe désormais te voir de temps en temps sur la page Gymon : pour t'expliquer ce qui arrive à ton Gymon la première fois que ça se produit, ou pour te proposer une nouvelle expérience. En fin de protocole, il publie son rapport d'expérience (aussi dans Routine › Parler à Noxwell). Et l'organisation « un muscle par séance » existe maintenant sur 5 et 6 jours."},
   {d:"2026-11-20", t:"⛓ Les supersets", x:"Deux exercices enchaînés sans pause, repos seulement après le 2e : la séance est plus courte. Le Pr Noxwell te demande dans son examen si ça te tente. Tu peux aussi en créer ou en retirer à la main : dans Routine, touche « ⛓ Superset » entre deux exercices ; en séance, menu ⋯ d'un exercice. Et la reprise allégée ne se déclenche plus si le muscle a travaillé récemment avec un autre exercice."},
@@ -5787,28 +5800,27 @@ const ACT = {
   "plan-n": b => { const n = Math.min(6, Math.max(1, planDraft.n + +b.dataset.d)); if(n===planDraft.n) return;
     planDraft = newDraft(n); const ex = noxExam(), id = ex && ex.org && (NOX_TPL[ex.org] || {})[n], tp = id && (TEMPLATES[n] || []).find(t => t.id === id);
     if(tp){ planDraft.tpl = tp.id; planDraft.days.forEach((x, i) => x.muscles = (tp.days[i] || tp.days[0]).slice()); }   // l'organisation se choisit au bilan de Noxwell
-    render(); },
+    planAuto(); render(); },
   // sections de l'accueil
   "plan-dow": b => { const i = +b.dataset.i, d = planDraft, k = d.days.findIndex(x => x.dow===i);
     if(k>=0){ if(d.days.length===1) return; d.days.splice(k,1); } else { if(d.days.length>=6){ toast("6 séances par semaine au maximum"); return; } d.days.push({dow:i, muscles:[], off:{}, min:60}); }
     d.days.sort((a,b)=>a.dow-b.dow); d.n = d.days.length;
     const tp = (TEMPLATES[d.n]||[])[0]; if(tp && k<0){ d.tpl = tp.id; d.days.forEach((x,i2) => { x.muscles = tp.days[i2].slice(); x.off = {}; }); } else d.tpl = "";
-    render(); },
+    planAuto(); render(); },
   "plan-tpl": b => { const tp = (TEMPLATES[planDraft.n]||[]).find(t => t.id===b.dataset.t); if(!tp) return;
-    planDraft.tpl = tp.id; planDraft.days.sort((a,c)=>a.dow-c.dow).forEach((x,i) => { x.muscles = tp.days[i].slice(); x.off = {}; }); render(); },
+    planDraft.tpl = tp.id; planDraft.days.sort((a,c)=>a.dow-c.dow).forEach((x,i) => { x.muscles = tp.days[i].slice(); x.off = {}; }); planAuto(); render(); },
   "plan-muscle": b => { const day = planDraft.days[+b.dataset.k], m = b.dataset.m, i = day.muscles.indexOf(m);
-    if(i>=0) day.muscles.splice(i,1); else day.muscles.push(m); day.off = {}; planDraft.tpl = ""; render(); },
-  "plan-duo": b => { const day = planDraft.days[+b.dataset.k]; day.muscles = DUOS[+b.dataset.u].m.slice(); day.off = {}; planDraft.tpl = ""; render(); },
-  "plan-swap": b => { const day = planDraft.days[+b.dataset.k], s = b.dataset.s; day.off[s] = (day.off[s]||0) + 1; render(); },
+    if(i>=0) day.muscles.splice(i,1); else day.muscles.push(m); day.off = {}; planDraft.tpl = ""; planAuto(); render(); },
+  "plan-duo": b => { const day = planDraft.days[+b.dataset.k]; day.muscles = DUOS[+b.dataset.u].m.slice(); day.off = {}; planDraft.tpl = ""; planAuto(); render(); },
+  "plan-swap": b => { const day = planDraft.days[+b.dataset.k], s = b.dataset.s; day.off[s] = (day.off[s]||0) + 1; planAuto(); render(); },
   "plan-ss": b => { const day = planDraft.days[+b.dataset.k], a = b.dataset.a, c = b.dataset.b;
     const g = generatePlan(planDraft), gd = g.days.find(x => x.dow === day.dow), cur = [];
     if(gd) gd.items.forEach((it, q) => { const nx = gd.items[q + 1]; if(it.ss && nx && nx.ss === it.ss) cur.push([it.slot, nx.slot]); });
     const linked = cur.some(([x, y]) => x === a && y === c);
     day.ss = linked ? cur.filter(([x, y]) => !(x === a && y === c)) : cur.filter(([x, y]) => ![x, y].includes(a) && ![x, y].includes(c)).concat([[a, c]]);
-    render(); toast(linked ? "Superset délié : touche « Valider la routine »" : "Superset créé : touche « Valider la routine »"); },
-  "plan-min": b => { const day = planDraft.days[+b.dataset.k]; day.min = +b.dataset.t; day.off = {}; render(); },
-  "plan-nov": () => { planDraft.novOff++; render(); },
-  "plan-save": () => { planSave(); const n = S.profile.routines.filter(r=>r.plan).length; tab = "seance"; render(); window.scrollTo(0,0); toast(`Routine enregistrée : ${n} séance${n>1?"s":""} par semaine`); },
+    planAuto(); render(); toast(linked ? "Superset délié" : "Superset créé : enchaîne les deux exercices, repos après le 2e"); },
+  "plan-min": b => { const day = planDraft.days[+b.dataset.k]; day.min = +b.dataset.t; day.off = {}; planAuto(); render(); },
+  "plan-nov": () => { planDraft.novOff++; planAuto(); render(); },
   "pick-done": () => { const ids = [...picker.sel], f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); if(ids.length) f(ids); },
   "filter-all": () => { exFilter.all = !exFilter.all; const l = document.getElementById("ex-list") || document.getElementById("pick-list");
     if(document.getElementById("ex-list")) document.getElementById("ex-list").innerHTML = exListHTML(null, "browse"); else if(picker) refreshPicker();
