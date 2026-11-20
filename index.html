@@ -921,7 +921,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 d";
+const APP_VERSION = "2026-11-20 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2061,8 +2061,21 @@ const multiJoint = e => Object.values(exWork(e)).filter(x => x >= .4).length >= 
 const isCompound = e => primOf(e) !== "Avant-bras" && (defaultRange(e)[0] <= 6 || (!!EX_RANGE[e.id] && multiJoint(e)));   // un exercice d'avant-bras n'est jamais polyarticulaire (rouleau à poignets en 3–6)
 /* Avec ou sans matériel (réglage du 14 nov. 2026) : « Sans matériel » limite les propositions (programme, ↻, séance du jour, listes)
    aux exercices au poids du corps, pour s'entraîner à la maison. « Avec matériel » (par défaut) garde tout, poids du corps compris. */
+// Lieu d'entraînement (20 nov. 2026) : salle complète, petite salle (pas de machines), maison avec haltères (± banc), sans matériel
+const EQUIP_MODES = {salle:["Salle complète", "tous les exercices"], petite:["Petite salle", "barres, haltères, poulies et poids du corps, sans machines"],
+  halteres:["Maison avec haltères", "haltères, kettlebell et poids du corps"], maison:["Sans matériel", "poids du corps uniquement"]};
+const equipMode = () => EQUIP_MODES[S.profile.equip] ? S.profile.equip : "salle";
 const atHome = () => S.profile.equip === "maison";
-const usableEx = e => !atHome() || e.equip === "Poids du corps" || CARDIO_HOME.has(e.id);
+const eqLimited = () => equipMode() !== "salle";
+const LIEU_EQ = {salle:"salle", petite:"petite", halt:"halteres", rien:"maison"};
+const eqLieu = () => ({petite:"petite", halteres:"halt", maison:"rien"})[equipMode()] || "salle";
+// Au poids du corps mais sur un appareil de salle : pas proposés à la maison (une barre de traction, elle, est courante)
+const STATION_EX = new Set(["dips", "gx-dips-pour-triceps", "gx-extension-du-dos-au-banc-a-lombaires", "gx-extensions-de-hanches-au-ghd", "chaise-romaine", "releve-genoux-barres"]);
+const usableEx = e => { const q = equipMode();
+  if(q === "maison") return CARDIO_HOME.has(e.id) || (e.equip === "Poids du corps" && !STATION_EX.has(e.id));
+  if(q === "halteres") return CARDIO_HOME.has(e.id) || (["Haltères", "Kettlebell", "Poids du corps"].includes(e.equip) && !STATION_EX.has(e.id) && (S.profile.bench !== false || !BENCH_RE.test(e.name)));
+  if(q === "petite") return e.equip !== "Machine";
+  return true; };
 // Sans historique, les grands classiques passent avant les variantes (bibliothèque de 200+ exercices, 14 nov. 2026)
 const EX_CORE = new Set(EX.slice(0, 41).map(e => e.id));
 function candidatesFor(m, st){
@@ -2187,8 +2200,8 @@ function generatePlan(d){
   const notes = [];
   const missing = MUSCLES.filter(m => !freq[m] && m!=="Abdos"); if(missing.length) notes.push(`Non travaillés cette semaine : ${missing.join(", ")}.`);
   const once = MUSCLES.filter(m => freq[m]===1 && m!=="Abdos"); if(once.length && out.length>=2) notes.push(`Une seule fois par semaine : ${once.join(", ")}. Deux fois est conseillé pour la prise de muscle.`);
-  if(atHome()){ const none = [...new Set(out.flatMap(x => x.muscles))].filter(m => !candidatesFor(m, st).length);
-    if(none.length) notes.push(`Sans matériel, pas d'exercice dédié pour : ${none.join(", ").toLowerCase()}. Ils travaillent en indirect (ex. tractions supination pour les biceps).`); }
+  if(eqLimited()){ const none = [...new Set(out.flatMap(x => x.muscles))].filter(m => !candidatesFor(m, st).length);
+    if(none.length) notes.push(`${EQUIP_MODES[equipMode()][0]} : pas d'exercice dédié pour ${none.join(", ").toLowerCase()}. Ils travaillent en indirect (ex. tractions supination pour les biceps).`); }
   // Séries par muscle et par semaine, au prorata (un squat compte aussi 0,7 série de fessiers)
   const weeklyFine = {}; MUSC.forEach(m => weeklyFine[m] = 0);
   out.forEach(day => day.items.forEach(it => Object.entries(exWork(exById(it.exId))).forEach(([m, p]) => weeklyFine[m] += it.sets * p)));
@@ -2221,6 +2234,8 @@ const NOX_OBJ = {
 const NOX_LIFTS = {dc:["dc-barre","Développé couché"], sq:["squat","Squat"], sdt:["souleve-terre","Soulevé de terre"], trac:["tractions","Tractions"], dm:["dm-barre","Développé militaire"]};
 const NOX_UPPER = ["Pectoraux","Dos","Épaules","Biceps","Triceps"], NOX_LOWER = ["Jambes"];
 const NOX_DUR = [30, 45, 60, 75, 90];
+const NOX_LIEUX = [["salle", "🏢", "Salle complète", "Machines, poulies, barres et haltères"], ["petite", "🏋️", "Petite salle", "Barres, haltères et poulies, peu ou pas de machines"],
+  ["halt", "🏠", "Maison avec haltères", "Haltères ou kettlebell, et le poids du corps"], ["rien", "🤸", "Sans matériel", "Au poids du corps"]];
 // Rythme par muscle → organisation (TEMPLATES existants), selon le nombre de séances
 const NOX_TPL = {deux:{2:"f2", 3:"f3", 4:"ul2", 5:"ulppl", 6:"ppl2"}, un:{2:"f2", 3:"ppl", 4:"duo4", 5:"bro5", 6:"bro6"}};
 const NOX_UN = /^(ppl|duo4|duo5|bro5|bro6)$/;
@@ -2249,7 +2264,7 @@ function goalCardioDays(nDays){
 function goalCardioEx(){
   const st = exStats(), list = allEx().filter(e => isCardio(e) && usableEx(e));
   const best = list.slice().sort((a, b) => ((st[b.id] || {}).n || 0) - ((st[a.id] || {}).n || 0))[0];
-  return best && (st[best.id] || {}).n ? best : exById(atHome() ? "footing" : "rameur") || list[0] || null;
+  return best && (st[best.id] || {}).n ? best : (usableEx(exById("rameur") || {}) ? exById("rameur") : exById("footing")) || list[0] || null;
 }
 const NOX_CARDIO_MIN = 12;
 
@@ -2406,7 +2421,7 @@ function noxPrefill(){
   const days = p && p.days && p.days.length ? p.days.map(d => d.dow).sort((a, b) => a - b) : DEFAULT_DAYS[3].slice();
   const n = Math.min(6, Math.max(2, days.length)), min = p && p.days && p.days.length ? p.days[0].min || 60 : 60;
   const dur = NOX_DUR.reduce((b, v, i) => Math.abs(v - min) < Math.abs(NOX_DUR[b] - min) ? i : b, 2);
-  const a = {n, days:days.slice(0, n), dur, lieu:atHome() ? "rien" : "salle", sexe:S.profile.sex === "f" ? "f" : S.profile.sex === "h" ? "h" : undefined,
+  const a = {n, days:days.slice(0, n), dur, lieu:eqLieu(), banc:S.profile.bench === false ? "non" : "oui", sexe:S.profile.sex === "f" ? "f" : S.profile.sex === "h" ? "h" : undefined,
     bw:S.profile.bw || "", height:S.profile.height || "", exp:S.workouts.length ? (months < 6 ? "deb" : months < 24 ? "mid" : "pro") : undefined,
     org:p && NOX_UN.test(p.tpl || "") ? "un" : p ? "deux" : undefined, ss:S.profile.ssPref};
   if(a.days.length < n) a.days = DEFAULT_DAYS[n].slice();
@@ -2471,8 +2486,10 @@ const NOX_STEPS = [
      <div class="nxe-sub">Tu pourras toujours créer ou retirer un superset à la main, dans Routine ou en pleine séance.</div>`,
    react:() => noxA.ss === "oui" ? "Excellent ! PLUS DE PUISSANCE, MOINS DE DISCUSSION." : noxA.ss === "non" ? "Soit ! Chaque exercice aura son repos complet." : "", ok:() => !!noxA.ss},
   {k:"lieu", q:true, say:() => "Où se trouve ton laboratoire ?", f:"smirk",
-   html:() => `<div class="nxe-q">Ton lieu d'entraînement</div>` + [["salle","🏢","Avec du matériel","Salle de sport, ou maison équipée"],["rien","🤸","Sans matériel","Au poids du corps"]].map(([v, e, l, d]) => `<button class="nxe-opt" data-set="lieu" data-v="${v}" aria-pressed="${noxA.lieu === v}"><span class="e">${e}</span><span><b>${l}</b><small>${d}</small></span></button>`).join(""),
-   react:() => ({salle:"Toutes ces machines… FASCINANT !", rien:"Le corps est le premier instrument du savant !"})[noxA.lieu] || "", ok:() => !!noxA.lieu},
+   html:() => `<div class="nxe-q">Ton lieu d'entraînement</div>` + NOX_LIEUX.map(([v, e, l, d]) => `<button class="nxe-opt" data-set="lieu" data-v="${v}" aria-pressed="${noxA.lieu === v}"><span class="e">${e}</span><span><b>${l}</b><small>${d}</small></span></button>`).join("")
+     + (noxA.lieu === "halt" ? `<div class="nxe-q">As-tu un banc ?</div><div class="nxe-chips"><button data-set="banc" data-v="oui" aria-pressed="${noxA.banc === "oui"}">Oui, j'ai un banc</button><button data-set="banc" data-v="non" aria-pressed="${noxA.banc === "non"}">Non, pas de banc</button></div>` : ""),
+   react:() => noxA.lieu === "halt" && noxA.banc === "non" ? "Pas de banc ? Le sol fera l'affaire. La science s'adapte !" : ({salle:"Toutes ces machines… FASCINANT !", petite:"Peu de machines, mais l'essentiel : la fonte !", halt:"Deux haltères et de la volonté : l'expérience continue à domicile !", rien:"Le corps est le premier instrument du savant !"})[noxA.lieu] || "",
+   ok:() => !!noxA.lieu && (noxA.lieu !== "halt" || !!noxA.banc)},
   {k:"org", q:true, say:() => "Tu préfères travailler chaque muscle comment ?", f:"smirk",
    html:() => `<div class="nxe-q">Ton rythme par muscle</div>
      <button class="nxe-opt rec" data-set="org" data-v="deux" aria-pressed="${noxA.org === "deux"}"><span class="e">🔁</span><span><b>Deux fois par semaine</b><small>Le plus efficace pour progresser</small></span></button>
@@ -2491,7 +2508,7 @@ const NOX_STEPS = [
      <div><span>Semaine</span><b>${noxA.n} séances · ${noxA.days.map(i => DOWS[i].slice(0, 3)).join(", ")}</b></div>
      <div><span>Durée</span><b>${NOX_DUR[noxA.dur] < 60 ? NOX_DUR[noxA.dur] + " min" : NOX_DUR[noxA.dur] === 60 ? "1 h" : "1 h " + (NOX_DUR[noxA.dur] - 60)}</b></div>
      <div><span>Supersets</span><b>${noxA.ss === "oui" ? "Oui" : "Non"}</b></div>
-     <div><span>Lieu</span><b>${noxA.lieu === "rien" ? "Sans matériel" : "Avec du matériel"}</b></div>
+     <div><span>Lieu</span><b>${esc(EQUIP_MODES[LIEU_EQ[noxA.lieu] || "salle"][0])}${noxA.lieu === "halt" ? (noxA.banc === "non" ? ", sans banc" : ", avec banc") : ""}</b></div>
      <div><span>Rythme</span><b>${noxA.org === "un" ? "Un muscle par séance" : "Chaque muscle 2 fois / sem."}</b></div></div>
      <button class="btn wide" data-nxe="fix" style="margin-top:10px">✏️ Corriger une réponse</button>`, ok:() => true, btn:"C'est ça, au protocole !"},
   {k:"proto", say:() => "Analyse terminée… Intéressant… le sujet évolue… Voici ton <b>protocole</b> !", f:"grin",
@@ -2532,11 +2549,11 @@ function noxExamClick(e){
 // Fin de l'examen : le protocole devient le programme (accepter), un brouillon à ajuster (edit), ou on garde le programme actuel (keep)
 function noxApply(mode){
   const a = noxA, st = noxSt();
-  st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, org:a.org, ss:a.ss};
+  st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, banc:a.banc, org:a.org, ss:a.ss};
   S.profile.ssPref = a.ss === "oui" ? "oui" : "non";
   S.profile.goal = {obj:a.obj, prec:a.prec};
   st.proto = {k:((st.proto || {}).k || 0) + 1, start:Date.now(), obj:a.obj, prec:a.prec};
-  S.profile.equip = a.lieu === "rien" ? "maison" : "salle"; S.profile.sex = a.sexe;
+  S.profile.equip = LIEU_EQ[a.lieu] || "salle"; if(a.lieu === "halt") S.profile.bench = a.banc !== "non"; else delete S.profile.bench; S.profile.sex = a.sexe;
   if(num(a.bw)) S.profile.bw = num(a.bw); if(num(a.height)) S.profile.height = Math.round(num(a.height));
   let msg = "Protocole lancé ! ENCORE UNE ! C'EST POUR LA SCIENCE !";
   if(mode !== "keep"){
@@ -4736,6 +4753,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-20", t:"🏠 Quatre lieux d'entraînement", x:"Salle complète, petite salle (sans machines), maison avec haltères (avec ou sans banc) ou sans matériel : le Pr Noxwell te le demande dans son examen, et le programme, le bouton ↻ et les listes ne proposent que des exercices faisables avec ton matériel. Les exercices qui demandent un appareil de salle (dips aux barres, GHD…) ne sont plus proposés à la maison."},
   {d:"2026-11-20", t:"🧪 Le labo s'agrandit", x:"Le Pr Noxwell passe désormais te voir de temps en temps sur la page Gymon : pour t'expliquer ce qui arrive à ton Gymon la première fois que ça se produit, ou pour te proposer une nouvelle expérience. En fin de protocole, il publie son rapport d'expérience (aussi dans Routine › Parler à Noxwell). Et l'organisation « un muscle par séance » existe maintenant sur 5 et 6 jours."},
   {d:"2026-11-20", t:"⛓ Les supersets", x:"Deux exercices enchaînés sans pause, repos seulement après le 2e : la séance est plus courte. Le Pr Noxwell te demande dans son examen si ça te tente. Tu peux aussi en créer ou en retirer à la main : dans Routine, touche « ⛓ Superset » entre deux exercices ; en séance, menu ⋯ d'un exercice. Et la reprise allégée ne se déclenche plus si le muscle a travaillé récemment avec un autre exercice."},
   {d:"2026-11-20", t:"🏋️ Un coach plus malin", x:"Le coach suit mieux ta vraie force : fini les charges qui tournent en rond ou qui redescendent après une semaine plus légère. Si ta 1re série dépasse nettement l'objectif (ou en est loin), il recalcule la charge des séries suivantes sur-le-champ. Sur la fiche d'un exercice, indique le palier de ta machine (de 5 en 5 kg…) : il ne proposera que des charges possibles. Les débutants progressent plus vite, la reprise après une longue pause est plus douce, et en isolation on va un peu plus près de l'échec."},
@@ -5395,10 +5413,11 @@ function exListHTML(sel, mode){
     return `<button class="item" data-act="ex-info" data-id="${e.id}">${thumb(e)}<span class="t"><b>${star(e)}${esc(e.name)}</b><span>${esc(primOf(e))} · ${esc(e.equip)}${h.length?` · ${h.length} séance${h.length>1?"s":""}`:""}</span></span>${best?`<span class="small num muted">${fmtN(best)} kg</span>`:""}<span class="chev">›</span></button>`;
   })()).join("");
 }
+const filterAllTxt = () => { const l = EQUIP_MODES[equipMode()][0]; return exFilter.all ? `Tout le matériel · voir seulement : ${l.toLowerCase()}` : `${l} · voir aussi le reste`; };
 function chipsHTML(){
   return `<div class="chips">${["Tous",...MUSCLES].map(m => `<button class="chip" data-act="filter-m" data-m="${m}" aria-pressed="${exFilter.m===m}">${m}</button>`).join("")}</div>`
     + `<div class="chips chips-eq" aria-label="Matériel">${EQ_FILTERS.map(([k]) => `<button class="chip" data-act="filter-eq" data-eq="${k}" aria-pressed="${exFilter.eq===k}">${k === "Tous" ? "Tout matériel" : k}</button>`).join("")}</div>`
-    + (atHome() ? `<button class="chip home-all" data-act="filter-all" aria-pressed="${exFilter.all}">${exFilter.all ? "Tout le matériel" : "Sans matériel"} · voir ${exFilter.all ? "seulement sans matériel" : "aussi avec matériel"}</button>` : "");
+    + (eqLimited() ? `<button class="chip home-all" data-act="filter-all" aria-pressed="${exFilter.all}">${filterAllTxt()}</button>` : "");
 }
 // Formulaire d'exercice perso : nom, muscle principal, muscles secondaires, matériel
 const EQUIPS = ["Barre","Haltères","Kettlebell","Poulie","Machine","Poids du corps","Autre"];
@@ -5446,10 +5465,12 @@ function viewSettings(){
     <section class="card" id="reglages" style="display:flex;flex-direction:column;gap:12px">
       <label class="field">Apparence
         <select id="theme">${[["dark","Sombre (par défaut)"],["light","Clair"],["auto","Automatique, comme l'iPhone"]].map(([v,l]) => `<option value="${v}" ${(S.profile.theme||"dark")===v?"selected":""}>${l}</option>`).join("")}</select></label>
-      ${noxExam() ? `<div class="row" style="gap:10px"><span style="flex:1"><b>Mesures et lieu d'entraînement</b><small class="muted" style="display:block">Réglés avec le Pr Noxwell : ${esc([S.profile.bw ? fmtN(num(S.profile.bw)) + " kg" : "", S.profile.height ? S.profile.height + " cm" : "", atHome() ? "sans matériel" : "avec matériel"].filter(Boolean).join(" · "))}</small></span><button class="btn sm" data-act="nox-exam">Modifier</button></div>` : ""}
+      ${noxExam() ? `<div class="row" style="gap:10px"><span style="flex:1"><b>Mesures et lieu d'entraînement</b><small class="muted" style="display:block">Réglés avec le Pr Noxwell : ${esc([S.profile.bw ? fmtN(num(S.profile.bw)) + " kg" : "", S.profile.height ? S.profile.height + " cm" : "", EQUIP_MODES[equipMode()][0].toLowerCase() + (equipMode() === "halteres" && S.profile.bench === false ? ", sans banc" : "")].filter(Boolean).join(" · "))}</small></span><button class="btn sm" data-act="nox-exam">Modifier</button></div>` : ""}
       <label class="field" ${noxExam() ? "hidden" : ""}>Mes entraînements
-        <select id="equip-mode"><option value="salle" ${atHome() ? "" : "selected"}>Avec matériel (salle ou maison équipée)</option><option value="maison" ${atHome() ? "selected" : ""}>Sans matériel : au poids du corps</option></select>
-        <small class="muted">Avec matériel, les exercices au poids du corps restent proposés. Sans matériel, le programme, le bouton ↻ et les listes ne proposent que des exercices au poids du corps.</small></label>
+        <select id="equip-mode">${Object.entries(EQUIP_MODES).map(([k, [l]]) => `<option value="${k}" ${equipMode() === k ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <small class="muted">Le programme, le bouton ↻ et les listes ne proposent que les exercices faisables avec ce matériel.</small></label>
+      <label class="field" ${noxExam() || equipMode() !== "halteres" ? "hidden" : ""}>Banc de musculation
+        <select id="bench-mode"><option value="oui" ${S.profile.bench === false ? "" : "selected"}>J'ai un banc</option><option value="non" ${S.profile.bench === false ? "selected" : ""}>Pas de banc</option></select></label>
       <label class="field">Repos par défaut après une série
         <select id="rest-default">${[-1,0,45,60,90,120,150,180,240].map(s => `<option value="${s}" ${S.profile.rest===s?"selected":""}>${s<0?"Auto selon l'exercice (1 min 30 à 3 min)":s?fmtClock(s*1000):"Pas de minuteur"}</option>`).join("")}</select></label>
       <div class="row wrap">
@@ -5787,9 +5808,9 @@ const ACT = {
   "pick-done": () => { const ids = [...picker.sel], f = picker.onDone; picker = null; sheetOnClose = null; closeSheet(); if(ids.length) f(ids); },
   "filter-all": () => { exFilter.all = !exFilter.all; const l = document.getElementById("ex-list") || document.getElementById("pick-list");
     if(document.getElementById("ex-list")) document.getElementById("ex-list").innerHTML = exListHTML(null, "browse"); else if(picker) refreshPicker();
-    document.querySelectorAll('[data-act="filter-all"]').forEach(c => { c.setAttribute("aria-pressed", exFilter.all); c.textContent = (exFilter.all ? "Tout le matériel" : "Sans matériel") + " · voir " + (exFilter.all ? "seulement sans matériel" : "aussi avec matériel"); }); },
+    document.querySelectorAll('[data-act="filter-all"]').forEach(c => { c.setAttribute("aria-pressed", exFilter.all); c.textContent = filterAllTxt(); }); },
   "filter-eq": b => { exFilter.eq = b.dataset.eq; document.querySelectorAll('[data-act="filter-eq"]').forEach(c => c.setAttribute("aria-pressed", c.dataset.eq===exFilter.eq));
-    if(exFilter.eq !== "Tous" && exFilter.eq !== "Sans matériel" && atHome()) exFilter.all = true;   // à la maison, choisir un matériel montre aussi les exercices avec matériel
+    if(exFilter.eq !== "Tous" && exFilter.eq !== "Sans matériel" && eqLimited()) exFilter.all = true;   // matériel restreint, choisir un matériel montre aussi les exercices avec matériel
     if(picker){ refreshPicker(); const sc = document.getElementById("pick-scroll"); if(sc) sc.scrollTop = 0; } else { const l = document.getElementById("ex-list"); if(l) l.innerHTML = exListHTML(null,"browse"); } },
   "filter-m": b => { exFilter.m = b.dataset.m; document.querySelectorAll('[data-act="filter-m"]').forEach(c => c.setAttribute("aria-pressed", c.dataset.m===exFilter.m));
     if(picker){ refreshPicker(); const sc = document.getElementById("pick-scroll"); if(sc) sc.scrollTop = 0; } else { const l = document.getElementById("ex-list"); if(l) l.innerHTML = exListHTML(null,"browse"); } },
@@ -6462,7 +6483,7 @@ async function importText(txt){
       const prec = v => Array.isArray(v) ? v.filter(k => NOX_LIFTS[k]).slice(0, 3) : typeof v === "string" ? v.slice(0, 10) : undefined;
       S.profile.nox = {v:1, intro:nx.intro, ...(isTime(nx.later) ? {later:nx.later} : {}),
         ...(ex ? {exam:{v:1, done:isTime(ex.done) ? ex.done : Date.now(), obj:ex.obj, prec:prec(ex.prec), exp:["deb","mid","pro"].includes(ex.exp) ? ex.exp : "mid",
-          n:Math.min(6, Math.max(2, Math.round(num(ex.n)) || 3)), days:Array.isArray(ex.days) ? ex.days.map(Number).filter(x => x >= 0 && x <= 6).slice(0, 6) : [], dur:Math.min(4, Math.max(0, Math.round(num(ex.dur)))), lieu:ex.lieu === "rien" ? "rien" : "salle", org:ex.org === "un" ? "un" : "deux"}} : {}),
+          n:Math.min(6, Math.max(2, Math.round(num(ex.n)) || 3)), days:Array.isArray(ex.days) ? ex.days.map(Number).filter(x => x >= 0 && x <= 6).slice(0, 6) : [], dur:Math.min(4, Math.max(0, Math.round(num(ex.dur)))), lieu:LIEU_EQ[ex.lieu] ? ex.lieu : "salle", banc:ex.banc === "non" ? "non" : "oui", org:ex.org === "un" ? "un" : "deux"}} : {}),
         ...(pr && NOX_OBJ[pr.obj] ? {proto:{k:Math.max(1, Math.round(num(pr.k)) || 1), start:pr.start, obj:pr.obj, prec:prec(pr.prec)}} : {})};
       const g = (d.profile || {}).goal; if(g && NOX_OBJ[g.obj]) S.profile.goal = {obj:g.obj, prec:prec(g.prec)};
     }
@@ -6603,8 +6624,11 @@ document.addEventListener("change", e => {
   else if(e.target.id==="bar-ez"){ S.profile.barEz = +e.target.value; touchProfile(); }
   else if(e.target.id==="height"){ S.profile.height = num(e.target.value) || ""; touchProfile(); }
   else if(e.target.id==="sex"){ S.profile.sex = e.target.value; touchProfile(); }
-  else if(e.target.id==="equip-mode"){ S.profile.equip = e.target.value === "maison" ? "maison" : ""; exFilter.all = false; touchProfile();
-    toast(atHome() ? "Sans matériel : les propositions passent au poids du corps" : "Avec matériel : tous les exercices sont proposés"); }
+  else if(e.target.id==="equip-mode"){ const v = e.target.value; S.profile.equip = v === "salle" || !EQUIP_MODES[v] ? "" : v; exFilter.all = false; touchProfile();
+    const bf = document.getElementById("bench-mode"); if(bf) bf.closest("label").hidden = v !== "halteres";
+    toast(`${EQUIP_MODES[equipMode()][0]} : ${EQUIP_MODES[equipMode()][1]}`); }
+  else if(e.target.id==="bench-mode"){ S.profile.bench = e.target.value !== "non"; touchProfile();
+    toast(S.profile.bench ? "Avec banc : les exercices allongés et assis sont proposés" : "Sans banc : les exercices sur banc ne sont plus proposés"); }
   else if(e.target.id==="theme"){ S.profile.theme = e.target.value; touchProfile(); applyTheme(); }
   else if(e.target.id==="rest-default"){ S.profile.rest = +e.target.value; touchProfile(); toast("Réglage enregistré"); }
 });
