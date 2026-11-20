@@ -147,6 +147,30 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const g = generatePlan(d); return {name:t.name, days:g.days.map(x => x.name), items:g.days[0].items.length}; });
   ok(bro.name === "Un muscle par séance" && bro.days[0] === "Pectoraux" && bro.items >= 3, "un muscle par séance sur 5 jours : une séance pecs avec plusieurs exercices", bro);
 
+  // 9. Lieu d'entraînement : 4 options, banc à la maison, filtre réel des exercices
+  const lieu = await p1.evaluate(() => {
+    const saved = {eq:S.profile.equip, b:S.profile.bench}, r = {};
+    const ids = () => new Set(allEx().filter(usableEx).map(e => e.id));
+    S.profile.equip = ""; r.salle = ids().size; r.all = allEx().length;
+    S.profile.equip = "petite"; const pe = ids(); r.petiteMachine = allEx().some(e => pe.has(e.id) && e.equip === "Machine"); r.petiteBarre = allEx().some(e => pe.has(e.id) && e.equip === "Barre");
+    S.profile.equip = "halteres"; delete S.profile.bench; const h1 = ids(); r.halt = h1.size; r.haltBad = allEx().some(e => h1.has(e.id) && !["Haltères","Kettlebell","Poids du corps"].includes(e.equip) && !CARDIO_HOME.has(e.id));
+    r.haltBench = allEx().some(e => h1.has(e.id) && e.equip === "Haltères" && BENCH_RE.test(e.name));
+    S.profile.bench = false; const h2 = ids(); r.noBench = allEx().some(e => h2.has(e.id) && BENCH_RE.test(e.name) && e.equip === "Haltères"); r.h2 = h2.size;
+    S.profile.equip = "maison"; const m = ids(); r.maisonBad = allEx().some(e => m.has(e.id) && e.equip !== "Poids du corps" && !CARDIO_HOME.has(e.id));
+    const d = newDraft(3); r.planOk = generatePlan(d).days.every(x => x.items.every(it => m.has(it.exId)));
+    S.profile.equip = "halteres"; S.profile.bench = false; const d2 = newDraft(3); r.planHalt = generatePlan(d2).days.every(x => x.items.every(it => h2.has(it.exId)));
+    S.profile.equip = saved.eq; S.profile.bench = saved.b; if(saved.b === undefined) delete S.profile.bench; return r; });
+  ok(lieu.salle === lieu.all && !lieu.petiteMachine && lieu.petiteBarre && !lieu.haltBad && lieu.haltBench && !lieu.noBench && lieu.h2 < lieu.halt && !lieu.maisonBad && lieu.planOk && lieu.planHalt,
+    "lieu : salle = tout, petite salle sans machines, maison haltères (± banc), sans matériel ; le programme suit", lieu);
+  const ex2 = await p1.evaluate(() => { noxExamOpen(); noxStep = NOX_STEPS.findIndex(s => s.k === "lieu"); noxDraw(false);
+    return {n:document.querySelectorAll('[data-set="lieu"]').length}; });
+  await p1.click('[data-set="lieu"][data-v="halt"]');
+  const banc = await p1.evaluate(() => ({q:!!document.querySelector('[data-set="banc"]'), say:document.querySelector(".nxe-bub").textContent}));
+  await p1.click('[data-set="banc"][data-v="non"]');
+  const banc2 = await p1.evaluate(() => document.querySelector(".nxe-bub").textContent);
+  ok(ex2.n === 4 && banc.q && /haltères/i.test(banc.say) && /banc/i.test(banc2), "examen : 4 lieux, « As-tu un banc ? » pour la maison avec haltères", {ex2, banc, banc2});
+  await p1.evaluate(() => noxExamClose());
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");
