@@ -851,6 +851,11 @@ body.nox-shake main{animation:nxshake .38s linear}
 .nox-proto h3{margin:0;font-size:18px}
 .nox-org{display:flex;justify-content:space-between;align-items:center;width:100%;background:var(--fill);border:1px solid var(--glass-line);border-radius:14px;padding:10px 12px;margin:10px 0 12px;font:inherit;font-size:14.5px;color:var(--fg);text-align:left;gap:8px}
 .nox-org span:last-child{color:var(--accent);font-weight:600;white-space:nowrap}
+.nox-ctr{background:var(--fill);border-radius:14px;padding:10px 12px;margin:10px 0}.nox-ctr h4{margin:0 0 4px;font-size:14px}
+.nox-cl{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.35;margin:8px 0}.nox-cl i{font-style:normal;font-size:16px}.nox-cl span{flex:1}
+.nox-cl small{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}.nox-cl.ok small{color:var(--ok)}
+.nox-cl em{display:block;height:4px;border-radius:2px;background:var(--line,rgba(127,127,127,.25));margin-top:5px;overflow:hidden}.nox-cl em b{display:block;height:100%;background:var(--ok)}
+.nox-promise{font-size:13px;color:var(--muted);margin:6px 0 0;line-height:1.35}
 .nox-barl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin:6px 0 10px}
 .nox-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
 .nox-tiles div{background:var(--fill);border-radius:14px;padding:9px 6px;text-align:center}
@@ -921,7 +926,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 h";
+const APP_VERSION = "2026-11-20 i";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2521,13 +2526,15 @@ const NOX_STEPS = [
      <div><span>Lieu</span><b>${esc(EQUIP_MODES[LIEU_EQ[noxA.lieu] || "salle"][0])}${noxA.lieu === "halt" ? (noxA.banc === "non" ? ", sans banc" : ", avec banc") : ""}</b></div>
      <div><span>Rythme</span><b>${noxA.org === "un" ? "Un muscle par séance" : "Chaque muscle 2 fois / sem."}</b></div></div>
      <button class="btn wide" data-nxe="fix" style="margin-top:10px">✏️ Corriger une réponse</button>`, ok:() => true, btn:"C'est ça, au protocole !"},
-  {k:"proto", say:() => "Analyse terminée… Intéressant… le sujet évolue… Voici ton <b>protocole</b> !", f:"grin",
+  {k:"proto", say:() => `Analyse terminée… Voici ton <b>protocole</b>, et notre <b>contrat</b> : tes objectifs pour les ${NOX.weeks} prochaines semaines. Tu signes ?`, f:"grin",
    html:() => { const g = {obj:noxA.obj, prec:noxA.prec}, tn = noxTplName(noxA.n, noxA.org);
      return `<div class="nxe-proto"><h3>Protocole n° ${((noxSt().proto || {}).k || 0) + 1} · ${NOX_OBJ[noxA.obj].l}</h3><div class="s">${NOX.weeks} semaines · ${noxA.n} séances · ${esc(tn)}</div>
        ${noxLevers(g).map(([i, t]) => `<div class="nxe-lev"><i>${i}</i><span>${esc(t)}</span></div>`).join("")}
+       ${noxContractHTML(noxContractBuild({obj:noxA.obj, prec:noxA.prec, exp:noxA.exp, n:noxA.n, start:Date.now()}))}
+       <p class="nox-promise">Exigeant mais atteignable : calculé sur ton historique et ton expérience. ${NOX_PROMISE}</p>
        <div class="nxe-src">📚 Construit d'après la recherche en musculation : fourchettes de reps (Schoenfeld 2017, 2021), reps en réserve (Helms 2016, Robinson 2024), volume par muscle (Pelland 2025).</div></div>
        <button class="btn wide" data-nxe="edit" style="margin-top:10px">✏️ Accepter et ajuster dans Routine</button><button class="btn wide ghost" data-nxe="keep" style="margin-top:8px">Garder mon programme actuel</button>`; },
-   ok:() => true, btn:"Accepter le protocole"}
+   ok:() => true, btn:"✍️ Je signe le contrat"}
 ];
 function noxDraw(reactNow){
   const el = document.getElementById("nox-exam"); if(!el) return;
@@ -2563,7 +2570,7 @@ function noxApply(mode){
   st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, banc:a.banc, org:a.org, ss:a.ss};
   S.profile.ssPref = a.ss === "oui" ? "oui" : "non";
   S.profile.goal = {obj:a.obj, prec:a.prec};
-  st.proto = {k:((st.proto || {}).k || 0) + 1, start:Date.now(), obj:a.obj, prec:a.prec};
+  const t0 = Date.now(); st.proto = {k:((st.proto || {}).k || 0) + 1, start:t0, obj:a.obj, prec:a.prec, contract:noxContractBuild({obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, start:t0})};
   S.profile.equip = LIEU_EQ[a.lieu] || "salle"; if(a.lieu === "halt") S.profile.bench = a.banc !== "non"; else delete S.profile.bench; S.profile.sex = a.sexe;
   if(num(a.bw)) S.profile.bw = num(a.bw); if(num(a.height)) S.profile.height = Math.round(num(a.height));
   let msg = "Protocole lancé ! ENCORE UNE ! C'EST POUR LA SCIENCE !";
@@ -2599,7 +2606,7 @@ function tiredCount(){
 function noxCycle(){
   const st = noxSt(), l = S.profile.lightWeek;
   if(l && Date.now() >= l.until && st.proto && l.proto === st.proto.k){   // fin de la semaine légère : nouveau cycle
-    st.proto = {...st.proto, k:st.proto.k + 1, start:l.until}; delete S.profile.lightWeek; touchProfile(); }
+    st.proto = {...st.proto, k:st.proto.k + 1, start:l.until}; delete st.proto.contract; delete S.profile.lightWeek; touchProfile(); }   // nouveau cycle : nouveau contrat, recalculé sur les progrès
 }
 function noxProposals(){
   const ex = noxExam(), st = noxSt(), pr = noxProof(), out = [];
@@ -2618,6 +2625,66 @@ function noxProposals(){
   return out.slice(0, 2).join("");
 }
 
+/* --- Contrat d'expérience (20 nov. 2026, demande du propriétaire) : des objectifs chiffrés que le joueur signe avec Noxwell.
+   Calculés une fois au début du protocole, d'après son historique (120 jours avant) et son expérience : exigeants mais atteignables.
+   Rythme de progression visé par semaine (1RM estimé) : plus lent quand on est confirmé. */
+const NOX_RATE = {force:{deb:1.5, mid:.75, pro:.4}, muscle:{deb:1, mid:.5, pro:.25}}, NOX_RECS = {deb:6, mid:4, pro:2};
+function noxBase(id, t0){ const b = exHistory(id).filter(x => x.ts < t0 && x.ts > t0 - 120 * 86400000 && x.best > 0); return b.length ? Math.max(...b.map(x => x.best)) : 0; }
+function noxTopEx(t0){   // exercices avec charge les plus pratiqués dans les 120 jours avant le protocole
+  const n = {}; S.workouts.forEach(w => { if(w.start >= t0 || w.start < t0 - 120 * 86400000) return; new Set(w.exercises.map(x => x.exId)).forEach(id => n[id] = (n[id] || 0) + 1); });
+  return Object.keys(n).filter(id => { const e = exById(id); return e && !isCardio(e) && noxBase(id, t0) > 0; }).sort((a, b) => n[b] - n[a] || isCompound(exById(b)) - isCompound(exById(a)));
+}
+function noxContractBuild(o){
+  const W = NOX.weeks, t0 = o.start || Date.now(), exp = NOX_RECS[o.exp] ? o.exp : "mid", n = Math.max(1, o.n || 3), items = [];
+  items.push({k:"reg", want:Math.max(1, Math.round(n * W * 0.8)), of:n * W});
+  if(o.obj === "force" || o.obj === "muscle"){
+    let ids = o.obj === "force" ? (Array.isArray(o.prec) ? o.prec : []).map(k => (NOX_LIFTS[k] || [])[0]).filter(id => id && noxBase(id, t0) > 0) : [];
+    if(!ids.length) ids = noxTopEx(t0);
+    ids.slice(0, 2).forEach(id => { const base = noxBase(id, t0), r = NOX_RATE[o.obj][exp] / 100 * W;
+      items.push({k:"lift", id, base:Math.round(base * 2) / 2, want:Math.max(Math.round(base * 2) / 2 + 1, Math.ceil(base * (1 + r) * 2) / 2)}); });
+    items.push({k:"rec", want:NOX_RECS[exp]});
+  } else {
+    const days = o.obj === "seche" ? n : Math.min(n, Math.max(1, Math.round(num(o.prec)) || 1));
+    items.push({k:"cardio", want:Math.max(30, Math.round(days * NOX_CARDIO_MIN * W * 0.8 / 5) * 5)});
+    if(o.obj === "seche"){ const id = noxTopEx(t0).find(x => isCompound(exById(x))) || noxTopEx(t0)[0];
+      if(id){ const base = noxBase(id, t0); items.push({k:"keep", id, base:Math.round(base * 2) / 2, want:Math.floor(base * 0.97 * 2) / 2}); } }
+    else { let prev = 0; S.workouts.forEach(w => { if(w.start < t0 && w.start > t0 - 120 * 86400000) w.exercises.forEach(x => { if(isCardio(exById(x.exId))) prev = Math.max(prev, cardioMin(x)); }); });
+      items.push({k:"long", base:prev, want:Math.max(20, Math.ceil(prev * 1.25 / 5) * 5)}); }
+  }
+  return {v:1, weeks:W, items};
+}
+// Contrat du protocole en cours (créé à la volée pour les protocoles signés avant son arrivée)
+function noxContract(){
+  const ex = noxExam(), p = noxSt().proto; if(!ex || !p) return null;
+  if(!p.contract || !Array.isArray(p.contract.items)){ p.contract = noxContractBuild({obj:p.obj, prec:p.prec, exp:ex.exp, n:ex.n, start:p.start}); touchProfile(); }
+  return p.contract;
+}
+function noxContractState(c, start){
+  const since = S.workouts.filter(w => w.start >= start), hist = id => exHistory(id).filter(x => x.ts >= start && x.best > 0);
+  const cmin = l => l.flatMap(w => w.exercises.filter(x => isCardio(exById(x.exId))).map(cardioMin));
+  return c.items.map(it => { let have = 0, pct = 0;
+    if(it.k === "reg") have = since.length;
+    else if(it.k === "rec") have = since.reduce((t, w) => t + (w.prs || []).length, 0);
+    else if(it.k === "cardio") have = cmin(since).reduce((t, x) => t + x, 0);
+    else if(it.k === "long") have = Math.max(0, ...cmin(since));
+    else if(it.k === "lift"){ const h = hist(it.id); have = h.length ? Math.max(...h.map(x => x.best)) : 0; }
+    else if(it.k === "keep"){ const h = hist(it.id); have = h.length ? h[h.length - 1].best : 0; }
+    pct = it.k === "lift" ? (have ? Math.max(0, Math.min(1, (have - it.base) / Math.max(.5, it.want - it.base))) : 0) : Math.min(1, it.want ? have / it.want : 0);
+    return {...it, have, pct, ok:have >= it.want && (it.k !== "keep" || have > 0)}; });
+}
+const noxClauseTxt = it => { const nm = id => (exById(id) || {name:"?"}).name;
+  return it.k === "reg" ? [`📅`, `Être présent à au moins <b>${it.want} séances</b> sur ${it.of}`, x => `${x.have}/${x.want}`]
+    : it.k === "lift" ? [`🏋️`, `${esc(nm(it.id))} : passer de ${fmtN(it.base, 1)} à <b>${fmtN(it.want, 1)} kg</b> (1RM estimé)`, x => x.have ? `${fmtN(Math.round(x.have * 2) / 2, 1)} kg` : "—"]
+    : it.k === "rec" ? [`🏆`, `Battre <b>${it.want} records</b>`, x => `${x.have}/${x.want}`]
+    : it.k === "cardio" ? [`🫀`, `Cumuler <b>${it.want} min</b> de cardio`, x => `${fmtN(x.have, 0)}/${x.want} min`]
+    : it.k === "keep" ? [`🛡️`, `${esc(nm(it.id))} : garder au moins <b>${fmtN(it.want, 1)} kg</b> (1RM estimé), sécher sans fondre`, x => x.have ? `${fmtN(Math.round(x.have * 2) / 2, 1)} kg` : "—"]
+    : [`⏱️`, `Tenir <b>${it.want} min</b> de cardio d'affilée${it.base ? ` (record actuel : ${fmtN(it.base, 0)} min)` : ""}`, x => `${fmtN(x.have, 0)} min`]; };
+const NOX_PROMISE = "De mon côté : j'ajuste chaque charge selon ton ressenti, je te préviens quand la fatigue s'accumule, et je rends un rapport honnête à la fin.";
+function noxContractHTML(c, st){
+  return `<div class="nox-ctr"><h4>📜 Contrat d'expérience · ${c.weeks} semaines</h4>${c.items.map((it, i) => { const [ic, t, v] = noxClauseTxt(it), x = st && st[i];
+    return `<div class="nox-cl${x && x.ok ? " ok" : ""}"><i>${x && x.ok ? "✅" : ic}</i><span>${t}${x ? `<em><b style="width:${Math.round(x.pct * 100)}%"></b></em>` : ""}</span>${x ? `<small>${v(x)}</small>` : ""}</div>`; }).join("")}</div>`;
+}
+
 /* --- Rapport d'expérience (étape 3) : bilan du protocole avec les seules données du joueur --- */
 function noxReportData(){
   const ex = noxExam(), p = noxSt().proto; if(!ex || !p) return null;
@@ -2630,12 +2697,14 @@ function noxReportData(){
   const before = S.workouts.filter(w => w.start < p.start && w.start >= p.start - 28 * 86400000), volW = l => l.reduce((t, w) => t + wVolume(w), 0);
   const vB = before.length ? volW(before) / 4 : 0, vA = since.length ? volW(since) / weeks : 0;
   const cardio = since.reduce((t, w) => t + w.exercises.reduce((u, x) => u + (isCardio(exById(x.exId)) ? cardioMin(x) : 0), 0), 0);
-  return {p, ex, weeks, done:since.length, want, recs, gains, up:gains.filter(g => g.pct > 0).length, vB, vA, cardio};
+  const ctr = noxContract(), cst = ctr ? noxContractState(ctr, p.start) : [];
+  return {p, ex, weeks, done:since.length, want, recs, gains, up:gains.filter(g => g.pct > 0).length, vB, vA, cardio, ctr, cst, held:cst.filter(x => x.ok).length};
 }
 function noxReport(){
   const d = noxReportData(); if(!d){ toast("Passe d'abord l'examen du Pr Noxwell"); return; }
   const reg = d.want ? Math.round(d.done / d.want * 100) : 0, okPlan = reg >= 60, good = d.gains.length ? d.up >= Math.ceil(d.gains.length / 2) : d.recs > 0;
   const verdict = !d.done ? "Pas encore de séance dans ce protocole : la science a besoin de données !"
+    : d.cst.length && d.held === d.cst.length ? "Contrat rempli, clause par clause ! FASCINANT. Prêt pour un protocole plus exigeant ?"
     : !okPlan ? `Protocole suivi à ${reg} % : trop peu pour conclure. Hypothèse : la régularité d'abord, les résultats suivront.`
     : good ? "Hypothèse confirmée : le protocole fonctionne ! FASCINANT. On continue, ou on change d'objectif ?"
     : "Résultats timides malgré ta régularité. Hypothèse : changer de stimulus. Refais l'examen, j'ajusterai le protocole.";
@@ -2647,6 +2716,7 @@ function noxReport(){
     ${d.gains.length ? `<div class="small muted" style="margin:12px 0 4px">Force estimée (1RM), avant → pendant le protocole</div><div class="nox-gains">${d.gains.slice(0, 5).map(g => `<div><span>${esc(g.e.name)}</span><b class="${g.pct > 0 ? "up" : g.pct < 0 ? "down" : ""}">${g.pct > 0 ? "+" : ""}${g.pct} %</b></div>`).join("")}</div>
       <p class="small muted" style="margin:6px 0 0">${d.up} exercice${d.up > 1 ? "s" : ""} sur ${d.gains.length} en progrès.</p>` : `<p class="small muted">Pas encore d'exercice comparable avant et pendant le protocole.</p>`}
     ${d.cardio ? `<p class="small" style="margin:10px 0 0">🫀 ${fmtN(d.cardio, 0)} min de cardio pendant le protocole.</p>` : ""}
+    ${d.ctr ? noxContractHTML(d.ctr, d.cst) + `<p class="small" style="margin:0"><b>${d.held} clause${d.held > 1 ? "s" : ""} tenue${d.held > 1 ? "s" : ""} sur ${d.cst.length}</b>${d.weeks < NOX.weeks ? ` · encore ${NOX.weeks - d.weeks} semaine${NOX.weeks - d.weeks > 1 ? "s" : ""} pour remplir le reste` : ""}</p>` : ""}
     <div class="row" style="margin-top:14px;gap:8px"><button class="btn" style="flex:1" data-act="nox-exam">🩺 Refaire l'examen</button><button class="btn primary" style="flex:1" data-act="close">On continue !</button></div>`));
 }
 
@@ -2671,7 +2741,7 @@ function noxBlock(){
       <div class="small muted">Commencé le ${esc(fmtDate(p ? p.start : ex.done, {day:"numeric", month:"long"}))} · d'après ton examen${noxPrecTxt({obj:g.obj, prec:g.prec}) ? " · " + esc(noxPrecTxt({obj:g.obj, prec:g.prec}).toLowerCase()) : ""}</div>
       <button class="nox-org" data-act="nox-org"><span>🧬 Organisation : <b>${esc(tn || "à définir")}</b></span><span>changer ›</span></button>
       ${pr ? `<div class="nox-bar"><i style="width:${Math.min(100, Math.round(pr.weeks / NOX.weeks * 100))}%"></i></div><div class="nox-barl"><span>Semaine ${Math.min(pr.week, NOX.weeks)} sur ${NOX.weeks}</span><span>${pr.done} séance${pr.done > 1 ? "s" : ""} faite${pr.done > 1 ? "s" : ""}</span></div>
-        <div class="nox-tiles">${pr.tiles.slice(0, 3).map(([v, l]) => `<div><strong>${esc(v)}</strong><span>${esc(l)}</span></div>`).join("")}</div>` : ""}
+        ${(c => c ? noxContractHTML(c, noxContractState(c, p.start)) : "")(noxContract())}` : ""}
       <div class="nox-levs">${noxLevers(g).map(([i, t]) => `<div><i>${i}</i><span>${esc(t)}</span></div>`).join("")}</div>
       <button class="btn sm wide" data-act="nox-report" style="margin-top:6px">📊 Rapport d'expérience${pr && pr.week > NOX.weeks ? " · prêt" : ""}</button></section>` : ""}`;
 }
@@ -4770,6 +4840,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-20", t:"📜 Le contrat d'expérience", x:"À la fin de l'examen, le Pr Noxwell te propose un contrat chiffré pour les 6 semaines du protocole : un nombre de séances, une charge à atteindre sur tes exercices clés, des records ou des minutes de cardio selon ton objectif. Calculé sur ton historique et ton expérience : exigeant mais atteignable. Tu suis chaque clause dans le labo, et le rapport dit lesquelles tu as tenues."},
   {d:"2026-11-20", t:"⭐ Tes favoris dans la routine", x:"La routine choisit d'abord tes exercices favoris (étoilés dans leur fiche, ou faits souvent), puis tes autres exercices habituels. Le reste ne change pas : un polyarticulaire en tête pour les gros muscles, et les exercices alternent d'une séance à l'autre."},
   {d:"2026-11-20", t:"💾 Routine enregistrée toute seule", x:"Plus de bouton « Valider la routine » : chaque réglage (jours, muscles, temps dispo, ↻, supersets) est enregistré aussitôt, et tes séances suivent."},
   {d:"2026-11-20", t:"🏠 Quatre lieux d'entraînement", x:"Salle complète, petite salle (sans machines), maison avec haltères (avec ou sans banc) ou sans matériel : le Pr Noxwell te le demande dans son examen, et le programme, le bouton ↻ et les listes ne proposent que des exercices faisables avec ton matériel. Les exercices qui demandent un appareil de salle (dips aux barres, GHD…) ne sont plus proposés à la maison."},

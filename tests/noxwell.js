@@ -199,6 +199,20 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.profile.favs = savedFav; S.profile.equip = savedEq; return r; });
   ok(fav.first === fav.id && fav.without !== fav.id, "routine : l'exercice favori passe en premier pour son muscle", fav);
 
+  // 13. Contrat d'expérience : clauses chiffrées d'après l'historique, plus exigeantes pour un débutant, suivies et jugées
+  const ctr = await p1.evaluate(() => { const D = 86400000, now = Date.now(), saved = S.workouts;
+    S.workouts = Array.from({length:20}, (_, k) => ({id:"c" + k, name:"S", start:now - (60 - k * 3) * D, end:now - (60 - k * 3) * D + 3600000, prs:[], exercises:[{exId:"dc-barre", feel:3, sets:[{w:String(80 + k), r:"5", done:true}]}]}));
+    const f = l => noxContractBuild({obj:"force", prec:["dc"], exp:l, n:4, start:now}).items, deb = f("deb"), pro = f("pro");
+    const sec = noxContractBuild({obj:"seche", prec:[], exp:"mid", n:3, start:now}).items, endu = noxContractBuild({obj:"endu", prec:"2", exp:"mid", n:3, start:now}).items;
+    const lift = deb.find(i => i.k === "lift"), c = {v:1, weeks:6, items:deb};
+    S.workouts.push({id:"c-new", name:"S", start:now + 1000, end:now + 3600000, prs:[{}], exercises:[{exId:"dc-barre", feel:3, sets:[{w:"200", r:"5", done:true}]}]});
+    const st = noxContractState(c, now), html = noxContractHTML(c, st);
+    S.workouts = saved;
+    return {reg:deb[0].want, of:deb[0].of, base:lift.base, debW:lift.want, proW:pro.find(i => i.k === "lift").want, recD:deb.find(i => i.k === "rec").want, recP:pro.find(i => i.k === "rec").want,
+      sec:sec.map(i => i.k), endu:endu.map(i => i.k), liftOk:st.find(i => i.k === "lift").ok, regOk:st[0].ok, html:/Contrat d'expérience/.test(html) && /✅/.test(html)}; });
+  ok(ctr.reg === 19 && ctr.of === 24 && ctr.base > 0 && ctr.debW > ctr.proW && ctr.proW > ctr.base && ctr.recD > ctr.recP && ctr.sec.join() === "reg,cardio,keep" && ctr.endu.join() === "reg,cardio,long" && ctr.liftOk && !ctr.regOk && ctr.html,
+    "contrat : séances, charge visée selon l'expérience, records ou cardio selon l'objectif, clauses suivies", ctr);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");
