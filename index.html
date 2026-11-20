@@ -921,7 +921,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 c";
+const APP_VERSION = "2026-11-20 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2724,7 +2724,7 @@ function noxHow(){
 }
 
 function viewPlan(){
-  const d = planDraft || (planDraft = initDraft()), g = generatePlan(d), tpls = TEMPLATES[d.n] || [];
+  const d = planDraft || (planDraft = initDraft()), g = generatePlan(d);
   const dayCards = g.days.map(day => {
     const k = d.days.findIndex(x => x.dow===day.dow), al = g.alerts.filter(a => a.dow===day.dow);
     return `<section class="card pday">
@@ -2748,9 +2748,6 @@ function viewPlan(){
         <span class="stepper"><button data-act="plan-n" data-d="-1" aria-label="Une séance de moins">−</button><span>${d.n}</span><button data-act="plan-n" data-d="1" aria-label="Une séance de plus">+</button></span></div>
       <div class="dows">${DOWS.map((l,i) => `<button data-act="plan-dow" data-i="${i}" aria-pressed="${d.days.some(x=>x.dow===i)}" class="${i===todayDow()?"today":""}">${l.slice(0,3)}</button>`).join("")}</div>
     </section>
-    ${noxExam() ? "" : `<h2>Organisation proposée</h2>
-    <div class="tpls">${tpls.map(t => `<button class="card tpl" data-act="plan-tpl" data-t="${t.id}" aria-pressed="${d.tpl===t.id}">
-      <span class="row"><b style="flex:1">${esc(t.name)}</b>${t.rec?'<span class="ctag">Conseillé</span>':""}</span><span class="small muted">${esc(t.desc)}</span></button>`).join("")}</div>`}
     ${g.notes.map(n => `<div class="alert warn">ⓘ ${esc(n)}</div>`).join("")}
     <h2>Vos séances</h2>
     ${dayCards}
@@ -5762,7 +5759,10 @@ const ACT = {
     openPicker(ids => { progEx = ids[0]; render(); window.scrollTo(0,0); }, freq); },
   "body-m": b => { bodySel = bodySel===b.dataset.m ? null : b.dataset.m; render(); },
   "prog-sub": b => { progSub = b.dataset.s; render(); window.scrollTo(0,0); },
-  "plan-n": b => { const n = Math.min(6, Math.max(1, planDraft.n + +b.dataset.d)); if(n!==planDraft.n){ planDraft = newDraft(n); render(); } },
+  "plan-n": b => { const n = Math.min(6, Math.max(1, planDraft.n + +b.dataset.d)); if(n===planDraft.n) return;
+    planDraft = newDraft(n); const ex = noxExam(), id = ex && ex.org && (NOX_TPL[ex.org] || {})[n], tp = id && (TEMPLATES[n] || []).find(t => t.id === id);
+    if(tp){ planDraft.tpl = tp.id; planDraft.days.forEach((x, i) => x.muscles = (tp.days[i] || tp.days[0]).slice()); }   // l'organisation se choisit au bilan de Noxwell
+    render(); },
   // sections de l'accueil
   "plan-dow": b => { const i = +b.dataset.i, d = planDraft, k = d.days.findIndex(x => x.dow===i);
     if(k>=0){ if(d.days.length===1) return; d.days.splice(k,1); } else { if(d.days.length>=6){ toast("6 séances par semaine au maximum"); return; } d.days.push({dow:i, muscles:[], off:{}, min:60}); }
