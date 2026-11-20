@@ -171,6 +171,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(ex2.n === 4 && banc.q && /haltères/i.test(banc.say) && /banc/i.test(banc2), "examen : 4 lieux, « As-tu un banc ? » pour la maison avec haltères", {ex2, banc, banc2});
   await p1.evaluate(() => noxExamClose());
 
+  // 10. « Non, pas de superset » : aucun superset dans le programme, quel que soit le choix final (accepter, ajuster, garder)
+  const ssNo = await p1.evaluate(() => { const r = {};
+    for(const mode of ["accept", "edit", "keep"]){ S.profile.ssPref = undefined;
+      for(const [v, m] of [["oui", "accept"], ["non", mode]]){ noxExamOpen(); Object.assign(noxA, {obj:"muscle", exp:"mid", n:4, days:[0,1,3,4], dur:1, lieu:"salle", org:"deux", ss:v}); noxApply(m); }
+      if(mode === "edit") planSave();
+      r[mode] = S.profile.routines.filter(x => x.plan).reduce((t, x) => t + x.items.filter(it => it.ss).length, 0) + S.profile.plan.days.reduce((t, d) => t + (d.ss || []).length, 0); }
+    return r; });
+  ok(ssNo.accept === 0 && ssNo.edit === 0 && ssNo.keep === 0, "supersets refusés au 2e examen : plus aucun superset, même en gardant le programme", ssNo);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");

@@ -921,7 +921,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 e";
+const APP_VERSION = "2026-11-20 f";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2479,10 +2479,10 @@ const NOX_STEPS = [
    html:() => `<div class="nxe-q">Durée d'une séance</div><div class="nxe-chips">${NOX_DUR.map((m, i) => `<button data-set="dur" data-v="${i}" aria-pressed="${noxA.dur === i}">${m < 60 ? m + " min" : m === 60 ? "1 h" : "1 h " + (m - 60)}</button>`).join("")}</div>`,
    react:() => noxA.dur === undefined ? "" : noxA.dur === 0 ? "Court mais intense. Pas une seconde de bavardage !" : noxA.dur >= 4 ? "Une éternité de science ! Je prépare les électrodes." : "Parfait pour mes protocoles.",
    ok:() => noxA.dur !== undefined},
-  {k:"ss", q:true, say:() => "Ça te dérange d'enchaîner deux exercices sans pause entre eux ? On appelle ça un <b>superset</b> : la séance est plus courte et plus intense.", f:"smirk",
+  {k:"ss", q:true, say:() => "Veux-tu enchaîner deux exercices sans pause entre eux ? On appelle ça un <b>superset</b> : la séance est plus courte et plus intense.", f:"smirk",
    html:() => `<div class="nxe-q">Les supersets</div>
-     <button class="nxe-opt" data-set="ss" data-v="oui" aria-pressed="${noxA.ss === "oui"}"><span class="e">⛓</span><span><b>Pas du tout, j'aime gagner du temps</b><small>Deux exercices de muscles différents enchaînés, repos après le 2e</small></span></button>
-     <button class="nxe-opt" data-set="ss" data-v="non" aria-pressed="${noxA.ss === "non"}"><span class="e">⏸</span><span><b>Je préfère sans</b><small>Un exercice à la fois, avec le repos entre chaque série</small></span></button>
+     <button class="nxe-opt" data-set="ss" data-v="oui" aria-pressed="${noxA.ss === "oui"}"><span class="e">⛓</span><span><b>Oui, des supersets</b><small>J'aime gagner du temps : deux exercices de muscles différents enchaînés, repos après le 2e</small></span></button>
+     <button class="nxe-opt" data-set="ss" data-v="non" aria-pressed="${noxA.ss === "non"}"><span class="e">⏸</span><span><b>Non, pas de superset</b><small>Un exercice à la fois, avec le repos entre chaque série</small></span></button>
      <div class="nxe-sub">Tu pourras toujours créer ou retirer un superset à la main, dans Routine ou en pleine séance.</div>`,
    react:() => noxA.ss === "oui" ? "Excellent ! PLUS DE PUISSANCE, MOINS DE DISCUSSION." : noxA.ss === "non" ? "Soit ! Chaque exercice aura son repos complet." : "", ok:() => !!noxA.ss},
   {k:"lieu", q:true, say:() => "Où se trouve ton laboratoire ?", f:"smirk",
@@ -2549,6 +2549,7 @@ function noxExamClick(e){
 // Fin de l'examen : le protocole devient le programme (accepter), un brouillon à ajuster (edit), ou on garde le programme actuel (keep)
 function noxApply(mode){
   const a = noxA, st = noxSt();
+  const ssWas = S.profile.ssPref;
   st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, banc:a.banc, org:a.org, ss:a.ss};
   S.profile.ssPref = a.ss === "oui" ? "oui" : "non";
   S.profile.goal = {obj:a.obj, prec:a.prec};
@@ -2560,7 +2561,10 @@ function noxApply(mode){
     const n = a.n, tpl = (TEMPLATES[n] || []).find(t => t.id === NOX_TPL[a.org][n]) || TEMPLATES[n][0];
     planDraft = {n, tpl:tpl.id, days:a.days.map((dow, i) => ({dow, muscles:tpl.days[i].slice(), off:{}, min:NOX_DUR[a.dur] || 60})), novOff:0};
     if(mode === "accept") planSave(); else msg = "Ajuste ton protocole, puis touche « Valider la routine ».";
-  } else msg = "Soit ! Je garde ton programme, et j'observe. Fascinant quand même.";
+  } else { msg = "Soit ! Je garde ton programme, et j'observe. Fascinant quand même.";
+    // Programme gardé : la réponse sur les supersets s'applique quand même (« non » retire tous ceux du programme)
+    if(S.profile.ssPref === "non"){ ((S.profile.plan || {}).days || []).forEach(x => delete x.ss); S.profile.routines.forEach(r => { if(r.plan) r.items.forEach(it => delete it.ss); }); }
+    else if(ssWas !== "oui" && S.profile.plan){ planDraft = initDraft(); planDraft.days.forEach(x => delete x.ss); planSave(); } }
   touchProfile();
   const el = document.getElementById("nox-exam"); if(el) el.remove(); unlockBody();
   tab = "routine"; render(); window.scrollTo(0, 0); toast(msg);
