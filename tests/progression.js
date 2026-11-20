@@ -1,0 +1,102 @@
+// Tests de la progression du coach (Node + Playwright) : sportifs simulés sur 16 semaines (force réelle connue),
+// plus les règles de l'audit du 19 nov. 2026 une par une (cascade de décharges, ajustement en séance, palier, semaine légère, plateau…).
+// Usage : node tests/progression.js
+const {chromium} = require("playwright");
+const path = require("path");
+const URL = "file://" + path.resolve(__dirname, "..", "index.html");
+let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  " : "ÉCHEC"} ${label}${extra!==undefined ? " → " + JSON.stringify(extra).slice(0, 400) : ""}`); if(!cond) fails++; };
+
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage(), errs = [];
+  p.on("pageerror", e => errs.push(e.message));
+  await p.goto(URL); await p.waitForTimeout(300);
+
+  // 1. Simulation : 3 séances par semaine, 48 séances, ressenti exact ou bruité (une fois sur trois)
+  const sim = await p.evaluate(() => {
+    let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const gauss = () => { let u = 0, v = 0; while(!u) u = rnd(); while(!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    const P = {debutant:[0.015, {"dc-barre":55, "leg-ext":45, "curl-halteres":11}], intermediaire:[0.005, {"dc-barre":90, "leg-ext":80, "curl-halteres":18}], confirme:[0.0015, {"squat":170, "leg-ext":110, "curl-halteres":26}]};
+    const out = [];
+    for(const [pn, [g, T0s]] of Object.entries(P)) for(const [exId, T0] of Object.entries(T0s)) for(const noisy of [false, true]){
+      S.workouts = []; S.profile.ranges = {}; S.profile.bw = 80; S.profile.nox = {v:1}; S.profile.exOpts = {}; delete S.profile.lightWeek;
+      const t0 = Date.now() - 120 * 86400000, rows = [];
+      for(let k = 0; k < 48; k++){
+        const ts = t0 + Math.floor(k / 3) * 7 * 86400000 + [0, 2, 4][k % 3] * 86400000 + 18 * 3600000;
+        const T = T0 * (1 + g * (ts - t0) / (7 * 86400000)) * (1 + 0.03 * gauss()), c = coach(exId, ts);
+        let w = num(c.w), rT = num(c.r) || c.lo; if(!w){ w = Math.round(T / (1 + (c.lo + 2) / 30) / 2.5) * 2.5; rT = c.lo; }
+        const sets = []; let minRIR = 99;
+        for(let s = 0; s < (c.sets || 3); s++){ const maxR = Math.max(0, Math.floor(30 * (T * (1 - 0.015 * s) / w - 1))), d = Math.min(rT, maxR); sets.push({w:String(w), r:String(d), done:true}); minRIR = Math.min(minRIR, maxR - d); }
+        let feel = Math.min(...sets.map(x => num(x.r))) < rT ? 5 : minRIR >= 4 ? 1 : minRIR === 3 ? 2 : minRIR >= 1 ? 3 : 4;
+        if(noisy && rnd() < 0.35) feel = Math.min(5, Math.max(1, feel + (rnd() < 0.5 ? -1 : 1)));
+        S.workouts.push({id:"s" + k, name:"S", start:ts, end:ts + 3600000, exercises:[{exId, feel, sets}], prs:[]});
+        rows.push({w, ideal:T / (1 + (rT + 1.5) / 30), deload:/Décharge|Reprise/.test(c.tag || "")});
+      }
+      const l8 = rows.slice(-8), eff = l8.reduce((t, r) => t + r.w / r.ideal, 0) / l8.length, minW = Math.min(...rows.slice(4).map(r => r.w));
+      out.push({cas:`${pn} ${exId}${noisy ? " (ressenti bruité)" : ""}`, eff:+(eff * 100).toFixed(0), deloads:rows.filter(r => r.deload).length, chute:+((1 - minW / rows[1].w) * 100).toFixed(0)});
+    }
+    return out;
+  });
+  sim.forEach(r => ok(r.eff >= 85 && r.eff <= 108, `charges proches de l'idéal en fin de simulation : ${r.cas}`, r));
+  ok(sim.every(r => r.deloads <= 7), "pas de décharges à répétition (7 au plus en 48 séances)", sim.map(r => r.deloads));
+  ok(sim.every(r => r.chute <= 25), "jamais d'effondrement de la charge (cascade de décharges)", sim.map(r => r.chute));
+
+  // 2. Règles une par une
+  const t = await p.evaluate(() => {
+    const D = 86400000, now = Date.now(), W = (dAgo, exId, feel, sets) => ({id:"x" + dAgo + exId, name:"T", start:now - dAgo * D, end:now - dAgo * D + 3600000, prs:[], exercises:[{exId, feel, sets:sets.map(([w, r]) => ({w:String(w), r:String(r), done:true}))}]});
+    const reset = () => { S.workouts = []; S.profile.ranges = {}; S.profile.exOpts = {}; S.profile.nox = {v:1}; delete S.profile.lightWeek; };
+    const r = {};
+    // décharge puis séance facile : on reprend la charge d'avant, sans nouvelle décharge
+    reset(); S.workouts = [W(12, "leg-ext", 3, [[60, 10], [60, 10], [60, 10]]), W(8, "leg-ext", 4, [[62.5, 9], [62.5, 9], [62.5, 8]]), W(4, "leg-ext", 1, [[55, 8], [55, 8]])];
+    let c = coach("leg-ext"); r.rebound = [c.w, c.tag];
+    // trois séances « Dur » (pas « Trop dur ») : pas de décharge
+    reset(); S.workouts = [W(12, "squat", 4, [[100, 8], [100, 8]]), W(8, "squat", 4, [[100, 8], [100, 8]]), W(4, "squat", 4, [[100, 8], [100, 7]])];
+    c = coach("squat"); r.dur3 = c.tag;
+    // ressenti non noté, objectif largement dépassé : traité comme facile
+    reset(); S.workouts = [W(3, "curl-halteres", 0, [[12, 15], [12, 14], [12, 14]])];
+    r.infer = inferFeel(sessionsFor("curl-halteres")[0], 8, 12);
+    // reprise : −10 % après 4 semaines, −20 % après 8
+    reset(); S.workouts = [W(30, "leg-ext", 3, [[60, 10], [60, 10]])]; r.rep4 = coach("leg-ext").w;
+    reset(); S.workouts = [W(60, "leg-ext", 3, [[60, 10], [60, 10]])]; r.rep8 = coach("leg-ext").w;
+    // palier réglé : machine de 5 en 5 kg
+    reset(); S.workouts = [W(3, "leg-ext", 3, [[60, 12], [60, 12], [60, 12]])]; const c0 = coach("leg-ext"); setExOpt("leg-ext", "step", 5); const c5 = coach("leg-ext");
+    r.step = [c0.w, c5.w];
+    // cardio et gainage plafonnés
+    reset(); S.workouts = [W(2, "rameur", 3, [[0, 30]])]; r.cardio = [coach("rameur").r, coach("rameur").tag];
+    reset(); S.workouts = [W(2, "gainage", 3, [[0, 60], [0, 60]])]; r.gainage = [coach("gainage").r, coach("gainage").tag];
+    // semaine légère : −10 % et une série de moins
+    reset(); S.workouts = [W(3, "leg-ext", 3, [[60, 10], [60, 10], [60, 10]])]; const n0 = coach("leg-ext"); S.profile.lightWeek = {from:now - D, until:now + 6 * D, proto:1}; const n1 = coach("leg-ext");
+    r.light = [n0.w, n1.w, n0.sets, n1.sets, n1.tag];
+    // plateau : 8 séances à la même force
+    reset(); for(let k = 0; k < 8; k++) S.workouts.push(W(40 - k * 5, "curl-halteres", 3, [[14, 10], [14, 10], [14, 10]])); S.profile.nox = {v:1, intro:now, exam:{done:now, obj:"muscle", n:3}};
+    r.plateau = plateaus().map(x => x.id);
+    return r;
+  });
+  ok(t.rebound[0] === 62.5 && /^(\+|Retour|.*kg)/.test(t.rebound[1] || ""), "après un allègement facile, on reprend la charge d'avant (62,5 kg)", t.rebound);
+  ok(t.dur3 !== "Décharge", "trois séances « Dur » ne déclenchent plus de décharge", t.dur3);
+  ok(t.infer === 2, "ressenti non noté et objectif dépassé de 2 reps : « Facile »", t.infer);
+  ok(t.rep4 === 55 && t.rep8 === 47.5, "reprise : −10 % après 4 semaines, −20 % après 8", [t.rep4, t.rep8]);
+  ok(t.step[0] === 62.5 && t.step[1] === 65, "palier de la machine réglé à 5 kg : 65 kg au lieu de 62,5", t.step);
+  ok(t.cardio[0] === 30 && t.cardio[1] === "Intensité", "cardio plafonné à la durée visée, puis plus d'intensité", t.cardio);
+  ok(t.gainage[0] === 60 && t.gainage[1] === "Variante", "gainage plafonné, puis une variante plus dure", t.gainage);
+  ok(t.light[1] < t.light[0] && t.light[3] === t.light[2] - 1 && t.light[4] === "Semaine légère", "semaine légère : charge −10 % et une série de moins", t.light);
+  ok(t.plateau.includes("curl-halteres"), "plateau détecté sur 8 séances sans progrès", t.plateau);
+
+  // 3. Ajustement en cours de séance : 3 reps de plus que l'objectif → charge plus lourde pour les séries suivantes
+  const live = await p.evaluate(() => {
+    const D = 86400000, now = Date.now(); S.profile.exOpts = {}; S.profile.ranges = {}; delete S.profile.lightWeek;
+    S.profile.tutoDone = true; S.profile.onboarded = true; S.profile.welcomed = true; closeSheet(); document.getElementById("tuto").hidden = true;
+    S.workouts = [{id:"p1", name:"T", start:now - 3 * D, end:now - 3 * D + 3600000, prs:[], exercises:[{exId:"leg-ext", feel:3, sets:[{w:"60", r:"10", done:true}, {w:"60", r:"10", done:true}, {w:"60", r:"9", done:true}]}]}];
+    const c = coach("leg-ext");
+    S.profile.active = {id:"a", name:"T", start:now, exercises:[{exId:"leg-ext", sets:[{w:"", r:""}, {w:"", r:""}, {w:"", r:""}]}]}; tab = "seance"; render();
+    return {w:c.w, r:c.r};
+  });
+  await p.fill("#w-0-0", String(live.w)); await p.fill("#r-0-0", String(live.r + 4));
+  await p.click('tr[data-j="0"] [data-act="check"]'); await p.waitForTimeout(200);
+  const after = await p.evaluate(() => ({adj:A().exercises[0].adj, next:A().exercises[0].sets[1].w, txt:(document.querySelector(".live-adj") || {}).textContent || ""}));
+  ok(after.adj && after.adj.w > live.w && Number(after.next) === after.adj.w && /au lieu de/.test(after.txt), "série nettement au-dessus de l'objectif : charge recalculée pour la suite", {live, after});
+
+  ok(errs.length === 0, "aucune erreur JavaScript", errs);
+  await b.close();
+  console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de progression passent");
+  process.exit(fails ? 1 : 0);
+})();
