@@ -868,6 +868,16 @@ body.nox-shake main{animation:nxshake .38s linear}
 .coach.nx{background:color-mix(in srgb,#22d3ee 9%,transparent);border:1px solid color-mix(in srgb,#22d3ee 35%,transparent);border-left:3px solid #22d3ee}
 .coach.nx .cwhy{color:#0891b2}
 :root:not([data-theme="light"]) .coach.nx .cwhy{color:#67e8f9}
+.ss-wrap{position:relative;border:2px solid color-mix(in srgb,#ec4899 60%,transparent);border-radius:calc(var(--r) + 6px);padding:16px 6px 2px;margin:18px 0 12px;background:color-mix(in srgb,#ec4899 6%,transparent)}
+.ss-wrap > .card{margin-top:8px}
+.ss-lbl{position:absolute;top:-11px;left:16px;background:#ec4899;color:#fff;font-size:12px;font-weight:800;padding:3px 10px;border-radius:99px;letter-spacing:.03em}
+.ss-hint{margin:0 6px;font-size:13px;color:#db2777;font-weight:600}:root:not([data-theme="light"]) .ss-hint{color:#f9a8d4}
+.ss-n{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 4px;border-radius:99px;background:#ec4899;color:#fff;font-weight:800;font-size:12.5px;flex-shrink:0;margin-right:6px}
+.plist li.ss-in{background:color-mix(in srgb,#ec4899 8%,transparent);border-radius:12px}
+.plist li.ss-link{list-style:none;display:flex;justify-content:center;padding:0;margin:-4px 0;min-height:0;background:none;counter-increment:none}
+.plist li.ss-link::before{content:none}
+.ss-link button{font:inherit;font-size:12px;font-weight:700;color:var(--muted);background:var(--fill);border:1px dashed var(--glass-line);border-radius:99px;padding:3px 12px}
+.ss-link button[aria-pressed="true"]{color:#fff;background:#ec4899;border-style:solid;border-color:#ec4899}
 .live-adj{margin:0 0 6px;font-size:13.5px;line-height:1.35;color:#0e7490;font-weight:600}
 :root:not([data-theme="light"]) .live-adj{color:#a5f3fc}
 .nox-fio{font-size:15px;filter:drop-shadow(0 0 4px rgba(163,230,53,.6))}
@@ -909,7 +919,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 a";
+const APP_VERSION = "2026-11-20 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1796,7 +1806,13 @@ function coachFresh(exId, beforeTs, planned){
   let minR = Math.min(...top.map(s => num(s.r))), lastR = num(top[top.length-1].r);
   const nSets = last.sets.filter(s => num(s.w) >= W*0.75).length;   // les séries dégressives légères ne comptent pas
   let sets = planned || Math.min(5, Math.max(2, nSets));
-  const gapDays = Math.round(((beforeTs || Date.now()) - last.ts) / 86400000);
+  const exGap = Math.round(((beforeTs || Date.now()) - last.ts) / 86400000);
+  // Reprise selon le muscle, pas l'exercice (retour du propriétaire, 20 nov. 2026) : des biceps travaillés la semaine dernière
+  // avec un autre exercice ne sont pas « en reprise » parce que ce curl-là date d'un mois
+  const gapDays = (() => { const m = primOf(e), t = beforeTs || Date.now(); let lastM = 0;
+    S.workouts.forEach(w => { if(w.start >= t || w.start <= lastM || offIgnored(w)) return;
+      if(w.exercises.some(x => workSets(x).length && workPct(exById(x.exId), m) >= 0.5)) lastM = w.start; });
+    return lastM ? Math.min(exGap, Math.round((t - lastM) / 86400000)) : exGap; })();
   // Poids du corps (charge = poids de corps éventuel) : progression en répétitions
   if(!W && TIMED.has(e.id)){
     let r = Math.min(Math.max(hi, minR), Math.max(5, minR + ({1:15,2:10,3:5,4:0,5:-5})[feel])); if(gapDays > 21) r = Math.max(5, minR - 5);
@@ -1818,10 +1834,15 @@ function coachFresh(exId, beforeTs, planned){
   let E = W * (1 + (lastR + f.rir)/30);
   const repsAt = w => Math.floor(30*(E/w - 1) - 1.5 + 1e-9);
   // Reprise après plus de 3 semaines sans cet exercice : -10 %
+  if(exGap > 21 && gapDays <= 21){   // exercice repris, muscle entraîné récemment : même charge, mêmes reps
+    const r = Math.max(lo, Math.min(hi, minR));
+    return {lo, hi, rest, w:+W.toFixed(2), r, sets:Math.max(2, Math.min(sets, 3)), tag:"Retour", mode, from:{W, minR, feel},
+      why:`Tu n'as pas fait cet exercice depuis ${Math.round(exGap/7)} semaines, mais tes ${primOf(e).toLowerCase()} ont travaillé récemment : on reprend la charge de la dernière fois (${fmtN(W)} kg × ${r}), sans alléger.`};
+  }
   if(gapDays > 21){
     const k = gapDays > 42 ? 0.8 : 0.9, w = Math.max(st, roundTo(W*k, st)), r = Math.max(lo, Math.min(hi, repsAt(w)));
     return {lo, hi, rest, w, r, sets:Math.max(2, Math.min(sets, 3)), tag:"Reprise", deload:true,
-      why:`Tu n'as pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend plus léger (environ −${Math.round((1 - k) * 100)} %) pour réhabituer le corps sans risque. La progression normale repart dès la séance suivante.`};
+      why:`Tes ${primOf(e).toLowerCase()} n'ont pas travaillé depuis ${Math.round(gapDays/7)} semaines : on reprend plus léger (environ −${Math.round((1 - k) * 100)} %) pour réhabituer le corps sans risque. La progression normale repart dès la séance suivante.`};
   }
   // Décharge : 3 séances d'affilée notées « Dur/Trop dur » ou 1RM estimé en baisse sur 3 séances
   const e1 = s => { const ww = Math.max(...s.sets.map(x=>num(x.w))), rr = num(s.sets.filter(x=>num(x.w)===ww).slice(-1)[0].r);
@@ -2019,7 +2040,7 @@ function newDraft(n){
 }
 function initDraft(){
   const p = S.profile.plan;
-  if(p && p.days && p.days.length) return {n:p.days.length, tpl:p.tpl||"", days:p.days.map(d => ({dow:d.dow, muscles:d.muscles.slice(), off:{...(d.off||{})}, min:d.min||60})), novOff:0};
+  if(p && p.days && p.days.length) return {n:p.days.length, tpl:p.tpl||"", days:p.days.map(d => ({dow:d.dow, muscles:d.muscles.slice(), off:{...(d.off||{})}, min:d.min||60, ...(Array.isArray(d.ss) ? {ss:d.ss.map(x => x.slice())} : {})})), novOff:0};
   return newDraft(3);
 }
 function exStats(){
@@ -2052,8 +2073,25 @@ const exFamily = e => e.muscle + "|" + e.name.toLowerCase().replace(/\(.*?\)/g, 
 // Exercices dont le muscle principal est m (ex. quadriceps), dans le même ordre
 const candidatesPrim = (m, st) => candidatesFor(GROUP_OF[m] || m, st).filter(c => primOf(c.e) === m);
 function estMinutes(items){
-  return 5 + items.reduce((t,it) => { const e = exById(it.exId), rest = S.profile.rest<0 ? (REST_BY_RANGE[repRange(e)[0]]||120) : (S.profile.rest||90);
-    return t + (it.sets*(40 + rest) + 90)/60; }, 0);
+  return 5 + items.reduce((t,it,k) => { const e = exById(it.exId), rest = S.profile.rest<0 ? (REST_BY_RANGE[repRange(e)[0]]||120) : (S.profile.rest||90);
+    const chained = it.ss && items[k+1] && items[k+1].ss === it.ss;   // 1er exercice d'un superset : pas de repos, on enchaîne
+    return t + (it.sets*(40 + (chained ? 15 : rest)) + 90)/60; }, 0);
+}
+/* Supersets (20 nov. 2026) : deux exercices enchaînés sans pause, repos après le 2e. Paires = [créneau A, créneau B].
+   Automatique : jamais le 1er exercice (gros mouvement, repos complet) ; muscles différents et non synergiques (pecs + dos, biceps + triceps…). */
+function ssAuto(items){
+  const pairs = [], used = new Set(), list = items.filter(it => !it.cardio);
+  for(let a = 1; a < list.length; a++){ if(used.has(a)) continue;
+    for(let b = a + 1; b < list.length; b++){ if(used.has(b)) continue; const A = list[a], B = list[b];
+      if(A.muscle !== B.muscle && !(SYN[A.muscle] || []).includes(B.muscle) && !(SYN[B.muscle] || []).includes(A.muscle)){ pairs.push([A.slot, B.slot]); used.add(a); used.add(b); break; } } }
+  return pairs;
+}
+function ssApply(day, pairs){
+  day.items.forEach(it => delete it.ss); let k = 0;
+  (pairs || []).forEach(([a, b]) => { const ia = day.items.findIndex(it => it.slot === a), ib = day.items.findIndex(it => it.slot === b);
+    if(ia < 0 || ib < 0 || ia === ib || day.items[ia].cardio || day.items[ib].cardio) return;
+    const L = String.fromCharCode(65 + k++), B = day.items.splice(ib, 1)[0], ja = day.items.indexOf(day.items.find(it => it.slot === a));
+    day.items.splice(ja + 1, 0, B); day.items[ja].ss = L; B.ss = L; });
 }
 function generatePlan(d){
   const st = exStats(), seen = {}, days = d.days.slice().sort((a,b)=>a.dow-b.dow), lifts = goalLifts();
@@ -2125,6 +2163,8 @@ function generatePlan(d){
   });
   // Ordre : polyarticulaires d'abord, gros muscles avant petits, abdos en dernier
   out.forEach(day => day.items.sort((a,b) => (a.muscle==="Abdos")-(b.muscle==="Abdos") || b.comp-a.comp || PRIO.indexOf(a.muscle)-PRIO.indexOf(b.muscle)));
+  // Supersets (20 nov. 2026) : paires choisies à la main pour ce jour, sinon proposées si le joueur les accepte (examen de Noxwell)
+  out.forEach(day => { const dd = days.find(x => x.dow === day.dow); ssApply(day, dd && Array.isArray(dd.ss) ? dd.ss : S.profile.ssPref === "oui" ? ssAuto(day.items) : []); day.est = Math.round(estMinutes(day.items)); });
   out.forEach(day => { if(cardioDow.has(day.dow) && day.items.length){ day.items.push({exId:cardioEx.id, muscle:"Cardio", slot:"cardio", comp:false, n:0, sets:1, cardio:true}); day.est += NOX_CARDIO_MIN; } });
   // Alertes de récupération entre jours consécutifs
   const alerts = [], dset = new Set(out.map(x => x.dow));
@@ -2216,6 +2256,7 @@ function noxLevers(g){
     force:[["🏋️",`Au programme chaque semaine, en début de séance : ${(Array.isArray(g.prec) ? g.prec : []).map(k => (NOX_LIFTS[k] || [,""])[1]).filter(Boolean).join(", ") || "les grands mouvements"}`],["🎯","Charges lourdes : 5 à 8 reps sur les grands mouvements à la barre"],["📊","Ce sont eux qui prouveront tes progrès"]],
     endu:[["🫀",`${Math.max(1, Math.round(num(g.prec)) || 1)} bloc${num(g.prec) > 1 ? "s" : ""} de cardio par semaine, en fin de séance`],["📈","10 à 20 séries par muscle et par semaine"]]
   }[g.obj].slice();
+  if(S.profile.ssPref === "oui") L.push(["⛓", "Supersets : deux exercices de muscles différents enchaînés sans pause, repos après le 2e"]);
   if(g.obj === "muscle" && (g.prec === "haut" || g.prec === "bas")) L.push(["⬆️", `Priorité au ${g.prec === "haut" ? "haut" : "bas"} du corps : plus de séries par semaine quand le temps de séance le permet`]);
   return L;
 }
@@ -2317,7 +2358,7 @@ function noxPrefill(){
   const dur = NOX_DUR.reduce((b, v, i) => Math.abs(v - min) < Math.abs(NOX_DUR[b] - min) ? i : b, 2);
   const a = {n, days:days.slice(0, n), dur, lieu:atHome() ? "rien" : "salle", sexe:S.profile.sex === "f" ? "f" : S.profile.sex === "h" ? "h" : undefined,
     bw:S.profile.bw || "", height:S.profile.height || "", exp:S.workouts.length ? (months < 6 ? "deb" : months < 24 ? "mid" : "pro") : undefined,
-    org:p && /^(ppl|duo4|duo5)$/.test(p.tpl || "") ? "un" : p ? "deux" : undefined};
+    org:p && /^(ppl|duo4|duo5)$/.test(p.tpl || "") ? "un" : p ? "deux" : undefined, ss:S.profile.ssPref};
   if(a.days.length < n) a.days = DEFAULT_DAYS[n].slice();
   return ex ? {...a, ...ex, days:(ex.days || a.days).slice()} : a;
 }
@@ -2373,6 +2414,12 @@ const NOX_STEPS = [
    html:() => `<div class="nxe-q">Durée d'une séance</div><div class="nxe-chips">${NOX_DUR.map((m, i) => `<button data-set="dur" data-v="${i}" aria-pressed="${noxA.dur === i}">${m < 60 ? m + " min" : m === 60 ? "1 h" : "1 h " + (m - 60)}</button>`).join("")}</div>`,
    react:() => noxA.dur === undefined ? "" : noxA.dur === 0 ? "Court mais intense. Pas une seconde de bavardage !" : noxA.dur >= 4 ? "Une éternité de science ! Je prépare les électrodes." : "Parfait pour mes protocoles.",
    ok:() => noxA.dur !== undefined},
+  {k:"ss", q:true, say:() => "Ça te dérange d'enchaîner deux exercices sans pause entre eux ? On appelle ça un <b>superset</b> : la séance est plus courte et plus intense.", f:"smirk",
+   html:() => `<div class="nxe-q">Les supersets</div>
+     <button class="nxe-opt" data-set="ss" data-v="oui" aria-pressed="${noxA.ss === "oui"}"><span class="e">⛓</span><span><b>Pas du tout, j'aime gagner du temps</b><small>Deux exercices de muscles différents enchaînés, repos après le 2e</small></span></button>
+     <button class="nxe-opt" data-set="ss" data-v="non" aria-pressed="${noxA.ss === "non"}"><span class="e">⏸</span><span><b>Je préfère sans</b><small>Un exercice à la fois, avec le repos entre chaque série</small></span></button>
+     <div class="nxe-sub">Tu pourras toujours créer ou retirer un superset à la main, dans Routine ou en pleine séance.</div>`,
+   react:() => noxA.ss === "oui" ? "Excellent ! PLUS DE PUISSANCE, MOINS DE DISCUSSION." : noxA.ss === "non" ? "Soit ! Chaque exercice aura son repos complet." : "", ok:() => !!noxA.ss},
   {k:"lieu", q:true, say:() => "Où se trouve ton laboratoire ?", f:"smirk",
    html:() => `<div class="nxe-q">Ton lieu d'entraînement</div>` + [["salle","🏢","Avec du matériel","Salle de sport, ou maison équipée"],["rien","🤸","Sans matériel","Au poids du corps"]].map(([v, e, l, d]) => `<button class="nxe-opt" data-set="lieu" data-v="${v}" aria-pressed="${noxA.lieu === v}"><span class="e">${e}</span><span><b>${l}</b><small>${d}</small></span></button>`).join(""),
    react:() => ({salle:"Toutes ces machines… FASCINANT !", rien:"Le corps est le premier instrument du savant !"})[noxA.lieu] || "", ok:() => !!noxA.lieu},
@@ -2393,6 +2440,7 @@ const NOX_STEPS = [
      <div><span>Expérience</span><b>${({deb:"Moins de 6 mois", mid:"6 mois à 2 ans", pro:"Plus de 2 ans"})[noxA.exp]}</b></div>
      <div><span>Semaine</span><b>${noxA.n} séances · ${noxA.days.map(i => DOWS[i].slice(0, 3)).join(", ")}</b></div>
      <div><span>Durée</span><b>${NOX_DUR[noxA.dur] < 60 ? NOX_DUR[noxA.dur] + " min" : NOX_DUR[noxA.dur] === 60 ? "1 h" : "1 h " + (NOX_DUR[noxA.dur] - 60)}</b></div>
+     <div><span>Supersets</span><b>${noxA.ss === "oui" ? "Oui" : "Non"}</b></div>
      <div><span>Lieu</span><b>${noxA.lieu === "rien" ? "Sans matériel" : "Avec du matériel"}</b></div>
      <div><span>Rythme</span><b>${noxA.org === "un" ? "Un muscle par séance" : "Chaque muscle 2 fois / sem."}</b></div></div>
      <button class="btn wide" data-nxe="fix" style="margin-top:10px">✏️ Corriger une réponse</button>`, ok:() => true, btn:"C'est ça, au protocole !"},
@@ -2434,7 +2482,8 @@ function noxExamClick(e){
 // Fin de l'examen : le protocole devient le programme (accepter), un brouillon à ajuster (edit), ou on garde le programme actuel (keep)
 function noxApply(mode){
   const a = noxA, st = noxSt();
-  st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, org:a.org};
+  st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, org:a.org, ss:a.ss};
+  S.profile.ssPref = a.ss === "oui" ? "oui" : "non";
   S.profile.goal = {obj:a.obj, prec:a.prec};
   st.proto = {k:((st.proto || {}).k || 0) + 1, start:Date.now(), obj:a.obj, prec:a.prec};
   S.profile.equip = a.lieu === "rien" ? "maison" : "salle"; S.profile.sex = a.sexe;
@@ -2601,10 +2650,12 @@ function viewPlan(){
       ${al.map(a => `<div class="alert ${a.level}">${a.level==="danger"?"⚠︎":"ⓘ"} ${esc(a.text)}</div>`).join("")}
       <div class="chips wrapc">${MUSCLES.map(m => `<button class="chip" data-act="plan-muscle" data-k="${k}" data-m="${m}" aria-pressed="${day.muscles.includes(m)}" style="${mc(m)}"><span class="mdot"></span>${m}</button>`).join("")}</div>
       <details class="duos"><summary>Duos conseillés</summary><div class="duo-list">${DUOS.map((u,ui) => `<button class="duo" data-act="plan-duo" data-k="${k}" data-u="${ui}"><b>${esc(u.label)}</b><span>${esc(u.why)}</span></button>`).join("")}</div></details>
-      ${day.items.length ? `<ol class="plist">${day.items.map(it => { const e = exById(it.exId);
+      ${day.items.length ? `<ol class="plist">${day.items.map((it, q) => { const e = exById(it.exId), nx = day.items[q + 1], link = nx && !it.cardio && !nx.cardio;
+        const lk = link ? `<li class="ss-link"><button data-act="plan-ss" data-k="${k}" data-a="${it.slot}" data-b="${nx.slot}" aria-pressed="${!!(it.ss && it.ss === nx.ss)}">${it.ss && it.ss === nx.ss ? "⛓ Superset " + it.ss + " · délier" : "⛓ Superset"}</button></li>` : "";
+        const ssn = it.ss ? `<span class="ss-n">${it.ss}${day.items.filter((x, z) => x.ss === it.ss && z <= q).length}</span>` : "";
         if(it.cardio) return `<li>${thumb(e)}<span class="t"><b>${esc(e.name)}</b><span>🧪 ≈ ${NOX_CARDIO_MIN} min de cardio en fin de séance</span></span></li>`;
-        return `<li>${thumb(e)}<span class="t"><b>${esc(e.name)}${it.novel?'<span class="new">Nouveau</span>':""}</b><span>${it.sets} séries · ${esc(primOf(e))}${it.comp?" · polyarticulaire":""}${it.n?` · fait ${it.n} fois`:""}</span></span>
-          <button class="icon-btn" data-act="${it.novel?"plan-nov":"plan-swap"}" data-k="${k}" data-s="${it.slot}" aria-label="Proposer un autre exercice">↻</button></li>`; }).join("")}</ol>`
+        return `<li class="${it.ss ? "ss-in" : ""}">${ssn}${thumb(e)}<span class="t"><b>${esc(e.name)}${it.novel?'<span class="new">Nouveau</span>':""}</b><span>${it.sets} séries · ${esc(primOf(e))}${it.comp?" · polyarticulaire":""}${it.n?` · fait ${it.n} fois`:""}</span></span>
+          <button class="icon-btn" data-act="${it.novel?"plan-nov":"plan-swap"}" data-k="${k}" data-s="${it.slot}" aria-label="Proposer un autre exercice">↻</button></li>${lk}`; }).join("")}</ol>`
         : `<p class="small muted" style="margin:0">Choisissez les muscles de cette séance.</p>`}
     </section>`;
   }).join("");
@@ -2632,8 +2683,8 @@ function viewPlan(){
 function planSave(){
   const g = generatePlan(planDraft);
   S.profile.routines = S.profile.routines.filter(r => !r.plan).concat(g.days.filter(x => x.items.length).map(day => ({
-    id:"plan-"+day.dow, plan:true, dow:day.dow, name:`${DOWS[day.dow]} · ${day.name}`, items:day.items.map(it => ({exId:it.exId, sets:it.sets}))})));
-  S.profile.plan = {tpl:planDraft.tpl, created:Date.now(), days:planDraft.days.map(x => ({dow:x.dow, muscles:x.muscles.slice(), off:{...x.off}, min:x.min||60}))};
+    id:"plan-"+day.dow, plan:true, dow:day.dow, name:`${DOWS[day.dow]} · ${day.name}`, items:day.items.map(it => ({exId:it.exId, sets:it.sets, ...(it.ss ? {ss:it.ss} : {})}))})));
+  S.profile.plan = {tpl:planDraft.tpl, created:Date.now(), days:planDraft.days.map(x => ({dow:x.dow, muscles:x.muscles.slice(), off:{...x.off}, min:x.min||60, ...(Array.isArray(x.ss) ? {ss:x.ss.map(p => p.slice())} : {})}))};
   if(g.novelty) S.profile.novelty = {exId:g.novelty.exId, date:Date.now()};
   touchProfile();
 }
@@ -2777,7 +2828,7 @@ function adaptToday(r){
   MUSCLES.forEach(m => rec[m] = recovery(m).pct);
   MUSC.forEach(m => { if(!(m in rec)) rec[m] = recovery(m).pct; });
   const weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible" && rec[m] >= 0.9);
-  let items = r.items.map(it => { const e = exById(it.exId); return {exId:it.exId, sets:it.sets, muscle:e.muscle, prim:primOf(e), comp:isCompound(e)}; });
+  let items = r.items.map(it => { const e = exById(it.exId); return {exId:it.exId, sets:it.sets, muscle:e.muscle, prim:primOf(e), comp:isCompound(e), ...(it.ss ? {ss:it.ss} : {})}; });
   // Programme déjà enregistré : deux exercices du même mouvement sont regroupés en un seul, avec plus de séries (5 au plus)
   if(r.plan){ const fam = {}, merged = [];
     items = items.filter(it => { const f = exFamily(exById(it.exId)), k = fam[f]; if(!k){ fam[f] = it; return true; }
@@ -4605,6 +4656,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-20", t:"⛓ Les supersets", x:"Deux exercices enchaînés sans pause, repos seulement après le 2e : la séance est plus courte. Le Pr Noxwell te demande dans son examen si ça te tente. Tu peux aussi en créer ou en retirer à la main : dans Routine, touche « ⛓ Superset » entre deux exercices ; en séance, menu ⋯ d'un exercice. Et la reprise allégée ne se déclenche plus si le muscle a travaillé récemment avec un autre exercice."},
   {d:"2026-11-20", t:"🏋️ Un coach plus malin", x:"Le coach suit mieux ta vraie force : fini les charges qui tournent en rond ou qui redescendent après une semaine plus légère. Si ta 1re série dépasse nettement l'objectif (ou en est loin), il recalcule la charge des séries suivantes sur-le-champ. Sur la fiche d'un exercice, indique le palier de ta machine (de 5 en 5 kg…) : il ne proposera que des charges possibles. Les débutants progressent plus vite, la reprise après une longue pause est plus douce, et en isolation on va un peu plus près de l'échec."},
   {d:"2026-11-19", t:"🧪 Un visiteur inattendu", x:"Quelqu'un s'intéresse de très près à ton Gymon… Il se présentera sur la page Gymon dès que ton Gymon aura un peu grandi. Il connaît la musculation sur le bout des doigts : écoute ses conseils, mais c'est toi qui as le dernier mot. Au passage, le coach te tutoie désormais."},
   {d:"2026-11-18", t:"🛠️ Vos exercices, à votre façon", x:"Sur la fiche d'un exercice, « Mes réglages » : ajoutez une photo de la machine de votre salle, indiquez si vous le faites en unilatéral (un côté puis l'autre : le volume compte les deux) et réglez le poids à vide de la barre, du chariot ou de la Smith (l'app indique ce qu'il faut ajouter). Vos exercices créés se renomment et acceptent maintenant des muscles secondaires. Merci pour vos retours !"},
@@ -5006,7 +5058,7 @@ function viewHome(){
 
 function viewActive(){
   const a = S.profile.active;
-  const exs = a.exercises.map((ex,i) => {
+  const exsL = a.exercises.map((ex,i) => {
     const e = exById(ex.exId), prev = lastSetsFor(ex.exId, a.start), c = coach(ex.exId, a.start, ex.plan, preLoad(a.exercises, i, true));
     const hasWarm = ex.sets.some(s => s.warm), wu = hasWarm ? warmupFor(ex.exId, a.start, ex.plan, warmNeed(a.exercises.slice(0, i), ex.exId), ex.wuForce).slice(-ex.sets.filter(s => s.warm).length) : [];   // séries retirées : on garde les plus proches de la charge
     const prevWork = (sessionsFor(ex.exId, a.start)[0] || {sets:[]}).sets, prevWarm = prev.filter(x => x.warm);
@@ -5022,8 +5074,9 @@ function viewActive(){
         <td><button class="check" data-act="check" aria-label="Valider la série"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button></td>
       </tr>`;
     }).join("");
+    const ssK = ex.ss ? a.exercises.filter((x, z) => x.ss === ex.ss && z <= i).length : 0;
     return `<article class="card ex" data-i="${i}">
-      <div class="ex-head">${thumb(e,"ex-info")}<div class="tt"><h3>${esc(e.name)}</h3><span class="tag"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(primOf(e))} · ${esc(e.equip)}</span></div>
+      <div class="ex-head">${ex.ss ? `<span class="ss-n">${esc(ex.ss)}${ssK}</span>` : ""}${thumb(e,"ex-info")}<div class="tt"><h3>${esc(e.name)}</h3><span class="tag"><span class="mdot" style="${mc(e.muscle)}"></span>${esc(primOf(e))} · ${esc(e.equip)}</span></div>
         ${ex.sets.some(s => s.done && !s.warm) || isCardio(e) ? "" : `<button class="icon-btn" data-act="ex-swap" data-i="${i}" aria-label="Remplacer par un autre exercice du même muscle">↻</button>`}
         <button class="icon-btn" data-act="ex-menu" data-i="${i}" aria-label="Options de l'exercice">⋯</button></div>
       <button class="coach ${c.deload?"deload":""} ${noxMet()?"nx":""}" data-act="coach-why" data-i="${i}">
@@ -5044,7 +5097,14 @@ function viewActive(){
         <div class="feel-bar">${FEEL.map(f => `<button data-act="feel" data-i="${i}" data-v="${f.v}" aria-pressed="${ex.feel===f.v}" style="--fc:var(${f.col})" aria-label="${f.label}"></button>`).join("")}</div>
         <div class="feel-ends"><span>Trop facile</span><span>Trop dur</span></div>${noxFeelHTML(i, ex, e)}</div>` : ""}
     </article>`;
-  }).join("");
+  });
+  // Supersets : exercices consécutifs de même lettre regroupés dans un cadre
+  let exs = "";
+  for(let q = 0; q < exsL.length;){ const L = a.exercises[q].ss; let z = q + 1; while(L && z < exsL.length && a.exercises[z].ss === L) z++;
+    if(L && z - q >= 2){ const names = a.exercises.slice(q, z).map(x => esc(exById(x.exId).name));
+      exs += `<section class="ss-wrap"><span class="ss-lbl">SUPERSET ${esc(L)}</span><p class="ss-hint">⚡ Enchaîne ${names.join(" puis ")} sans pause. Repos seulement après le dernier.</p>${exsL.slice(q, z).join("")}</section>`; }
+    else exs += exsL.slice(q, z).join("");
+    q = z; }
   return `
     <section class="live-head">
       <input id="w-name" class="name-input" value="${esc(a.name)}" aria-label="Nom de la séance">
@@ -5588,12 +5648,12 @@ const ACT = {
   "start-today": () => { const ch = chooseToday(); if(!ch) return; const its = adaptToday(ch.eff).items;
     if(ch.switched && ch.pick.kind==="plan"){ const wk = weekStart(Date.now());
       S.profile.swaps = (S.profile.swaps||[]).filter(x => x.week===wk).concat({week:wk, a:ch.r0.id, b:ch.pick.r.id}); }
-    startWorkout(ch.eff.name, its.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), ch.pick.kind==="plan" ? ch.pick.r.id : ch.r0.id); },
+    startWorkout(ch.eff.name, its.map(it => ({exId:it.exId, plan:it.sets, ...(it.ss ? {ss:it.ss} : {}), sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), ch.pick.kind==="plan" ? ch.pick.r.id : ch.r0.id); },
   "today-pick": b => { S.profile.todayPick = {date:dayKey(), key:b.dataset.k}; touchProfile(); render(); },
   "today-auto": () => { delete S.profile.todayPick; touchProfile(); render(); },
   "start-routine": b => { const r = S.profile.routines.find(x=>x.id===b.dataset.id); if(!r) return;
     const its = isTodayPlan(r) ? adaptToday(r).items : r.items;
-    startWorkout(r.name, its.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), r.id); },
+    startWorkout(r.name, its.map(it => ({exId:it.exId, plan:it.sets, ...(it.ss ? {ss:it.ss} : {}), sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), r.id); },
   "new-routine": () => { draft = {id:uidGen("r"), name:"", items:[]}; openRoutineEditor(); },
   "edit-routine": b => { const r = S.profile.routines.find(x=>x.id===b.dataset.id); if(!r) return; draft = clone(r); openRoutineEditor(); },
   "r-inc": b => { draft.items[+b.dataset.k].sets = Math.min(10, draft.items[+b.dataset.k].sets+1); openRoutineEditor(); },
@@ -5631,6 +5691,12 @@ const ACT = {
     if(i>=0) day.muscles.splice(i,1); else day.muscles.push(m); day.off = {}; planDraft.tpl = ""; render(); },
   "plan-duo": b => { const day = planDraft.days[+b.dataset.k]; day.muscles = DUOS[+b.dataset.u].m.slice(); day.off = {}; planDraft.tpl = ""; render(); },
   "plan-swap": b => { const day = planDraft.days[+b.dataset.k], s = b.dataset.s; day.off[s] = (day.off[s]||0) + 1; render(); },
+  "plan-ss": b => { const day = planDraft.days[+b.dataset.k], a = b.dataset.a, c = b.dataset.b;
+    const g = generatePlan(planDraft), gd = g.days.find(x => x.dow === day.dow), cur = [];
+    if(gd) gd.items.forEach((it, q) => { const nx = gd.items[q + 1]; if(it.ss && nx && nx.ss === it.ss) cur.push([it.slot, nx.slot]); });
+    const linked = cur.some(([x, y]) => x === a && y === c);
+    day.ss = linked ? cur.filter(([x, y]) => !(x === a && y === c)) : cur.filter(([x, y]) => ![x, y].includes(a) && ![x, y].includes(c)).concat([[a, c]]);
+    render(); toast(linked ? "Superset délié : touche « Valider la routine »" : "Superset créé : touche « Valider la routine »"); },
   "plan-min": b => { const day = planDraft.days[+b.dataset.k]; day.min = +b.dataset.t; day.off = {}; render(); },
   "plan-nov": () => { planDraft.novOff++; render(); },
   "plan-save": () => { planSave(); const n = S.profile.routines.filter(r=>r.plan).length; tab = "seance"; render(); window.scrollTo(0,0); toast(`Routine enregistrée : ${n} séance${n>1?"s":""} par semaine`); },
@@ -5669,6 +5735,9 @@ const ACT = {
   "nox-org-set": b => { const plan = S.profile.plan, n = plan && plan.days ? plan.days.length : (planDraft || initDraft()).n;
     const ex = noxExam(); if(ex){ ex.org = b.dataset.v; } noxSetTpl(NOX_TPL[b.dataset.v][n] || (TEMPLATES[n] || [{}])[0].id); },
   "nox-tpl": b => noxSetTpl(b.dataset.t),
+  "nox-ss": () => { S.profile.ssPref = S.profile.ssPref === "oui" ? "non" : "oui"; const ex = noxExam(); if(ex) ex.ss = S.profile.ssPref;
+    planDraft = initDraft(); planDraft.days.forEach(x => delete x.ss); if(S.profile.plan) planSave(); closeSheet(); render();
+    toast(S.profile.ssPref === "oui" ? "Supersets ajoutés à ton programme" : "Supersets retirés de ton programme"); },
   "nox-light": () => { const from = Date.now(); S.profile.lightWeek = {from, until:from + 7 * 86400000, proto:(noxSt().proto || {}).k || 1}; touchProfile(); render(); toast("Semaine légère lancée : à toi de récupérer !"); },
   "nox-light-later": () => { noxSt().lightSnooze = Date.now(); touchProfile(); render(); },
   "nox-light-stop": () => { if(S.profile.lightWeek) S.profile.lightWeek.until = Date.now(); touchProfile(); render(); toast("Semaine légère arrêtée"); },
@@ -5677,6 +5746,7 @@ const ACT = {
   "nox-plateau-no": b => { (noxSt().dis = noxSt().dis || {})[b.dataset.id] = Date.now(); touchProfile(); render(); },
   "nox-talk": () => openSheet(noxSays("Que veux-tu, sujet ?", `<div class="nox-orgs">
       <button class="card tpl" data-act="nox-exam"><b>🩺 Refaire l'examen</b><span class="small muted">Tes objectifs ont changé ? Je recalcule le protocole.</span></button>
+      <button class="card tpl" data-act="nox-ss"><b>⛓ Supersets : ${S.profile.ssPref === "oui" ? "oui" : "non"}</b><span class="small muted">${S.profile.ssPref === "oui" ? "Je les retire de ton programme." : "Je les ajoute à ton programme pour gagner du temps."}</span></button>
       <button class="card tpl" data-act="nox-org"><b>🧬 Organisation des séances</b><span class="small muted">Deux fois par semaine, ou un muscle par séance.</span></button>
       <button class="card tpl" data-act="nox-src"><b>📚 Mes sources</b><span class="small muted">Les études derrière mes protocoles.</span></button></div>`)),
   "coach-why": b => { const ex = A().exercises[+b.dataset.i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan, preLoad(A().exercises, +b.dataset.i, true));
@@ -5749,7 +5819,8 @@ const ACT = {
       // Coup critique : réussi seulement si l'objectif est atteint (charge visée et reps visées au moins)
       if(s.crit && !s.warm){ const c = coach(ex.exId, A().start, ex.plan, preLoad(A().exercises, i, true)), tw = num(c.w), tr0 = num(c.r) || num(c.lo);
         s.critOK = (!tw || num(s.w) >= tw - 0.01) && (!tr0 || num(s.r) >= tr0) ? 1 : 0; s.critGoal = (tw ? fmtN(tw) + " kg × " : "") + (tr0 ? tr0 + (c.unit === "s" ? " s" : " reps") : ""); }
-      s.done = true; if(!s.warm && !isCardio(exById(ex.exId))) startRest(S.profile.rest<0 ? coach(ex.exId, A().start, ex.plan).rest : S.profile.rest);
+      const nxSS = ex.ss && A().exercises[i + 1] && A().exercises[i + 1].ss === ex.ss ? A().exercises[i + 1] : null;
+      s.done = true; if(!s.warm && !isCardio(exById(ex.exId))){ if(nxSS) toast(`⚡ Superset : enchaîne ${exById(nxSS.exId).name}, sans repos`); else startRest(S.profile.rest<0 ? coach(ex.exId, A().start, ex.plan).rest : S.profile.rest); }
       // Pré-remplit la série suivante si elle est vide
       const nx = ex.sets[j+1]; if(nx && !nx.done && !nx.warm && nx.w==="" && s.w!=="" && !s.warm) nx.w = s.w;
       if(!s.warm) setReaction(ex, s);
@@ -5788,10 +5859,16 @@ const ACT = {
     openSheet(`<h3>${esc(e.name)}</h3>
       ${i>0?`<button class="btn" data-act="ex-move" data-i="${i}" data-d="-1">Monter</button>`:""}
       ${i<n-1?`<button class="btn" data-act="ex-move" data-i="${i}" data-d="1">Descendre</button>`:""}
+      ${A().exercises[i].ss ? `<button class="btn" data-act="ex-ss-off" data-i="${i}">⛓ Délier le superset</button>` : i<n-1 && !isCardio(e) && !isCardio(exById(A().exercises[i+1].exId)) ? `<button class="btn" data-act="ex-ss" data-i="${i}">⛓ Superset avec ${esc(exById(A().exercises[i+1].exId).name)}</button>` : ""}
       <button class="btn" data-act="ex-info-close" data-id="${e.id}">Fiche de l'exercice</button>
       ${isCardio(e) ? "" : `<div class="row" style="padding:2px 4px"><span style="flex:1">Unilatéral (un côté puis l'autre)</span><button class="sw" data-act="ex-uni" data-id="${e.id}" aria-pressed="${!!exOpt(e.id).uni}" aria-label="Unilatéral"></button></div>`}
       <button class="btn danger" data-act="ex-remove" data-i="${i}">Retirer de la séance</button>
       <button class="btn ghost" data-act="close">Fermer</button>`); },
+  "ex-ss": b => { const i = +b.dataset.i, l = A().exercises, used = new Set(l.map(x => x.ss).filter(Boolean));
+    let L = "A"; while(used.has(L)) L = String.fromCharCode(L.charCodeAt(0) + 1);
+    if(l[i + 1].ss) l.filter(x => x.ss === l[i + 1].ss).forEach(x => delete x.ss);
+    l[i].ss = L; l[i + 1].ss = L; touchProfile(); closeSheet(); render(); toast(`Superset ${L} : enchaîne les deux exercices, repos après le 2e`); },
+  "ex-ss-off": b => { const l = A().exercises, L = l[+b.dataset.i].ss; l.forEach(x => { if(x.ss === L) delete x.ss; }); touchProfile(); closeSheet(); render(); toast("Superset délié"); },
   "ex-move": b => { const i = +b.dataset.i, d = +b.dataset.d, l = A().exercises; [l[i], l[i+d]] = [l[i+d], l[i]]; touchProfile(); closeSheet(); render(); },
   "ex-remove": b => { A().exercises.splice(+b.dataset.i,1); touchProfile(); closeSheet(); render(); },
   "ex-info-close": b => { closeSheet(); ACT["ex-info"](b); },

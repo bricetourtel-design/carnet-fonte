@@ -58,6 +58,8 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p0.click('[data-set="exp"][data-v="mid"]'); await next();
   await p0.click('[data-nxn="1"]'); await next();
   await p0.click('[data-set="dur"][data-v="1"]'); await next();
+  ok(/superset/i.test(await p0.$eval(".nxe-bub", e => e.textContent)), "il demande si les supersets dérangent");
+  await p0.click('[data-set="ss"][data-v="oui"]'); await next();
   await p0.click('[data-set="lieu"][data-v="salle"]'); await next();
   await p0.click('[data-set="org"][data-v="un"]');
   ok(/Ce que dit la science/.test(await p0.$eval(".nxe-body", e => e.textContent)), "« un muscle par séance » : les risques sont expliqués");
@@ -71,6 +73,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const after = await p0.evaluate(() => ({goal:S.profile.goal, ex:S.profile.nox.exam, tpl:S.profile.plan && S.profile.plan.tpl, n:(S.profile.plan || {days:[]}).days.length, min:(S.profile.plan || {days:[{}]}).days[0].min,
     bw:S.profile.bw, h:S.profile.height, routines:S.profile.routines.filter(r => r.plan).length, tab}));
   ok(after.goal.obj === "muscle" && after.tpl === "ul2" && after.n === 4 && after.min === 45 && after.bw === 80 && after.h === 180 && after.routines === 4 && after.tab === "routine", "accepter : programme haut/bas sur 4 séances de 45 min enregistré, mesures gardées", after);
+
+  const ssPlan = await p0.evaluate(() => ({pref:S.profile.ssPref, ss:S.profile.routines.filter(r => r.plan).some(r => r.items.filter(it => it.ss).length >= 2)}));
+  ok(ssPlan.pref === "oui" && ssPlan.ss, "supersets acceptés : des paires dans le programme", ssPlan);
 
   // 5. Effet réel de l'objectif : au moins 14 séries par semaine pour le haut du corps
   const vol = await p0.evaluate(() => { const d = newDraft(3); d.days.forEach(x => x.min = 75); const up = () => { const g = generatePlan(d); return NOX_UPPER.reduce((t, m) => t + g.weekly[m], 0); };
