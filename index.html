@@ -921,7 +921,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 g";
+const APP_VERSION = "2026-11-20 h";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2113,7 +2113,8 @@ function ssApply(day, pairs){
 }
 function generatePlan(d){
   const st = exStats(), seen = {}, days = d.days.slice().sort((a,b)=>a.dow-b.dow), lifts = goalLifts();
-  const prefer = arr => lifts.length ? arr.slice().sort((a, b) => lifts.includes(b.e.id) - lifts.includes(a.e.id)) : arr;   // force : les mouvements choisis d'abord
+  // Favoris d'abord (20 nov. 2026, demande du propriétaire) : étoilés à la main ou fréquents ; objectif force : les mouvements choisis avant tout
+  const prefer = arr => arr.slice().sort((a, b) => (lifts.includes(b.e.id) - lifts.includes(a.e.id)) || (isFav(b.e.id) - isFav(a.e.id)));
   const out = days.map(day => {
     const ms = day.muscles.slice().sort((a,b) => PRIO.indexOf(a)-PRIO.indexOf(b));
     const mins = day.min || 60, sumW = ms.reduce((t,m) => t+WEIGHT[m], 0);
@@ -2122,7 +2123,7 @@ function generatePlan(d){
     ms.forEach(m => {
       const k = seen[m] = (seen[m]||0) + 1;           // k-ième séance de la semaine pour ce muscle
       const cnt = m==="Abdos" ? (slots>=5 ? 1 : 0) : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
-      const all = prefer(candidatesFor(m, st)), done = all.filter(c => c.n>0 || lifts.includes(c.e.id));
+      const all = prefer(candidatesFor(m, st)), done = all.filter(c => c.n>0 || lifts.includes(c.e.id) || isFav(c.e.id));
       const pool = done.length >= cnt ? done : all;
       for(let j=0;j<cnt;j++){
         const off = day.off[m+":"+j] || 0;
@@ -4769,6 +4770,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-20", t:"⭐ Tes favoris dans la routine", x:"La routine choisit d'abord tes exercices favoris (étoilés dans leur fiche, ou faits souvent), puis tes autres exercices habituels. Le reste ne change pas : un polyarticulaire en tête pour les gros muscles, et les exercices alternent d'une séance à l'autre."},
   {d:"2026-11-20", t:"💾 Routine enregistrée toute seule", x:"Plus de bouton « Valider la routine » : chaque réglage (jours, muscles, temps dispo, ↻, supersets) est enregistré aussitôt, et tes séances suivent."},
   {d:"2026-11-20", t:"🏠 Quatre lieux d'entraînement", x:"Salle complète, petite salle (sans machines), maison avec haltères (avec ou sans banc) ou sans matériel : le Pr Noxwell te le demande dans son examen, et le programme, le bouton ↻ et les listes ne proposent que des exercices faisables avec ton matériel. Les exercices qui demandent un appareil de salle (dips aux barres, GHD…) ne sont plus proposés à la maison."},
   {d:"2026-11-20", t:"🧪 Le labo s'agrandit", x:"Le Pr Noxwell passe désormais te voir de temps en temps sur la page Gymon : pour t'expliquer ce qui arrive à ton Gymon la première fois que ça se produit, ou pour te proposer une nouvelle expérience. En fin de protocole, il publie son rapport d'expérience (aussi dans Routine › Parler à Noxwell). Et l'organisation « un muscle par séance » existe maintenant sur 5 et 6 jours."},

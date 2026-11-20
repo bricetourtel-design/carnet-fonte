@@ -190,6 +190,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     r.label = /Enregistré automatiquement/.test(document.getElementById("view").textContent); return r; });
   ok(!auto.btn && auto.min === 30 && auto.changed && auto.novKept && auto.label, "routine : enregistrement automatique, la nouveauté du mois ne change pas", auto);
 
+  // 12. Favoris d'abord dans la routine : un exercice étoilé jamais fait passe devant les autres de son muscle
+  const fav = await p1.evaluate(() => { const st = exStats(), savedFav = S.profile.favs, savedEq = S.profile.equip; S.profile.equip = "";
+    const c = candidatesFor("Biceps", st).filter(x => !x.n && !isFav(x.e.id)).pop(); S.profile.favs = [c.e.id];
+    const d = {n:1, tpl:"", days:[{dow:1, muscles:["Biceps"], off:{}, min:30}], novOff:0, noNovelty:true}, g = generatePlan(d);
+    const r = {id:c.e.id, first:(g.days[0].items.find(it => it.muscle === "Biceps") || {}).exId};
+    S.profile.favs = ["__aucun__"]; r.without = (generatePlan(d).days[0].items.find(it => it.muscle === "Biceps") || {}).exId;
+    S.profile.favs = savedFav; S.profile.equip = savedEq; return r; });
+  ok(fav.first === fav.id && fav.without !== fav.id, "routine : l'exercice favori passe en premier pour son muscle", fav);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");
