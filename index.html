@@ -855,6 +855,8 @@ body.nox-shake main{animation:nxshake .38s linear}
 .nox-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
 .nox-tiles div{background:var(--fill);border-radius:14px;padding:9px 6px;text-align:center}
 .nox-tiles strong{display:block;font-size:18px;color:var(--ok)}.nox-tiles span{font-size:11.5px;color:var(--muted);line-height:1.2;display:block;margin-top:2px}
+.nox-xp{border-color:rgba(34,211,238,.5);background:linear-gradient(160deg,rgba(34,211,238,.12),var(--glass))}
+.nox-xp h3{margin:0 0 6px;font-size:16.5px}.nox-xp p{margin:0 0 8px;font-size:14.5px;line-height:1.38}.nox-xp p.why{font-size:12.5px;color:var(--muted)}
 .nox-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .nox-sheet-h{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
 .nox-sheet-h .nox-face{width:58px;height:64px;border-radius:16px}
@@ -866,6 +868,8 @@ body.nox-shake main{animation:nxshake .38s linear}
 .coach.nx{background:color-mix(in srgb,#22d3ee 9%,transparent);border:1px solid color-mix(in srgb,#22d3ee 35%,transparent);border-left:3px solid #22d3ee}
 .coach.nx .cwhy{color:#0891b2}
 :root:not([data-theme="light"]) .coach.nx .cwhy{color:#67e8f9}
+.live-adj{margin:0 0 6px;font-size:13.5px;line-height:1.35;color:#0e7490;font-weight:600}
+:root:not([data-theme="light"]) .live-adj{color:#a5f3fc}
 .nox-fio{font-size:15px;filter:drop-shadow(0 0 4px rgba(163,230,53,.6))}
 .feel-how{margin-left:auto;font-size:12.5px;font-weight:700;color:#0891b2;background:none;border:0;padding:0}
 :root:not([data-theme="light"]) .feel-how{color:#67e8f9}
@@ -905,7 +909,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-19 a";
+const APP_VERSION = "2026-11-20 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1661,6 +1665,10 @@ function defaultRange(e){
   return [6,10];
 }
 function stepFor(e, w){
+  const own = num(exOpt(e.id).step); if(own > 0) return own;   // palier réglé par le joueur (pile de 5 en 5 kg…)
+  return stepDefault(e, w);
+}
+function stepDefault(e, w){
   if(e.equip==="Kettlebell") return 4;   // kettlebells de 4 en 4 kg
   if(e.equip==="Haltères") return w<10 ? 1 : 2;
   if(e.equip==="Barre") return 2.5;
@@ -1715,7 +1723,11 @@ function freshSess(sess){
     return {...x, r:String(W ? Math.round((30 + R) / f - 30) : Math.round(R / f))}; })};
 }
 // Ressenti non noté : « Idéal » par défaut (les reps sous la fourchette sont traitées à part, avec une tolérance)
-function inferFeel(sess, lo){ return 3; }
+function inferFeel(sess, lo, hi){
+  if(!hi || !sess || !sess.sets.length) return 3;
+  const W = Math.max(...sess.sets.map(x => num(x.w))), minR = Math.min(...sess.sets.filter(x => num(x.w) === W).map(x => num(x.r)));
+  return minR >= hi + 2 ? 2 : 3;   // objectif largement dépassé sans ressenti noté : « Facile » (audit du 19 nov. 2026)
+}
 // Séries de la semaine pour un muscle, au prorata (un développé couché compte 0,5 série de triceps)
 function muscleSetsThisWeek(muscle, untilTs){
   const end = untilTs || Infinity, ws = untilTs ? untilTs - 7*86400000 : weekStart(Date.now()); let n = 0;
@@ -1726,8 +1738,18 @@ function muscleSetsThisWeek(muscle, untilTs){
 // Proposition à la place du jour dans la séance (pre = séries déjà faites pour ce muscle, voir preLoad)
 // Exercice au poids du corps (hors gainage tenu en secondes) : la charge notée, c'est le poids de corps actuel ; on progresse en reps (15 nov. 2026)
 const isBWX = e => e.equip === "Poids du corps" && !TIMED.has(e.id);
+function novice(){
+  const ex = S.profile.nox && S.profile.nox.exam; if(ex && ex.exp) return ex.exp === "deb";
+  const first = S.workouts.reduce((t, w) => Math.min(t, w.start), Infinity);
+  return isFinite(first) && S.workouts.length >= 1 && Date.now() - first < 120 * 86400000 && S.workouts.length < 40;
+}
+// Semaine allégée (audit du 19 nov. 2026) : proposée par Noxwell en fin de protocole ou quand plusieurs exercices sont durs
+const lightOn = ts => { const l = S.profile.lightWeek; return !!(l && ts >= l.from && ts < l.until); };
 function coach(exId, beforeTs, planned, pre){
-  const c = coachFresh(exId, beforeTs, planned), f = fatigueFactor(pre);
+  let c = coachFresh(exId, beforeTs, planned); const f = fatigueFactor(pre);
+  if(lightOn(beforeTs || Date.now()) && num(c.w) && !c.deload && !c.unit){ const e = exById(exId), st = stepFor(e, num(c.w));
+    c = {...c, w:+Math.max(st, roundTo(num(c.w) * 0.9, st)).toFixed(2), sets:Math.max(2, (c.sets || 3) - 1), tag:"Semaine légère", deload:true, light:true,
+      why:"Semaine allégée : environ −10 % de charge et une série de moins sur tous les exercices. Le corps récupère, la force remonte, et on repart plus fort la semaine suivante.", notes:[]}; }
   if(f >= 0.999 || !c.r || c.deload || c.unit === "min") return c;
   const e = exById(exId), W = num(c.w), pct = Math.round((1 - f) * 100), {k} = fatigueK();
   let w = W, r;
@@ -1755,16 +1777,21 @@ function coachFresh(exId, beforeTs, planned){
   if(isCardio(e)){   // cardio : durée en minutes ; trop facile → +5 min, idéal → +2, dur → pareil, trop dur → −3
     if(!hist.length) return {lo, hi, rest:0, w:"", r:"", sets:planned||1, unit:"min", tag:"Nouveau",
       why:`Cardio : note la durée en minutes (${lo} à ${hi} min pour commencer), sans charge. Le ressenti règle l'intensité, et j'ajuste la durée la prochaine fois.`};
-    const m0 = Math.max(...hist[0].sets.map(x => num(x.r))), fl = hist[0].feel || 3, r = Math.max(5, m0 + ({1:5, 2:5, 3:2, 4:0, 5:-3})[fl]);
-    return {lo, hi, rest:0, w:"", r, sets:planned||1, unit:"min", tag: r > m0 ? `+${r - m0} min` : r < m0 ? `${r - m0} min` : "Consolider",
-      why:`Cardio : la dernière fois ${m0} min, ressenti « ${FEEL[fl - 1].label} ». On vise ${r} min. Plus long ou plus intense, tu brûles plus de calories.`}; }
+    const m0 = Math.max(...hist[0].sets.map(x => num(x.r))), fl = hist[0].feel || 3, top = Math.max(hi, m0);
+    const r = Math.min(top, Math.max(5, m0 + ({1:5, 2:5, 3:2, 4:0, 5:-3})[fl])), capped = r >= hi && fl <= 3 && m0 >= hi;
+    return {lo, hi, rest:0, w:"", r, sets:planned||1, unit:"min", tag: capped ? "Intensité" : r > m0 ? `+${r - m0} min` : r < m0 ? `${r - m0} min` : "Consolider",
+      why: capped ? `Cardio : ${m0} min, la durée visée est atteinte. Pour progresser, garde ${r} min mais va plus vite ou augmente la résistance : le ressenti montera, les calories aussi.`
+        : `Cardio : la dernière fois ${m0} min, ressenti « ${FEEL[fl - 1].label} ». On vise ${r} min. Plus long ou plus intense, tu brûles plus de calories.`}; }
   if(!hist.length){ const est = estimateNew(e, lo);
     if(est) return {lo, hi, rest, w:est.w, r:lo, sets:planned||3, tag:"Estimé", est:true,
       why:`Tu n'as jamais fait cet exercice : la charge est une estimation, volontairement prudente. ${est.txt} Arrête chaque série 2 ou 3 reps avant de ne plus pouvoir. Trop facile ou trop dur ? Ajuste dès la 2e série : la prochaine fois, je partirai de ce que tu auras vraiment fait.`};
     return {lo, hi, rest, w:"", r:"", sets:planned||3, tag:"Nouveau",
       why:`Première fois sur cet exercice : choisis une charge avec laquelle tu fais ${lo} à ${hi} reps, en t'arrêtant 1 ou 2 reps avant de ne plus pouvoir. Je calculerai la suite à partir de ce que tu auras noté.`}; }
   const last = hist[0];
-  let feel = last.feel || inferFeel(last, lo), f = FEEL[feel-1];
+  let feel = last.feel || inferFeel(last, lo, hi), f = FEEL[feel-1];
+  // Isolation (audit du 19 nov. 2026, Robinson 2024) : finir à 0–1 rep en réserve est la cible, « Dur » y vaut « Idéal »
+  const isoNear = !isPoly(e) && !isBWX(e) && !TIMED.has(e.id) && e.equip !== "Poids du corps";
+  if(isoNear && feel === 4) feel = 3;
   let W = Math.max(...last.sets.map(s => num(s.w))), top = last.sets.filter(s => num(s.w)===W);
   let minR = Math.min(...top.map(s => num(s.r))), lastR = num(top[top.length-1].r);
   const nSets = last.sets.filter(s => num(s.w) >= W*0.75).length;   // les séries dégressives légères ne comptent pas
@@ -1772,7 +1799,9 @@ function coachFresh(exId, beforeTs, planned){
   const gapDays = Math.round(((beforeTs || Date.now()) - last.ts) / 86400000);
   // Poids du corps (charge = poids de corps éventuel) : progression en répétitions
   if(!W && TIMED.has(e.id)){
-    let r = Math.max(5, minR + ({1:15,2:10,3:5,4:0,5:-5})[feel]); if(gapDays > 21) r = Math.max(5, minR - 5);
+    let r = Math.min(Math.max(hi, minR), Math.max(5, minR + ({1:15,2:10,3:5,4:0,5:-5})[feel])); if(gapDays > 21) r = Math.max(5, minR - 5);
+    if(minR >= hi && feel <= 3 && gapDays <= 21) return {lo, hi, rest, w:"", r:minR, sets, unit:"s", tag:"Variante",
+      why:`Tu tiens ${minR} s, le haut de l'objectif (${hi} s) : plutôt que d'allonger encore, passe à une variante plus dure (pieds surélevés, bras tendus, appui sur un pied).`};
     return {lo, hi, rest, w:"", r, sets, unit:"s", tag: gapDays > 21 ? "Reprise" : r > minR ? `+${r-minR} s` : r < minR ? `${r-minR} s` : "Consolider",
       why: gapDays > 21 ? `Tu n'as pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend avec 5 secondes de moins.`
         : r > minR ? `Exercice tenu en secondes : on vise ${r} s, ${r-minR} de plus que la dernière fois (${minR} s).` : r < minR ? `La dernière fois, c'était trop dur : on tient ${r} s.` : `C'était dur : on garde ${r} s pour les rendre plus faciles avant d'en ajouter.`};
@@ -1790,45 +1819,62 @@ function coachFresh(exId, beforeTs, planned){
   const repsAt = w => Math.floor(30*(E/w - 1) - 1.5 + 1e-9);
   // Reprise après plus de 3 semaines sans cet exercice : -10 %
   if(gapDays > 21){
-    const w = Math.max(st, roundTo(W*0.9, st)), r = Math.max(lo, Math.min(hi, repsAt(w)));
+    const k = gapDays > 42 ? 0.8 : 0.9, w = Math.max(st, roundTo(W*k, st)), r = Math.max(lo, Math.min(hi, repsAt(w)));
     return {lo, hi, rest, w, r, sets:Math.max(2, Math.min(sets, 3)), tag:"Reprise", deload:true,
-      why:`Tu n'as pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend un peu plus léger (environ −10 %) pour réhabituer le corps sans risque. La progression normale repart dès la séance suivante.`};
+      why:`Tu n'as pas fait cet exercice depuis ${Math.round(gapDays/7)} semaines : on reprend plus léger (environ −${Math.round((1 - k) * 100)} %) pour réhabituer le corps sans risque. La progression normale repart dès la séance suivante.`};
   }
   // Décharge : 3 séances d'affilée notées « Dur/Trop dur » ou 1RM estimé en baisse sur 3 séances
   const e1 = s => { const ww = Math.max(...s.sets.map(x=>num(x.w))), rr = num(s.sets.filter(x=>num(x.w)===ww).slice(-1)[0].r);
-    return ww*(1 + (rr + FEEL[(s.feel||inferFeel(s,lo))-1].rir)/30); };
+    return ww*(1 + (rr + FEEL[(s.feel||inferFeel(s,lo,hi))-1].rir)/30); };
   // (baisse du 1RM : au moins 5 %, sur 3 séances rapprochées, pour ne pas confondre le bruit avec de la fatigue)
-  const close3 = hist.length>=3 && hist[0].ts - hist[2].ts < 42*86400000;
-  if(close3 && (hist.slice(0,3).every(s => s.feel>=4) || (e1(hist[0]) < e1(hist[1]) && e1(hist[1]) < e1(hist[2]) && e1(hist[0]) < e1(hist[2])*0.95))){
+  // Audit du 19 nov. 2026 : « Dur » est une zone normale (pas de décharge sur 3 « Dur ») ; une séance allégée notée facile
+  // sous-estime la force et ne compte pas comme une baisse (sinon décharges en cascade) ; pas de décharge juste après un allègement.
+  const close3 = hist.length>=3 && hist[0].ts - hist[2].ts < 42*86400000, h3 = hist.slice(0, 3), topW = x => Math.max(...x.sets.map(y => num(y.w)));
+  const feelOf = x => x.feel || inferFeel(x, lo, hi), sameType = x => !dup || isHeavySess(x, dup) === isHeavySess(hist[0], dup);
+  const prevSame = hist.slice(1).find(sameType), wasLight = !!prevSame && topW(hist[0]) <= topW(prevSame) * 0.92;   // en lourd/volume : comparé au même type
+  const tooHard = close3 && h3.every(x => feelOf(x) >= 4) && h3.filter(x => feelOf(x) === 5).length >= 2;
+  const decline = close3 && h3.every(x => feelOf(x) >= 3) && e1(hist[0]) < e1(hist[1]) && e1(hist[1]) < e1(hist[2]) && e1(hist[0]) < e1(hist[2])*0.95;
+  if(close3 && !wasLight && (tooHard || decline)){
     const w = Math.max(st, roundTo(W*0.9, st));
     return {lo, hi, rest, w, r:lo, sets:Math.max(2, sets-1), tag:"Décharge", deload:true,
       why:"Tes 3 dernières séances sur cet exercice étaient trop dures ou en baisse : c'est un signe de fatigue accumulée. On allège cette fois (environ −10 % et une série de moins) pour récupérer, puis on repart plus fort."};
   }
+  // Retour après un allègement : la séance d'avant était plus lourde (≥ 8 %), celle-ci a été facile → on reprend cette charge
+  const recent = hist.slice(1, 4).filter(x => last.ts - x.ts < 35*86400000 && (!mode || isHeavySess(x, dup) === isHeavySess(last, dup)));
+  const peakS = recent.filter(x => feelOf(x) <= 4).sort((a, b) => topW(b) - topW(a))[0], peak = peakS ? topW(peakS) : 0;
+  const rebound = peak && W <= peak * 0.92 && feel <= 3;
   // Lourd / Volume : charge calée sur la force la plus récente (1RM estimé de la dernière séance, corrigé par le ressenti),
   // sans jamais reculer par rapport à la dernière séance du même type réussie
   if(mode){
     const target = mode==="lourd" ? lo : lo + 2;   // lourd : on vise le bas de la fourchette avec la charge la plus haute possible
     let x = Math.max(st, roundTo(E / (1 + (target + 1.5)/30), st)); while(repsAt(x) < target && x - st >= st) x -= st;
-    let note = `Charge calculée d'après ta force mesurée la dernière fois (tu pourrais soulever environ ${fmtN(E,0)} kg une seule fois).`, ref0 = null, minRep = 0;
+    let note = `Charge calculée d'après ta force mesurée la dernière fois (tu pourrais soulever environ ${fmtN(E,0)} kg une seule fois).`, ref0 = null, minRep = 0, plusRep = false;
     if(!fromEst){
       const rW = Math.max(...ref.sets.map(s => num(s.w))), rTop = ref.sets.filter(s => num(s.w)===rW), rMin = Math.min(...rTop.map(s => num(s.r))), rFeel = ref.feel || 3;
       ref0 = rW;
       if(rFeel <= 3 && rMin >= hi && x <= rW){ x = rW + stepFor(e, rW); note = `Ta dernière séance ${mode==="lourd"?"lourde":"volume"} : ${rMin} reps à ${fmtN(rW)} kg, le haut de l'objectif est atteint : on monte la charge.`; }
-      else if(rFeel <= 3 && rMin >= lo && x <= rW){ x = rW; minRep = Math.min(hi, rMin + 1);
+      else if(rFeel <= 3 && rMin >= lo && x <= rW){ x = rW; minRep = Math.min(hi, rMin + 1); plusRep = minRep > rMin;
         note = `Même charge que ta dernière séance ${mode==="lourd"?"lourde":"volume"} (${fmtN(rW)} kg × ${rMin}) : on vise une rep de plus.`; }
+      else if(rFeel === 4 && rMin >= lo && x <= rW){ x = rW; minRep = rMin;   // audit du 19 nov. 2026 : plus de zigzag (6 → 4 reps, −2,5 kg puis +2,5 kg)
+        note = `Même charge que ta dernière séance ${mode==="lourd"?"lourde":"volume"} (${fmtN(rW)} kg × ${rMin}), qui était dure : on garde ${rMin} reps pour les rendre plus faciles.`; }
     }
+    if(rebound && x < peak){ x = peak; note = `Fin de l'allègement : on reprend la charge d'avant (${fmtN(peak)} kg).`; }
     const wk = muscleSetsThisWeek(primOf(e), last.ts + 1);
     const notes = [];
     if(!planned && feel <= 3 && wk < 10 && sets < 4){ sets++; notes.push(`Tu as fait ${fmtN(wk, 1)} série${wk>1?"s":""} de ${primOf(e).toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
+    if(!fromEst && (ref.feel || 3) >= 4 && feel >= 4 && sets > 2){ sets--; notes.push("Deux séances dures de suite sur ce type de séance : une série de moins pour récupérer et repartir."); }
     const r0 = Math.max(lo, minRep, Math.min(hi, repsAt(x))), d = ref0 === null ? null : x - ref0;
     return {lo, hi, rest, w:+x.toFixed(2), r:r0, sets, mode,
-      tag: ML.replace(" · ", "") + (d === null ? "" : d > 0 ? ` · +${fmtN(d)} kg` : d < 0 ? ` · ${fmtN(d)} kg` : minRep ? " · +1 rep" : " · même charge"),
+      tag: ML.replace(" · ", "") + (d === null ? "" : d > 0 ? ` · +${fmtN(d)} kg` : d < 0 ? ` · ${fmtN(d)} kg` : plusRep ? " · +1 rep" : " · même charge"),
       why: MW + note + ` Objectif : ${r0} reps, en t'arrêtant 1 ou 2 reps avant de ne plus pouvoir.`, notes, from:{W, minR, feel}};
   }
   let w = W, r, why;
   // Baisse jusqu'à retrouver le bas de la fourchette, 15 % maximum
   const lower = () => { let x = W - st; while(repsAt(x) < lo && x - st >= Math.max(st, W*0.85)) x -= st; return Math.max(st, x); };
-  if(minR < lo && feel <= 3 && minR >= lo - 2){
+  if(rebound){
+    w = peak; r = Math.max(lo, Math.min(hi, Math.min(...peakS.sets.filter(x => num(x.w) === peak).map(x => num(x.r)))));
+    why = `Fin de l'allègement : on reprend la charge d'avant (${fmtN(peak)} kg × ${r}).`;
+  }else if(minR < lo && feel <= 3 && minR >= lo - 2){
     // Juste sous la fourchette sans difficulté : on garde la charge lourde et on va chercher les reps
     r = lo; why = `La dernière fois : ${minR} reps à ${fmtN(W)} kg, sans difficulté. C'est juste sous l'objectif (${lo} à ${hi} reps) : on garde la même charge et on va chercher ${lo} reps.`;
   }else if(minR < lo && feel === 4 && minR >= lo - 1){
@@ -1851,8 +1897,10 @@ function coachFresh(exId, beforeTs, planned){
     // (jusqu'à +4) tant que la charge suivante serait trop dure, puis on monte
     if(minR >= need && st / W > 0.1 && repsAt(W + st) < lo - 1 && minR < hi + 4){
       r = minR + 1; why = `Monter à ${fmtN(W + st)} kg ferait un saut de ${Math.round(st / W * 100)} % d'un coup : on ajoute d'abord des reps au-delà de ${hi}, puis on montera.`;
-    }else if(minR >= need){
+    }else if(minR >= need || (novice() && feel <= 2 && minR >= lo)){
       w = W + st * (feel===1 ? 2 : 1);
+      // Débutant (audit du 19 nov. 2026) : il progresse vite ; charge calculée sur sa force, jusqu'à +10 % d'un coup
+      if(novice()){ let x = roundTo(Math.min(E / (1 + (lo + 2.5)/30), W * 1.1), st); while(repsAt(x) < lo + 1 && x - st > W) x -= st; w = Math.max(w, x); }
       while(repsAt(w) < lo && w - st > W) w -= st;
       r = Math.max(lo, Math.min(hi, repsAt(w)));
       why = feel===1 ? "La dernière fois, c'était trop facile : on monte nettement la charge." : `La dernière fois : ${minR} reps à ${fmtN(W)} kg, le haut de l'objectif (${hi} reps) est atteint. On monte la charge ; les reps baissent un peu, puis on remontera vers ${hi}.`;
@@ -1866,6 +1914,7 @@ function coachFresh(exId, beforeTs, planned){
   const notes = [];
   if(!planned && feel<=3 && wk < 10 && sets < 4){ sets++; notes.push(`Tu as fait ${fmtN(wk, 1)} série${wk>1?"s":""} de ${primOf(e).toLowerCase()} sur 7 jours, moins que les 10 conseillées pour progresser : une série de plus.`); }
   if(feel===5 && hist[1] && (hist[1].feel||0)===5 && sets > 2){ sets--; notes.push("Deux séances trop dures de suite : une série de moins pour récupérer."); }
+  else if(feel===4 && hist[1] && (hist[1].feel||0)>=4 && w === W && sets > 2){ sets--; notes.push("Deux séances dures de suite à cette charge : une série de moins pour récupérer et repartir."); }
   const dW = w - W, tag = ML + (dW>0 ? `+${fmtN(dW)} kg` : dW<0 ? `${fmtN(dW)} kg` : r>minR ? `+${r-minR} rep${r-minR>1?"s":""}` : "Consolider");
   return {lo, hi, rest, w:+w.toFixed(2), r, sets, tag, why, notes, mode, from:{W, minR, feel}};
 }
@@ -2401,6 +2450,44 @@ function noxApply(mode){
   tab = "routine"; render(); window.scrollTo(0, 0); toast(msg);
 }
 
+/* --- Propositions d'expérience (audit du 19 nov. 2026) --- */
+// Plateau : sur 8 séances récentes, les 4 dernières ne battent pas les 4 d'avant (1RM estimé, +1 % au moins)
+function plateaus(){
+  const now = Date.now(), dis = (noxSt().dis || {}), ids = [...new Set(S.workouts.flatMap(w => w.exercises.map(x => x.exId)))];
+  return ids.map(id => { const e = exById(id); if(!e || isCardio(e) || e.equip === "Poids du corps" || (dis[id] && now - dis[id] < 30 * 86400000)) return null;
+    const h = exHistory(id).filter(x => x.best > 0); if(h.length < 8) return null; const l8 = h.slice(-8);
+    if(now - l8[7].ts > 21 * 86400000 || l8[7].ts - l8[0].ts > 84 * 86400000) return null;
+    const a = Math.max(...l8.slice(0, 4).map(x => x.best)), b = Math.max(...l8.slice(4).map(x => x.best));
+    return b <= a * 1.01 ? {id, e, best:b} : null; }).filter(Boolean);
+}
+const altRange = e => { const [lo] = repRange(e); return lo <= 6 ? [8, 12] : lo === 8 ? [6, 10] : [8, 12]; };
+// Fatigue générale : au moins 3 exercices dont les 2 dernières séances (sur 14 jours) étaient dures
+function tiredCount(){
+  const now = Date.now(), ids = [...new Set(S.workouts.filter(w => now - w.start < 14 * 86400000).flatMap(w => w.exercises.map(x => x.exId)))];
+  return ids.filter(id => { const h = sessionsFor(id).slice(0, 2); return h.length === 2 && h.every(x => (x.feel || 3) >= 4) && now - h[1].ts < 14 * 86400000; }).length;
+}
+function noxCycle(){
+  const st = noxSt(), l = S.profile.lightWeek;
+  if(l && Date.now() >= l.until && st.proto && l.proto === st.proto.k){   // fin de la semaine légère : nouveau cycle
+    st.proto = {...st.proto, k:st.proto.k + 1, start:l.until}; delete S.profile.lightWeek; touchProfile(); }
+}
+function noxProposals(){
+  const ex = noxExam(), st = noxSt(), pr = noxProof(), out = [];
+  if(!ex) return "";
+  if(lightOn(Date.now())) return `<section class="card nox-xp"><h3>🌙 Semaine légère en cours</h3><p>Jusqu'au ${esc(fmtDate(S.profile.lightWeek.until, {weekday:"long", day:"numeric", month:"long"}))} : environ −10 % de charge et une série de moins partout.</p><button class="btn sm" data-act="nox-light-stop">Arrêter la semaine légère</button></section>`;
+  const snooze = st.lightSnooze && Date.now() - st.lightSnooze < 4 * 86400000, tired = tiredCount();
+  if(!snooze && ((pr && pr.week > NOX.weeks) || tired >= 3))
+    out.push(`<section class="card nox-xp"><h3>🧪 Nouvelle expérience proposée</h3><p>${pr && pr.week > NOX.weeks ? `Ton protocole a ${pr.week} semaines` : `${tired} exercices ont été durs deux séances de suite`} : hypothèse, une <b>semaine allégée</b> (−10 % de charge, une série de moins) pour récupérer et repartir plus fort.</p>
+      <p class="why">Pourquoi ? La fatigue s'accumule sans prévenir ; une semaine plus légère toutes les 5 à 8 semaines la fait retomber sans perdre de force.</p>
+      <div class="row"><button class="btn primary sm" style="flex:1" data-act="nox-light">Lancer la semaine légère</button><button class="btn sm" data-act="nox-light-later">Plus tard</button></div></section>`);
+  const pl = plateaus()[0];
+  if(pl){ const alt = altRange(pl.e), cur = repRange(pl.e);
+    out.push(`<section class="card nox-xp"><h3>🧪 Plateau détecté</h3><p><b>${esc(pl.e.name)}</b> ne progresse plus depuis 4 séances. Hypothèse : changer de stimulus, passer de ${cur[0]}–${cur[1]} à <b>${alt[0]}–${alt[1]} reps</b>.</p>
+      <p class="why">Pourquoi ? Varier la charge et les répétitions relance souvent la progression ; on pourra revenir en arrière à tout moment sur la fiche de l'exercice.</p>
+      <div class="row"><button class="btn primary sm" style="flex:1" data-act="nox-plateau" data-id="${pl.e.id}">Essayer</button><button class="btn sm" data-act="nox-plateau-no" data-id="${pl.e.id}">Non merci</button></div></section>`); }
+  return out.slice(0, 2).join("");
+}
+
 /* --- Bloc labo en haut de la page Routine --- */
 function noxHeroLine(){
   const ex = noxExam();
@@ -2411,11 +2498,13 @@ function noxHeroLine(){
   return pr && pr.done ? `Semaine ${pr.week} du protocole. Le sujet évolue… J'observe. FASCINANT !` : `Protocole prêt ! La première séance dira tout. ENCORE UNE ! C'EST POUR LA SCIENCE !`;
 }
 function noxBlock(){
+  noxCycle();
   const ex = noxExam(), pr = noxProof(), p = noxSt().proto, g = goal();
   const plan = S.profile.plan, tn = plan ? ((TEMPLATES[(plan.days || []).length] || []).find(t => t.id === plan.tpl) || {}).name : "";
   return `<section class="card nox-hero"><div class="nox-pic">${noxSVG(NOX_BUST)}</div>
       <div class="nox-say"><span class="nox-chip">Pr Noxwell</span><div class="nox-hb">${noxHeroLine()}</div>
         ${ex ? `<button class="btn sm" data-act="nox-talk">💬 Parler à Noxwell</button>` : `<button class="btn primary sm" data-act="nox-exam">🩺 Passer l'examen</button>`}</div></section>
+    ${noxProposals()}
     ${ex && g ? `<section class="card nox-proto"><h3>Protocole n° ${p ? p.k : 1} · ${esc(NOX_OBJ[g.obj].l)}</h3>
       <div class="small muted">Commencé le ${esc(fmtDate(p ? p.start : ex.done, {day:"numeric", month:"long"}))} · d'après ton examen${noxPrecTxt({obj:g.obj, prec:g.prec}) ? " · " + esc(noxPrecTxt({obj:g.obj, prec:g.prec}).toLowerCase()) : ""}</div>
       <button class="nox-org" data-act="nox-org"><span>🧬 Organisation : <b>${esc(tn || "à définir")}</b></span><span>changer ›</span></button>
@@ -2480,6 +2569,22 @@ function noxFeelHTML(i, ex, e){
   if(noxReply && noxReply.i === i && Date.now() - noxReply.ts < 4000)
     return `<div class="nox-reply"><div class="nox-mini hop">${noxSVG(NOX_FACE)}</div><div class="nox-rb">${esc(NOX_FEEL_SAY[ex.feel - 1])} <span class="muted">(${esc(isCardio(e) ? CARDIO_TALK[ex.feel - 1] : f.hint)})</span>${nx ? `<span class="nox-nx">${nx}</span>` : ""}</div></div>`;
   return nx ? `<div class="nox-compact"><span class="nox-fio">🧪</span><span>${esc(f.label)} · ${nx}</span></div>` : "";
+}
+/* --- Ajustement en cours de séance (audit du 19 nov. 2026) : dès qu'une série s'écarte nettement de l'objectif
+   (3 reps de plus, ou 2 de moins), la charge des séries suivantes est recalculée sur la force que la série vient de montrer. --- */
+function liveAdjust(i, j){
+  const a = A(), ex = a.exercises[i], e = exById(ex.exId), s = ex.sets[j];
+  if(!e || isCardio(e) || TIMED.has(e.id) || e.equip === "Poids du corps") return;
+  const c = coach(ex.exId, a.start, ex.plan, preLoad(a.exercises, i, true)), tr = num(ex.adj ? ex.adj.r : c.r), w = num(s.w), reps = num(s.r);
+  if(!tr || !w || !reps) return;
+  const diff = reps - tr; if(diff < 3 && diff > -2) return;
+  const st = stepFor(e, w), E = w * (1 + (reps + (diff > 0 ? 1.5 : 0.5)) / 30), repsAt = x => Math.floor(30 * (E / x - 1) - 1.5 + 1e-9);
+  let x = roundTo(E / (1 + (tr + 1.5) / 30), st);
+  if(diff > 0){ x = Math.min(Math.max(x, w + st), roundTo(w * 1.15, st)); while(x - st > w && repsAt(x) < tr) x -= st; }
+  else { x = Math.max(Math.min(x, w - st), roundTo(w * 0.8, st), st); }
+  if(x === w) return;
+  ex.adj = {w:+x.toFixed(2), r:tr, txt:`Série ${ex.sets.filter((y, k) => k <= j && !y.warm).length} : ${reps} reps au lieu de ${tr}. ${x > w ? "Tu es plus fort que prévu" : "C'était lourd"} : ${fmtN(x)} kg pour les séries suivantes.`};
+  ex.sets.forEach((y, k) => { if(k > j && !y.done && !y.warm && (y.w === "" || num(y.w) === w)) y.w = String(+x.toFixed(2)); });
 }
 function noxHow(){
   openSheet(noxSays("Après le dernier effort, demande-toi : <b>combien de reps aurais-tu encore pu faire</b> avec une bonne technique ? Sois honnête, c'est pour la science !",
@@ -4500,6 +4605,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-20", t:"🏋️ Un coach plus malin", x:"Le coach suit mieux ta vraie force : fini les charges qui tournent en rond ou qui redescendent après une semaine plus légère. Si ta 1re série dépasse nettement l'objectif (ou en est loin), il recalcule la charge des séries suivantes sur-le-champ. Sur la fiche d'un exercice, indique le palier de ta machine (de 5 en 5 kg…) : il ne proposera que des charges possibles. Les débutants progressent plus vite, la reprise après une longue pause est plus douce, et en isolation on va un peu plus près de l'échec."},
   {d:"2026-11-19", t:"🧪 Un visiteur inattendu", x:"Quelqu'un s'intéresse de très près à ton Gymon… Il se présentera sur la page Gymon dès que ton Gymon aura un peu grandi. Il connaît la musculation sur le bout des doigts : écoute ses conseils, mais c'est toi qui as le dernier mot. Au passage, le coach te tutoie désormais."},
   {d:"2026-11-18", t:"🛠️ Vos exercices, à votre façon", x:"Sur la fiche d'un exercice, « Mes réglages » : ajoutez une photo de la machine de votre salle, indiquez si vous le faites en unilatéral (un côté puis l'autre : le volume compte les deux) et réglez le poids à vide de la barre, du chariot ou de la Smith (l'app indique ce qu'il faut ajouter). Vos exercices créés se renomment et acceptent maintenant des muscles secondaires. Merci pour vos retours !"},
   {d:"2026-11-18", t:"⚖️ Charge par haltère", x:"Sur les exercices où la charge pouvait prêter à confusion, une petite mention sous « kg » précise ce qu'il faut noter : le poids d'un seul haltère (pas des deux), ou d'un seul côté pour les machines iso-latérales et les écartés à deux poulies."},
@@ -4911,8 +5017,8 @@ function viewActive(){
       return `<tr class="set ${s.done?"done":""} ${s.warm?"warm":""} ${s.crit && !s.warm ? (s.done && s.critOK === 0 ? "crit-miss" : "crit") : ""}" data-i="${i}" data-j="${j}">
         <td><button class="setno ${s.warm?"warm":""}" data-act="toggle-warm" aria-label="Série ${label}${s.crit && !s.warm ? ", coup critique" : ""}, toucher pour marquer en échauffement">${label}</button></td>
         <td class="prev">${p ? esc(setTxt(p, e)) : "—"}</td>
-        ${isCardio(e) ? `<td class="kg-off">—<input id="w-${i}-${j}" data-f="w" type="hidden" value=""></td>` : `<td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (wu[nw-1] ? fmtN(wu[nw-1].w) : p&&num(p.w)?fmtN(num(p.w)):"kg") : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg">${EMPTY_OK(e) && emptyW(e) ? `<small class="plates" id="pl-${i}-${j}">${plateText(e, num(s.w) || num(s.warm ? (wu[nw-1]||{}).w : c.w))}</small>` : ""}</td>`}
-        <td><input id="r-${i}-${j}" data-f="r" inputmode="numeric" value="${esc(s.r)}" placeholder="${s.warm ? (wu[nw-1] ? wu[nw-1].r : p?num(p.r)||"":"reps") : c.r || (c.lo+"–"+c.hi)}" aria-label="${isCardio(e) ? "Durée en minutes" : "Répétitions"}"></td>
+        ${isCardio(e) ? `<td class="kg-off">—<input id="w-${i}-${j}" data-f="w" type="hidden" value=""></td>` : `<td><input id="w-${i}-${j}" data-f="w" inputmode="decimal" value="${esc(s.w)}" placeholder="${s.warm ? (wu[nw-1] ? fmtN(wu[nw-1].w) : p&&num(p.w)?fmtN(num(p.w)):"kg") : ex.adj ? fmtN(ex.adj.w) : c.w ? fmtN(c.w) : "kg"}" aria-label="Charge en kg">${EMPTY_OK(e) && emptyW(e) ? `<small class="plates" id="pl-${i}-${j}">${plateText(e, num(s.w) || num(s.warm ? (wu[nw-1]||{}).w : c.w))}</small>` : ""}</td>`}
+        <td><input id="r-${i}-${j}" data-f="r" inputmode="numeric" value="${esc(s.r)}" placeholder="${s.warm ? (wu[nw-1] ? wu[nw-1].r : p?num(p.r)||"":"reps") : ex.adj ? ex.adj.r : c.r || (c.lo+"–"+c.hi)}" aria-label="${isCardio(e) ? "Durée en minutes" : "Répétitions"}"></td>
         <td><button class="check" data-act="check" aria-label="Valider la série"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button></td>
       </tr>`;
     }).join("");
@@ -4924,6 +5030,7 @@ function viewActive(){
         ${noxMet() ? '<span class="nox-fio">🧪</span>' : ""}<span class="ctag">${esc(c.tag)}</span>
         <span class="ct">${c.w||c.r ? `Objectif ${c.sets} × ${c.r||c.lo} ${c.w?`à ${fmtN(c.w)} kg`:unitOf(e)}` : `Objectif ${c.lo}–${c.hi} ${unitOf(e)}`}${c.fatigue ? `<small class="fat"> · fatigue −${c.fatigue} %</small>` : ""}</span>
         <span class="cwhy">pourquoi ?</span></button>
+      ${ex.adj ? `<p class="live-adj">${noxMet() ? '<span class="nox-fio">🧪</span> ' : ""}${esc(ex.adj.txt)}</p>` : ""}
       ${(() => { const nums = ex.sets.filter(x => !x.warm).map((x, k) => x.crit && !x.done ? k + 1 : 0).filter(Boolean);
         return nums.length && !creatureState().dead ? `<p class="crit-hint">⚡ Série${nums.length > 1 ? "s" : ""} ${nums.join(" et ")} : coup critique ! Sors de ta zone de confort : objectif atteint, ${nums.length > 1 ? "elles nourrissent" : "elle nourrit"} double ton Gymon.</p>` : ""; })()}
       ${wu.length ? `<p class="wu-hint">🔥 Échauffement d'abord (séries « É ») : ${wu.map(x => `${fmtN(x.w)} kg × ${x.r}`).join(" puis ")}. Sans minuteur, ne compte pas dans le volume.</p>` : ""}
@@ -5178,6 +5285,8 @@ function exOptsHTML(e){
       ${mine ? `<button class="btn sm ghost danger" data-act="ph-del" data-id="${e.id}">Retirer</button>` : ""}</div>
     ${isCardio(e) ? "" : `<div class="row"><span style="flex:1">Unilatéral<small class="muted" style="display:block">Un côté puis l'autre : charge et reps notées pour un côté, le volume compte les deux</small></span>
       <button class="sw" data-act="ex-uni" data-id="${e.id}" aria-pressed="${!!o.uni}" aria-label="Unilatéral"></button></div>`}
+    ${!isCardio(e) && e.equip !== "Poids du corps" ? `<div class="row"><span style="flex:1">Palier de charge<small class="muted" style="display:block">L'écart entre deux charges possibles sur ce matériel (pile de 5 en 5 kg, haltères de 2 en 2…)</small></span>
+      <input class="ex-empty" id="ex-step" data-id="${e.id}" inputmode="decimal" value="${o.step ? fmtN(o.step) : ""}" placeholder="${fmtN(stepDefault(e, 20))} kg" aria-label="Palier de charge en kg"></div>` : ""}
     ${EMPTY_OK(e) ? `<div class="row"><span style="flex:1">Poids à vide<small class="muted" style="display:block">Barre, chariot ou Smith : vous notez la charge totale, l'app indique ce qu'il faut ajouter</small></span>
       <input class="ex-empty" id="ex-empty" data-id="${e.id}" inputmode="decimal" value="${o.empty ? fmtN(o.empty) : ""}" placeholder="${e.equip === "Barre" ? barWeight(e) + " kg" : "0 kg"}" aria-label="Poids à vide en kg"></div>` : ""}
     ${custom ? `<button class="btn sm" data-act="ex-edit" data-id="${e.id}">✏️ Modifier le nom ou les muscles</button>` : ""}
@@ -5560,6 +5669,12 @@ const ACT = {
   "nox-org-set": b => { const plan = S.profile.plan, n = plan && plan.days ? plan.days.length : (planDraft || initDraft()).n;
     const ex = noxExam(); if(ex){ ex.org = b.dataset.v; } noxSetTpl(NOX_TPL[b.dataset.v][n] || (TEMPLATES[n] || [{}])[0].id); },
   "nox-tpl": b => noxSetTpl(b.dataset.t),
+  "nox-light": () => { const from = Date.now(); S.profile.lightWeek = {from, until:from + 7 * 86400000, proto:(noxSt().proto || {}).k || 1}; touchProfile(); render(); toast("Semaine légère lancée : à toi de récupérer !"); },
+  "nox-light-later": () => { noxSt().lightSnooze = Date.now(); touchProfile(); render(); },
+  "nox-light-stop": () => { if(S.profile.lightWeek) S.profile.lightWeek.until = Date.now(); touchProfile(); render(); toast("Semaine légère arrêtée"); },
+  "nox-plateau": b => { const e = exById(b.dataset.id); if(!e) return; S.profile.ranges = S.profile.ranges || {}; S.profile.ranges[e.id] = altRange(e);
+    (noxSt().dis = noxSt().dis || {})[e.id] = Date.now(); touchProfile(); render(); toast(`Expérience lancée : ${e.name}, ${S.profile.ranges[e.id].join("–")} reps`); },
+  "nox-plateau-no": b => { (noxSt().dis = noxSt().dis || {})[b.dataset.id] = Date.now(); touchProfile(); render(); },
   "nox-talk": () => openSheet(noxSays("Que veux-tu, sujet ?", `<div class="nox-orgs">
       <button class="card tpl" data-act="nox-exam"><b>🩺 Refaire l'examen</b><span class="small muted">Tes objectifs ont changé ? Je recalcule le protocole.</span></button>
       <button class="card tpl" data-act="nox-org"><b>🧬 Organisation des séances</b><span class="small muted">Deux fois par semaine, ou un muscle par séance.</span></button>
@@ -5638,6 +5753,7 @@ const ACT = {
       // Pré-remplit la série suivante si elle est vide
       const nx = ex.sets[j+1]; if(nx && !nx.done && !nx.warm && nx.w==="" && s.w!=="" && !s.warm) nx.w = s.w;
       if(!s.warm) setReaction(ex, s);
+      if(!s.warm) liveAdjust(i, j);
     } else { s.done = false; delete s.critOK; }
     touchProfile(); render();
   },
@@ -6290,6 +6406,7 @@ document.addEventListener("change", e => {
   if(e.target.id==="imp-file"){ const f = e.target.files && e.target.files[0]; e.target.value = ""; if(!f) return;
     const rd = new FileReader(); rd.onload = () => importText(String(rd.result)); rd.onerror = () => toast("Lecture du fichier impossible"); rd.readAsText(f); return; }
   if(e.target.id==="ph-file"){ const f = e.target.files && e.target.files[0], id = e.target.dataset.id; e.target.value = ""; if(f && id) addPhoto(id, f); return; }
+  if(e.target.id==="ex-step"){ const v = Math.min(50, Math.max(0, num(e.target.value))); setExOpt(e.target.dataset.id, "step", v || 0); if(A()) softRender(); toast(v ? `Palier : ${fmtN(v)} kg` : "Palier par défaut"); return; }
   if(e.target.id==="ex-empty"){ const v = Math.min(500, Math.max(0, num(e.target.value))); setExOpt(e.target.dataset.id, "empty", v || 0); if(A()) softRender(); toast(v ? `Poids à vide : ${fmtN(v)} kg` : "Poids à vide par défaut"); return; }
   if(e.target.id==="gravl-file"){ const f = e.target.files && e.target.files[0]; e.target.value = ""; if(!f) return;
     const rd = new FileReader();
