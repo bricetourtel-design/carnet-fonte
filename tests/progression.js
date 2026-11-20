@@ -45,6 +45,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const D = 86400000, now = Date.now(), W = (dAgo, exId, feel, sets) => ({id:"x" + dAgo + exId, name:"T", start:now - dAgo * D, end:now - dAgo * D + 3600000, prs:[], exercises:[{exId, feel, sets:sets.map(([w, r]) => ({w:String(w), r:String(r), done:true}))}]});
     const reset = () => { S.workouts = []; S.profile.ranges = {}; S.profile.exOpts = {}; S.profile.nox = {v:1}; delete S.profile.lightWeek; };
     const r = {};
+    // exercice repris après 5 semaines, mais le même muscle travaillé la semaine dernière : pas de « Reprise »
+    reset(); S.workouts = [W(35, "curl-halteres", 3, [[14, 10], [14, 10]]), W(6, "curl-marteau", 3, [[16, 10], [16, 10]])];
+    let cr = coach("curl-halteres"); r.reprise = [cr.tag, cr.w];
+    reset(); S.workouts = [W(35, "curl-halteres", 3, [[14, 10], [14, 10]])]; cr = coach("curl-halteres"); r.reprise2 = [cr.tag, cr.w];
+    // supersets : paires automatiques quand le joueur les accepte, aucune sinon ; une paire fait gagner du temps
+    reset(); S.profile.ssPref = "non"; const g0 = generatePlan(newDraft(3)); S.profile.ssPref = "oui"; const g1 = generatePlan(newDraft(3)); delete S.profile.ssPref;
+    r.ss = {sans:g0.days.flatMap(d => d.items.filter(it => it.ss)).length, avec:g1.days.map(d => d.items.filter(it => it.ss).length), firstFree:g1.days.every(d => !d.items[0].ss),
+      gain:g0.days.reduce((t, d) => t + d.est, 0) - g1.days.reduce((t, d) => t + d.est, 0)};
     // décharge puis séance facile : on reprend la charge d'avant, sans nouvelle décharge
     reset(); S.workouts = [W(12, "leg-ext", 3, [[60, 10], [60, 10], [60, 10]]), W(8, "leg-ext", 4, [[62.5, 9], [62.5, 9], [62.5, 8]]), W(4, "leg-ext", 1, [[55, 8], [55, 8]])];
     let c = coach("leg-ext"); r.rebound = [c.w, c.tag];
@@ -71,6 +79,10 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     r.plateau = plateaus().map(x => x.id);
     return r;
   });
+  ok(t.reprise[0] === "Retour" && t.reprise[1] === 14, "exercice repris mais muscle travaillé récemment : même charge, pas de « Reprise »", t.reprise);
+  ok(t.reprise2[0] === "Reprise" && t.reprise2[1] < 14, "muscle au repos depuis 5 semaines : vraie reprise allégée", t.reprise2);
+  ok(t.ss.sans === 0 && t.ss.avec.every(n => n >= 2 && n % 2 === 0) && t.ss.firstFree, "supersets : aucun sans accord, des paires sinon, jamais sur le 1er exercice", t.ss);
+  ok(t.ss.gain > 0, "les supersets raccourcissent la séance prévue", t.ss.gain);
   ok(t.rebound[0] === 62.5 && /^(\+|Retour|.*kg)/.test(t.rebound[1] || ""), "après un allègement facile, on reprend la charge d'avant (62,5 kg)", t.rebound);
   ok(t.dur3 !== "Décharge", "trois séances « Dur » ne déclenchent plus de décharge", t.dur3);
   ok(t.infer === 2, "ressenti non noté et objectif dépassé de 2 reps : « Facile »", t.infer);
@@ -94,6 +106,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.click('tr[data-j="0"] [data-act="check"]'); await p.waitForTimeout(200);
   const after = await p.evaluate(() => ({adj:A().exercises[0].adj, next:A().exercises[0].sets[1].w, txt:(document.querySelector(".live-adj") || {}).textContent || ""}));
   ok(after.adj && after.adj.w > live.w && Number(after.next) === after.adj.w && /au lieu de/.test(after.txt), "série nettement au-dessus de l'objectif : charge recalculée pour la suite", {live, after});
+
+  const ssLive = await p.evaluate(() => { stopRest(); S.profile.active = {id:"b", name:"T", start:Date.now(), exercises:[{exId:"dc-barre", sets:[{w:"60", r:"8"}]}, {exId:"rowing-barre", sets:[{w:"60", r:"8"}]}]}; tab = "seance"; render();
+    ACT["ex-ss"]({dataset:{i:"0"}}); return {ss:A().exercises.map(x => x.ss), wrap:!!document.querySelector(".ss-wrap"), n:document.querySelectorAll(".ss-wrap .ex").length}; });
+  ok(ssLive.ss[0] === "A" && ssLive.ss[1] === "A" && ssLive.wrap && ssLive.n === 2, "superset créé à la main en séance : deux exercices regroupés", ssLive);
+  await p.click('.ex[data-i="0"] tr[data-j="0"] [data-act="check"]'); await p.waitForTimeout(150);
+  const rest1 = await p.evaluate(() => !!restState);
+  await p.click('.ex[data-i="1"] tr[data-j="0"] [data-act="check"]'); await p.waitForTimeout(150);
+  const rest2 = await p.evaluate(() => !!restState);
+  ok(!rest1 && rest2, "superset : pas de repos après le 1er exercice, repos après le 2e", {rest1, rest2});
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
