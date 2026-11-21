@@ -270,6 +270,28 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(dur.bar && dur.endClock && dur.dur0 === 45 && dur.dur1 === 75 && dur.n1 > dur.n0 && dur.addOk && dur.dup && dur.dur2 === 15 && dur.n2 < dur.n0 && dur.keep && dur.noNox,
     "séance : barre de durée, + ajoute un exercice du jour sans doublon, − retire d'abord ses ajouts, jamais un exercice commencé", dur);
 
+  // 16. Page Séance : toujours une séance conseillée (fatigue > routine > jour) ; activités hors muscu
+  const best = await p1.evaluate(() => { const r = {}, W = S.workouts, n = Date.now(), H = 36e5; S.profile.active = null; closeSheet(); delete S.profile.todayPick;
+    const dow = todayDow(), other = (dow + 2) % 7;
+    planDraft = {n:2, tpl:"", days:[{dow, muscles:["Jambes"], off:{}, min:45}, {dow:other, muscles:["Pectoraux", "Triceps"], off:{}, min:45}], novOff:0}; planSave();
+    S.workouts = W.filter(w => w.start < n - 8 * 864e5); let ch = chooseToday(); r.today = ch && ch.pick.kind === "plan" && ch.pick.r.dow === dow;
+    S.workouts.push({id:"leg-hard", name:"x", start:n - 10 * H, end:n - 9 * H, prs:[], exercises:[{exId:"squat", feel:5, sets:Array.from({length:6}, () => ({w:"100", r:"8", done:true}))}]});
+    ch = chooseToday(); r.fatigue = ch && !ch.pick.ms.includes("Jambes");
+    planDraft = {n:1, tpl:"", days:[{dow:other, muscles:["Pectoraux", "Triceps"], off:{}, min:45}], novOff:0}; planSave(); ch = chooseToday(); r.rest = !!ch && ch.restDay;
+    tab = "seance"; render(); r.top = /Séance conseillée/.test((document.querySelector("#view .todaycard") || {}).textContent || "") && document.querySelector("#view").firstElementChild.classList.contains("todaycard");
+    // activité : natation 45 min, 1,5 km
+    const c = creatureState(), m0 = c.weight; document.querySelector('[data-act="act-new"]').click(); r.grid = document.querySelectorAll(".act-b").length;
+    document.querySelector('[data-act="act-pick"][data-k="natation"]').click(); document.getElementById("act-min").value = "45"; document.getElementById("act-km").value = "1,5";
+    document.querySelector('[data-act="act-save"]').click(); const w = S.workouts[S.workouts.length - 1];
+    r.act = !!w.act && w.act.k === "natation" && w.act.min === 45 && w.act.km === 1.5 && w.exercises.length === 0;
+    r.mass = Math.abs(creatureState().weight - m0 - actFood(w) / 1000 * CREATURE_CFG.kgPerTonne) < 1e-6 && actFood(w) > 0;
+    r.rec = recoveryFine("Grand dorsal").pct < 1 && recoveryFine("Quadriceps", n + 30 * H).last < w.end;
+    r.sheet = /Activité enregistrée : 🏊 Natation/.test(document.getElementById("sheet-in").textContent); closeSheet();
+    tab = "progres"; progSub = "hist"; render(); r.hist = /Natation/.test(document.getElementById("view").textContent); progSub = "prog";
+    r.kind = sessionKind(w) === "cardio"; S.workouts = W; tab = "seance"; render(); return r; });
+  ok(best.today && best.fatigue && best.rest && best.top, "séance conseillée en tête : jour prévu, sauf muscles fatigués ; même un jour de repos", best);
+  ok(best.grid === 20 && best.act && best.mass && best.rec && best.sheet && best.hist && best.kind, "activité hors muscu : durée et km, nourrit et fait grossir le Gymon, fatigue les muscles sollicités, hors exercices", best);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");
