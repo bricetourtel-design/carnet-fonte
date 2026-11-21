@@ -96,6 +96,11 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p0.click(".nox-lite"); await p0.waitForTimeout(200);
   ok(mini.mini && !mini.proto && mini.h < 90, "Routine : labo en version légère (protocole, semaine, clauses), ouvert en grand au toucher", mini);
   ok(await p0.$(".nox-proto") !== null && await p0.$(".tpls") === null, "Routine : bloc protocole, plus d'« Organisation proposée »");
+  const fold = await p0.evaluate(() => { const r = {top:!!document.querySelector('.nox-hero [data-act="nox-toggle"]'), bottom:!!document.querySelector('.nox-fold-b')};
+    document.querySelector('.nox-fold-b').click(); r.closed = !document.querySelector(".nox-proto") && !!document.querySelector(".nox-lite");
+    const d = document.querySelector("details.duos"); d.open = true; d.querySelector('[data-act="duos-close"]').click(); r.duos = !d.open;
+    document.querySelector(".nox-lite").click(); return r; });
+  ok(fold.top && fold.bottom && fold.closed && fold.duos, "Routine : le labo ouvert se referme (en haut et en bas), les duos conseillés aussi", fold);
   await p0.click('[data-act="nox-org"]'); await p0.waitForTimeout(200);
   await p0.click('[data-act="nox-org-set"][data-v="un"]'); await p0.waitForTimeout(200);
   ok(await p0.evaluate(() => S.profile.plan.tpl === "duo4"), "« changer » l'organisation : un muscle par séance → séances en duos");
