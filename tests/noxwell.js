@@ -243,6 +243,23 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(fio.n === 1 && !fio.starsHalf && fio.again === 0 && fio.fridge === 0 && fio.mem && fio.won === "0" && fio.full === 2 && fio.stars && fio.memFull && fio.same && fio.starsN === 6 && fio.sat === "ratée" && fio.sat2 === "tenue jusqu'ici",
     "contrat : clause tenue notée au carnet ; rempli = étoiles 2 jours sans effet sur le jeu ; clause satiété suivie", fio);
 
+  // 15. Séance en cours : barre de durée ; + ajoute un exercice du jour (logique du programme), − retire un exercice pas commencé
+  const dur = await p1.evaluate(() => { const r = {}; S.profile.active = null; S.profile.equip = ""; closeSheet();
+    planDraft = {n:1, tpl:"", days:[{dow:todayDow(), muscles:["Pectoraux", "Triceps"], off:{}, min:45}], novOff:0}; planSave();
+    const rt = S.profile.routines.find(x => x.plan && x.dow === todayDow());
+    startWorkout(rt.name, rt.items.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), rt.id);
+    const a = A(); r.bar = !!document.getElementById("sess-bar"); r.dur0 = sessDur(a); r.n0 = a.exercises.length;
+    a.exercises[0].sets.filter(x => !x.warm)[0].done = true; const first = a.exercises[0].exId;
+    for(let k = 0; k < 3; k++) document.querySelector('[data-act="sess-dur"][data-d="10"]').click();
+    r.dur1 = A().dur; r.n1 = A().exercises.length; const add = A().exercises.filter(x => x.nox).map(x => exById(x.exId));
+    r.addOk = add.length > 0 && add.every(e => ["Pectoraux", "Triceps"].includes(e.muscle)); r.dup = new Set(A().exercises.map(x => x.exId)).size === A().exercises.length;
+    for(let k = 0; k < 6; k++) document.querySelector('[data-act="sess-dur"][data-d="-10"]').click();
+    r.dur2 = A().dur; r.n2 = A().exercises.length; r.keep = A().exercises[0].exId === first; r.noNox = !A().exercises.some(x => x.nox);
+    r.msg = (document.querySelector(".toast") || {}).textContent || "";
+    S.profile.active = null; render(); return r; });
+  ok(dur.bar && dur.dur0 === 45 && dur.dur1 === 75 && dur.n1 > dur.n0 && dur.addOk && dur.dup && dur.dur2 === 15 && dur.n2 < dur.n0 && dur.keep && dur.noNox,
+    "séance : barre de durée, + ajoute un exercice du jour sans doublon, − retire d'abord ses ajouts, jamais un exercice commencé", dur);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");

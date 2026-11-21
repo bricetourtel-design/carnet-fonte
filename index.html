@@ -105,6 +105,11 @@ button.thumb{padding:0}
 
 /* Séance en cours */
 .live-head{display:flex;align-items:center;gap:12px}
+.sess-bar{background:var(--fill);border-radius:16px;padding:8px 10px 10px;margin-bottom:10px}.sess-top{display:flex;align-items:center;gap:10px}
+.sess-txt{flex:1;text-align:center;line-height:1.15}.sess-txt b{font-size:18px;font-variant-numeric:tabular-nums}.sess-txt span{color:var(--muted);font-size:14px}.sess-txt small{display:block;font-size:12px;color:var(--muted)}
+.sess-b{width:38px;height:38px;border-radius:50%;border:1px solid var(--line,rgba(127,127,127,.3));background:transparent;color:var(--accent);font-size:22px;font-weight:600;line-height:1}
+.sess-track{position:relative;height:8px;border-radius:4px;background:rgba(127,127,127,.22);margin-top:8px;overflow:visible}.sess-track i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),#16c7d9);transition:width 1s linear}
+.sess-track em{position:absolute;top:-3px;width:2px;height:14px;background:var(--text);opacity:.55;transform:translateX(-1px)}.sess-bar.over .sess-track i{background:#f59e0b}.sess-bar.over #sess-el{color:#f59e0b}
 .name-input{flex:1;min-width:0;border:0;background:transparent;font-weight:700;font-size:22px;padding:4px 0}
 .name-input:focus{outline:none}
 .clock{font-weight:600;font-size:17px;font-variant-numeric:tabular-nums;color:var(--accent);background:var(--fill);padding:6px 12px;border-radius:999px}
@@ -944,7 +949,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 d";
+const APP_VERSION = "2026-11-21 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -4965,6 +4970,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-21", t:"⏱ La durée de ta séance", x:"En haut de la séance en cours, une barre se remplit avec le temps écoulé, face à la durée prévue, avec un repère pour l'heure de fin estimée. Touche − ou + pour la raccourcir ou la rallonger de 10 minutes : le Pr Noxwell retire un exercice pas encore commencé, ou en ajoute un pour le muscle du jour le moins travaillé, en suivant ton programme (tes favoris d'abord)."},
   {d:"2026-11-21", t:"🐾 Le contrat signé à trois", x:"Le contrat du Pr Noxwell se signe maintenant pour de vrai : ta signature au doigt, celle du professeur et l'empreinte de ton Gymon. Il comprend la taille et la masse que ton Gymon atteindra si tu tiens tes séances, et une clause : ne jamais le laisser sous 50 % de satiété. Chaque clause tenue s'inscrit dans son carnet de santé ; contrat rempli, il brille d'étoiles pendant 2 jours."},
   {d:"2026-11-20", t:"📜 Le contrat d'expérience", x:"À la fin de l'examen, le Pr Noxwell te propose un contrat chiffré pour les 6 semaines du protocole : un nombre de séances, une charge à atteindre sur tes exercices clés, des records ou des minutes de cardio selon ton objectif. Calculé sur ton historique et ton expérience : exigeant mais atteignable. Tu suis chaque clause dans le labo, et le rapport dit lesquelles tu as tenues."},
   {d:"2026-11-20", t:"⭐ Tes favoris dans la routine", x:"La routine choisit d'abord tes exercices favoris (étoilés dans leur fiche, ou faits souvent), puis tes autres exercices habituels. Le reste ne change pas : un polyarticulaire en tête pour les gros muscles, et les exercices alternent d'une séance à l'autre."},
@@ -5420,10 +5426,10 @@ function viewActive(){
       exs += `<section class="ss-wrap"><span class="ss-lbl">SUPERSET ${esc(L)}</span><p class="ss-hint">⚡ Enchaîne ${names.join(" puis ")} sans pause. Repos seulement après le dernier.</p>${exsL.slice(q, z).join("")}</section>`; }
     else exs += exsL.slice(q, z).join("");
     q = z; }
-  return `
+  return `${sessBarHTML()}
     <section class="live-head">
       <input id="w-name" class="name-input" value="${esc(a.name)}" aria-label="Nom de la séance">
-      ${mealBar()}<div class="clock" id="clock">0:00</div>
+      ${mealBar()}${S.profile.active.exercises.length ? "" : `<div class="clock" id="clock">0:00</div>`}
     </section>
     <div class="live-meta" id="live-meta">${liveMeta()}</div>
     ${a.team ? teamDuoHTML(a.team.friend ? friendFromCard(a.team.friend) : null, true) : ""}
@@ -5478,6 +5484,83 @@ function mealInfo(){
 function mealBar(){
   const m = mealInfo(); if(!m) return "";
   return `<button class="meal${m.pct >= 100 ? " full" : ""}" id="meal" data-act="meal-info" style="--p:${Math.min(100, m.pct ?? 0)}%" aria-label="Repas du Gymon">${m.pct >= 100 ? "🎉" : "🍗"} ${m.pct === null ? fmtVol(m.v) : m.pct + " %"}</button>`;
+}
+/* Durée de la séance (21 nov. 2026, demande du propriétaire) : barre en haut de la séance en cours (temps écoulé / durée voulue).
+   Le joueur rallonge ou raccourcit ; le Pr Noxwell ajoute un exercice (muscle du jour le moins travaillé, favoris d'abord,
+   jamais deux fois le même mouvement) ou retire un exercice pas encore commencé (d'abord ceux qu'il a ajoutés, puis l'isolation). */
+const SESS = {step:10, min:15, max:180, slack:8};
+function sessExMin(ex, k, list){   // minutes restantes pour un exercice de la séance (mêmes temps que estMinutes)
+  const e = exById(ex.exId); if(!e) return 0; const left = ex.sets.filter(x => !x.done && !x.warm).length;
+  if(isCardio(e)) return left * (num((ex.sets.find(x => !x.done) || {}).r) || NOX_CARDIO_MIN);
+  const rest = S.profile.rest < 0 ? (REST_BY_RANGE[repRange(e)[0]] || 120) : (S.profile.rest || 90), chained = ex.ss && list[k + 1] && list[k + 1].ss === ex.ss;
+  return (left * (40 + (chained ? 15 : rest)) + (ex.sets.some(x => x.done) ? 0 : 90)) / 60;
+}
+const sessLeft = a => a.exercises.reduce((t, ex, k) => t + sessExMin(ex, k, a.exercises), 0);
+function sessPlanDay(a){ const r = a.routineId && S.profile.routines.find(x => x.id === a.routineId); return r && r.plan && S.profile.plan ? (S.profile.plan.days || []).find(d => d.dow === r.dow) : null; }
+function sessDur(a){
+  if(!a.dur){ const d = sessPlanDay(a), est = 5 + sessLeft(a);
+    a.dur = Math.min(SESS.max, Math.max(SESS.min, d && d.min ? d.min : Math.round(est / 5) * 5)); }
+  return a.dur;
+}
+function sessBarHTML(){
+  const a = S.profile.active; if(!a || !a.exercises.length) return "";
+  const dur = sessDur(a), el = (Date.now() - a.start) / 60000, end = el + sessLeft(a), pct = Math.min(100, el / dur * 100);
+  return `<section class="sess-bar${el > dur ? " over" : ""}" id="sess-bar"><div class="sess-top"><button class="sess-b" data-act="sess-dur" data-d="-${SESS.step}" aria-label="Raccourcir la séance de ${SESS.step} min">−</button>
+      <div class="sess-txt"><b id="sess-el">${fmtClock(Date.now() - a.start)}</b><span> / ${dur} min</span><small id="sess-end">fin prévue ≈ ${Math.round(end)} min</small></div>
+      <button class="sess-b" data-act="sess-dur" data-d="${SESS.step}" aria-label="Rallonger la séance de ${SESS.step} min">+</button></div>
+    <div class="sess-track"><i id="sess-fill" style="width:${pct.toFixed(1)}%"></i><em style="left:${Math.min(100, end / dur * 100).toFixed(1)}%" id="sess-mark" title="Fin prévue"></em></div></section>`;
+}
+function sessTick(){
+  const a = S.profile.active, f = document.getElementById("sess-fill"); if(!a || !f) return;
+  const dur = sessDur(a), el = (Date.now() - a.start) / 60000; f.style.width = Math.min(100, el / dur * 100).toFixed(1) + "%";
+  const t = document.getElementById("sess-el"); if(t) t.textContent = fmtClock(Date.now() - a.start);
+  const end = el + sessLeft(a), e2 = document.getElementById("sess-end"), m = document.getElementById("sess-mark");
+  if(e2) e2.textContent = `fin prévue ≈ ${Math.round(end)} min`; if(m) m.style.left = Math.min(100, end / dur * 100).toFixed(1) + "%";
+  document.getElementById("sess-bar").classList.toggle("over", el > dur);
+}
+// Un exercice de plus, dans la logique du programme : muscle du jour le moins servi (au poids du muscle), favoris et habitudes d'abord
+function sessPick(a){
+  const st = exStats(), day = sessPlanDay(a), inS = a.exercises.map(x => exById(x.exId)).filter(Boolean);
+  const muscles = (day && day.muscles.length ? day.muscles : [...new Set(inS.filter(e => !isCardio(e)).map(e => e.muscle))]).filter(m => WEIGHT[m]);
+  if(!muscles.length) return null;
+  const sets = {}; muscles.forEach(m => sets[m] = 0);
+  a.exercises.forEach(x => { const e = exById(x.exId); if(e && sets[e.muscle] !== undefined) sets[e.muscle] += x.sets.filter(y => !y.warm).length; });
+  const used = new Set(inS.map(e => e.id)), fam = new Set(inS.map(exFamily)), prims = new Set(inS.map(primOf));
+  for(const m of muscles.slice().sort((x, y) => sets[x] / WEIGHT[x] - sets[y] / WEIGHT[y])){
+    const all = candidatesFor(m, st).filter(c => !used.has(c.e.id) && !fam.has(exFamily(c.e))).sort((x, y) => isFav(y.e.id) - isFav(x.e.id));
+    const pool = all.filter(c => c.n > 0 || isFav(c.e.id)), list = pool.length ? pool : all;
+    const c = list.find(x => !prims.has(primOf(x.e))) || list[0];
+    if(c) return c.e;
+  }
+  return null;
+}
+function sessAdapt(a, dir){   // dir > 0 : rallonger (n'ajoute que), dir < 0 : raccourcir (ne retire que)
+  const dur = sessDur(a), el = (Date.now() - a.start) / 60000, added = [], removed = [];
+  let end = el + sessLeft(a);
+  while(dir > 0 && end < dur - SESS.slack && added.length < 3){
+    const e = sessPick(a); if(!e) break;
+    const n = coach(e.id, a.start, 3).sets || 3, x = addWarmups([{exId:e.id, plan:3, nox:1, sets:Array.from({length:n}, blankSet)}], a.start, a.exercises)[0];
+    const k = a.exercises.findIndex(y => isCardio(exById(y.exId)) && !y.sets.some(z => z.done));   // avant le cardio de fin de séance
+    if(k >= 0) a.exercises.splice(k, 0, x); else a.exercises.push(x);
+    added.push(e); end = el + sessLeft(a);
+    if(end > dur + 2){ a.exercises.splice(a.exercises.indexOf(x), 1); added.pop(); end = el + sessLeft(a); break; }   // il ne tient pas : on ne l'ajoute pas
+  }
+  while(dir < 0 && end > dur + 4){
+    const free = a.exercises.map((x, i) => ({x, i, e:exById(x.exId)})).filter(o => o.e && !o.x.ss && !o.x.sets.some(y => y.done));
+    const o = free.filter(o => o.x.nox).pop() || free.filter(o => !isCompound(o.e) && !isCardio(o.e)).pop() || free.filter(o => !isCardio(o.e)).slice(1).pop();
+    if(o){ a.exercises.splice(o.i, 1); removed.push(o.e); end = el + sessLeft(a); continue; }
+    // plus rien à retirer en entier : une série de moins sur l'exercice qui en a le plus à faire (2 au moins)
+    const t = a.exercises.filter(x => !isCardio(exById(x.exId))).map(x => ({x, left:x.sets.filter(y => !y.done && !y.warm)})).filter(z => z.left.length && z.x.sets.filter(y => !y.warm).length > 2).sort((p, q) => q.left.length - p.left.length)[0];
+    if(!t) break; t.x.sets.splice(t.x.sets.lastIndexOf(t.left[t.left.length - 1]), 1); removed.push(null); end = el + sessLeft(a);
+  }
+  return {added, removed, end};
+}
+function sessMsg(r, dur){
+  const nm = e => e.name, sig = noxMet() ? "🧪 " : "⏱ ", ex = r.removed.filter(Boolean), sets = r.removed.length - ex.length;
+  if(r.added.length) return `${sig}${dur} min : j'ajoute ${r.added.map(e => `${nm(e)} (${primOf(e).toLowerCase()})`).join(", ")}. Fin prévue ≈ ${Math.round(r.end)} min.`;
+  if(r.removed.length) return `${sig}${dur} min : je retire ${[ex.length ? ex.map(nm).join(", ") : "", sets ? `${sets} série${sets > 1 ? "s" : ""}` : ""].filter(Boolean).join(" et ")}. Fin prévue ≈ ${Math.round(r.end)} min.`;
+  return r.end > dur + 4 ? `${sig}${dur} min : ton programme dépasse encore un peu (fin prévue ≈ ${Math.round(r.end)} min). Raccourcis si tu es pressé.`
+    : `${sig}${dur} min : ta séance tient déjà dedans (fin prévue ≈ ${Math.round(r.end)} min).`;
 }
 function liveMeta(){
   const a = S.profile.active; if(!a) return "";
@@ -5857,7 +5940,7 @@ function drawRest(){
   const t = fmtClock(left), tt = el.querySelector(".rest-t"); if(tt.textContent !== t) tt.textContent = t;
   el.querySelector(".rest-bar").style.width = (100*left/restState.total).toFixed(1) + "%";
 }
-function tickClock(){ const c = document.getElementById("clock"); if(c && S.profile.active) c.textContent = fmtClock(Date.now()-S.profile.active.start); }
+function tickClock(){ const c = document.getElementById("clock"); if(c && S.profile.active) c.textContent = fmtClock(Date.now()-S.profile.active.start); sessTick(); }
 setInterval(tickClock, 1000);
 setInterval(() => { if(restState) drawRest(); }, 250);
 
@@ -6193,6 +6276,8 @@ const ACT = {
     l[i].ss = L; l[i + 1].ss = L; touchProfile(); closeSheet(); render(); toast(`Superset ${L} : enchaîne les deux exercices, repos après le 2e`); },
   "ex-ss-off": b => { const l = A().exercises, L = l[+b.dataset.i].ss; l.forEach(x => { if(x.ss === L) delete x.ss; }); touchProfile(); closeSheet(); render(); toast("Superset délié"); },
   "ex-move": b => { const i = +b.dataset.i, d = +b.dataset.d, l = A().exercises; [l[i], l[i+d]] = [l[i+d], l[i]]; touchProfile(); closeSheet(); render(); },
+  "sess-dur": b => { const a = A(); if(!a) return; const d = Math.min(SESS.max, Math.max(SESS.min, sessDur(a) + +b.dataset.d)); if(d === a.dur){ toast(`Entre ${SESS.min} et ${SESS.max} min`); return; }
+    a.dur = d; const r = sessAdapt(a, +b.dataset.d); if(r.added.length) critPlan(a); touchProfile(); render(); toast(sessMsg(r, d)); },
   "ex-remove": b => { A().exercises.splice(+b.dataset.i,1); touchProfile(); closeSheet(); render(); },
   "ex-info-close": b => { closeSheet(); ACT["ex-info"](b); },
   "ex-progress-close": b => { closeSheet(); ACT["ex-progress"](b); },

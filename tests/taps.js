@@ -28,7 +28,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   await p.evaluate(() => { startRest(14); }); await p.waitForTimeout(4600);
   const ban = await p.evaluate(() => { const f = document.getElementById("flash"), r = f.getBoundingClientRect(); return {cls:f.className, hidden:f.hidden, h:r.height, vh:innerHeight}; });
   ok(!ban.hidden && /warn/.test(ban.cls) && ban.h < ban.vh/4, "10 s avant la fin : bandeau en haut (pas plein écran)", ban);
-  const inp = await p.locator("#w-0-0").boundingBox(); await p.touchscreen.tap(inp.x + 20, inp.y + 10); await p.keyboard.type("12");
+  await p.evaluate(() => document.getElementById("w-0-0").scrollIntoView({block:"center"})); await p.waitForTimeout(200); const inp = await p.locator("#w-0-0").boundingBox(); await p.touchscreen.tap(inp.x + 20, inp.y + 10); await p.keyboard.type("12");
   ok(await p.evaluate(() => A().exercises[0].sets[0].w) === "12", "pendant le bandeau, la saisie de la charge reste possible");
   await p.waitForTimeout(10500);
   const go = await p.evaluate(() => { const f = document.getElementById("flash"), r = f.getBoundingClientRect(); return {cls:f.className, hidden:f.hidden, h:r.height, vh:innerHeight}; });
