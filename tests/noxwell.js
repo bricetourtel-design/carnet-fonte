@@ -70,12 +70,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await next();
   ok(/Priorité au haut du corps/.test(await p0.$eval(".nxe-body", e => e.textContent)), "protocole : leviers annoncés selon l'objectif");
   // Contrat signé à trois : bouton bloqué tant que le joueur n'a pas signé au doigt ; empreinte du Gymon et clauses du Gymon
-  const pre = await p0.evaluate(() => ({dis:document.querySelector('[data-nxe="next"]').disabled, paw:!!document.querySelector(".nox-paw svg"), nox:/Pr Noxwell/.test(document.querySelector(".nox-sigs").textContent),
+  const pre = await p0.evaluate(() => ({dis:!document.querySelector('[data-nxe="next"]').disabled, paw:!!document.querySelector(".nox-paw svg"), nox:/Pr Noxwell/.test(document.querySelector(".nox-sigs").textContent),
     gym:/satiété/.test(document.querySelector(".nox-ctr").textContent) && /cm/.test(document.querySelector(".nox-ctr").textContent)}));
+  await p0.click('[data-nxe="next"]'); await p0.waitForTimeout(150);
+  pre.note = await p0.evaluate(() => { const n = document.querySelector(".nox-sign-need"); return !!n && !n.hidden && getComputedStyle(n).color === "rgb(239, 68, 68)" && NOX_STEPS[noxStep].k === "proto" && !S.profile.nox.proto; });
   const cv = await p0.$(".nox-pad canvas"); await cv.scrollIntoViewIfNeeded(); const bb = await cv.boundingBox();
   await p0.mouse.move(bb.x + 20, bb.y + 40); await p0.mouse.down(); for(let i = 1; i <= 12; i++) await p0.mouse.move(bb.x + 20 + i * 15, bb.y + 40 + (i % 2 ? -15 : 15)); await p0.mouse.up();
-  const signed = await p0.evaluate(() => ({dis:document.querySelector('[data-nxe="next"]').disabled, sign:noxA.sign}));
-  ok(pre.dis && pre.paw && pre.nox && pre.gym && !signed.dis && /^M\d+ \d+( L\d+ \d+)+$/.test(signed.sign), "contrat : signature au doigt obligatoire, empreinte du Gymon, clauses taille/masse et satiété", {pre, signed});
+  const signed = await p0.evaluate(() => ({dis:!document.querySelector(".nox-sign-need").hidden, sign:noxA.sign}));
+  ok(pre.dis && pre.note && pre.paw && pre.nox && pre.gym && !signed.dis && /^M\d+ \d+( L\d+ \d+)+$/.test(signed.sign), "contrat : sans signature, note rouge et pas de validation ; signature au doigt, empreinte du Gymon, clauses taille/masse et satiété", {pre, signed});
   await next(); await p0.waitForTimeout(300);
   const after = await p0.evaluate(() => ({goal:S.profile.goal, ex:S.profile.nox.exam, tpl:S.profile.plan && S.profile.plan.tpl, n:(S.profile.plan || {days:[]}).days.length, min:(S.profile.plan || {days:[{}]}).days[0].min,
     bw:S.profile.bw, h:S.profile.height, routines:S.profile.routines.filter(r => r.plan).length, tab}));
