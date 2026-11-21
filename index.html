@@ -868,7 +868,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 .nox-sigs.pad{grid-template-columns:1fr 1fr}.nox-sigs.pad>div:first-child{grid-column:1/-1}
 .nox-sigs>div{display:flex;flex-direction:column;gap:3px;min-width:0}.nox-sigs .sig-l{font-size:11px;color:var(--muted);border-top:1px solid currentColor;padding-top:3px;order:2}
 .nox-sigs svg.sig{width:100%;height:46px;color:var(--text)}.nox-sig-nox{font-family:"Snell Roundhand","Segoe Script","Brush Script MT",cursive;font-style:italic;font-size:22px;line-height:46px;height:46px;color:#16c7d9;white-space:nowrap}
-.nox-paw{height:46px;display:flex;align-items:center;justify-content:center}.nox-paw svg{width:38px;height:42px;color:var(--accent,#8b5cf6);transform:rotate(-14deg);opacity:.9}
+.nox-paw{height:64px;display:flex;align-items:center;justify-content:center}.nox-paw svg{width:58px;height:64px;color:var(--accent,#8b5cf6);transform:rotate(-14deg)}
 .nox-pad{position:relative}.nox-pad canvas{width:100%;height:70px;display:block;background:var(--fill);border-radius:10px;touch-action:none;cursor:crosshair}
 .nox-pad small{position:absolute;left:8px;top:6px;font-size:11px;color:var(--muted);pointer-events:none}.nox-pad button{position:absolute;right:4px;top:2px;font-size:11px;background:none;border:0;color:var(--muted);padding:4px}
 .nox-cl .fx{display:block;font-size:12px;color:var(--muted);margin-top:2px}
@@ -942,7 +942,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 b";
+const APP_VERSION = "2026-11-21 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2738,7 +2738,8 @@ const noxClauseTxt = it => { const nm = id => (exById(id) || {name:"?"}).name, g
     : [`🍗`, `Ne jamais laisser ${g} sous <b>${it.want} % de satiété</b>`, x => x.note, `Nourris-le après chaque séance : le frigo est là pour ça`]; };
 const NOX_PROMISE = "De mon côté : j'ajuste chaque charge selon ton ressenti, je te préviens quand la fatigue s'accumule, et je rends un rapport honnête à la fin.";
 // Signatures : celle du joueur (dessinée au doigt), celle du professeur, et l'empreinte du Gymon (une patte d'oiseau)
-const NOX_PAW = `<svg viewBox="0 0 40 44" aria-hidden="true"><g stroke="currentColor" stroke-width="4.6" stroke-linecap="round" fill="none"><path d="M20 27 L20 5"/><path d="M20 27 L6 11"/><path d="M20 27 L34 11"/><path d="M20 27 L21 40"/></g><circle cx="20" cy="27" r="4.6" fill="currentColor"/><g fill="currentColor"><circle cx="20" cy="4" r="2.2"/><circle cx="5.3" cy="10.2" r="2.2"/><circle cx="34.7" cy="10.2" r="2.2"/></g></svg>`;
+// Empreinte d'encre (21 nov. 2026) : trois doigts devant et un derrière, coussinets, griffes détachées, bords et grain d'encre (filtre SVG)
+const NOX_PAW = `<svg viewBox="0 0 64 70" aria-hidden="true"><defs><filter id="pawInk" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.1" result="d"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 1.3" result="m"/><feComposite in="d" in2="m" operator="in"/></filter></defs><g fill="currentColor" filter="url(#pawInk)"><g opacity=".88"><ellipse cx="32" cy="46" rx="6.2" ry="5.6"/><g transform="rotate(0 32 46)"><path d="M28.9 44 L30.3 12.5 Q32 10 33.7 12.5 L35.1 44Z"/><ellipse cx="32" cy="38.6" rx="3.9" ry="5.1"/><ellipse cx="32" cy="28.7" rx="3.5" ry="4.6"/><ellipse cx="32" cy="18.9" rx="3.2" ry="4.1"/></g><g transform="rotate(-40 32 46)"><path d="M29.2 44 L30.4 19.5 Q32 17 33.6 19.5 L34.8 44Z"/><ellipse cx="32" cy="39.8" rx="3.5" ry="4.6"/><ellipse cx="32" cy="32.2" rx="3.2" ry="4.2"/><ellipse cx="32" cy="24.6" rx="2.9" ry="3.7"/></g><g transform="rotate(40 32 46)"><path d="M29.2 44 L30.4 19.5 Q32 17 33.6 19.5 L34.8 44Z"/><ellipse cx="32" cy="39.8" rx="3.5" ry="4.6"/><ellipse cx="32" cy="32.2" rx="3.2" ry="4.2"/><ellipse cx="32" cy="24.6" rx="2.9" ry="3.7"/></g><g transform="rotate(180 32 46)"><path d="M29.5 44 L30.6 33.5 Q32 31 33.4 33.5 L34.5 44Z"/><ellipse cx="32" cy="41.4" rx="3.1" ry="4"/><ellipse cx="32" cy="36.8" rx="2.7" ry="3.4"/></g></g><g transform="rotate(0 32 46)"><path d="M30.8 10.2 Q32 3.5 33.2 10.2Z"/></g><g transform="rotate(-40 32 46)"><path d="M30.8 17.2 Q32 11 33.2 17.2Z"/></g><g transform="rotate(40 32 46)"><path d="M30.8 17.2 Q32 11 33.2 17.2Z"/></g><g transform="rotate(180 32 46)"><path d="M30.8 31.2 Q32 26 33.2 31.2Z"/></g></g></svg>`;
 const signOk = d => typeof d === "string" && d.length > 6 && d.length <= 6000 && /^[ML0-9 .]+$/.test(d);
 const signSVG = d => `<svg class="sig" viewBox="0 0 300 70" preserveAspectRatio="xMidYMid meet" aria-label="Ta signature"><path d="${d}" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function noxSigsHTML(sign, pad){
