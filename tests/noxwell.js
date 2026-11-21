@@ -57,6 +57,10 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await next(); await p0.click('[data-set="prec"][data-v="haut"]'); await next();
   await p0.click('[data-set="exp"][data-v="mid"]'); await next();
   await p0.click('[data-nxn="1"]'); await next();
+  // Autres sports : foot le lundi soir → pas de jambes dimanche et lundi
+  ok(/autre sport/.test(await p0.$eval(".nxe-bub", e => e.textContent)) && /Pourquoi \?/.test(await p0.$eval(".nxe-body", e => e.textContent)), "il demande les autres sports ou métiers, et explique pourquoi");
+  await p0.click('[data-set="autres"][data-v="oui"]'); await next();
+  await p0.click('[data-exd="0"][data-m="Jambes"]'); await p0.click('[data-exd="6"][data-m="Jambes"]'); await next();
   await p0.click('[data-set="dur"][data-v="1"]'); await next();
   ok(/superset/i.test(await p0.$eval(".nxe-bub", e => e.textContent)), "il demande si les supersets dérangent");
   await p0.click('[data-set="ss"][data-v="oui"]'); await next();
@@ -65,6 +69,10 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(/Ce que dit la science/.test(await p0.$eval(".nxe-body", e => e.textContent)), "« un muscle par séance » : les risques sont expliqués");
   await p0.click('[data-set="org"][data-v="deux"]'); await next();
   await p0.fill('[data-in="bw"]', "80"); await p0.fill('[data-in="height"]', "180"); await p0.click('[data-set="sexe"][data-v="h"]'); await next();
+  // Sans historique : charge max sur une répétition (vide = hypothèse)
+  const mx = await p0.evaluate(() => ({step:NOX_STEPS[noxStep].k, ph:document.querySelector('[data-in="mx_squat"]').placeholder}));
+  ok(mx.step === "max" && /Je ne sais pas → \d/.test(mx.ph), "sans historique : il demande la charge max, hypothèse proposée", mx);
+  await p0.fill('[data-in="mx_dc-barre"]', "100"); await next();
   const recap = await p0.$eval(".nxe-body", e => e.textContent);
   ok(/Prendre du muscle/.test(recap) && /4 séances/.test(recap), "récapitulatif de ce qu'il a compris", recap.slice(0, 160));
   await next();
@@ -81,6 +89,10 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await next(); await p0.waitForTimeout(300);
   const after = await p0.evaluate(() => ({goal:S.profile.goal, ex:S.profile.nox.exam, tpl:S.profile.plan && S.profile.plan.tpl, n:(S.profile.plan || {days:[]}).days.length, min:(S.profile.plan || {days:[{}]}).days[0].min,
     bw:S.profile.bw, h:S.profile.height, routines:S.profile.routines.filter(r => r.plan).length, tab}));
+  const exc = await p0.evaluate(() => ({excl:S.profile.excl, mon:(S.profile.plan.days.find(d => d.dow === 0) || {muscles:[]}).muscles, sun:(S.profile.plan.days.find(d => d.dow === 6) || {muscles:[]}).muscles, max:S.profile.maxes["dc-barre"],
+    est:(coach("di-barre") || {}).w, estTxt:(coach("di-barre") || {}).why}));
+  ok(exc.excl[0].join() === "Jambes" && !exc.mon.includes("Jambes") && !exc.sun.includes("Jambes") && exc.max === 100 && exc.est > 0 && /charge max déclarée/.test(exc.estTxt),
+    "muscles à éviter respectés dans la routine ; premières charges tirées de la charge max déclarée", exc);
   ok(after.goal.obj === "muscle" && after.tpl === "ul2" && after.n === 4 && after.min === 45 && after.bw === 80 && after.h === 180 && after.routines === 4 && after.tab === "routine", "accepter : programme haut/bas sur 4 séances de 45 min enregistré, mesures gardées", after);
 
   const ssPlan = await p0.evaluate(() => ({pref:S.profile.ssPref, ss:S.profile.routines.filter(r => r.plan).some(r => r.items.filter(it => it.ss).length >= 2)}));
@@ -291,6 +303,18 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     r.kind = sessionKind(w) === "cardio"; S.workouts = W; tab = "seance"; render(); return r; });
   ok(best.today && best.fatigue && best.rest && best.top, "séance conseillée en tête : jour prévu, sauf muscles fatigués ; même un jour de repos", best);
   ok(best.grid === 20 && best.act && best.mass && best.rec && best.sheet && best.hist && best.kind, "activité hors muscu : durée et km, nourrit et fait grossir le Gymon, fatigue les muscles sollicités, hors exercices", best);
+
+  // 17. Perte de poids : poids visé, IMC 18,5 minimum, paliers de 5 %, calories par semaine au contrat, 80/20 cuisine
+  const loss = await p1.evaluate(() => { const r = {}; closeSheet(); noxExamOpen(); Object.assign(noxA, {obj:"seche", prec:"partout", exp:"mid", n:3, days:[0,2,4], dur:2, lieu:"salle", org:"deux", ss:"non", autres:"non", bw:"90", height:"175", sexe:"h", ideal:"50"});
+    noxStep = NOX_STEPS.findIndex(x => x.k === "ideal"); noxDraw(false); r.low = /zone de santé commence vers/.test(document.querySelector(".nxe-body").textContent) && noxLoss().target === 57;
+    noxA.ideal = "65"; noxStep = noxMove(1); noxDraw(false); const t = document.querySelector(".nxe-body").textContent, L = noxLoss();
+    r.pal = L.pal === 4.5 && L.weeks === 9 && L.big && /médecin/.test(t) && /80 % dans l'assiette/.test(t) && /pas une application diététique/.test(t);
+    document.querySelector('[data-set="kcalW"][data-v="2000"]').click(); r.kw = noxA.kcalW === 2000;
+    noxA.sign = "M1 1 L20 20"; noxApply("keep"); const it = noxSt().proto.contract.items.find(x => x.k === "kcal");
+    r.clause = !!it && it.per === 2000 && it.want === 12000 && S.profile.loss.target === 65;
+    const t2 = Date.now(); S.workouts.push({id:"kc1", name:"🏃 Course", start:noxSt().proto.start + 1, end:t2 + 3600e3, act:{k:"course", min:60}, exercises:[], prs:[]});
+    r.have = noxContractState(noxSt().proto.contract, noxSt().proto).find(x => x.k === "kcal").have > 500; S.workouts = S.workouts.filter(w => w.id !== "kc1"); return r; });
+  ok(loss.low && loss.pal && loss.kw && loss.clause && loss.have, "perte de poids : pas sous un IMC de 18,5, paliers de 5 %, médecin pour une grosse perte, 80/20, calories par semaine au contrat (activités comprises)", loss);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
