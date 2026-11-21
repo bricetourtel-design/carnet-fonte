@@ -869,7 +869,9 @@ body.nox-shake main{animation:nxshake .38s linear}
 .nox-sigs>div{display:flex;flex-direction:column;gap:3px;min-width:0}.nox-sigs .sig-l{font-size:11px;color:var(--muted);border-top:1px solid currentColor;padding-top:3px;order:2}
 .nox-sigs svg.sig{width:100%;height:46px;color:var(--text)}.nox-sig-nox{font-family:"Snell Roundhand","Segoe Script","Brush Script MT",cursive;font-style:italic;font-size:22px;line-height:46px;height:46px;color:#16c7d9;white-space:nowrap}
 .nox-paw{height:64px;display:flex;align-items:center;justify-content:center}.nox-paw svg{width:58px;height:64px;color:var(--accent,#8b5cf6);transform:rotate(-14deg)}
-.nox-pad{position:relative}.nox-pad canvas{width:100%;height:70px;display:block;background:var(--fill);border-radius:10px;touch-action:none;cursor:crosshair}
+.nox-pad{position:relative}.nox-pad.need canvas{box-shadow:0 0 0 2px #ef4444}
+.nox-sign-need{order:3;margin:4px 0 0;color:#ef4444;font-size:13px;font-weight:600}.nox-sign-need.shake{animation:signShake .4s}
+@keyframes signShake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}@media (prefers-reduced-motion:reduce){.nox-sign-need.shake{animation:none}}.nox-pad canvas{width:100%;height:70px;display:block;background:var(--fill);border-radius:10px;touch-action:none;cursor:crosshair}
 .nox-pad small{position:absolute;left:8px;top:6px;font-size:11px;color:var(--muted);pointer-events:none}.nox-pad button{position:absolute;right:4px;top:2px;font-size:11px;background:none;border:0;color:var(--muted);padding:4px}
 .nox-cl .fx{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .nox-barl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin:6px 0 10px}
@@ -942,7 +944,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 c";
+const APP_VERSION = "2026-11-21 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2550,8 +2552,8 @@ const NOX_STEPS = [
        <p class="nox-promise">Exigeant mais atteignable : calculé sur ton historique, ton expérience et ton Gymon. ${NOX_PROMISE}</p>
        ${noxSigsHTML(noxA.sign, true)}
        <div class="nxe-src">📚 Construit d'après la recherche en musculation : fourchettes de reps (Schoenfeld 2017, 2021), reps en réserve (Helms 2016, Robinson 2024), volume par muscle (Pelland 2025).</div></div>
-       <button class="btn wide" data-nxe="edit" style="margin-top:10px" ${noxA.sign ? "" : "disabled"}>✏️ Signer, puis ajuster dans Routine</button><button class="btn wide ghost" data-nxe="keep" style="margin-top:8px" ${noxA.sign ? "" : "disabled"}>Signer et garder mon programme actuel</button>`; },
-   ok:() => !!noxA.sign, btn:"✍️ Je signe le contrat"}
+       <button class="btn wide" data-nxe="edit" style="margin-top:10px">✏️ Signer, puis ajuster dans Routine</button><button class="btn wide ghost" data-nxe="keep" style="margin-top:8px">Signer et garder mon programme actuel</button>`; },
+   ok:() => true, btn:"✍️ Je signe le contrat"}
 ];
 function noxDraw(reactNow){
   const el = document.getElementById("nox-exam"); if(!el) return;
@@ -2572,6 +2574,12 @@ function noxExamClick(e){
   if(b.dataset.nxe === "back"){ noxStep = Math.max(0, noxStep - 1); noxDraw(false); return; }
   if(b.dataset.nxe === "fix"){ noxStep = 1; noxDraw(false); return; }
   if(b.dataset.nxe === "unsign"){ noxA.sign = undefined; noxDraw(false); return; }
+  // Contrat (21 nov. 2026) : sans signature, une note rouge sous le cadre de signature, et on y descend
+  if(["next", "edit", "keep"].includes(b.dataset.nxe) && NOX_STEPS[noxStep].k === "proto" && !noxA.sign){
+    const pad = document.querySelector(".nox-pad"), n = document.querySelector(".nox-sign-need");
+    if(n){ n.hidden = false; n.classList.remove("shake"); void n.offsetWidth; n.classList.add("shake"); }
+    if(pad){ pad.classList.add("need"); pad.scrollIntoView({behavior:"smooth", block:"center"}); }
+    return; }
   if(b.dataset.nxe === "next"){ if(NOX_STEPS[noxStep].k === "proto"){ noxApply("accept"); return; } noxStep = Math.min(NOX_STEPS.length - 1, noxStep + 1); noxDraw(false); document.querySelector(".nxe-body").scrollTop = 0; return; }
   if(b.dataset.nxe === "edit"){ noxApply("edit"); return; }
   if(b.dataset.nxe === "keep"){ noxApply("keep"); return; }
@@ -2745,7 +2753,7 @@ const signSVG = d => `<svg class="sig" viewBox="0 0 300 70" preserveAspectRatio=
 function noxSigsHTML(sign, pad){
   const me = pad ? `<div class="nox-pad"><canvas width="600" height="140" aria-label="Signe ici avec le doigt"></canvas><small>${sign ? "" : "Signe ici avec le doigt ✍️"}</small>${sign ? `<button type="button" data-nxe="unsign">Effacer</button>` : ""}</div>`
     : signOk(sign) ? signSVG(sign) : `<div class="nox-sig-nox" style="color:var(--muted)">—</div>`;
-  return `<div class="nox-sigs${pad ? " pad" : ""}"><div><span class="sig-l">Toi</span>${me}</div><div><span class="sig-l">Le professeur</span><div class="nox-sig-nox">Pr Noxwell</div></div>
+  return `<div class="nox-sigs${pad ? " pad" : ""}"><div><span class="sig-l">Toi</span>${me}${pad ? `<p class="nox-sign-need" role="alert" hidden>✍️ Signe le contrat ici avec le doigt pour le valider.</p>` : ""}</div><div><span class="sig-l">Le professeur</span><div class="nox-sig-nox">Pr Noxwell</div></div>
     <div><span class="sig-l">${noxNm()}</span><div class="nox-paw">${NOX_PAW}</div></div></div>`;
 }
 function noxSignBind(){
@@ -2755,7 +2763,7 @@ function noxSignBind(){
     ctx.beginPath(); pts.split(/(?=[ML])/).forEach(sg => { const [c, x, y] = [sg[0], ...sg.slice(1).trim().split(" ").map(Number)]; if(isNaN(x)) return; c === "M" ? ctx.moveTo(x * 2, y * 2) : ctx.lineTo(x * 2, y * 2); }); ctx.stroke(); };
   const at = e => { const r = cv.getBoundingClientRect(); const k = (v, m) => Math.max(0, Math.min(m, Math.round(v))); return [k((e.clientX - r.left) / r.width * 300, 300), k((e.clientY - r.top) / r.height * 70, 70)]; };
   const sync = () => { const okS = signOk(pts); noxA.sign = okS ? pts : undefined;
-    document.querySelectorAll('#nox-exam [data-nxe="next"], #nox-exam [data-nxe="edit"], #nox-exam [data-nxe="keep"]').forEach(b => b.disabled = !okS);
+    if(okS){ const n = document.querySelector(".nox-sign-need"); if(n) n.hidden = true; const pd = document.querySelector(".nox-pad"); if(pd) pd.classList.remove("need"); }
     const h = document.querySelector(".nox-pad small"); if(h) h.textContent = okS ? "" : "Signe ici avec le doigt ✍️"; };
   cv.addEventListener("pointerdown", e => { e.preventDefault(); on = true; cv.setPointerCapture(e.pointerId); const [x, y] = at(e); if(pts.length < 5900){ pts += `${pts ? " " : ""}M${x} ${y}`; } draw(); });
   cv.addEventListener("pointermove", e => { if(!on) return; const [x, y] = at(e); if(pts.length < 5900){ pts += ` L${x} ${y}`; draw(); } });
