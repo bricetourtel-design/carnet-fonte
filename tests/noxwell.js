@@ -220,27 +220,26 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(ctr.reg === 19 && ctr.of === 24 && ctr.base > 0 && ctr.debW > ctr.proW && ctr.proW > ctr.base && ctr.recD > ctr.recP && ctr.sec.join() === "reg,cardio,keep,gym,sat" && ctr.endu.join() === "reg,cardio,long,gym,sat" && ctr.liftOk && !ctr.regOk && ctr.html,
     "contrat : séances, charge visée selon l'expérience, records ou cardio selon l'objectif, clauses suivies", ctr);
 
-  // 14. Clause tenue → fiole de sérum au frigo ; bue : +5 % de masse et de taille pendant 48 h, étoiles autour du Gymon ; clause satiété
+  // 14. Clause tenue → page du carnet ; contrat rempli → étoiles 2 jours, sans effet sur la masse ni la taille ; clause satiété
   const fio = await p1.evaluate(() => { const now = Date.now(), st = noxSt(), c = creatureState(), r = {};
-    c.dead = null; c.stage = Math.max(c.stage, 3); c.fridge = []; c.journal = [];
-    st.proto = {k:9, start:now - 60000, obj:"muscle", prec:[], contract:{v:2, weeks:6, items:[{k:"reg", want:1, of:1}, {k:"sat", want:50}]}};
-    const w = {id:"fio-w", name:"S", start:now - 30000, end:now - 20000, prs:[], exercises:[{exId:"dc-barre", feel:3, sets:[{w:"60", r:"8", done:true}]}]}; S.workouts.push(w);
-    r.n = noxContractAward(); r.again = noxContractAward(); const f = c.fridge.find(x => x.k === "fiole"); r.fiole = !!f;
+    c.dead = null; c.stage = Math.max(c.stage, 3); c.fridge = []; c.journal = []; delete c.boost;
+    st.proto = {k:9, start:now - 60000, obj:"muscle", prec:[], contract:{v:2, weeks:6, items:[{k:"reg", want:1, of:1}, {k:"rec", want:1}]}};
+    const mk = (id, prs) => ({id, name:"S", start:now - 30000, end:now - 20000, prs, exercises:[{exId:"dc-barre", feel:3, sets:[{w:"60", r:"8", done:true}]}]});
+    S.workouts.push(mk("fio-w", []));
+    r.n = noxContractAward(); r.starsHalf = boostOn(c); r.again = noxContractAward(); r.fridge = c.fridge.length;
     r.mem = c.journal.some(j => /Clause tenue/.test(j.t)); r.won = st.proto.won.join();
-    // gain de masse : avec et sans sérum
-    c.weight = Math.max(c.weight, CREATURE_CFG.minWeight[c.stage] * 3); const save = {w:c.weight, sat:c.sat, satT:c.satT, full:c.full}, gain = () => { c.weight = save.w; c.sat = 10; c.satT = now; c.full = 0; satEat(c, 2000, now); return c.weight - save.w; };
-    const g0 = gain(); const d = fridgeEat(c, f.id); r.drink = !!(d && d.fiole) && c.boost.until > now + 47 * 3600000 && !c.fridge.some(x => x.k === "fiole");
-    const g1 = gain(); r.ratio = Math.round(g1 / g0 * 1000) / 1000; Object.assign(c, {weight:save.w, sat:save.sat, satT:save.satT, full:save.full});
-    // taille : une séance pendant le sérum
-    const hx0 = c.hx || 0, w2 = {id:"fio-w2", name:"S", start:now - 10000, end:now - 5000, prs:[], exercises:[{exId:"dc-barre", feel:3, sets:[{w:"60", r:"8", done:true}]}]}; S.workouts.push(w2); creatureFeed(w2);
-    r.hx = (c.hx || 0) > hx0;
-    tab = "creature"; render(); r.stars = document.querySelectorAll(".gy-stars i").length;
-    // satiété : suivie après le premier repas, ratée sous 50 %
-    st.proto.satOn = 1; st.proto.satMin = 40; r.sat = noxContractState(st.proto.contract, st.proto)[1].note;
-    st.proto.satMin = 80; r.sat2 = noxContractState(st.proto.contract, st.proto)[1].note;
+    S.workouts.push(mk("fio-w2", ["dc-barre"])); r.full = noxContractAward(); r.stars = boostOn(c) && c.boost.until > now + 47 * 3600000;
+    r.memFull = c.journal.some(j => /Contrat rempli/.test(j.t));
+    // aucun effet sur le jeu : même gain de masse avec ou sans étoiles, même taille
+    c.weight = Math.max(c.weight, CREATURE_CFG.minWeight[c.stage] * 3); const save = {w:c.weight, sat:c.sat, satT:c.satT, full:c.full, b:c.boost};
+    const gain = () => { c.weight = save.w; c.sat = 10; c.satT = now; c.full = 0; satEat(c, 2000, now); return c.weight - save.w; };
+    const g1 = gain(); delete c.boost; const g0 = gain(); r.same = g0 === g1; c.boost = save.b; Object.assign(c, {weight:save.w, sat:save.sat, satT:save.satT, full:save.full});
+    tab = "creature"; render(); r.starsN = document.querySelectorAll(".gy-stars i").length;
+    st.proto.contract.items.push({k:"sat", want:50}); st.proto.satOn = 1; st.proto.satMin = 40; r.sat = noxContractState(st.proto.contract, st.proto)[2].note;
+    st.proto.satMin = 80; r.sat2 = noxContractState(st.proto.contract, st.proto)[2].note;
     S.workouts = S.workouts.filter(x => !/^fio-/.test(x.id)); delete c.boost; return r; });
-  ok(fio.n === 1 && fio.again === 0 && fio.fiole && fio.mem && fio.won === "0" && fio.drink && fio.ratio === 1.05 && fio.hx && fio.stars === 6 && fio.sat === "ratée" && fio.sat2 === "tenue jusqu'ici",
-    "fiole : gagnée une fois par clause, bue = +5 % de masse et de taille pendant 48 h, étoiles ; clause satiété suivie", fio);
+  ok(fio.n === 1 && !fio.starsHalf && fio.again === 0 && fio.fridge === 0 && fio.mem && fio.won === "0" && fio.full === 2 && fio.stars && fio.memFull && fio.same && fio.starsN === 6 && fio.sat === "ratée" && fio.sat2 === "tenue jusqu'ici",
+    "contrat : clause tenue notée au carnet ; rempli = étoiles 2 jours sans effet sur le jeu ; clause satiété suivie", fio);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
