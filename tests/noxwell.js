@@ -18,20 +18,18 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const base = () => { S.profile.tutoDone = true; S.profile.tutoAppDone = true; S.profile.onboarded = true; S.profile.welcomed = true; S.profile.installHintOff = true;
     S.profile.wnKeys = WHATS_NEW.map(wnKey); S.profile.wnSeen = versionDate(APP_VERSION); closeSheet(); document.getElementById("tuto").hidden = true; };
 
-  // 1. Pas d'arrivée tant que le Gymon est petit
+  // 1. Nouveau joueur : la page Routine est vide, la première routine passe par l'examen du professeur
   const p0 = await phone(base);
-  await p0.evaluate(() => { const c = creatureState(); c.stage = 2; c.fidelity = 3; saveLocal(); tab = "creature"; render(); });
-  await p0.waitForTimeout(1800);
-  ok(await p0.$("#nox-layer") === null, "Gymon au stade 2 : Noxwell n'arrive pas");
   await p0.evaluate(() => { tab = "routine"; render(); });
-  ok(await p0.$(".nox-hero, .nox-lite") === null && await p0.$(".tpls") === null, "avant son arrivée : pas de bloc Noxwell, pas d'« Organisation proposée » (choisie au bilan)");
+  ok(await p0.$(".nox-first [data-act=\"nox-exam\"]") !== null && await p0.$(".pday") === null && await p0.evaluate(() => !S.profile.plan) && await p0.$(".tpls") === null,
+    "nouveau joueur : Routine vide, la première routine se construit avec le Pr Noxwell");
 
-  // 2. Arrivée à une visite calme (stade 3), nouveau joueur
-  await p0.evaluate(() => { const c = creatureState(); c.stage = 3; c.fidelity = 5; c.journal = []; saveLocal(); tab = "creature"; render(); });
+  // 2. Arrivée dès le premier lancement, sur la page Gymon (œuf)
+  await p0.evaluate(() => { const c = creatureState(); c.journal = []; saveLocal(); tab = "creature"; render(); });
   await p0.waitForTimeout(2800);
-  ok(await p0.$("#nox-layer .nox-bub.in") !== null, "stade 3 : Noxwell surgit sur la page Gymon");
+  ok(await p0.$("#nox-layer .nox-bub.in") !== null, "premier lancement : Noxwell surgit sur la page Gymon");
   const t1 = await p0.$eval(".nox-txt", e => e.textContent);
-  ok(/FASCINANT/.test(t1), "première bulle « FASCINANT ! »", t1);
+  ok(/FASCINANT/.test(t1) && /œuf/.test(t1), "première bulle « FASCINANT ! Un œuf de Gymon ! »", t1);
   for(let k = 0; k < 3; k++){ await p0.click(".nox-bub"); await p0.waitForTimeout(150); }
   ok(await p0.$eval(".nox-btns", e => !e.hidden), "dernière bulle : « Passer l'examen » ou « Plus tard »");
   const noStage = await p0.$eval(".nox-layer", e => !/Poussin|Poule|Dinosaure|Dragon/.test(e.textContent));

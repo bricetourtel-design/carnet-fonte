@@ -847,6 +847,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 .nxe-src{font-size:12px;color:var(--muted);margin-top:8px}
 .nxe-foot{padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 18px)}
 /* Bloc labo (page Routine) */
+.nox-first{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 18px}.nox-first h3{margin:0}.nox-first p{margin:0}.nf-ico{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:rgba(34,211,238,.16);font-size:28px}
 .nox-lite{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;color:inherit;font:inherit;cursor:pointer;background:linear-gradient(160deg,rgba(34,211,238,.12),rgba(139,92,246,.14) 55%,var(--glass));border-color:rgba(34,211,238,.35)}
 .nm-ico{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;background:rgba(34,211,238,.16);font-size:18px}.nm-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .nm-t b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nm-t>span{font-size:12.5px;color:var(--muted)}.nm-bar{display:block;height:4px;border-radius:2px;background:rgba(127,127,127,.22);margin-top:4px;overflow:hidden}
@@ -963,7 +964,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 o";
+const APP_VERSION = "2026-11-21 p";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2409,16 +2410,21 @@ function noxCalm(){
   if(tab !== "creature" || S.profile.active || document.visibilityState !== "visible") return false;
   if(document.getElementById("celebrate") || document.getElementById("nox-layer") || !document.getElementById("sheet").hidden || !document.getElementById("tuto").hidden) return false;
   if(!S.profile.onboarded || !S.profile.tutoDone || whatsNewSince().length) return false;
-  const c = creatureState(); if(c.dead || c.stage < NOX.stage) return false;
+  const c = creatureState(); if(c.dead) return false;   // 21 nov. 2026 : il arrive dès le premier lancement (plus d'attente du stade 3)
   // pas le jour d'une évolution : la fête du Gymon reste à lui
   const d0 = new Date(); d0.setHours(0, 0, 0, 0);
   return !(c.journal || []).some(j => j.k && /^evo/.test(j.k) && j.ts >= d0.getTime());
 }
-function noxMaybeIntro(){ if(noxMet() || !noxCalm()) return; const c = creatureState(); noxIntro(c.fidelity >= NOX.oldFid ? "old" : "new"); }
+function noxMaybeIntro(){ if(noxMet() || !noxCalm()) return; const c = creatureState(); noxIntro(c.fidelity >= NOX.oldFid ? "old" : c.stage < 2 ? "first" : "new"); }
 function noxIntro(kind){
   const c = creatureState(), n = c.fidelity || 0, name = c.name ? esc(c.name) : "Ton Gymon";
   const st = noxSt(); st.intro = Date.now(); st.stageSeen = c.stage; st.seen = st.seen || {}; NOX_PHEN.forEach(ph => { if(ph.on(c)) st.seen[ph.k] = Date.now(); }); touchProfile();
-  const steps = kind === "old" ? [
+  const steps = kind === "first" ? [
+    {t:"FASCINANT ! Un œuf de Gymon !", f:"grin", boom:true},
+    {t:"Professeur <b>Noxwell</b>, spécialiste des Gymons. Je traque cette espèce depuis des années… et tu viens d'en recevoir un !", f:"smirk"},
+    {t:"Il grandira à chaque répétition que <b>TU</b> feras. Ton corps est mon laboratoire… et le sien aussi !", f:"grin"},
+    {t:"Avant ta première séance : un examen. Quelques questions, et je construis <b>ta routine</b> sur mesure. Mouahahaha !", f:"grin", end:true}
+  ] : kind === "old" ? [
     {t:`FASCINANT ! Un spécimen de <b>${n} séances</b> !`, f:"grin", boom:true},
     {t:`Professeur <b>Noxwell</b>. Je t'observe depuis ${n} séances, caché derrière la machine à mollets. Pardon. C'était pour la science.`, f:"smirk"},
     {t:`<b>${name}</b> est le spécimen le plus intrigant de ma carrière. Et je ne comprends pas encore tout…`, f:"smirk"},
@@ -2781,7 +2787,7 @@ function noxExamClick(e){
 // Fin de l'examen : le protocole devient le programme (accepter), un brouillon à ajuster (edit), ou on garde le programme actuel (keep)
 function noxApply(mode){
   const a = noxA, st = noxSt();
-  const ssWas = S.profile.ssPref;
+  const ssWas = S.profile.ssPref; if(!noxSt().intro) noxSt().intro = Date.now();
   const excl = {}; if(a.autres === "oui") Object.entries(a.excl || {}).forEach(([d, l]) => { const m = (l || []).filter(x => MUSCLES.includes(x)); if(m.length) excl[d] = m; });
   const L = a.obj === "seche" ? noxLoss() : null, kcalW = a.obj === "seche" ? (a.kcalW || noxKcalDef()) : undefined;
   st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, banc:a.banc, org:a.org, ss:a.ss,
@@ -3140,8 +3146,12 @@ function noxHow(){
 }
 
 function viewPlan(){
+  // 21 nov. 2026 (décision du propriétaire) : sans examen ni routine, la page est vide ; la première routine se construit avec le Pr Noxwell
+  if(!S.profile.plan && !noxExam()) return `${noxMet() ? noxBlock() : ""}
+    <section class="card nox-first"><div class="nf-ico">🧪</div><h3>Ta routine se construit avec le Pr Noxwell</h3>
+      <p class="small muted">Un examen de quelques minutes : ton objectif, tes jours, ton temps, ton matériel, tes autres sports. Il te propose une séance par jour, vous la revoyez ensemble, et elle reste modifiable ici, à la main.</p>
+      <button class="btn primary wide" data-act="nox-exam">🩺 Passer l'examen</button></section>`;
   const d = planDraft || (planDraft = initDraft()), g = generatePlan(d);
-  if(!S.profile.plan && g.days.some(x => x.items.length)) planSave();
   const dayCards = g.days.map(day => {
     const k = d.days.findIndex(x => x.dow===day.dow), al = g.alerts.filter(a => a.dow===day.dow);
     return `<section class="card pday">
@@ -5245,6 +5255,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-21", t:"🧪 Le Pr Noxwell dès le premier jour", x:"Les nouveaux joueurs rencontrent le Pr Noxwell dès le premier lancement : avant la première séance, il fait passer l'examen et construit la routine. La page Routine reste vide tant que l'examen n'est pas passé ; ensuite, tout reste modifiable à la main."},
   {d:"2026-11-21", t:"📋 La revue du programme avec le professeur", x:"Avant de signer le contrat, le Pr Noxwell te présente chaque séance, jour par jour : comment il l'a construite, et pour chaque exercice ta performance actuelle (charge max estimée) et celle qu'il vise à la fin du contrat. Un exercice ne te plaît pas ? ↻ pour en changer avec lui. Le programme signé est celui que vous avez revu, et il reste modifiable dans Routine."},
   {d:"2026-11-21", t:"🩺 Un examen plus complet", x:"Le Pr Noxwell explique chacun de ses choix (« 💡 Pourquoi ? »). Il te demande si tu fais un autre sport ou un métier physique, et quels muscles laisser tranquilles certains jours : il en tient compte dans ta routine et dans la séance conseillée. Sans historique, il te demande ta charge max (ou part d'une hypothèse prudente) pour tes premières charges. Pour perdre du poids : ton poids visé, des paliers réalistes et un nombre de calories à brûler chaque semaine, inscrit au contrat."},
   {d:"2026-11-21", t:"🏊 Tes autres sports comptent", x:"Natation, foot, vélo, marche, tennis, escalade… : sur la page Séance, « Autre activité » enregistre la durée et/ou les km. Ton Gymon mange, grossit et grandit, tes muscles sollicités se reposent, sans mélanger ces activités à tes exercices de musculation. Et la page Séance met maintenant en tête la séance la plus adaptée à ta récupération ; « S'entraîner » sur la page Gymon la démarre directement."},
