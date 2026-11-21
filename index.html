@@ -875,6 +875,10 @@ body.nox-shake main{animation:nxshake .38s linear}
 .gy-stars i:nth-child(1){color:#ffd23f}
 @keyframes gyOrbit{to{transform:rotate(360deg)}}@keyframes gyTwinkle{to{opacity:.55}}
 @media (prefers-reduced-motion:reduce){.gy-stars,.gy-stars i{animation:none}}
+.rv-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}.rv-it{display:flex;align-items:center;gap:8px;background:var(--fill);border-radius:12px;padding:8px 10px}
+.rv-n{flex:1;min-width:0;display:flex;flex-direction:column}.rv-n b{font-size:14px}.rv-n small,.rv-p small{font-size:11.5px;color:var(--muted)}
+.rv-p{display:flex;flex-direction:column;align-items:flex-end;font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}.rv-p b{color:var(--ok)}
+.rv-sw{width:32px;height:32px;flex:none;border-radius:50%;border:1px solid var(--line,rgba(127,127,127,.3));background:transparent;color:var(--accent);font-size:16px}
 .nxe-why{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);font-size:13.5px;line-height:1.4}
 .nxe-excl{display:flex;flex-direction:column;gap:6px;margin-top:8px}.nxe-exd{display:flex;gap:8px;align-items:flex-start}.nxe-exd>b{width:34px;flex:none;padding-top:6px;font-size:13px}
 .nxe-exd>div{display:flex;flex-wrap:wrap;gap:4px}.nxe-exd button{padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid var(--line,rgba(127,127,127,.3));background:transparent;color:var(--text)}
@@ -959,7 +963,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 n";
+const APP_VERSION = "2026-11-21 o";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2195,10 +2199,12 @@ function generatePlan(d){
     const mins = day.min || 60, sumW = ms.reduce((t,m) => t+WEIGHT[m], 0);
     const slots = Math.max(2, Math.min(9, Math.floor((mins - 5)/9.5 + 0.3)));   // ~9,5 min par exercice de 3 séries, 5 min d'échauffement
     const items = [], used = new Set(), usedPrim = new Set(), usedFam = new Set();
+    // Muscles à éviter ce jour-là (autre sport, métier ; examen du Pr Noxwell) : pas d'exercice qui les sollicite fortement (soulevé de terre un jour sans jambes)
+    const exG = (((S.profile.excl || {})[day.dow]) || []).filter(g => !ms.includes(g)), avoid = c => exG.length && Object.entries(exWork(c.e)).some(([mm, p]) => p >= 0.5 && exG.includes(GROUP_OF[mm] || mm));
     ms.forEach(m => {
       const k = seen[m] = (seen[m]||0) + 1;           // k-ième séance de la semaine pour ce muscle
       const cnt = m==="Abdos" ? (slots>=5 ? 1 : 0) : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
-      const all = prefer(candidatesFor(m, st)), done = all.filter(c => c.n>0 || lifts.includes(c.e.id) || isFav(c.e.id));
+      const all = prefer(candidatesFor(m, st).filter(c => !avoid(c))), done = all.filter(c => c.n>0 || lifts.includes(c.e.id) || isFav(c.e.id));
       const pool = done.length >= cnt ? done : all;
       for(let j=0;j<cnt;j++){
         const off = day.off[m+":"+j] || 0;
@@ -2551,6 +2557,52 @@ function noxLoss(){
   return {bw, ideal, floor, target, loss, pal, weeks:Math.max(1, Math.ceil(pal / 0.5)), tooLow:!!floor && ideal < floor, big:loss > bw * 0.1, steps:Math.max(1, Math.ceil(loss / Math.max(0.5, bw * 0.05)))};
 }
 const NOX_KCAL = [1000, 1500, 2000, 2500];
+/* Revue jour par jour avant la signature (21 nov. 2026, décision du propriétaire) : le professeur présente chaque séance,
+   explique comment il l'a construite, montre pour chaque exercice la performance actuelle et celle visée à la fin du contrat ;
+   ↻ change un exercice avec lui. Le programme signé est exactement celui revu ; tout reste modifiable ensuite dans Routine. */
+const noxExclOf = a => { const ex = {}; if(a.autres === "oui") Object.entries(a.excl || {}).forEach(([d, l]) => { const m = (l || []).filter(x => MUSCLES.includes(x)); if(m.length) ex[d] = m; }); return ex; };
+function noxDraftFrom(a){
+  const n = a.n, tpl = (TEMPLATES[n] || []).find(t => t.id === NOX_TPL[a.org][n]) || TEMPLATES[n][0];
+  return {n, tpl:tpl.id, days:noxPlaceDays(tpl.days, a.days, noxExclOf(a)).map(([dow, ms]) => ({dow, muscles:ms, off:{}, min:NOX_DUR[a.dur] || 60})), novOff:0};
+}
+const noxRevKey = a => JSON.stringify([a.n, a.days, a.org, a.dur, a.autres, a.excl, a.obj, a.prec, a.lieu, a.banc, a.ss]);
+// Calcule avec les réponses de l'examen (matériel, objectif, supersets, charges max) sans toucher au profil
+function noxWithExam(a, fn){
+  const P = S.profile, keep = {equip:P.equip, bench:P.bench, goal:P.goal, ssPref:P.ssPref, maxes:P.maxes, expHyp:P.expHyp, bw:P.bw, sex:P.sex, excl:P.excl};
+  P.excl = noxExclOf(a);
+  P.equip = LIEU_EQ[a.lieu] || "salle"; if(a.lieu === "halt") P.bench = a.banc !== "non"; P.goal = {obj:a.obj, prec:a.prec}; P.ssPref = a.ss === "oui" ? "oui" : "non";
+  P.maxes = {...(P.maxes || {})}; NOX_MAXL.forEach(([id]) => { const v = num(a["mx_" + id]); if(v > 0) P.maxes[id] = v; }); P.expHyp = a.exp;
+  if(num(a.bw)) P.bw = num(a.bw); if(a.sexe) P.sex = a.sexe;
+  try{ return fn(); } finally { Object.assign(P, keep); Object.keys(keep).forEach(k => keep[k] === undefined && delete P[k]); }
+}
+// Performance actuelle et visée à la fin du contrat (1RM estimé), au rythme de progression du contrat
+function noxPerf(id, a){
+  const e = exById(id); if(!e || isCardio(e)) return null;
+  const t0 = Date.now(), h = exHistory(id).filter(x => x.ts > t0 - 120 * 86400000 && x.best > 0);
+  let cur = h.length ? Math.max(...h.map(x => x.best)) : 0, est = false;
+  if(!cur){ const r = estimateNew(e, repRange(e)[0]); if(r && r.oneRM){ cur = r.oneRM; est = true; } }
+  if(!cur) return null;
+  const exp = NOX_RECS[a.exp] ? a.exp : "mid", rate = a.obj === "force" ? NOX_RATE.force[exp] : a.obj === "muscle" ? NOX_RATE.muscle[exp] : a.obj === "endu" ? NOX_RATE.muscle[exp] / 2 : 0;
+  const st = stepFor(e, cur), r = v => Math.round(v / st) * st;
+  return {cur:r(cur), proj:Math.max(r(cur), r(cur * (1 + rate / 100 * NOX.weeks))), est, keep:a.obj === "seche"};
+}
+function noxReviewHTML(){
+  const a = noxA; if(!a.rev || a.revKey !== noxRevKey(a)){ a.rev = noxDraftFrom(a); a.revKey = noxRevKey(a); a.revDay = 0; }
+  return noxWithExam(a, () => {
+    const g = generatePlan(a.rev), days = g.days, i = Math.min(a.revDay || 0, days.length - 1), d = days[i], ex = noxExclOf(a)[d.dow] || [];
+    const items = d.items.map(it => { const e = exById(it.exId); if(it.cardio) return `<li class="rv-it"><span class="rv-n">🫀 ${esc(e.name)}</span><span class="rv-p">≈ ${NOX_CARDIO_MIN} min de cardio</span></li>`;
+      const c = coach(it.exId, undefined, it.sets), pf = noxPerf(it.exId, a);
+      return `<li class="rv-it"><span class="rv-n"><b>${esc(e.name)}</b><small>${it.sets} × ${c.lo}–${c.hi} reps${c.w ? ` · départ ${fmtN(c.w)} kg` : ""}</small></span>
+        ${pf ? `<span class="rv-p">${pf.keep ? `1RM ≈ ${fmtN(pf.cur)} kg <small>à garder</small>` : `1RM ${fmtN(pf.cur)} → <b>${fmtN(pf.proj)} kg</b>`}${pf.est ? `<small>estimé</small>` : ""}</span>` : `<span class="rv-p"><small>au poids du corps</small></span>`}
+        <button class="rv-sw" data-rvs="${esc(it.slot)}" data-rvd="${d.dow}" aria-label="Changer cet exercice">↻</button></li>`; }).join("");
+    const why = [`Muscles du jour : ${d.muscles.join(", ").toLowerCase()}.`, "Les mouvements polyarticulaires d'abord, quand tu es frais ; l'isolation ensuite.",
+      `${d.items.filter(x => !x.cardio).length} exercices pour tenir en ≈ ${d.est} min.`, ...(ex.length ? [`Pas de ${ex.join(", ").toLowerCase()} ce jour-là : tu me l'as demandé.`] : []),
+      ...(d.items.some(x => x.ss) ? ["Supersets pour gagner du temps, entre muscles qui ne se gênent pas."] : [])];
+    return `<div class="nxe-q">Séance ${i + 1} sur ${days.length} · ${DOWS[d.dow]}</div>
+      <div class="nxe-sub">${esc(d.name)} · ≈ ${d.est} min</div><ul class="rv-list">${items}</ul>
+      <div class="nxe-why">💡 <b>Comment je l'ai construite</b><br>${why.map(esc).join("<br>")}</div>
+      <div class="nxe-sub">« 1RM » : la charge max estimée sur une répétition ; la 2e valeur est celle que je vise à la fin du contrat (${NOX.weeks} semaines). ↻ change un exercice ; tout reste modifiable ensuite dans Routine.</div>`; });
+}
 const noxKcalDef = () => ({deb:1000, mid:1500, pro:2000})[noxA.exp] || 1500;
 const NOX_STEPS = [
   {k:"intro", say:() => "Premier examen ! Détends-toi, ça ne pique pas. Enfin, <b>presque</b> pas. Quelques questions, et je te concocte un protocole sur mesure.", f:"grin",
@@ -2658,6 +2710,8 @@ const NOX_STEPS = [
      ${noxA.obj === "seche" && noxLoss() ? `<div><span>Poids visé</span><b>${fmtN(noxLoss().target, 1)} kg · ${fmtN(noxA.kcalW || noxKcalDef(), 0)} kcal/sem.</b></div>` : ""}
      ${noxMaxTodo().length ? `<div><span>Charges max</span><b>${esc(noxMaxTodo().map(([id, l]) => `${l} ${num(noxA["mx_" + id]) ? fmtN(num(noxA["mx_" + id]), 1) + " kg" : "≈ " + fmtN(noxMaxHyp(id), 1) + " kg (hypothèse)"}`).join(" · "))}</b></div>` : ""}</div>
      <button class="btn wide" data-nxe="fix" style="margin-top:10px">✏️ Corriger une réponse</button>`, ok:() => true, btn:"C'est ça, au protocole !"},
+  {k:"revue", say:() => { const i = (noxA.revDay || 0) + 1, n = noxA.n; return i === 1 ? `Avant de signer, revoyons ensemble <b>chaque séance</b>, jour par jour.` : i === n ? `Dernière séance. Ensuite, le contrat !` : `Séance ${i}. Toujours d'accord avec moi ?`; }, f:"smirk",
+   html:() => noxReviewHTML(), ok:() => true, btn:"Séance suivante ›"},
   {k:"proto", say:() => `Analyse terminée… Voici ton <b>protocole</b>, et notre <b>contrat</b> : tes objectifs pour les ${NOX.weeks} prochaines semaines. Tu signes ?`, f:"grin",
    html:() => { const g = {obj:noxA.obj, prec:noxA.prec}, tn = noxTplName(noxA.n, noxA.org);
      return `<div class="nxe-proto"><h3>Protocole n° ${((noxSt().proto || {}).k || 0) + 1} · ${NOX_OBJ[noxA.obj].l}</h3><div class="s">${NOX.weeks} semaines · ${noxA.n} séances · ${esc(tn)}</div>
@@ -2677,7 +2731,8 @@ function noxDraw(reactNow){
   const qs = NOX_STEPS.filter(x => x.q && !(x.skip && x.skip())), qi = qs.indexOf(s);
   el.querySelector(".nxe-prog small").textContent = qi >= 0 ? `Question ${qi + 1} sur ${qs.length}` : s.k === "intro" ? "Premier examen" : s.k === "recap" ? "Récapitulatif" : "Ton protocole";
   el.querySelector(".nxe-bar i").style.width = Math.round(100 * noxStep / (NOX_STEPS.length - 1)) + "%";
-  el.querySelector(".nxe-foot").innerHTML = `<button class="btn primary wide" data-nxe="next" ${s.ok() ? "" : "disabled"}>${s.btn || "Continuer"}</button>`;
+  const btn = s.k === "revue" && (noxA.revDay || 0) >= noxA.n - 1 ? "C'est validé, au contrat !" : s.btn || "Continuer";
+  el.querySelector(".nxe-foot").innerHTML = `<button class="btn primary wide" data-nxe="next" ${s.ok() ? "" : "disabled"}>${btn}</button>`;
   noxSignBind();
   el.querySelector(".nxe-back").style.visibility = noxStep > 0 ? "visible" : "hidden";
   const f = el.querySelector(".nxe-face"); f.className = "nxe-face " + (r && s.k === "obj" ? "grin" : s.f); f.classList.remove("hop"); void f.offsetWidth; f.classList.add("hop");
@@ -2698,7 +2753,9 @@ function noxMove(d){ let i = noxStep + d; while(i > 0 && i < NOX_STEPS.length - 
 function noxExamClick(e){
   const b = e.target.closest("button"); if(!b) return; const a = noxA;
   if(b.dataset.nxe === "close"){ noxExamClose(); return; }
-  if(b.dataset.nxe === "back"){ noxStep = noxMove(-1); noxDraw(false); return; }
+  if(b.dataset.nxe === "back"){ if(NOX_STEPS[noxStep].k === "revue" && (noxA.revDay || 0) > 0){ noxA.revDay--; noxDraw(false); return; }
+    noxStep = noxMove(-1); if(NOX_STEPS[noxStep].k === "revue") noxA.revDay = Math.max(0, noxA.n - 1); noxDraw(false); return; }
+  if(b.dataset.rvs){ const day = noxA.rev.days.find(x => x.dow === +b.dataset.rvd), sl = b.dataset.rvs; if(day){ day.off[sl] = (day.off[sl] || 0) + 1; } noxDraw(false); return; }
   if(b.dataset.nxe === "fix"){ noxStep = 1; noxDraw(false); return; }
   if(b.dataset.nxe === "unsign"){ noxA.sign = undefined; noxDraw(false); return; }
   // Contrat (21 nov. 2026) : sans signature, une note rouge sous le cadre de signature, et on y descend
@@ -2707,6 +2764,7 @@ function noxExamClick(e){
     if(n){ n.hidden = false; n.classList.remove("shake"); void n.offsetWidth; n.classList.add("shake"); }
     if(pad){ pad.classList.add("need"); pad.scrollIntoView({behavior:"smooth", block:"center"}); }
     return; }
+  if(b.dataset.nxe === "next" && NOX_STEPS[noxStep].k === "revue" && (noxA.revDay || 0) < noxA.n - 1){ noxA.revDay = (noxA.revDay || 0) + 1; noxDraw(false); document.querySelector(".nxe-body").scrollTop = 0; return; }
   if(b.dataset.nxe === "next"){ if(NOX_STEPS[noxStep].k === "proto"){ noxApply("accept"); return; } noxStep = noxMove(1); noxDraw(false); document.querySelector(".nxe-body").scrollTop = 0; return; }
   if(b.dataset.nxe === "edit"){ noxApply("edit"); return; }
   if(b.dataset.nxe === "keep"){ noxApply("keep"); return; }
@@ -2738,8 +2796,7 @@ function noxApply(mode){
   if(num(a.bw)) S.profile.bw = num(a.bw); if(num(a.height)) S.profile.height = Math.round(num(a.height));
   let msg = "Protocole lancé ! ENCORE UNE ! C'EST POUR LA SCIENCE !";
   if(mode !== "keep"){
-    const n = a.n, tpl = (TEMPLATES[n] || []).find(t => t.id === NOX_TPL[a.org][n]) || TEMPLATES[n][0];
-    planDraft = {n, tpl:tpl.id, days:noxPlaceDays(tpl.days, a.days, excl).map(([dow, ms]) => ({dow, muscles:ms, off:{}, min:NOX_DUR[a.dur] || 60})), novOff:0};
+    planDraft = a.rev && a.revKey === noxRevKey(a) ? JSON.parse(JSON.stringify(a.rev)) : noxDraftFrom(a);
     planSave(); if(mode !== "accept") msg = "Ajuste ton protocole ici : chaque changement est enregistré automatiquement.";
   } else { msg = "Soit ! Je garde ton programme, et j'observe. Fascinant quand même.";
     // Programme gardé : la réponse sur les supersets s'applique quand même (« non » retire tous ceux du programme)
@@ -5188,6 +5245,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-21", t:"📋 La revue du programme avec le professeur", x:"Avant de signer le contrat, le Pr Noxwell te présente chaque séance, jour par jour : comment il l'a construite, et pour chaque exercice ta performance actuelle (charge max estimée) et celle qu'il vise à la fin du contrat. Un exercice ne te plaît pas ? ↻ pour en changer avec lui. Le programme signé est celui que vous avez revu, et il reste modifiable dans Routine."},
   {d:"2026-11-21", t:"🩺 Un examen plus complet", x:"Le Pr Noxwell explique chacun de ses choix (« 💡 Pourquoi ? »). Il te demande si tu fais un autre sport ou un métier physique, et quels muscles laisser tranquilles certains jours : il en tient compte dans ta routine et dans la séance conseillée. Sans historique, il te demande ta charge max (ou part d'une hypothèse prudente) pour tes premières charges. Pour perdre du poids : ton poids visé, des paliers réalistes et un nombre de calories à brûler chaque semaine, inscrit au contrat."},
   {d:"2026-11-21", t:"🏊 Tes autres sports comptent", x:"Natation, foot, vélo, marche, tennis, escalade… : sur la page Séance, « Autre activité » enregistre la durée et/ou les km. Ton Gymon mange, grossit et grandit, tes muscles sollicités se reposent, sans mélanger ces activités à tes exercices de musculation. Et la page Séance met maintenant en tête la séance la plus adaptée à ta récupération ; « S'entraîner » sur la page Gymon la démarre directement."},
   {d:"2026-11-21", t:"🏃 Le cardio a sa propre référence", x:"Une séance de cardio se compare maintenant à tes séances de cardio habituelles, et une séance de muscu à tes séances de muscu : un bon footing remet ton Gymon à 100 % et le fait grandir, même s'il pèse moins de tonnes qu'une séance de fonte. Le cardio nourrit et fait grossir ton Gymon, mais ne change plus la taille de ses muscles."},
