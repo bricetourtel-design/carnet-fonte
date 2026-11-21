@@ -24,7 +24,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p0.waitForTimeout(1800);
   ok(await p0.$("#nox-layer") === null, "Gymon au stade 2 : Noxwell n'arrive pas");
   await p0.evaluate(() => { tab = "routine"; render(); });
-  ok(await p0.$(".nox-hero") === null && await p0.$(".tpls") === null, "avant son arrivée : pas de bloc Noxwell, pas d'« Organisation proposée » (choisie au bilan)");
+  ok(await p0.$(".nox-hero, .nox-lite") === null && await p0.$(".tpls") === null, "avant son arrivée : pas de bloc Noxwell, pas d'« Organisation proposée » (choisie au bilan)");
 
   // 2. Arrivée à une visite calme (stade 3), nouveau joueur
   await p0.evaluate(() => { const c = creatureState(); c.stage = 3; c.fidelity = 5; c.journal = []; saveLocal(); tab = "creature"; render(); });
@@ -43,11 +43,11 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
 
   // 3. La page Routine devient son labo, avec l'invitation à l'examen
   await p0.evaluate(() => { tab = "routine"; render(); });
-  ok(await p0.$(".nox-hero") !== null && await p0.$('.nox-hero [data-act="nox-exam"]') !== null, "Routine : bloc Noxwell avec « Passer l'examen »");
+  ok(await p0.$(".nox-hero") === null && await p0.$('.nox-lite [data-act="nox-exam"]') !== null, "Routine : version légère du labo, avec « Examen »");
   ok(await p0.$(".tpls") === null, "sans examen : pas d'« Organisation proposée » sur la page");
 
   // 4. Premier examen complet : prise de muscle, haut du corps, 4 séances, 45 min, avec matériel, deux fois par semaine
-  await p0.click('.nox-hero [data-act="nox-exam"]'); await p0.waitForTimeout(300);
+  await p0.click('.nox-lite [data-act="nox-exam"]'); await p0.waitForTimeout(300);
   ok(await p0.$("#nox-exam") !== null, "l'examen s'ouvre en plein écran");
   const next = async () => { await p0.click('[data-nxe="next"]'); await p0.waitForTimeout(120); };
   await next();
@@ -92,6 +92,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(vol.haut > vol.equi, "zone haut du corps (full body, 1 h 15) : plus de séries pour le haut qu'en équilibré", vol);
 
   // 6. Labo après l'examen : protocole, organisation dans le diagnostic, sources
+  const mini = await p0.evaluate(() => { const m = document.querySelector(".nox-lite"); return {mini:!!m && /Protocole n° 1/.test(m.textContent) && /Semaine 1\/6/.test(m.textContent) && /clauses/.test(m.textContent), proto:!!document.querySelector(".nox-proto"), h:m ? m.getBoundingClientRect().height : 0}; });
+  await p0.click(".nox-lite"); await p0.waitForTimeout(200);
+  ok(mini.mini && !mini.proto && mini.h < 90, "Routine : labo en version légère (protocole, semaine, clauses), ouvert en grand au toucher", mini);
   ok(await p0.$(".nox-proto") !== null && await p0.$(".tpls") === null, "Routine : bloc protocole, plus d'« Organisation proposée »");
   await p0.click('[data-act="nox-org"]'); await p0.waitForTimeout(200);
   await p0.click('[data-act="nox-org-set"][data-v="un"]'); await p0.waitForTimeout(200);
@@ -249,6 +252,8 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const rt = S.profile.routines.find(x => x.plan && x.dow === todayDow());
     startWorkout(rt.name, rt.items.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), rt.id);
     const a = A(); r.bar = !!document.getElementById("sess-bar"); r.dur0 = sessDur(a); r.n0 = a.exercises.length;
+    const t0 = document.getElementById("sess-end").textContent; a.exercises.forEach(x => x.sets.forEach(y => { if(!y.warm) y.done = true; })); sessTick();
+    r.endClock = /^fin prévue vers \d\d h \d\d$/.test(t0) && document.getElementById("sess-end").textContent !== t0; a.exercises.forEach(x => x.sets.forEach(y => y.done = false));
     a.exercises[0].sets.filter(x => !x.warm)[0].done = true; const first = a.exercises[0].exId;
     for(let k = 0; k < 3; k++) document.querySelector('[data-act="sess-dur"][data-d="10"]').click();
     r.dur1 = A().dur; r.n1 = A().exercises.length; const add = A().exercises.filter(x => x.nox).map(x => exById(x.exId));
@@ -257,7 +262,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     r.dur2 = A().dur; r.n2 = A().exercises.length; r.keep = A().exercises[0].exId === first; r.noNox = !A().exercises.some(x => x.nox);
     r.msg = (document.querySelector(".toast") || {}).textContent || "";
     S.profile.active = null; render(); return r; });
-  ok(dur.bar && dur.dur0 === 45 && dur.dur1 === 75 && dur.n1 > dur.n0 && dur.addOk && dur.dup && dur.dur2 === 15 && dur.n2 < dur.n0 && dur.keep && dur.noNox,
+  ok(dur.bar && dur.endClock && dur.dur0 === 45 && dur.dur1 === 75 && dur.n1 > dur.n0 && dur.addOk && dur.dup && dur.dur2 === 15 && dur.n2 < dur.n0 && dur.keep && dur.noNox,
     "séance : barre de durée, + ajoute un exercice du jour sans doublon, − retire d'abord ses ajouts, jamais un exercice commencé", dur);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);

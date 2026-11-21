@@ -846,6 +846,11 @@ body.nox-shake main{animation:nxshake .38s linear}
 .nxe-src{font-size:12px;color:var(--muted);margin-top:8px}
 .nxe-foot{padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 18px)}
 /* Bloc labo (page Routine) */
+.nox-lite{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;color:inherit;font:inherit;cursor:pointer;background:linear-gradient(160deg,rgba(34,211,238,.12),rgba(139,92,246,.14) 55%,var(--glass));border-color:rgba(34,211,238,.35)}
+.nm-ico{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;background:rgba(34,211,238,.16);font-size:18px}.nm-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.nm-t b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nm-t>span{font-size:12.5px;color:var(--muted)}.nm-bar{display:block;height:4px;border-radius:2px;background:rgba(127,127,127,.22);margin-top:4px;overflow:hidden}
+.nm-bar b{display:block;height:100%;background:#16c7d9}.nm-chev{font-size:22px;color:var(--muted)}.nox-lite .btn{flex:none}
+.nox-fold{position:absolute;top:8px;right:10px;z-index:2;background:rgba(0,0,0,.25);border:0;color:#fff;font-size:12px;padding:5px 10px;border-radius:999px}.nox-hero{position:relative}
 .nox-hero{display:flex;gap:10px;align-items:flex-end;padding:0;overflow:hidden;background:linear-gradient(160deg,rgba(34,211,238,.16),rgba(139,92,246,.2) 45%,var(--glass));border-color:rgba(34,211,238,.35)}
 .nox-pic{width:124px;flex-shrink:0;align-self:stretch;position:relative;min-height:160px}
 .nox-pic svg{position:absolute;left:-8px;bottom:-4px;width:142px;height:auto}
@@ -949,7 +954,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 e";
+const APP_VERSION = "2026-11-21 f";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2839,11 +2844,24 @@ function noxHeroLine(){
   if(pr && pr.week > NOX.weeks) return `Ton protocole a ${pr.week} semaines. Toujours au rendez-vous ? <b>Refais l'examen</b> si tes objectifs ont changé.`;
   return pr && pr.done ? `Semaine ${pr.week} du protocole. Le sujet évolue… J'observe. FASCINANT !` : `Protocole prêt ! La première séance dira tout. ENCORE UNE ! C'EST POUR LA SCIENCE !`;
 }
+/* Page Routine (21 nov. 2026) : le labo tient en une ligne (version légère) ; un toucher l'ouvre en grand, comme avant */
+let noxOpen = false;
+function noxMini(){
+  const ex = noxExam(), p = noxSt().proto, g = goal(), pr = noxProof();
+  if(!ex) return `<section class="card nox-lite"><span class="nm-ico">🧪</span><span class="nm-t"><b>Pr Noxwell</b><span>Le premier examen t'attend : un protocole sur mesure.</span></span>
+    <button class="btn primary sm" data-act="nox-exam">🩺 Examen</button></section>`;
+  const ctr = noxContract(), st = ctr && p ? noxContractState(ctr, p) : [], held = st.filter(x => x.ok).length, wk = pr ? Math.min(pr.week, NOX.weeks) : 1;
+  return `<button class="card nox-lite" data-act="nox-toggle" aria-expanded="false" aria-label="Ouvrir le labo du Pr Noxwell"><span class="nm-ico">🧪</span>
+      <span class="nm-t"><b>Protocole n° ${p ? p.k : 1}${g && NOX_OBJ[g.obj] ? " · " + esc(NOX_OBJ[g.obj].l) : ""}</b>
+        <span>Semaine ${wk}/${NOX.weeks}${st.length ? ` · 📜 ${held}/${st.length} clause${st.length > 1 ? "s" : ""}` : ""}${pr ? ` · ${pr.done} séance${pr.done > 1 ? "s" : ""}` : ""}</span>
+        <i class="nm-bar"><b style="width:${Math.round(wk / NOX.weeks * 100)}%"></b></i></span><span class="nm-chev" aria-hidden="true">›</span></button>${noxProposals()}`;
+}
 function noxBlock(){
   noxCycle(); noxContractAward();
+  if(!noxOpen) return noxMini();
   const ex = noxExam(), pr = noxProof(), p = noxSt().proto, g = goal();
   const plan = S.profile.plan, tn = plan ? ((TEMPLATES[(plan.days || []).length] || []).find(t => t.id === plan.tpl) || {}).name : "";
-  return `<section class="card nox-hero"><div class="nox-pic">${noxSVG(NOX_BUST)}</div>
+  return `<section class="card nox-hero"><button class="nox-fold" data-act="nox-toggle" aria-expanded="true" aria-label="Réduire le labo">▴ Réduire</button><div class="nox-pic">${noxSVG(NOX_BUST)}</div>
       <div class="nox-say"><span class="nox-chip">Pr Noxwell</span><div class="nox-hb">${noxHeroLine()}</div>
         ${ex ? `<button class="btn sm" data-act="nox-talk">💬 Parler à Noxwell</button>` : `<button class="btn primary sm" data-act="nox-exam">🩺 Passer l'examen</button>`}</div></section>
     ${noxProposals()}
@@ -4970,7 +4988,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
-  {d:"2026-11-21", t:"⏱ La durée de ta séance", x:"En haut de la séance en cours, une barre se remplit avec le temps écoulé, face à la durée prévue, avec un repère pour l'heure de fin estimée. Touche − ou + pour la raccourcir ou la rallonger de 10 minutes : le Pr Noxwell retire un exercice pas encore commencé, ou en ajoute un pour le muscle du jour le moins travaillé, en suivant ton programme (tes favoris d'abord)."},
+  {d:"2026-11-21", t:"⏱ La durée de ta séance", x:"En haut de la séance en cours, une barre se remplit avec le temps écoulé, face à la durée prévue, et l'heure réelle à laquelle elle se terminera (pratique pour reprendre le travail), recalculée à chaque série validée. Touche − ou + pour la raccourcir ou la rallonger de 10 minutes : le Pr Noxwell retire un exercice pas encore commencé, ou en ajoute un pour le muscle du jour le moins travaillé, en suivant ton programme (tes favoris d'abord)."},
   {d:"2026-11-21", t:"🐾 Le contrat signé à trois", x:"Le contrat du Pr Noxwell se signe maintenant pour de vrai : ta signature au doigt, celle du professeur et l'empreinte de ton Gymon. Il comprend la taille et la masse que ton Gymon atteindra si tu tiens tes séances, et une clause : ne jamais le laisser sous 50 % de satiété. Chaque clause tenue s'inscrit dans son carnet de santé ; contrat rempli, il brille d'étoiles pendant 2 jours."},
   {d:"2026-11-20", t:"📜 Le contrat d'expérience", x:"À la fin de l'examen, le Pr Noxwell te propose un contrat chiffré pour les 6 semaines du protocole : un nombre de séances, une charge à atteindre sur tes exercices clés, des records ou des minutes de cardio selon ton objectif. Calculé sur ton historique et ton expérience : exigeant mais atteignable. Tu suis chaque clause dans le labo, et le rapport dit lesquelles tu as tenues."},
   {d:"2026-11-20", t:"⭐ Tes favoris dans la routine", x:"La routine choisit d'abord tes exercices favoris (étoilés dans leur fiche, ou faits souvent), puis tes autres exercices habituels. Le reste ne change pas : un polyarticulaire en tête pour les gros muscles, et les exercices alternent d'une séance à l'autre."},
@@ -5495,6 +5513,8 @@ function sessExMin(ex, k, list){   // minutes restantes pour un exercice de la s
   const rest = S.profile.rest < 0 ? (REST_BY_RANGE[repRange(e)[0]] || 120) : (S.profile.rest || 90), chained = ex.ss && list[k + 1] && list[k + 1].ss === ex.ss;
   return (left * (40 + (chained ? 15 : rest)) + (ex.sets.some(x => x.done) ? 0 : 90)) / 60;
 }
+// Heure réelle de fin (pratique pour reprendre le travail) : maintenant + ce qu'il reste à faire, recalculée à chaque série validée
+const sessClock = (a, endMin) => new Date(a.start + endMin * 60000).toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"}).replace(":", " h ");
 const sessLeft = a => a.exercises.reduce((t, ex, k) => t + sessExMin(ex, k, a.exercises), 0);
 function sessPlanDay(a){ const r = a.routineId && S.profile.routines.find(x => x.id === a.routineId); return r && r.plan && S.profile.plan ? (S.profile.plan.days || []).find(d => d.dow === r.dow) : null; }
 function sessDur(a){
@@ -5506,7 +5526,7 @@ function sessBarHTML(){
   const a = S.profile.active; if(!a || !a.exercises.length) return "";
   const dur = sessDur(a), el = (Date.now() - a.start) / 60000, end = el + sessLeft(a), pct = Math.min(100, el / dur * 100);
   return `<section class="sess-bar${el > dur ? " over" : ""}" id="sess-bar"><div class="sess-top"><button class="sess-b" data-act="sess-dur" data-d="-${SESS.step}" aria-label="Raccourcir la séance de ${SESS.step} min">−</button>
-      <div class="sess-txt"><b id="sess-el">${fmtClock(Date.now() - a.start)}</b><span> / ${dur} min</span><small id="sess-end">fin prévue ≈ ${Math.round(end)} min</small></div>
+      <div class="sess-txt"><b id="sess-el">${fmtClock(Date.now() - a.start)}</b><span> / ${dur} min</span><small id="sess-end">fin prévue vers ${sessClock(a, end)}</small></div>
       <button class="sess-b" data-act="sess-dur" data-d="${SESS.step}" aria-label="Rallonger la séance de ${SESS.step} min">+</button></div>
     <div class="sess-track"><i id="sess-fill" style="width:${pct.toFixed(1)}%"></i><em style="left:${Math.min(100, end / dur * 100).toFixed(1)}%" id="sess-mark" title="Fin prévue"></em></div></section>`;
 }
@@ -5515,7 +5535,7 @@ function sessTick(){
   const dur = sessDur(a), el = (Date.now() - a.start) / 60000; f.style.width = Math.min(100, el / dur * 100).toFixed(1) + "%";
   const t = document.getElementById("sess-el"); if(t) t.textContent = fmtClock(Date.now() - a.start);
   const end = el + sessLeft(a), e2 = document.getElementById("sess-end"), m = document.getElementById("sess-mark");
-  if(e2) e2.textContent = `fin prévue ≈ ${Math.round(end)} min`; if(m) m.style.left = Math.min(100, end / dur * 100).toFixed(1) + "%";
+  if(e2) e2.textContent = `fin prévue vers ${sessClock(a, end)}`; if(m) m.style.left = Math.min(100, end / dur * 100).toFixed(1) + "%";
   document.getElementById("sess-bar").classList.toggle("over", el > dur);
 }
 // Un exercice de plus, dans la logique du programme : muscle du jour le moins servi (au poids du muscle), favoris et habitudes d'abord
@@ -5557,10 +5577,10 @@ function sessAdapt(a, dir){   // dir > 0 : rallonger (n'ajoute que), dir < 0 : r
 }
 function sessMsg(r, dur){
   const nm = e => e.name, sig = noxMet() ? "🧪 " : "⏱ ", ex = r.removed.filter(Boolean), sets = r.removed.length - ex.length;
-  if(r.added.length) return `${sig}${dur} min : j'ajoute ${r.added.map(e => `${nm(e)} (${primOf(e).toLowerCase()})`).join(", ")}. Fin prévue ≈ ${Math.round(r.end)} min.`;
-  if(r.removed.length) return `${sig}${dur} min : je retire ${[ex.length ? ex.map(nm).join(", ") : "", sets ? `${sets} série${sets > 1 ? "s" : ""}` : ""].filter(Boolean).join(" et ")}. Fin prévue ≈ ${Math.round(r.end)} min.`;
-  return r.end > dur + 4 ? `${sig}${dur} min : ton programme dépasse encore un peu (fin prévue ≈ ${Math.round(r.end)} min). Raccourcis si tu es pressé.`
-    : `${sig}${dur} min : ta séance tient déjà dedans (fin prévue ≈ ${Math.round(r.end)} min).`;
+  if(r.added.length) return `${sig}${dur} min : j'ajoute ${r.added.map(e => `${nm(e)} (${primOf(e).toLowerCase()})`).join(", ")}. Fin vers ${sessClock(A(), r.end)}.`;
+  if(r.removed.length) return `${sig}${dur} min : je retire ${[ex.length ? ex.map(nm).join(", ") : "", sets ? `${sets} série${sets > 1 ? "s" : ""}` : ""].filter(Boolean).join(" et ")}. Fin vers ${sessClock(A(), r.end)}.`;
+  return r.end > dur + 4 ? `${sig}${dur} min : ton programme dépasse encore un peu (fin vers ${sessClock(A(), r.end)}). Raccourcis si tu es pressé.`
+    : `${sig}${dur} min : ta séance tient déjà dedans (fin vers ${sessClock(A(), r.end)}).`;
 }
 function liveMeta(){
   const a = S.profile.active; if(!a) return "";
@@ -6276,6 +6296,7 @@ const ACT = {
     l[i].ss = L; l[i + 1].ss = L; touchProfile(); closeSheet(); render(); toast(`Superset ${L} : enchaîne les deux exercices, repos après le 2e`); },
   "ex-ss-off": b => { const l = A().exercises, L = l[+b.dataset.i].ss; l.forEach(x => { if(x.ss === L) delete x.ss; }); touchProfile(); closeSheet(); render(); toast("Superset délié"); },
   "ex-move": b => { const i = +b.dataset.i, d = +b.dataset.d, l = A().exercises; [l[i], l[i+d]] = [l[i+d], l[i]]; touchProfile(); closeSheet(); render(); },
+  "nox-toggle": () => { noxOpen = !noxOpen; render(); },
   "sess-dur": b => { const a = A(); if(!a) return; const d = Math.min(SESS.max, Math.max(SESS.min, sessDur(a) + +b.dataset.d)); if(d === a.dur){ toast(`Entre ${SESS.min} et ${SESS.max} min`); return; }
     a.dur = d; const r = sessAdapt(a, +b.dataset.d); if(r.added.length) critPlan(a); touchProfile(); render(); toast(sessMsg(r, d)); },
   "ex-remove": b => { A().exercises.splice(+b.dataset.i,1); touchProfile(); closeSheet(); render(); },
