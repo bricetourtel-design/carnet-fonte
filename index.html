@@ -964,7 +964,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 p";
+const APP_VERSION = "2026-11-22 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -5255,6 +5255,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-22", t:"💪 Une récupération plus juste", x:"La récupération de tes muscles dépend maintenant de l'effort réel : nombre de séries, ressenti, durée et intensité de tes activités. 20 minutes de marche ou une série facile ne « fatiguent » presque plus tes jambes, une vraie séance de jambes compte toujours 2 à 3 jours, et deux séances rapprochées s'additionnent. « Prêt dans … » indique quand le muscle sera à 90 %."},
   {d:"2026-11-21", t:"🧪 Le Pr Noxwell dès le premier jour", x:"Les nouveaux joueurs rencontrent le Pr Noxwell dès le premier lancement : avant la première séance, il fait passer l'examen et construit la routine. La page Routine reste vide tant que l'examen n'est pas passé ; ensuite, tout reste modifiable à la main."},
   {d:"2026-11-21", t:"📋 La revue du programme avec le professeur", x:"Avant de signer le contrat, le Pr Noxwell te présente chaque séance, jour par jour : comment il l'a construite, et pour chaque exercice ta performance actuelle (charge max estimée) et celle qu'il vise à la fin du contrat. Un exercice ne te plaît pas ? ↻ pour en changer avec lui. Le programme signé est celui que vous avez revu, et il reste modifiable dans Routine."},
   {d:"2026-11-21", t:"🩺 Un examen plus complet", x:"Le Pr Noxwell explique chacun de ses choix (« 💡 Pourquoi ? »). Il te demande si tu fais un autre sport ou un métier physique, et quels muscles laisser tranquilles certains jours : il en tient compte dans ta routine et dans la séance conseillée. Sans historique, il te demande ta charge max (ou part d'une hypothèse prudente) pour tes premières charges. Pour perdre du poids : ton poids visé, des paliers réalistes et un nombre de calories à brûler chaque semaine, inscrit au contrat."},
@@ -5580,7 +5581,7 @@ function render(){
   tickClock(); wakeLock();
 }
 
-/* Récupération estimée par muscle : temps de base (30–66 h) modulé par le nombre de séries,
+/* Récupération estimée par muscle : temps de base (30–66 h) modulé par la fatigue de la séance (voir v2 plus bas),
    le ressenti et le travail indirect au prorata (ex. triceps à 50 % dans le développé couché).
    Une catégorie (« Jambes ») = son muscle principal le moins récupéré, hors muscles surtout travaillés en indirect. */
 const REC_BASE = {"Quadriceps":66, "Ischios":66, "Fessiers":60, "Mollets":40, "Adducteurs":50, "Grand dorsal":56, "Haut du dos":50, "Lombaires":66,
@@ -5590,22 +5591,36 @@ function recovery(m, now){
   if(l && l.length > 1) return l.filter(x => !MINOR.has(x)).map(x => recoveryFine(x, now)).reduce((a, b) => b.pct < a.pct ? b : a);
   return recoveryFine(m, now);
 }
-function recoveryFine(m, now){
-  now = now || Date.now();
-  let pct = 1, readyIn = 0, last = 0;
+/* Récupération v2 (22 nov. 2026, audit 3, décision du propriétaire) : chaque séance fatigue un muscle selon son effort,
+   au lieu de le remettre à 0 % dès une demi-série. Fatigue = séries × part du muscle × effort (ressenti) ; activités et cardio en séance
+   selon la durée et l'intensité. Profondeur = fatigue ÷ fatigue pleine (8 séries dures pour un gros muscle, 6 pour un petit) :
+   le muscle tombe à 100 % − profondeur, puis remonte en base × (0,5 + 0,5 × profondeur) × effort heures. Les séances rapprochées s'additionnent. */
+const REC_FULL = {"Quadriceps":8, "Ischios":8, "Fessiers":8, "Grand dorsal":8, "Haut du dos":8, "Pectoraux":8};
+const REC_EFF = [1, 0.75, 0.9, 1, 1.15, 1.3];   // ressenti : —, trop facile, facile, idéal, dur, trop dur
+const CARDIO_SPORT = {"footing":"course", "course":"course", "corde-sauter":"course", "velo":"velo", "velo-appart":"velo", "velo-allonge":"velo", "velo-air":"velo",
+  "marche":"marche", "marche-tapis":"marche", "escaliers":"rando", "rameur":"aviron", "ski-erg":"aviron", "elliptique":"rando"};
+function recLoads(m, now){
+  const out = [];
   S.workouts.forEach(w => {
     const end = w.end || w.start; if(now - end > 7*86400000 || end > now) return;
-    let load = 0, hard = 1;
-    w.exercises.forEach(ex => { const e = exById(ex.exId), n = workSets(ex).length; if(!n) return;
-      const f = ex.feel>=5 ? 1.15 : ex.feel===4 ? 1.08 : ex.feel && ex.feel<=2 ? 0.9 : 1;
-      const p = workPct(e, m); if(!p) return; load += n * p; if(p >= .5) hard = Math.max(hard, f); });
-    if(w.act && SPORTS[w.act.k]) load += (SPORTS[w.act.k].mus[m] || 0) * w.act.min / 60;   // activité hors muscu : séries équivalentes par heure
-    if(load < 0.5) return;
-    const need = Math.min(84, (REC_BASE[m] || 50) * Math.min(1.2, 0.6 + load/14) * hard);   // heures, 84 h max
-    const h = (now - end)/3600000;
-    pct = Math.min(pct, h/need); readyIn = Math.max(readyIn, need - h); last = Math.max(last, end);
+    let F = 0, eff = 1;
+    w.exercises.forEach(ex => { const e = exById(ex.exId); if(!e) return; const f = REC_EFF[ex.feel || 0] || 1;
+      if(isCardio(e)){ const sp = SPORTS[CARDIO_SPORT[e.id] || "course"], min = cardioMin(ex); if(sp && min) F += (sp.mus[m] || 0) * min / 60 * f; return; }   // cardio en séance : selon les minutes
+      const n = workSets(ex).length, p = workPct(e, m); if(!n || !p) return; F += n * p * f; if(p >= .5) eff = Math.max(eff, f); });
+    if(w.act && SPORTS[w.act.k]){ const A = SPORTS[w.act.k]; F += (A.mus[m] || 0) * w.act.min / 60 * (actMet(w.act) / A.met); }   // activité : durée × intensité
+    if(F < 0.25) return;
+    const d = Math.min(1, F / (REC_FULL[m] || 6)), need = Math.min(84, (REC_BASE[m] || 50) * (0.5 + 0.5 * d) * eff);
+    out.push({end, d, need});
   });
-  return {pct:Math.max(0, Math.min(1, pct)), readyIn:Math.max(0, readyIn), last};
+  return out;
+}
+const recResidual = (L, t) => L.reduce((r, x) => r + x.d * Math.max(0, 1 - (t - x.end) / 3600000 / x.need), 0);
+function recoveryFine(m, now){
+  now = now || Date.now();
+  const L = recLoads(m, now), res = Math.min(1, recResidual(L, now)), last = L.reduce((t, x) => Math.max(t, x.end), 0);
+  let readyIn = 0;   // heures avant de repasser à 90 % (« Récupéré »)
+  if(res > 0.1) for(let h = 1; h <= 168; h++){ if(recResidual(L, now + h * 3600000) <= 0.1){ readyIn = h; break; } readyIn = h; }
+  return {pct:Math.max(0, 1 - res), readyIn, last};
 }
 function recState(r){ return r.pct>=0.9 ? {k:"ok", label:"Récupéré"} : r.pct>=0.5 ? {k:"mid", label:"En récupération"} : {k:"low", label:"Fatigué"}; }
 const fmtHours = h => h < 1 ? "moins d'1 h" : h < 36 ? `${Math.round(h)} h` : `${Math.round(h/24)} j`;

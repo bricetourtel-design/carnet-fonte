@@ -116,6 +116,20 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const rest2 = await p.evaluate(() => !!restState);
   ok(!rest1 && rest2, "superset : pas de repos après le 1er exercice, repos après le 2e", {rest1, rest2});
 
+  // Récupération v2 (audit 3) : la fatigue suit l'effort ; une marche ou une série facile ne « fatiguent » presque plus, les séances s'additionnent
+  const rec = await p.evaluate(() => { const H = 36e5, n = Date.now(), W = S.workouts, bw = S.profile.bw, act = S.profile.active; S.profile.bw = 80; S.profile.active = null;
+    const set = (w, r, k) => Array.from({length:k}, () => ({w:String(w), r:String(r), done:true}));
+    const at = (l, h) => { S.workouts = l.map((w, i) => ({id:"rc" + i, name:"x", start:n - ((w.ago || 0) + 1) * H, end:n - (w.ago || 0) * H, prs:[], ...w})); return recovery("Jambes", n + h * H); };
+    const legs = [{exercises:[{exId:"squat", feel:4, sets:set(100, 8, 4)}, {exId:"presse", feel:4, sets:set(150, 10, 3)}, {exId:"leg-ext", feel:4, sets:set(50, 12, 3)}]}];
+    const r = {walk:Math.round(at([{act:{k:"marche", min:20}, exercises:[]}], 1).pct * 100), one:Math.round(at([{exercises:[{exId:"leg-ext", feel:2, sets:set(30, 12, 1)}]}], 1).pct * 100),
+      legs1:Math.round(at(legs, 1).pct * 100), legs48:Math.round(at(legs, 48).pct * 100), ready:at(legs, 1).readyIn,
+      sq1:Math.round(at([{exercises:[{exId:"squat", feel:4, sets:set(100, 8, 4)}]}], 1).pct * 100),
+      sq2:Math.round(at([{exercises:[{exId:"squat", feel:4, sets:set(100, 8, 4)}], ago:24}, {exercises:[{exId:"squat", feel:4, sets:set(100, 8, 4)}]}], 1).pct * 100),
+      bike:Math.round(at([{exercises:[{exId:"velo", feel:3, sets:[{w:"", r:"60", done:true}]}]}], 1).pct * 100)};
+    S.workouts = W; S.profile.bw = bw; S.profile.active = act; return r; });
+  ok(rec.walk >= 90 && rec.one >= 85 && rec.legs1 <= 5 && rec.legs48 > 50 && rec.legs48 < 80 && rec.ready > 48 && rec.ready < 72 && rec.sq2 < rec.sq1 && rec.bike < 80,
+    "récupération : marche et série facile presque sans fatigue, vraie séance de jambes ≈ 3 jours, séances qui s'additionnent, cardio en séance selon la durée", rec);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de progression passent");
