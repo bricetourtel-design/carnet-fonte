@@ -69,6 +69,13 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(/Prendre du muscle/.test(recap) && /4 séances/.test(recap), "récapitulatif de ce qu'il a compris", recap.slice(0, 160));
   await next();
   ok(/Priorité au haut du corps/.test(await p0.$eval(".nxe-body", e => e.textContent)), "protocole : leviers annoncés selon l'objectif");
+  // Contrat signé à trois : bouton bloqué tant que le joueur n'a pas signé au doigt ; empreinte du Gymon et clauses du Gymon
+  const pre = await p0.evaluate(() => ({dis:document.querySelector('[data-nxe="next"]').disabled, paw:!!document.querySelector(".nox-paw svg"), nox:/Pr Noxwell/.test(document.querySelector(".nox-sigs").textContent),
+    gym:/satiété/.test(document.querySelector(".nox-ctr").textContent) && /cm/.test(document.querySelector(".nox-ctr").textContent)}));
+  const cv = await p0.$(".nox-pad canvas"); await cv.scrollIntoViewIfNeeded(); const bb = await cv.boundingBox();
+  await p0.mouse.move(bb.x + 20, bb.y + 40); await p0.mouse.down(); for(let i = 1; i <= 12; i++) await p0.mouse.move(bb.x + 20 + i * 15, bb.y + 40 + (i % 2 ? -15 : 15)); await p0.mouse.up();
+  const signed = await p0.evaluate(() => ({dis:document.querySelector('[data-nxe="next"]').disabled, sign:noxA.sign}));
+  ok(pre.dis && pre.paw && pre.nox && pre.gym && !signed.dis && /^M\d+ \d+( L\d+ \d+)+$/.test(signed.sign), "contrat : signature au doigt obligatoire, empreinte du Gymon, clauses taille/masse et satiété", {pre, signed});
   await next(); await p0.waitForTimeout(300);
   const after = await p0.evaluate(() => ({goal:S.profile.goal, ex:S.profile.nox.exam, tpl:S.profile.plan && S.profile.plan.tpl, n:(S.profile.plan || {days:[]}).days.length, min:(S.profile.plan || {days:[{}]}).days[0].min,
     bw:S.profile.bw, h:S.profile.height, routines:S.profile.routines.filter(r => r.plan).length, tab}));
@@ -210,8 +217,30 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts = saved;
     return {reg:deb[0].want, of:deb[0].of, base:lift.base, debW:lift.want, proW:pro.find(i => i.k === "lift").want, recD:deb.find(i => i.k === "rec").want, recP:pro.find(i => i.k === "rec").want,
       sec:sec.map(i => i.k), endu:endu.map(i => i.k), liftOk:st.find(i => i.k === "lift").ok, regOk:st[0].ok, html:/Contrat d'expérience/.test(html) && /✅/.test(html)}; });
-  ok(ctr.reg === 19 && ctr.of === 24 && ctr.base > 0 && ctr.debW > ctr.proW && ctr.proW > ctr.base && ctr.recD > ctr.recP && ctr.sec.join() === "reg,cardio,keep" && ctr.endu.join() === "reg,cardio,long" && ctr.liftOk && !ctr.regOk && ctr.html,
+  ok(ctr.reg === 19 && ctr.of === 24 && ctr.base > 0 && ctr.debW > ctr.proW && ctr.proW > ctr.base && ctr.recD > ctr.recP && ctr.sec.join() === "reg,cardio,keep,gym,sat" && ctr.endu.join() === "reg,cardio,long,gym,sat" && ctr.liftOk && !ctr.regOk && ctr.html,
     "contrat : séances, charge visée selon l'expérience, records ou cardio selon l'objectif, clauses suivies", ctr);
+
+  // 14. Clause tenue → fiole de sérum au frigo ; bue : +5 % de masse et de taille pendant 48 h, étoiles autour du Gymon ; clause satiété
+  const fio = await p1.evaluate(() => { const now = Date.now(), st = noxSt(), c = creatureState(), r = {};
+    c.dead = null; c.stage = Math.max(c.stage, 3); c.fridge = []; c.journal = [];
+    st.proto = {k:9, start:now - 60000, obj:"muscle", prec:[], contract:{v:2, weeks:6, items:[{k:"reg", want:1, of:1}, {k:"sat", want:50}]}};
+    const w = {id:"fio-w", name:"S", start:now - 30000, end:now - 20000, prs:[], exercises:[{exId:"dc-barre", feel:3, sets:[{w:"60", r:"8", done:true}]}]}; S.workouts.push(w);
+    r.n = noxContractAward(); r.again = noxContractAward(); const f = c.fridge.find(x => x.k === "fiole"); r.fiole = !!f;
+    r.mem = c.journal.some(j => /Clause tenue/.test(j.t)); r.won = st.proto.won.join();
+    // gain de masse : avec et sans sérum
+    c.weight = Math.max(c.weight, CREATURE_CFG.minWeight[c.stage] * 3); const save = {w:c.weight, sat:c.sat, satT:c.satT, full:c.full}, gain = () => { c.weight = save.w; c.sat = 10; c.satT = now; c.full = 0; satEat(c, 2000, now); return c.weight - save.w; };
+    const g0 = gain(); const d = fridgeEat(c, f.id); r.drink = !!(d && d.fiole) && c.boost.until > now + 47 * 3600000 && !c.fridge.some(x => x.k === "fiole");
+    const g1 = gain(); r.ratio = Math.round(g1 / g0 * 1000) / 1000; Object.assign(c, {weight:save.w, sat:save.sat, satT:save.satT, full:save.full});
+    // taille : une séance pendant le sérum
+    const hx0 = c.hx || 0, w2 = {id:"fio-w2", name:"S", start:now - 10000, end:now - 5000, prs:[], exercises:[{exId:"dc-barre", feel:3, sets:[{w:"60", r:"8", done:true}]}]}; S.workouts.push(w2); creatureFeed(w2);
+    r.hx = (c.hx || 0) > hx0;
+    tab = "creature"; render(); r.stars = document.querySelectorAll(".gy-stars i").length;
+    // satiété : suivie après le premier repas, ratée sous 50 %
+    st.proto.satOn = 1; st.proto.satMin = 40; r.sat = noxContractState(st.proto.contract, st.proto)[1].note;
+    st.proto.satMin = 80; r.sat2 = noxContractState(st.proto.contract, st.proto)[1].note;
+    S.workouts = S.workouts.filter(x => !/^fio-/.test(x.id)); delete c.boost; return r; });
+  ok(fio.n === 1 && fio.again === 0 && fio.fiole && fio.mem && fio.won === "0" && fio.drink && fio.ratio === 1.05 && fio.hx && fio.stars === 6 && fio.sat === "ratée" && fio.sat2 === "tenue jusqu'ici",
+    "fiole : gagnée une fois par clause, bue = +5 % de masse et de taille pendant 48 h, étoiles ; clause satiété suivie", fio);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
