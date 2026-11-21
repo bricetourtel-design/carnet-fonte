@@ -118,7 +118,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const c2 = {...c, satT:n, full:n}; return {r, left:creatureDaysLeft(c2), leftPeas:creatureDaysLeft({...c2, peas:{t:n}})}; });
   ok(rule.r.join() === "100,100,90,50,30,10,5,0", "satiété : 100 % pendant 6 h, puis 90 (16 h), 50 (56 h), 30, 10 (136 h), 5, 0 = mort au bout de 15,7 jours", rule.r);
   ok(rule.left === 16 && rule.leftPeas === 24, "jours avant la mort : 16 sans boîte, 24 avec une boîte de pois chiches", rule);
-  // Repas de fin de séance : jusqu'à 100 %, 1 ration = +20 %, le reste au frigo ; steak (record), omelette (3e séance de la semaine)
+  // Repas de fin de séance (21 nov. 2026) : une séance habituelle remet à 100 %, au prorata des kg, le reste au frigo ; steak (record), omelette (3e séance de la semaine)
   const meal = await p.evaluate(() => { const c = creatureState(), n = Date.now(), H = 3600e3, saved = JSON.stringify(c), W = S.workouts;
     const mk = (id, kg, prs) => ({id, name:"x", start:n, end:n, prs:prs || [], exercises:[{exId:"squat", sets:[{w:String(kg/10), r:"10", done:true}]}]});
     S.workouts = []; c.dead = null; c.sat = 40; c.satT = n; c.full = 0; c.fridge = []; c.born = n - 2*86400000;
@@ -129,8 +129,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const w1 = c.weight, d = mk("fd3", 800); S.workouts.push(d); const f3 = creatureFeed(d); const ome = c.fridge.some(x => x.k === "omelette"), still = c.weight === w1;
     const res = {r1, s1, grew, s2, fr:poulet && poulet.kg, eaten2:Math.round(f2.eaten), steak, ome, still, full:f3.satAfter, plateau:c.full - n};
     S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return res; });
-  ok(meal.r1 === 1000 && meal.s1 === 60 && meal.grew, "nouveau joueur : ration 1 000 kg ; 1 000 kg mangés = +20 % (40 → 60 %), et il grossit", meal);
+  ok(meal.r1 === 1000 && meal.s1 === 66 && meal.grew, "nouveau joueur : séance habituelle ≈ 2 333 kg ; 1 000 kg comblent 3/7 du creux (40 → 66 %), et il grossit", meal);
   ok(meal.s2 === 100 && meal.fr + meal.eaten2 === 5000 && meal.fr > 0, "il mange jusqu'à 100 %, le reste part au frigo", meal);
+  // Séance habituelle → 100 % sans stock ; plus que d'habitude → surplus au frigo ; moins → pas 100 %
+  const usual = await p.evaluate(() => { const n = Date.now(), D = 864e5, H = 3600e3, W = S.workouts, saved = JSON.stringify(S.profile.creature);
+    const mk = (id, t, kg) => ({id, name:"x", start:t - H, end:t, prs:[], exercises:[{exId:"squat", sets:[{w:String(kg/10), r:"10", done:true}]}]});
+    S.workouts = Array.from({length:13}, (_, k) => mk("u" + k, n - (30 - k * 7/3) * D, 6000));
+    const t = (gapH, kg) => { const c = {sat:100, satT:n - gapH * H, full:0, stage:5, weight:5, fridge:[], fed:[], born:n - 60 * D}, f = gymFood(mk("t", n, kg)), e = satEat(c, f, n); return [Math.round(c.sat), Math.round(f - e)]; };
+    const r = {u:Math.round(satUsual(n).U), usual:t(56, 6000), more:t(56, 7800), less:t(56, 4200), long:t(100, 6000)};
+    S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return r; });
+  ok(usual.u === 6000 && usual.usual.join() === "100,0" && usual.long.join() === "100,0" && usual.more[0] === 100 && usual.more[1] === 1800 && usual.less[0] < 90 && usual.less[1] === 0,
+    "séance habituelle : 100 % sans stock (même après 4 jours) ; +30 % : surplus au frigo ; −30 % : pas 100 %", usual);
   ok(meal.steak && meal.ome, "un record rapporte un steak, la 3e séance de la semaine une omelette (rangés au frigo)", meal);
   ok(meal.still && meal.full === 100 && meal.plateau === 6*3600e3, "déjà rassasié : tout va au frigo et il ne grossit pas ; 6 h à 100 % après le repas", meal);
   // Frigo : manger depuis le frigo, steak (12 h à 100 %), le plus ancien d'abord, péremption en 5 jours
