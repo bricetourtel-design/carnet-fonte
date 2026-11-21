@@ -856,6 +856,22 @@ body.nox-shake main{animation:nxshake .38s linear}
 .nox-cl small{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}.nox-cl.ok small{color:var(--ok)}
 .nox-cl em{display:block;height:4px;border-radius:2px;background:var(--line,rgba(127,127,127,.25));margin-top:5px;overflow:hidden}.nox-cl em b{display:block;height:100%;background:var(--ok)}
 .nox-promise{font-size:13px;color:var(--muted);margin:6px 0 0;line-height:1.35}
+.gy-stars{position:absolute;left:50%;top:52%;width:0;height:0;z-index:3;pointer-events:none;animation:gyOrbit 3.2s linear infinite}
+.gy-stars i{position:absolute;font-style:normal;font-size:22px;line-height:1;margin:-11px 0 0 -11px;filter:drop-shadow(0 0 6px rgba(255,214,0,.9));animation:gyTwinkle .5s ease-in-out infinite alternate}
+.gy-stars i:nth-child(1){transform:rotate(0deg) translateX(var(--r,120px))}.gy-stars i:nth-child(2){transform:rotate(60deg) translateX(var(--r,120px));color:#ff5a5f}
+.gy-stars i:nth-child(3){transform:rotate(120deg) translateX(var(--r,120px));color:#3bd16f}.gy-stars i:nth-child(4){transform:rotate(180deg) translateX(var(--r,120px));color:#4a9de0}
+.gy-stars i:nth-child(5){transform:rotate(240deg) translateX(var(--r,120px));color:#c86bff}.gy-stars i:nth-child(6){transform:rotate(300deg) translateX(var(--r,120px));color:#ffd23f}
+.gy-stars i:nth-child(1){color:#ffd23f}
+@keyframes gyOrbit{to{transform:rotate(360deg)}}@keyframes gyTwinkle{to{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.gy-stars,.gy-stars i{animation:none}}
+.nox-sigs{display:grid;grid-template-columns:1.4fr 1fr .8fr;gap:8px;align-items:end;margin:12px 0 4px}
+.nox-sigs.pad{grid-template-columns:1fr 1fr}.nox-sigs.pad>div:first-child{grid-column:1/-1}
+.nox-sigs>div{display:flex;flex-direction:column;gap:3px;min-width:0}.nox-sigs .sig-l{font-size:11px;color:var(--muted);border-top:1px solid currentColor;padding-top:3px;order:2}
+.nox-sigs svg.sig{width:100%;height:46px;color:var(--text)}.nox-sig-nox{font-family:"Snell Roundhand","Segoe Script","Brush Script MT",cursive;font-style:italic;font-size:22px;line-height:46px;height:46px;color:#16c7d9;white-space:nowrap}
+.nox-paw{height:46px;display:flex;align-items:center;justify-content:center}.nox-paw svg{width:38px;height:42px;color:var(--accent,#8b5cf6);transform:rotate(-14deg);opacity:.9}
+.nox-pad{position:relative}.nox-pad canvas{width:100%;height:70px;display:block;background:var(--fill);border-radius:10px;touch-action:none;cursor:crosshair}
+.nox-pad small{position:absolute;left:8px;top:6px;font-size:11px;color:var(--muted);pointer-events:none}.nox-pad button{position:absolute;right:4px;top:2px;font-size:11px;background:none;border:0;color:var(--muted);padding:4px}
+.nox-cl .fx{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .nox-barl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin:6px 0 10px}
 .nox-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
 .nox-tiles div{background:var(--fill);border-radius:14px;padding:9px 6px;text-align:center}
@@ -926,7 +942,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-20 i";
+const APP_VERSION = "2026-11-21 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2530,11 +2546,12 @@ const NOX_STEPS = [
    html:() => { const g = {obj:noxA.obj, prec:noxA.prec}, tn = noxTplName(noxA.n, noxA.org);
      return `<div class="nxe-proto"><h3>Protocole n° ${((noxSt().proto || {}).k || 0) + 1} · ${NOX_OBJ[noxA.obj].l}</h3><div class="s">${NOX.weeks} semaines · ${noxA.n} séances · ${esc(tn)}</div>
        ${noxLevers(g).map(([i, t]) => `<div class="nxe-lev"><i>${i}</i><span>${esc(t)}</span></div>`).join("")}
-       ${noxContractHTML(noxContractBuild({obj:noxA.obj, prec:noxA.prec, exp:noxA.exp, n:noxA.n, start:Date.now()}))}
-       <p class="nox-promise">Exigeant mais atteignable : calculé sur ton historique et ton expérience. ${NOX_PROMISE}</p>
+       ${noxContractHTML(noxContractBuild({obj:noxA.obj, prec:noxA.prec, exp:noxA.exp, n:noxA.n, start:Date.now()}), null, false)}
+       <p class="nox-promise">Exigeant mais atteignable : calculé sur ton historique, ton expérience et ton Gymon. ${NOX_PROMISE}</p>
+       ${noxSigsHTML(noxA.sign, true)}
        <div class="nxe-src">📚 Construit d'après la recherche en musculation : fourchettes de reps (Schoenfeld 2017, 2021), reps en réserve (Helms 2016, Robinson 2024), volume par muscle (Pelland 2025).</div></div>
-       <button class="btn wide" data-nxe="edit" style="margin-top:10px">✏️ Accepter et ajuster dans Routine</button><button class="btn wide ghost" data-nxe="keep" style="margin-top:8px">Garder mon programme actuel</button>`; },
-   ok:() => true, btn:"✍️ Je signe le contrat"}
+       <button class="btn wide" data-nxe="edit" style="margin-top:10px" ${noxA.sign ? "" : "disabled"}>✏️ Signer, puis ajuster dans Routine</button><button class="btn wide ghost" data-nxe="keep" style="margin-top:8px" ${noxA.sign ? "" : "disabled"}>Signer et garder mon programme actuel</button>`; },
+   ok:() => !!noxA.sign, btn:"✍️ Je signe le contrat"}
 ];
 function noxDraw(reactNow){
   const el = document.getElementById("nox-exam"); if(!el) return;
@@ -2545,6 +2562,7 @@ function noxDraw(reactNow){
   el.querySelector(".nxe-prog small").textContent = qi >= 0 ? `Question ${qi + 1} sur ${qs.length}` : s.k === "intro" ? "Premier examen" : s.k === "recap" ? "Récapitulatif" : "Ton protocole";
   el.querySelector(".nxe-bar i").style.width = Math.round(100 * noxStep / (NOX_STEPS.length - 1)) + "%";
   el.querySelector(".nxe-foot").innerHTML = `<button class="btn primary wide" data-nxe="next" ${s.ok() ? "" : "disabled"}>${s.btn || "Continuer"}</button>`;
+  noxSignBind();
   el.querySelector(".nxe-back").style.visibility = noxStep > 0 ? "visible" : "hidden";
   const f = el.querySelector(".nxe-face"); f.className = "nxe-face " + (r && s.k === "obj" ? "grin" : s.f); f.classList.remove("hop"); void f.offsetWidth; f.classList.add("hop");
 }
@@ -2553,6 +2571,7 @@ function noxExamClick(e){
   if(b.dataset.nxe === "close"){ noxExamClose(); return; }
   if(b.dataset.nxe === "back"){ noxStep = Math.max(0, noxStep - 1); noxDraw(false); return; }
   if(b.dataset.nxe === "fix"){ noxStep = 1; noxDraw(false); return; }
+  if(b.dataset.nxe === "unsign"){ noxA.sign = undefined; noxDraw(false); return; }
   if(b.dataset.nxe === "next"){ if(NOX_STEPS[noxStep].k === "proto"){ noxApply("accept"); return; } noxStep = Math.min(NOX_STEPS.length - 1, noxStep + 1); noxDraw(false); document.querySelector(".nxe-body").scrollTop = 0; return; }
   if(b.dataset.nxe === "edit"){ noxApply("edit"); return; }
   if(b.dataset.nxe === "keep"){ noxApply("keep"); return; }
@@ -2570,7 +2589,7 @@ function noxApply(mode){
   st.exam = {v:1, done:Date.now(), obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, days:a.days.slice(), dur:a.dur, lieu:a.lieu, banc:a.banc, org:a.org, ss:a.ss};
   S.profile.ssPref = a.ss === "oui" ? "oui" : "non";
   S.profile.goal = {obj:a.obj, prec:a.prec};
-  const t0 = Date.now(); st.proto = {k:((st.proto || {}).k || 0) + 1, start:t0, obj:a.obj, prec:a.prec, contract:noxContractBuild({obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, start:t0})};
+  const t0 = Date.now(); st.proto = {k:((st.proto || {}).k || 0) + 1, start:t0, obj:a.obj, prec:a.prec, contract:noxContractBuild({obj:a.obj, prec:a.prec, exp:a.exp, n:a.n, start:t0}), ...(signOk(a.sign) ? {sign:a.sign} : {})};
   S.profile.equip = LIEU_EQ[a.lieu] || "salle"; if(a.lieu === "halt") S.profile.bench = a.banc !== "non"; else delete S.profile.bench; S.profile.sex = a.sexe;
   if(num(a.bw)) S.profile.bw = num(a.bw); if(num(a.height)) S.profile.height = Math.round(num(a.height));
   let msg = "Protocole lancé ! ENCORE UNE ! C'EST POUR LA SCIENCE !";
@@ -2606,7 +2625,7 @@ function tiredCount(){
 function noxCycle(){
   const st = noxSt(), l = S.profile.lightWeek;
   if(l && Date.now() >= l.until && st.proto && l.proto === st.proto.k){   // fin de la semaine légère : nouveau cycle
-    st.proto = {...st.proto, k:st.proto.k + 1, start:l.until}; delete st.proto.contract; delete S.profile.lightWeek; touchProfile(); }   // nouveau cycle : nouveau contrat, recalculé sur les progrès
+    st.proto = {...st.proto, k:st.proto.k + 1, start:l.until}; ["contract", "won", "full", "satMin", "satOn"].forEach(k => delete st.proto[k]); delete S.profile.lightWeek; touchProfile(); }   // nouveau cycle : nouveau contrat, recalculé sur les progrès
 }
 function noxProposals(){
   const ex = noxExam(), st = noxSt(), pr = noxProof(), out = [];
@@ -2636,11 +2655,12 @@ function noxTopEx(t0){   // exercices avec charge les plus pratiqués dans les 1
 }
 function noxContractBuild(o){
   const W = NOX.weeks, t0 = o.start || Date.now(), exp = NOX_RECS[o.exp] ? o.exp : "mid", n = Math.max(1, o.n || 3), items = [];
-  items.push({k:"reg", want:Math.max(1, Math.round(n * W * 0.8)), of:n * W});
+  const reg = Math.max(1, Math.round(n * W * 0.8));
+  items.push({k:"reg", want:reg, of:n * W});
   if(o.obj === "force" || o.obj === "muscle"){
     let ids = o.obj === "force" ? (Array.isArray(o.prec) ? o.prec : []).map(k => (NOX_LIFTS[k] || [])[0]).filter(id => id && noxBase(id, t0) > 0) : [];
     if(!ids.length) ids = noxTopEx(t0);
-    ids.slice(0, 2).forEach(id => { const base = noxBase(id, t0), r = NOX_RATE[o.obj][exp] / 100 * W;
+    ids.slice(0, o.obj === "force" ? 2 : 1).forEach(id => { const base = noxBase(id, t0), r = NOX_RATE[o.obj][exp] / 100 * W;
       items.push({k:"lift", id, base:Math.round(base * 2) / 2, want:Math.max(Math.round(base * 2) / 2 + 1, Math.ceil(base * (1 + r) * 2) / 2)}); });
     items.push({k:"rec", want:NOX_RECS[exp]});
   } else {
@@ -2651,38 +2671,112 @@ function noxContractBuild(o){
     else { let prev = 0; S.workouts.forEach(w => { if(w.start < t0 && w.start > t0 - 120 * 86400000) w.exercises.forEach(x => { if(isCardio(exById(x.exId))) prev = Math.max(prev, cardioMin(x)); }); });
       items.push({k:"long", base:prev, want:Math.max(20, Math.ceil(prev * 1.25 / 5) * 5)}); }
   }
-  return {v:1, weeks:W, items};
+  // Le Gymon dans le contrat (21 nov. 2026) : sa taille et sa masse visées si les séances sont tenues, et ne jamais le laisser avoir faim
+  const c = creatureState();
+  if(!c.dead){ const pj = noxGymProj(c, reg, n), h0 = creatureHeight(c), w0 = c.weight;
+    items.push({k:"gym", h0:Math.floor(h0), w0, h:Math.max(Math.floor(h0) + 1, Math.floor(pj.h)), w:noxRoundKg(Math.max(w0 * 1.01, w0 + (pj.kg - w0) * 0.85))}); }
+  items.push({k:"sat", want:SAT.festinMin});
+  return {v:2, weeks:W, items};
 }
-// Contrat du protocole en cours (créé à la volée pour les protocoles signés avant son arrivée)
+// Contrat repris d'une sauvegarde : seules les clauses connues, avec des nombres
+function noxCtrClean(c){
+  if(!c || !Array.isArray(c.items)) return null; const K = ["reg","lift","rec","cardio","keep","long","gym","sat"], F = ["want","of","base","h0","w0","h","w"];
+  const items = c.items.filter(it => it && K.includes(it.k) && (it.id === undefined || (safeId(it.id) && exById(it.id)))).slice(0, 12)
+    .map(it => ({k:it.k, ...(it.id ? {id:it.id} : {}), ...Object.fromEntries(F.filter(f => typeof it[f] === "number" && isFinite(it[f])).map(f => [f, Math.max(0, Math.min(1e6, it[f]))]))}));
+  return items.length ? {v:Math.round(num(c.v)) === 2 ? 2 : 1, weeks:NOX.weeks, items} : null;
+}
+const noxRoundKg = kg => kg < 1 ? Math.round(kg * 100) / 100 : kg < 10 ? Math.round(kg * 10) / 10 : Math.round(kg);
+// Projection du Gymon après k séances (mêmes règles que les repas : volume mangé × coefficient du stade × régularité)
+function noxGymProj(c, k, n){
+  const D = 86400000, now = Date.now(), r = satRation(), recent = S.workouts.filter(w => now - (w.end || w.start) < 30 * D);
+  const vol = recent.length ? recent.reduce((t, w) => t + gymFood(w), 0) / recent.length : SAT.rationStart * 2;
+  const eat = Math.min(vol, r * 2.5), ff = 0.7 + 0.6 * Math.min(1, n * 0.8 * 2 / CREATURE_CFG.freq.target);
+  let fid = c.fidelity, st = c.stage, kg = c.weight;
+  for(let i = 0; i < k; i++){ fid++; st = Math.max(st, stageFor(fid, c)); kg = Math.max(CREATURE_CFG.minWeight[st], kg + eat / 1000 * CREATURE_CFG.foodPerTonne[st] * ff); }
+  return {h:creatureHeight({...c, stage:st, fidelity:fid}), kg};
+}
+// Contrat du protocole en cours (créé à la volée pour les protocoles signés avant son arrivée ; v2 : clauses du Gymon)
 function noxContract(){
   const ex = noxExam(), p = noxSt().proto; if(!ex || !p) return null;
-  if(!p.contract || !Array.isArray(p.contract.items)){ p.contract = noxContractBuild({obj:p.obj, prec:p.prec, exp:ex.exp, n:ex.n, start:p.start}); touchProfile(); }
+  if(!p.contract || !Array.isArray(p.contract.items) || (p.contract.v || 1) < 2){
+    const keep = p.contract && Array.isArray(p.contract.items) ? p.contract.items : null;
+    p.contract = noxContractBuild({obj:p.obj, prec:p.prec, exp:ex.exp, n:ex.n, start:p.start});
+    if(keep) p.contract.items = keep.concat(p.contract.items.filter(it => it.k === "gym" || it.k === "sat"));   // un contrat déjà signé garde ses chiffres
+    touchProfile(); }
   return p.contract;
 }
-function noxContractState(c, start){
+function noxContractState(c, pr){
+  const p = typeof pr === "object" ? pr : {start:pr}, start = p.start, cr = creatureState(), ended = Date.now() >= start + c.weeks * 7 * 86400000;
   const since = S.workouts.filter(w => w.start >= start), hist = id => exHistory(id).filter(x => x.ts >= start && x.best > 0);
   const cmin = l => l.flatMap(w => w.exercises.filter(x => isCardio(exById(x.exId))).map(cardioMin));
-  return c.items.map(it => { let have = 0, pct = 0;
+  return c.items.map(it => { let have = 0, pct = 0, ok = false, note = "";
     if(it.k === "reg") have = since.length;
     else if(it.k === "rec") have = since.reduce((t, w) => t + (w.prs || []).length, 0);
     else if(it.k === "cardio") have = cmin(since).reduce((t, x) => t + x, 0);
     else if(it.k === "long") have = Math.max(0, ...cmin(since));
     else if(it.k === "lift"){ const h = hist(it.id); have = h.length ? Math.max(...h.map(x => x.best)) : 0; }
     else if(it.k === "keep"){ const h = hist(it.id); have = h.length ? h[h.length - 1].best : 0; }
-    pct = it.k === "lift" ? (have ? Math.max(0, Math.min(1, (have - it.base) / Math.max(.5, it.want - it.base))) : 0) : Math.min(1, it.want ? have / it.want : 0);
-    return {...it, have, pct, ok:have >= it.want && (it.k !== "keep" || have > 0)}; });
+    if(it.k === "gym"){ const h = creatureHeight(cr), w = cr.weight, f = (v, a, b) => Math.max(0, Math.min(1, b > a ? (v - a) / (b - a) : 1));
+      pct = (f(h, it.h0, it.h) + f(w, it.w0, it.w)) / 2; ok = !cr.dead && h >= it.h && w >= it.w; note = `${fmtN(h, 0)} cm · ${fmtWeight(w)}`; }
+    else if(it.k === "sat"){ const on = p.satOn, low = Math.min(p.satMin ?? 100, on ? satExact(cr) : 100), held = on && low >= it.want && !cr.dead;
+      have = low; ok = held && ended; pct = held ? Math.min(1, (Date.now() - start) / (c.weeks * 7 * 86400000)) : 0;
+      note = !on ? "au prochain repas" : !held ? "ratée" : ended ? "tenue" : "tenue jusqu'ici"; }
+    else { pct = it.k === "lift" ? (have ? Math.max(0, Math.min(1, (have - it.base) / Math.max(.5, it.want - it.base))) : 0) : Math.min(1, it.want ? have / it.want : 0);
+      ok = have >= it.want && (it.k !== "keep" || have > 0); }
+    return {...it, have, pct, ok, note}; });
 }
-const noxClauseTxt = it => { const nm = id => (exById(id) || {name:"?"}).name;
-  return it.k === "reg" ? [`📅`, `Être présent à au moins <b>${it.want} séances</b> sur ${it.of}`, x => `${x.have}/${x.want}`]
-    : it.k === "lift" ? [`🏋️`, `${esc(nm(it.id))} : passer de ${fmtN(it.base, 1)} à <b>${fmtN(it.want, 1)} kg</b> (1RM estimé)`, x => x.have ? `${fmtN(Math.round(x.have * 2) / 2, 1)} kg` : "—"]
-    : it.k === "rec" ? [`🏆`, `Battre <b>${it.want} records</b>`, x => `${x.have}/${x.want}`]
-    : it.k === "cardio" ? [`🫀`, `Cumuler <b>${it.want} min</b> de cardio`, x => `${fmtN(x.have, 0)}/${x.want} min`]
-    : it.k === "keep" ? [`🛡️`, `${esc(nm(it.id))} : garder au moins <b>${fmtN(it.want, 1)} kg</b> (1RM estimé), sécher sans fondre`, x => x.have ? `${fmtN(Math.round(x.have * 2) / 2, 1)} kg` : "—"]
-    : [`⏱️`, `Tenir <b>${it.want} min</b> de cardio d'affilée${it.base ? ` (record actuel : ${fmtN(it.base, 0)} min)` : ""}`, x => `${fmtN(x.have, 0)} min`]; };
+const noxNm = () => esc(creatureState().name || "ton Gymon");
+const noxClauseTxt = it => { const nm = id => (exById(id) || {name:"?"}).name, g = noxNm();
+  const mus = id => { const e = exById(id); return e ? (M_SANS[primOf(e)] || e.muscle.toLowerCase()) : "muscles"; };
+  return it.k === "reg" ? [`📅`, `Être présent à au moins <b>${it.want} séances</b> sur ${it.of}`, x => `${x.have}/${x.want}`, `Chaque séance fait grandir ${g}`]
+    : it.k === "lift" ? [`🏋️`, `${esc(nm(it.id))} : passer de ${fmtN(it.base, 1)} à <b>${fmtN(it.want, 1)} kg</b> (1RM estimé)`, x => x.have ? `${fmtN(Math.round(x.have * 2) / 2, 1)} kg` : "—", `Les ${esc(mus(it.id))} de ${g} se développent`]
+    : it.k === "rec" ? [`🏆`, `Battre <b>${it.want} records</b>`, x => `${x.have}/${x.want}`, `Un steak du record pour ${g} à chaque fois 🥩`]
+    : it.k === "cardio" ? [`🫀`, `Cumuler <b>${it.want} min</b> de cardio`, x => `${fmtN(x.have, 0)}/${x.want} min`, `${g} mange aussi après le cardio`]
+    : it.k === "keep" ? [`🛡️`, `${esc(nm(it.id))} : garder au moins <b>${fmtN(it.want, 1)} kg</b> (1RM estimé), sécher sans fondre`, x => x.have ? `${fmtN(Math.round(x.have * 2) / 2, 1)} kg` : "—", `Les muscles de ${g} ne fondent pas`]
+    : it.k === "long" ? [`⏱️`, `Tenir <b>${it.want} min</b> de cardio d'affilée${it.base ? ` (record actuel : ${fmtN(it.base, 0)} min)` : ""}`, x => `${fmtN(x.have, 0)} min`, `Le souffle de ${g} s'allonge`]
+    : it.k === "gym" ? [`🐣`, `${g} atteint <b>${fmtN(it.h, 0)} cm</b> et <b>${fmtWeight(it.w)}</b> (aujourd'hui ${fmtN(it.h0, 0)} cm, ${fmtWeight(it.w0)})`, x => x.note, `Il change… je n'en dis pas plus. FASCINANT !`]
+    : [`🍗`, `Ne jamais laisser ${g} sous <b>${it.want} % de satiété</b>`, x => x.note, `Nourris-le après chaque séance : le frigo est là pour ça`]; };
 const NOX_PROMISE = "De mon côté : j'ajuste chaque charge selon ton ressenti, je te préviens quand la fatigue s'accumule, et je rends un rapport honnête à la fin.";
-function noxContractHTML(c, st){
-  return `<div class="nox-ctr"><h4>📜 Contrat d'expérience · ${c.weeks} semaines</h4>${c.items.map((it, i) => { const [ic, t, v] = noxClauseTxt(it), x = st && st[i];
-    return `<div class="nox-cl${x && x.ok ? " ok" : ""}"><i>${x && x.ok ? "✅" : ic}</i><span>${t}${x ? `<em><b style="width:${Math.round(x.pct * 100)}%"></b></em>` : ""}</span>${x ? `<small>${v(x)}</small>` : ""}</div>`; }).join("")}</div>`;
+// Signatures : celle du joueur (dessinée au doigt), celle du professeur, et l'empreinte du Gymon (une patte d'oiseau)
+const NOX_PAW = `<svg viewBox="0 0 40 44" aria-hidden="true"><g stroke="currentColor" stroke-width="4.6" stroke-linecap="round" fill="none"><path d="M20 27 L20 5"/><path d="M20 27 L6 11"/><path d="M20 27 L34 11"/><path d="M20 27 L21 40"/></g><circle cx="20" cy="27" r="4.6" fill="currentColor"/><g fill="currentColor"><circle cx="20" cy="4" r="2.2"/><circle cx="5.3" cy="10.2" r="2.2"/><circle cx="34.7" cy="10.2" r="2.2"/></g></svg>`;
+const signOk = d => typeof d === "string" && d.length > 6 && d.length <= 6000 && /^[ML0-9 .]+$/.test(d);
+const signSVG = d => `<svg class="sig" viewBox="0 0 300 70" preserveAspectRatio="xMidYMid meet" aria-label="Ta signature"><path d="${d}" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function noxSigsHTML(sign, pad){
+  const me = pad ? `<div class="nox-pad"><canvas width="600" height="140" aria-label="Signe ici avec le doigt"></canvas><small>${sign ? "" : "Signe ici avec le doigt ✍️"}</small>${sign ? `<button type="button" data-nxe="unsign">Effacer</button>` : ""}</div>`
+    : signOk(sign) ? signSVG(sign) : `<div class="nox-sig-nox" style="color:var(--muted)">—</div>`;
+  return `<div class="nox-sigs${pad ? " pad" : ""}"><div><span class="sig-l">Toi</span>${me}</div><div><span class="sig-l">Le professeur</span><div class="nox-sig-nox">Pr Noxwell</div></div>
+    <div><span class="sig-l">${noxNm()}</span><div class="nox-paw">${NOX_PAW}</div></div></div>`;
+}
+function noxSignBind(){
+  const cv = document.querySelector(".nox-pad canvas"); if(!cv) return;
+  const ctx = cv.getContext("2d"); let pts = noxA.sign || "", on = false;
+  const draw = () => { ctx.clearRect(0, 0, cv.width, cv.height); ctx.lineWidth = 5; ctx.lineCap = ctx.lineJoin = "round"; ctx.strokeStyle = getComputedStyle(cv).color || "#fff";
+    ctx.beginPath(); pts.split(/(?=[ML])/).forEach(sg => { const [c, x, y] = [sg[0], ...sg.slice(1).trim().split(" ").map(Number)]; if(isNaN(x)) return; c === "M" ? ctx.moveTo(x * 2, y * 2) : ctx.lineTo(x * 2, y * 2); }); ctx.stroke(); };
+  const at = e => { const r = cv.getBoundingClientRect(); const k = (v, m) => Math.max(0, Math.min(m, Math.round(v))); return [k((e.clientX - r.left) / r.width * 300, 300), k((e.clientY - r.top) / r.height * 70, 70)]; };
+  const sync = () => { const okS = signOk(pts); noxA.sign = okS ? pts : undefined;
+    document.querySelectorAll('#nox-exam [data-nxe="next"], #nox-exam [data-nxe="edit"], #nox-exam [data-nxe="keep"]').forEach(b => b.disabled = !okS);
+    const h = document.querySelector(".nox-pad small"); if(h) h.textContent = okS ? "" : "Signe ici avec le doigt ✍️"; };
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); on = true; cv.setPointerCapture(e.pointerId); const [x, y] = at(e); if(pts.length < 5900){ pts += `${pts ? " " : ""}M${x} ${y}`; } draw(); });
+  cv.addEventListener("pointermove", e => { if(!on) return; const [x, y] = at(e); if(pts.length < 5900){ pts += ` L${x} ${y}`; draw(); } });
+  const up = () => { if(!on) return; on = false; sync(); };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  draw(); sync();
+}
+function noxContractHTML(c, st, sign){
+  return `<div class="nox-ctr"><h4>📜 Contrat d'expérience · ${c.weeks} semaines</h4>${c.items.map((it, i) => { const [ic, t, v, fx] = noxClauseTxt(it), x = st && st[i];
+    return `<div class="nox-cl${x && x.ok ? " ok" : ""}"><i>${x && x.ok ? "✅" : ic}</i><span>${t}${fx ? `<span class="fx">→ ${fx}</span>` : ""}${x ? `<em><b style="width:${Math.round(x.pct * 100)}%"></b></em>` : ""}</span>${x ? `<small>${v(x)}</small>` : ""}</div>`; }).join("")}
+    <p class="small muted" style="margin:6px 0 0">🧪 Chaque clause tenue : une fiole de sérum pour ${noxNm()}.</p>${sign === false ? "" : noxSigsHTML(sign, false)}</div>`;
+}
+// Clauses tenues : une fiole de sérum au frigo du Gymon et une page de son carnet de santé (une seule fois par clause)
+function noxContractAward(){
+  const p = noxSt().proto, ctr = noxContract(); if(!p || !ctr) return 0;
+  const c = creatureState(); if(c.dead) return 0;
+  const st = noxContractState(ctr, p), won = p.won = p.won || [], now = Date.now(); let n = 0;
+  st.forEach((x, i) => { if(!x.ok || won.includes(i)) return; won.push(i); n++; fridgeAdd(c, "fiole", 0, now);
+    memAdd(c, `nx${p.k}-${i}`, "Clause tenue : " + noxClauseTxt(x)[1].replace(/<[^>]+>/g, "") + ". Une fiole de sérum au frigo.", now, "📜"); });
+  if(n && won.length === st.length && !p.full){ p.full = 1; memAdd(c, `nx${p.k}-full`, "Contrat rempli avec le Pr Noxwell, clause par clause !", now, "🏅"); }
+  if(n){ touchProfile(); toast(`🧪 Clause tenue ! ${n > 1 ? n + " fioles" : "Une fiole"} de sérum ${n > 1 ? "attendent" : "attend"} ${creatureState().name || "ton Gymon"} dans son frigo`); }
+  return n;
 }
 
 /* --- Rapport d'expérience (étape 3) : bilan du protocole avec les seules données du joueur --- */
@@ -2697,7 +2791,7 @@ function noxReportData(){
   const before = S.workouts.filter(w => w.start < p.start && w.start >= p.start - 28 * 86400000), volW = l => l.reduce((t, w) => t + wVolume(w), 0);
   const vB = before.length ? volW(before) / 4 : 0, vA = since.length ? volW(since) / weeks : 0;
   const cardio = since.reduce((t, w) => t + w.exercises.reduce((u, x) => u + (isCardio(exById(x.exId)) ? cardioMin(x) : 0), 0), 0);
-  const ctr = noxContract(), cst = ctr ? noxContractState(ctr, p.start) : [];
+  const ctr = noxContract(), cst = ctr ? noxContractState(ctr, p) : [];
   return {p, ex, weeks, done:since.length, want, recs, gains, up:gains.filter(g => g.pct > 0).length, vB, vA, cardio, ctr, cst, held:cst.filter(x => x.ok).length};
 }
 function noxReport(){
@@ -2716,7 +2810,7 @@ function noxReport(){
     ${d.gains.length ? `<div class="small muted" style="margin:12px 0 4px">Force estimée (1RM), avant → pendant le protocole</div><div class="nox-gains">${d.gains.slice(0, 5).map(g => `<div><span>${esc(g.e.name)}</span><b class="${g.pct > 0 ? "up" : g.pct < 0 ? "down" : ""}">${g.pct > 0 ? "+" : ""}${g.pct} %</b></div>`).join("")}</div>
       <p class="small muted" style="margin:6px 0 0">${d.up} exercice${d.up > 1 ? "s" : ""} sur ${d.gains.length} en progrès.</p>` : `<p class="small muted">Pas encore d'exercice comparable avant et pendant le protocole.</p>`}
     ${d.cardio ? `<p class="small" style="margin:10px 0 0">🫀 ${fmtN(d.cardio, 0)} min de cardio pendant le protocole.</p>` : ""}
-    ${d.ctr ? noxContractHTML(d.ctr, d.cst) + `<p class="small" style="margin:0"><b>${d.held} clause${d.held > 1 ? "s" : ""} tenue${d.held > 1 ? "s" : ""} sur ${d.cst.length}</b>${d.weeks < NOX.weeks ? ` · encore ${NOX.weeks - d.weeks} semaine${NOX.weeks - d.weeks > 1 ? "s" : ""} pour remplir le reste` : ""}</p>` : ""}
+    ${d.ctr ? noxContractHTML(d.ctr, d.cst, d.p.sign) + `<p class="small" style="margin:0"><b>${d.held} clause${d.held > 1 ? "s" : ""} tenue${d.held > 1 ? "s" : ""} sur ${d.cst.length}</b>${d.weeks < NOX.weeks ? ` · encore ${NOX.weeks - d.weeks} semaine${NOX.weeks - d.weeks > 1 ? "s" : ""} pour remplir le reste` : ""}</p>` : ""}
     <div class="row" style="margin-top:14px;gap:8px"><button class="btn" style="flex:1" data-act="nox-exam">🩺 Refaire l'examen</button><button class="btn primary" style="flex:1" data-act="close">On continue !</button></div>`));
 }
 
@@ -2730,7 +2824,7 @@ function noxHeroLine(){
   return pr && pr.done ? `Semaine ${pr.week} du protocole. Le sujet évolue… J'observe. FASCINANT !` : `Protocole prêt ! La première séance dira tout. ENCORE UNE ! C'EST POUR LA SCIENCE !`;
 }
 function noxBlock(){
-  noxCycle();
+  noxCycle(); noxContractAward();
   const ex = noxExam(), pr = noxProof(), p = noxSt().proto, g = goal();
   const plan = S.profile.plan, tn = plan ? ((TEMPLATES[(plan.days || []).length] || []).find(t => t.id === plan.tpl) || {}).name : "";
   return `<section class="card nox-hero"><div class="nox-pic">${noxSVG(NOX_BUST)}</div>
@@ -2741,7 +2835,7 @@ function noxBlock(){
       <div class="small muted">Commencé le ${esc(fmtDate(p ? p.start : ex.done, {day:"numeric", month:"long"}))} · d'après ton examen${noxPrecTxt({obj:g.obj, prec:g.prec}) ? " · " + esc(noxPrecTxt({obj:g.obj, prec:g.prec}).toLowerCase()) : ""}</div>
       <button class="nox-org" data-act="nox-org"><span>🧬 Organisation : <b>${esc(tn || "à définir")}</b></span><span>changer ›</span></button>
       ${pr ? `<div class="nox-bar"><i style="width:${Math.min(100, Math.round(pr.weeks / NOX.weeks * 100))}%"></i></div><div class="nox-barl"><span>Semaine ${Math.min(pr.week, NOX.weeks)} sur ${NOX.weeks}</span><span>${pr.done} séance${pr.done > 1 ? "s" : ""} faite${pr.done > 1 ? "s" : ""}</span></div>
-        ${(c => c ? noxContractHTML(c, noxContractState(c, p.start)) : "")(noxContract())}` : ""}
+        ${(c => c ? noxContractHTML(c, noxContractState(c, p), p.sign) : "")(noxContract())}` : ""}
       <div class="nox-levs">${noxLevers(g).map(([i, t]) => `<div><i>${i}</i><span>${esc(t)}</span></div>`).join("")}</div>
       <button class="btn sm wide" data-act="nox-report" style="margin-top:6px">📊 Rapport d'expérience${pr && pr.week > NOX.weeks ? " · prêt" : ""}</button></section>` : ""}`;
 }
@@ -3187,9 +3281,9 @@ const stageFor = (fid, c) => stageAt(c || creatureState()).reduce((s, at, i) => 
 // Progression cachée vers le stade suivant (0 à 1), sert seulement aux indices visuels
 function creatureNear(c){ const at = stageAt(c), next = at[c.stage+1]; return next===undefined ? 1 : Math.min(1, (c.fidelity - at[c.stage]) / (next - at[c.stage])); }
 function creatureHeight(c){
-  const [lo, hi] = CREATURE_CFG.height[c.stage], at = stageAt(c), next = at[c.stage+1];
-  if(next===undefined) return Math.min(hi, lo + (c.fidelity - at[c.stage]) * CREATURE_CFG.heightPerSessionAfter);
-  return lo + (hi - lo) * Math.min(1, (c.fidelity - at[c.stage]) / (next - at[c.stage]));
+  const [lo, hi] = CREATURE_CFG.height[c.stage], at = stageAt(c), next = at[c.stage+1], hx = c.hx || 0;
+  if(next===undefined) return Math.min(hi, lo + (c.fidelity - at[c.stage]) * CREATURE_CFG.heightPerSessionAfter) + hx;
+  return lo + (hi - lo) * Math.min(1, (c.fidelity - at[c.stage]) / (next - at[c.stage])) + hx;
 }
 const creatureIdleDays = c => (Date.now() - (c.last || c.born)) / 86400000;
 // Ancienne vitalité (jusqu'au 13 nov. 2026), seulement pour la mise à jour vers la satiété
@@ -3251,14 +3345,24 @@ function satEat(c, kg, at, plateauH, whole){
   weekMinNote(c, cur, at);
   c.sat = Math.min(100, cur + eat / r * SAT.perRation); c.satT = at; c.ateTs = Date.now(); c.full = Math.max(c.full || 0, at + (plateauH || SAT.plateauH) * 3600000);
   const ff = 0.7 + 0.6 * creatureRegularity(c).pct;   // 0,7 à 1,3 selon la régularité
-  c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + eat / 1000 * CREATURE_CFG.foodPerTonne[c.stage] * ff);
+  c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + eat / 1000 * CREATURE_CFG.foodPerTonne[c.stage] * ff * (boostOn(c, at) ? BOOST.mult : 1));
+  { const pr = (S.profile.nox || {}).proto; if(pr && at >= pr.start) pr.satOn = 1; }   // contrat : la satiété est suivie à partir du premier repas après la signature
   return eat;
 }
 /* Frigo : ce qu'il ne peut pas manger y part ; périme en 5 jours (l'omelette jamais) ; il mange d'abord le plus ancien.
    Aliments : 🍗 poulet (kg soulevés), ⭐ portion dorée (bonus du coup critique), 🥩 steak (record : 1 ration et 12 h à 100 %),
    🥚 omelette (3e séance de la semaine : 1 ration, ne périme pas). La boîte de pois chiches est à part (c.peas). */
-const FOODS = {poulet:{e:"🍗", n:"Poulet"}, or:{e:"⭐", n:"Portion dorée"}, steak:{e:"🥩", n:"Steak du record"}, omelette:{e:"🥚", n:"Omelette de la régularité"}};
-const spoilAt = it => it.k === "omelette" ? Infinity : it.t + SAT.spoilDays * 86400000;
+const FOODS = {poulet:{e:"🍗", n:"Poulet"}, or:{e:"⭐", n:"Portion dorée"}, steak:{e:"🥩", n:"Steak du record"}, omelette:{e:"🥚", n:"Omelette de la régularité"}, fiole:{e:"🧪", n:"Fiole de sérum"}};
+const spoilAt = it => it.k === "omelette" || it.k === "fiole" ? Infinity : it.t + SAT.spoilDays * 86400000;
+/* Fiole de sérum (21 nov. 2026, décision du propriétaire) : gagnée pour chaque clause tenue du contrat du Pr Noxwell.
+   Bue, elle fait grossir et grandir le Gymon 5 % plus vite pendant 48 h (étoiles autour de lui). Ne nourrit pas, ne périme pas. */
+const BOOST = {h:48, mult:1.05};
+const boostOn = (c, at) => !!(c && c.boost && (at || Date.now()) < c.boost.until);
+function fioleDrink(c, it){
+  const now = Date.now(); c.fridge = c.fridge.filter(x => x !== it);
+  c.boost = {until:Math.max(now, (c.boost || {}).until || 0) + BOOST.h * 3600000};
+  memAdd(c, null, "A bu une fiole de sérum du Pr Noxwell : il grandit plus vite pendant 48 h.", now, "🧪"); return {eaten:0, it, fiole:true};
+}
 function fridgeAdd(c, k, kg, t){ const it = {id:uidGen("f"), k, kg:Math.round(kg || 0), t:t || Date.now()}; (c.fridge = c.fridge || []).push(it); return it; }
 function fridgeTick(c, now){
   now = now || Date.now(); const f = c.fridge || [], gone = f.filter(it => spoilAt(it) <= now); if(!gone.length) return;
@@ -3269,6 +3373,7 @@ const fridgeKg = c => (c.fridge || []).reduce((t, it) => t + (it.k === "poulet" 
 // Manger un aliment du frigo (jusqu'à 100 %) ; renvoie {eaten, it} ou {full:true}
 function fridgeEat(c, id){
   const at = Math.max(Date.now(), c.satT || 0), it = (c.fridge || []).find(x => x.id === id); if(!it || c.dead) return null;
+  if(it.k === "fiole") return fioleDrink(c, it);
   if(satExact(c, at) >= 99.5) return {full:true, it};
   if(it.k === "steak" || it.k === "omelette"){
     const e = satEat(c, satRation(at), at, it.k === "steak" ? SAT.steakH : SAT.plateauH, true); c.fridge = c.fridge.filter(x => x !== it); return {eaten:e, it}; }
@@ -3285,6 +3390,7 @@ function weekMinNote(c, v, at){
     if(c.wk.full && Math.min(c.wk.min, endV) >= SAT.festinMin && c.festDone !== c.wk.k) c.festDue = c.wk.k;
   }
   if(!c.wk || c.wk.k !== k) c.wk = {k, min:v, full:at - k < 86400000}; else c.wk.min = Math.min(c.wk.min, v);   // full : suivie dès le lundi
+  const pr = (S.profile.nox || {}).proto; if(pr && pr.satOn && at >= pr.start) pr.satMin = Math.min(pr.satMin ?? 100, v);   // clause satiété du contrat
 }
 function festinCheck(c, now){
   now = now || Date.now(); if(c.dead) return false;
@@ -3420,12 +3526,13 @@ function creatureFeed(w){
   if(c.dead){ if(!(c.pending||[]).includes(w.id)) (c.pending = c.pending || []).push(w.id); touchProfile(); return {dead:true, vol:gymFood(w)}; }
   const before = {stage:c.stage, weight:c.weight, levels:Object.fromEntries(MUSC.map(m => [m, muscleLevel(c, m, w.end || w.start)]))};
   c.fed.push(w.id); if(c.fed.length > 1000) c.fed = c.fed.slice(-1000);
-  const t = Math.max(w.end || w.start, c.satT || 0), satBefore = satExact(c, t);
+  const t = Math.max(w.end || w.start, c.satT || 0), satBefore = satExact(c, t), h0 = creatureHeight(c);
   c.fidelity++;
   c.last = Math.max(c.last || 0, w.end || w.start);
   const vol = gymFood(w), bonus = critVolume(w);
   c.food += vol;
   c.stage = Math.max(c.stage, stageFor(c.fidelity, c));              // un stade acquis ne se perd jamais
+  if(boostOn(c, t)) c.hx = (c.hx || 0) + Math.max(0, creatureHeight(c) - h0) * (BOOST.mult - 1);   // fiole : +5 % de croissance en taille
   const ate = satEat(c, vol, t), ateB = bonus ? satEat(c, bonus, t) : 0, fr = [];
   if(vol - ate >= 1) fr.push(fridgeAdd(c, "poulet", vol - ate, t));
   if(bonus - ateB >= 1) fr.push(fridgeAdd(c, "or", bonus - ateB, t));
@@ -4058,8 +4165,8 @@ function fridgeSheet(){
   const row = it => { const f = FOODS[it.k], left = spoilAt(it) - now, d = Math.ceil(left / D);
     const title = it.k === "poulet" || it.k === "or" ? `${f.n} · ${fmtVol(it.kg)}` : f.n;
     const sub = it.k === "poulet" ? `≈ +${fmtN(gain(it.kg), 0)} % de satiété` : it.k === "or" ? `bonus du coup critique · ≈ +${fmtN(gain(it.kg), 0)} %`
-      : it.k === "steak" ? "1 ration (+20 %) et 12 h à 100 %" : "1 ration (+20 %)";
-    const badge = it.k === "omelette" ? `<span class="fr-d">ne périme pas</span>` : `<span class="fr-d ${d <= 1 ? "w" : ""}">${left < 12*3600000 ? "périme bientôt" : d <= 1 ? "périme demain" : d + " j"}</span>`;
+      : it.k === "steak" ? "1 ration (+20 %) et 12 h à 100 %" : it.k === "fiole" ? "Grandit et grossit 5 % plus vite pendant 48 h" : "1 ration (+20 %)";
+    const badge = it.k === "fiole" ? `<span class="fr-d">sérum</span>` : it.k === "omelette" ? `<span class="fr-d">ne périme pas</span>` : `<span class="fr-d ${d <= 1 ? "w" : ""}">${left < 12*3600000 ? "périme bientôt" : d <= 1 ? "périme demain" : d + " j"}</span>`;
     return `<button class="fr-row" data-act="fr-eat" data-id="${it.id}"><span class="fr-e">${f.e}</span><span class="fr-t"><b>${esc(title)}</b><span>${esc(sub)}</span></span>${badge}</button>`; };
   openSheet(`<div class="fr-head"><span class="fr-ico">${FRIDGE_SVG(true)}</span><div><h3>Le frigo de ${esc(nm)}</h3>
       <p class="small muted" style="margin:2px 0 6px">Satiété ${v} % · 1 ration (≈ ${fmtVol(r)}) = +20 %</p><span class="sat-bar wide"><i style="width:${v}%;background:${satColor(v)}"></i></span></div></div>
@@ -4112,6 +4219,7 @@ function gyActionsHTML(c, v){
 function viewCreature(){
   const c = creatureState(), vit = creatureSatiety(c); creatureLog(c);
   const annivL = c.dead ? null : memVisit(c);
+  if(!c.dead && noxExam() && noxContractAward()) gyMsg = {ts:Date.now(), txt:"Le Pr Noxwell m'a envoyé une fiole de sérum ! 🧪 Elle est au frigo.", eye:"happy"};
   if(!c.dead){ if(festinCheck(c)) setTimeout(() => festinShow(creatureState()), 0); else if(annivL) setTimeout(() => annivShow(creatureState(), annivL), 0); else if(c.peasNew) setTimeout(() => peasSheet(creatureState()), 0); }
   const lvAvg = MUSCLES.reduce((t,g) => t + groupLevel(c, g), 0) / MUSCLES.length, force = Math.min(5, Math.round(lvAvg) + 1);
   if(c.dead){
@@ -4138,11 +4246,13 @@ function viewCreature(){
       ${beforeAfterHTML(c)}
       <div class="gy-stage" data-act="gy-more-tap" role="button" aria-label="Voir mon Gymon de plus près">
         <div class="gy-aura"></div>
+        ${boostOn(c) ? (() => { const f = 0.30 + 0.70 * Math.min(1, Math.log(Math.max(6, creatureHeight(c)) / 6) / Math.log(350 / 6));   // autour du Gymon, à sa taille (même échelle que gyZoom)
+          return `<span class="gy-stars" style="top:${(100 - f * 48).toFixed(1)}%;--r:${Math.round(55 + f * 110)}px" aria-label="Sérum actif : croissance +5 %">${"<i>★</i>".repeat(6)}</span>`; })() : ""}
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
         <i class="gy-spark" style="--x:72%;--y:72%;--d:2.1s"></i><i class="gy-spark" style="--x:24%;--y:66%;--d:.7s"></i>
         ${isSmelly(c) ? `<span class="gy-stink" aria-hidden="true">${'<i><svg viewBox="0 0 16 48"><path d="M8 46 C 1 40 15 34 8 27 S 1 14 8 2" stroke="#8bc34a" stroke-width="3.2" fill="none" stroke-linecap="round"/></svg></i>'.repeat(3)}<b>🪰</b></span>` : isSweaty(c) ? `<span class="gy-puddle" aria-hidden="true"></span><span class="gy-sweat" aria-hidden="true"><i></i><i></i><i></i></span>` : ""}
         ${gyZoom(sv, c).replace('class="creature', `class="creature${gyFlipAnim ? " flipin" : ""}${hop ? " gy-hop" : ""}${fx && fx.cls && Date.now() - fx.ts < 1500 ? " " + fx.cls : ""}`)}
-        ${m0 === "sleep" ? `<span class="gy-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><button class="gy-bubble" data-act="gy-wake">Zzz… 💤</button>` : (() => { const L = fx ? [fx.txt] : gyAte && Date.now() - gyAte.ts < 6000 ? [gyAte.k === "steak" ? "Un steak ! Je suis calé pour 12 heures 🥩💪" : gyAte.k === "omelette" ? "Une omelette ! Miam 🥚" : `Miam ! 😋 Satiété ${vit} %`]
+        ${m0 === "sleep" ? `<span class="gy-zzz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><button class="gy-bubble" data-act="gy-wake">Zzz… 💤</button>` : (() => { const L = fx ? [fx.txt] : gyAte && Date.now() - gyAte.ts < 6000 ? [gyAte.k === "fiole" ? "Le sérum du Pr Noxwell ! Je me sens INVINCIBLE ⭐ Je grandis plus vite pendant 48 h !" : gyAte.k === "steak" ? "Un steak ! Je suis calé pour 12 heures 🥩💪" : gyAte.k === "omelette" ? "Une omelette ! Miam 🥚" : `Miam ! 😋 Satiété ${vit} %`]
           : gyWake && Date.now() - gyWake < 60000 ? ["Hein ? Quoi ? … Ah, c'est toi 😴 Je me rendors vite."] : gymonLines(c); const say = L.prio === undefined ? L[0] : gyTalk < L.length ? L[gyTalk] : c.stage >= 2 && !c.dead ? gymonTip(c, gyTalk - L.length) : "";   // le jeu d'abord, puis un conseil
           return say ? `<button class="gy-bubble" data-act="gy-talk">${esc(say)}</button>` : ""; })()}
         <button class="gy-chip tl" data-act="gy-curve" data-k="1" aria-label="Courbe du poids"><small>Poids</small>${fmtWeight(c.weight)}</button>
@@ -4770,6 +4880,11 @@ function gymonLines(c){
   if(c.spoiled && now - c.spoiled.ts < 2*D) melt.unshift(c.spoiled.kg ? `Beurk ! ${fmtVol(c.spoiled.kg)} de poulet ont périmé au frigo 🤢` : "Beurk ! Quelque chose a périmé au frigo 🤢");
   if((c.fridge || []).some(it => spoilAt(it) - now < D)) melt.push("Le frigo sent bizarre… donne-moi vite ce qui va périmer 🍗");
   L.unshift(...melt); L.prio = melt.length;   // la fonte et le frigo sont dits en premier
+  if(boostOn(c)) L.unshift("Le sérum fait effet ⭐ Je grandis plus vite !");
+  { const ctr = noxExam() && noxContract(), p = noxSt().proto;
+    if(ctr && p && Date.now() < p.start + ctr.weeks * 7 * D){ const st = noxContractState(ctr, p), r = st.find(x => x.k === "reg");
+      if(r && !r.ok) L.push(`Encore ${r.want - r.have} séance${r.want - r.have > 1 ? "s" : ""} pour notre contrat avec le Pr Noxwell ! 📜`);
+      const g = st.find(x => x.k === "gym"); if(g && !g.ok) L.push(`Le Pr Noxwell parie que j'atteindrai ${fmtN(g.h, 0)} cm. On lui montre ? 📏`); } }
   const v = creatureSatiety(c); if(v < 50) L.push(fridgeKg(c) ? "Il reste du poulet au frigo… j'ai faim 🍗" : "J'ai faim… une séance ?");
   L.prio = L.length;   // tout ce qui touche au jeu passe avant les conseils
   return L;
@@ -4840,6 +4955,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-21", t:"🐾 Le contrat signé à trois", x:"Le contrat du Pr Noxwell se signe maintenant pour de vrai : ta signature au doigt, celle du professeur et l'empreinte de ton Gymon. Il comprend la taille et la masse que ton Gymon atteindra si tu tiens tes séances, et une clause : ne jamais le laisser sous 50 % de satiété. Chaque clause tenue lui offre une fiole de sérum 🧪 : bue depuis le frigo, il grandit et grossit 5 % plus vite pendant 48 h, entouré d'étoiles."},
   {d:"2026-11-20", t:"📜 Le contrat d'expérience", x:"À la fin de l'examen, le Pr Noxwell te propose un contrat chiffré pour les 6 semaines du protocole : un nombre de séances, une charge à atteindre sur tes exercices clés, des records ou des minutes de cardio selon ton objectif. Calculé sur ton historique et ton expérience : exigeant mais atteignable. Tu suis chaque clause dans le labo, et le rapport dit lesquelles tu as tenues."},
   {d:"2026-11-20", t:"⭐ Tes favoris dans la routine", x:"La routine choisit d'abord tes exercices favoris (étoilés dans leur fiche, ou faits souvent), puis tes autres exercices habituels. Le reste ne change pas : un polyarticulaire en tête pour les gros muscles, et les exercices alternent d'une séance à l'autre."},
   {d:"2026-11-20", t:"💾 Routine enregistrée toute seule", x:"Plus de bouton « Valider la routine » : chaque réglage (jours, muscles, temps dispo, ↻, supersets) est enregistré aussitôt, et tes séances suivent."},
@@ -5775,6 +5891,7 @@ const ACT = {
     curvePts = pts; curveFmt = L[1]; },
     fridge: (b, e) => { if(e) e.stopPropagation(); fridgeSheet(); },
   "fr-eat": b => { const c = creatureState(), r = fridgeEat(c, b.dataset.id); if(!r) return;
+    if(r.fiole){ touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:"🧪", k:"fiole"}; tab = "creature"; render(); feedThrow("🧪"); return; }
     if(r.full){ toast("Il n'a plus faim pour l'instant"); return; }
     touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:FOODS[r.it.k].e, k:r.it.k}; tab = "creature"; render(); feedThrow(FOODS[r.it.k].e); },
   "fr-oldest": () => { const c = creatureState(), kg = fridgeEatOldest(c); if(!kg){ toast("Il n'a plus faim pour l'instant"); return; }
@@ -6573,7 +6690,9 @@ async function importText(txt){
       S.profile.nox = {v:1, intro:nx.intro, ...(isTime(nx.later) ? {later:nx.later} : {}),
         ...(ex ? {exam:{v:1, done:isTime(ex.done) ? ex.done : Date.now(), obj:ex.obj, prec:prec(ex.prec), exp:["deb","mid","pro"].includes(ex.exp) ? ex.exp : "mid",
           n:Math.min(6, Math.max(2, Math.round(num(ex.n)) || 3)), days:Array.isArray(ex.days) ? ex.days.map(Number).filter(x => x >= 0 && x <= 6).slice(0, 6) : [], dur:Math.min(4, Math.max(0, Math.round(num(ex.dur)))), lieu:LIEU_EQ[ex.lieu] ? ex.lieu : "salle", banc:ex.banc === "non" ? "non" : "oui", org:ex.org === "un" ? "un" : "deux"}} : {}),
-        ...(pr && NOX_OBJ[pr.obj] ? {proto:{k:Math.max(1, Math.round(num(pr.k)) || 1), start:pr.start, obj:pr.obj, prec:prec(pr.prec)}} : {})};
+        ...(pr && NOX_OBJ[pr.obj] ? {proto:{k:Math.max(1, Math.round(num(pr.k)) || 1), start:pr.start, obj:pr.obj, prec:prec(pr.prec), ...(signOk(pr.sign) ? {sign:pr.sign} : {}),
+          ...(Array.isArray(pr.won) ? {won:pr.won.filter(i => Number.isInteger(i) && i >= 0 && i < 12)} : {}), ...(pr.full ? {full:1} : {}), ...(pr.satOn ? {satOn:1} : {}), ...(noxCtrClean(pr.contract) ? {contract:noxCtrClean(pr.contract)} : {}),
+          ...(typeof pr.satMin === "number" && isFinite(pr.satMin) ? {satMin:Math.max(0, Math.min(100, pr.satMin))} : {})}} : {})};
       const g = (d.profile || {}).goal; if(g && NOX_OBJ[g.obj]) S.profile.goal = {obj:g.obj, prec:prec(g.prec)};
     }
     if(Array.isArray((d.profile || {}).favs)) S.profile.favs = [...new Set([...(S.profile.favs || []), ...d.profile.favs.filter(id => safeId(id) && allEx().some(e => e.id === id))])].slice(0, 400);
@@ -6609,7 +6728,8 @@ function cleanCreature(x){
     weight:n(x.weight, 0, 1e6, CREATURE_CFG.minWeight[stage]), stage, levels:byMuscle(x.levels, 0, 4.5), lastWorked:byMuscle(x.lastWorked, 0, now), peak:byMuscle(x.peak, 0, 4.5),
     last:n(x.last, 0, now, 0), lastMeal:null, ...(x.sv === 1 ? {sv:1, sat:n(x.sat, 0, 100, 100), satT:n(x.satT, 0, now, now), full:n(x.full, 0, now + 13*3600000, 0)} : {vit:n(x.vit, 0, 100, 100)}),
     fridge:(Array.isArray(x.fridge) ? x.fridge : []).filter(it => it && FOODS[it.k] && isTime(it.t)).slice(-60).map(it => ({id:safeId(it.id) ? it.id : uidGen("f"), k:it.k, kg:Math.round(n(it.kg, 0, 1e7, 0)), t:it.t})),
-    ...(x.peas && isTime(x.peas.t) ? {peas:{t:x.peas.t}} : {}), ...(typeof x.festDone === "number" && isFinite(x.festDone) ? {festDone:x.festDone} : {}), mv:Math.round(n(x.mv, 0, 99, 0)), resurrections:Math.round(n(x.resurrections, 0, 1e4, 0)),
+    ...(x.peas && isTime(x.peas.t) ? {peas:{t:x.peas.t}} : {}), ...(typeof x.hx === "number" && isFinite(x.hx) && x.hx > 0 ? {hx:Math.min(200, x.hx)} : {}),
+    ...(x.boost && isTime(x.boost.until) ? {boost:{until:Math.min(x.boost.until, now + 30 * 86400000)}} : {}), ...(typeof x.festDone === "number" && isFinite(x.festDone) ? {festDone:x.festDone} : {}), mv:Math.round(n(x.mv, 0, 99, 0)), resurrections:Math.round(n(x.resurrections, 0, 1e4, 0)),
     dead:x.dead && isTime(x.dead.ts) ? {ts:x.dead.ts, since:isTime(x.dead.since) ? x.dead.since : x.dead.ts} : null,
     graves:(Array.isArray(x.graves) ? x.graves : []).filter(t => t && typeof t === "object").slice(-50).map(t => ({stage:Math.round(n(t.stage, 0, N - 1, 0)), fidelity:Math.round(n(t.fidelity, 0, 1e5, 0)), died:n(t.died, 0, now, now)}))};
   if(Array.isArray(x.at) && x.at.length === N && x.at.every(v => typeof v === "number" && isFinite(v))) c.at = x.at.map(v => Math.max(0, Math.round(v)));
