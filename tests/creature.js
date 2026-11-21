@@ -606,7 +606,16 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return {sets, warm, head, kgOff, noSwap, noCrit, pop, rest, kcal:k.kcal, cardio:k.cardio, vol:wVolume(w), food:lm.vol, lvUp:lv1 > lv0, next:[next.r, next.unit, next.tag], backRed, backNo}; });
   ok(cd.sets === 1 && !cd.warm && /Min\./.test(cd.head) && cd.kgOff && cd.noSwap && cd.noCrit, "cardio : une série en minutes, sans charge, sans échauffement, sans ↻ ni coup critique", cd);
   ok(/kcal/.test(cd.pop) && cd.rest && cd.cardio === 392 && cd.kcal === 390, "cardio : 30 min de course à 80 kg ≈ 392 kcal (9,8 MET), pas de repos chronométré", cd);
-  ok(cd.vol === 0 && cd.food === 392 * 15 && cd.lvUp, "cardio : nourrit le Gymon (1 kcal = 15 kg de poulet) et lui muscle un peu les jambes", cd);
+  ok(cd.vol === 0 && cd.food === 392 * 15 && !cd.lvUp, "cardio : nourrit le Gymon (1 kcal = 15 kg de poulet), sans changer ses muscles", cd);
+  // Chaque séance se compare à son type : un footing habituel remet à 100 % et fait grandir, même avec moins de tonnes que la muscu
+  const kind = await p.evaluate(() => { const n = Date.now(), D = 864e5, H = 3600e3, W = S.workouts, saved = JSON.stringify(S.profile.creature), bw = S.profile.bw; S.profile.bw = 75;
+    const mu = (id, t) => ({id, name:"m", start:t - H, end:t, prs:[], exercises:[{exId:"squat", sets:[{w:"800", r:"10", done:true}]}]});
+    const run = (id, t) => ({id, name:"c", start:t - H, end:t, prs:[], exercises:[{exId:"footing", feel:3, sets:[{w:"", r:"30", done:true}]}]});
+    S.workouts = []; for(let k = 0; k < 4; k++){ S.workouts.push(mu("km" + k, n - (20 - k * 4) * D)); S.workouts.push(run("kc" + k, n - (18 - k * 4) * D)); }
+    const r = {kindRun:sessionKind(run("x", n)), kindMu:sessionKind(mu("y", n))}, x = run("kc-new", n);
+    r.full = sessionFull(x); const c = {sat:100, satT:n - 56 * H, full:0, stage:5, weight:5, fridge:[], fed:[], born:n - 60 * D}; satEat(c, gymFood(x), n, undefined, false, "cardio"); r.sat = Math.round(c.sat);
+    S.workouts = W; S.profile.creature = JSON.parse(saved); S.profile.bw = bw; saveLocal(); return r; });
+  ok(kind.kindRun === "cardio" && kind.kindMu === "muscu" && kind.full && kind.sat === 100, "séance cardio comparée aux séances cardio : footing habituel = séance complète et 100 %", kind);
   ok(cd.next[0] === 32 && cd.next[1] === "min" && /\+2 min/.test(cd.next[2]), "cardio : la prochaine fois, le coach propose 2 min de plus (ressenti idéal)", cd.next);
   ok(cd.backRed === 2 && cd.backNo === 0, "fessiers sollicités : rouges à travers le short, de dos", cd);
 

@@ -954,7 +954,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 k";
+const APP_VERSION = "2026-11-21 l";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1685,8 +1685,8 @@ Object.assign(EX_RANGE, {"pompes":[10,25], "dips":[6,15], "tractions":[5,12], "g
 const TIMED = new Set(["gainage", "gainage-lateral"]);
 /* Cardio (18 nov. 2026, demande du propriétaire, pour les objectifs « calories ») : une série = un effort en minutes, sans charge.
    Calories = MET × poids de corps × durée (Compendium of Physical Activities 2024), ajusté par le ressenti (×0,8 trop facile → ×1,25 trop dur).
-   Décision du propriétaire : le cardio nourrit le Gymon (1 kcal = 15 kg de poulet) et fait un peu grossir ses jambes (une série vaut
-   minutes / 15 séries équivalentes). Pas de coup critique, pas de repos chronométré, pas de record, hors programme automatique. */
+   Décision du propriétaire : le cardio nourrit le Gymon (1 kcal = 15 kg de poulet) ; depuis le 21 nov. 2026 il ne change plus
+   ses muscles. Pas de coup critique, pas de repos chronométré, pas de record, hors programme automatique. */
 const CARDIO_MET = {"velo-allonge":5.5, "velo-air":8.5, "ski-erg":7, "marche":3.5, "marche-tapis":4.5, "footing":7, "course":9.8, "escaliers":9, "velo-appart":6.8, "velo":7.5, "rameur":7, "elliptique":5, "corde-sauter":11};
 const CARDIO_HOME = new Set(["marche", "footing", "course", "escaliers", "velo", "corde-sauter"]);
 const CARDIO_FEEL = [1, 0.8, 0.9, 1, 1.15, 1.25], CARDIO_KG = 15;
@@ -3326,9 +3326,11 @@ function creatureHeight(c){
   if(c.heightCm) return c.heightCm;   // Gymon d'un ami (QR)
   return CREATURE_CFG.tallStart + CREATURE_CFG.cmPerSession * (c.tall ?? c.fidelity ?? 0);
 }
-// Séance complète (elle fait grandir) : pas trop loin du volume habituel ; les 3 premières séances comptent toujours
+// Type de séance : « cardio » si plus de la moitié de ce qu'elle rapporte vient du cardio, sinon « muscu » ; chaque séance se compare à son type
+const sessionKind = w => cardioFood(w) > wVolume(w) ? "cardio" : "muscu";
+// Séance complète (elle fait grandir) : pas trop loin du volume habituel de son type ; les 3 premières de chaque type comptent toujours
 function sessionFull(w){
-  const D = 86400000, t = w.end || w.start, l = S.workouts.filter(x => { const e = x.end || x.start; return x.id !== w.id && e < t && e >= t - SAT.rationDays * D && gymFood(x) > 0; });
+  const D = 86400000, t = w.end || w.start, k = sessionKind(w), l = S.workouts.filter(x => { const e = x.end || x.start; return x.id !== w.id && e < t && e >= t - SAT.rationDays * D && gymFood(x) > 0 && sessionKind(x) === k; });
   return l.length < 3 || gymFood(w) >= CREATURE_CFG.fullShare * l.reduce((a, x) => a + gymFood(x), 0) / l.length;
 }
 // Fins des séances complètes (calculées une fois par rejeu : le recalcul de toute la courbe reste rapide)
@@ -3389,19 +3391,20 @@ function satRation(at){
 /* Repas habituel (21 nov. 2026, décision du propriétaire) : une séance au volume habituel du joueur (moyenne de ses séances sur 30 jours)
    le remet à 100 % ; plus que d'habitude, le surplus va au frigo ; moins, il n'atteint pas 100 %. Valeur d'un repas : le creux à
    combler (au moins la baisse d'un écart habituel entre deux séances) pour un repas habituel, au prorata des kg. */
-function satUsual(at){
+function satUsual(at, kind){   // kind : « cardio » ou « muscu » (repas de séance, comparé aux séances du même type) ; sinon toutes les séances (frigo)
   const D = 86400000, t = at || Date.now(), N = SAT.rationDays, l = S.workouts.filter(w => { const e = w.end || w.start; return e < t && e >= t - N * D && gymFood(w) > 0; });
-  const U = l.length >= 3 ? l.reduce((x, w) => x + gymFood(w), 0) / l.length : satRation(t) * 7 / 3;   // nouveau joueur : comme avant (3 séances par semaine)
+  const lk = kind ? l.filter(w => sessionKind(w) === kind) : l, ref = lk.length >= 3 ? lk : l;
+  const U = ref.length >= 3 ? ref.reduce((x, w) => x + gymFood(w), 0) / ref.length : satRation(t) * 7 / 3;   // nouveau joueur : comme avant (3 séances par semaine)
   const gapH = l.length >= 3 ? Math.min(120, Math.max(24, N * 24 / l.length)) : 56;
   return {U:Math.max(SAT.rationMin, U), low:Math.max(10, 100 - satDecay(100, Math.max(0, gapH - SAT.plateauH)))};
 }
 // Manger kg (équivalent poulet) jusqu'à 100 % ; steak et omelette (whole) : 1 ration = +20 %, mangés en entier. Seul ce qui est mangé fait grossir.
-function satEat(c, kg, at, plateauH, whole){
+function satEat(c, kg, at, plateauH, whole, kind){
   at = Math.max(at || Date.now(), c.satT || 0);
   const cur = satExact(c, at); let eat, gain;
   if(whole){ eat = kg; gain = kg / satRation(at) * SAT.perRation; }
   else {   // un même repas (séance + portion dorée, ou plusieurs aliments du frigo d'affilée) garde la valeur calculée au début
-    if(!c.meal || at - c.meal.t > 60000 || at < c.meal.t){ const u = satUsual(at); c.meal = {t:at, rate:Math.max(100 - cur, u.low) / u.U}; }
+    if(!c.meal || at - c.meal.t > 60000 || at < c.meal.t){ const u = satUsual(at, kind); c.meal = {t:at, rate:Math.max(100 - cur, u.low) / u.U}; }
     eat = Math.min(kg, Math.max(0, 100 - cur) / c.meal.rate); gain = eat * c.meal.rate; }
   if(eat <= 0) return 0;
   weekMinNote(c, cur, at);
@@ -3517,7 +3520,8 @@ function growMuscles(c, w){
   c.levels = c.levels || {}; c.lastWorked = c.lastWorked || {}; c.peak = c.peak || {};
   // 17 muscles (13 nov. 2026) : chaque série compte pour chaque muscle au prorata de l'exercice (squat : quadriceps 1, fessiers 0,7…) ;
   // le bonus record va au muscle principal. Moins d'une demi-série équivalente : pas de croissance.
-  w.exercises.forEach(ex => { const e = exById(ex.exId), n = isCardio(e) ? cardioMin(ex) / 15 : workSets(ex).length; if(!n) return;   // cardio : 15 min = 1 série
+  w.exercises.forEach(ex => { const e = exById(ex.exId); if(isCardio(e)) return;   // cardio : ne change pas les muscles (21 nov. 2026, décision du propriétaire)
+    const n = workSets(ex).length; if(!n) return;
     Object.entries(exWork(e)).forEach(([m, p]) => sets[m] = (sets[m]||0) + n * p);
     if((w.prs||[]).includes(ex.exId)) pr.add(primOf(e)); });
   // Rattrapage selon la force (15 nov. 2026, décision du propriétaire) : un pratiquant avancé doit vite avoir un Gymon à son image,
@@ -3593,7 +3597,7 @@ function creatureFeed(w){
   c.stage = Math.max(c.stage, stageFor(c.fidelity, c));              // un stade acquis ne se perd jamais
   c.weight += vol / 1000 * CREATURE_CFG.kgPerTonne;                    // masse = charge soulevée, mangée ou non
   const full = sessionFull(w); if(full) c.tall = (c.tall ?? 0) + 1;      // taille = séances complètes
-  const ate = satEat(c, vol, t), ateB = bonus ? satEat(c, bonus, t) : 0, fr = [];
+  c.meal = null; const ate = satEat(c, vol, t, undefined, false, sessionKind(w)), ateB = bonus ? satEat(c, bonus, t) : 0, fr = [];
   if(vol - ate >= 1) fr.push(fridgeAdd(c, "poulet", vol - ate, t));
   if(bonus - ateB >= 1) fr.push(fridgeAdd(c, "or", bonus - ateB, t));
   if((w.prs || []).length) fr.push(fridgeAdd(c, "steak", 0, t));
@@ -5044,6 +5048,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-21", t:"🏃 Le cardio a sa propre référence", x:"Une séance de cardio se compare maintenant à tes séances de cardio habituelles, et une séance de muscu à tes séances de muscu : un bon footing remet ton Gymon à 100 % et le fait grandir, même s'il pèse moins de tonnes qu'une séance de fonte. Le cardio nourrit et fait grossir ton Gymon, mais ne change plus la taille de ses muscles."},
   {d:"2026-11-21", t:"📏 La taille de ton Gymon = ton assiduité", x:"Ton Gymon grandit de 3,3 cm à chaque séance complète, au même rythme à tous les stades : deux joueurs avec autant de séances ont un Gymon de la même taille. Une séance compte si elle atteint au moins 60 % de ton volume habituel ; une séance bâclée le nourrit mais ne le fait pas grandir. Sa taille a été recalculée sur ton historique."},
   {d:"2026-11-21", t:"⚖️ La masse de ton Gymon = ta charge soulevée", x:"Ton Gymon prend 300 g par tonne soulevée (cardio compris), dès la fin de la séance et au même taux à tous les stades. Plus de poids minimum par stade, plus de bonus de régularité, et steaks, omelettes et portions dorées ne servent plus qu'à le rassasier. Sa masse a été recalculée sur tout ton historique : c'est l'image exacte de ce que tu as soulevé."},
   {d:"2026-11-21", t:"🍗 Satiété : ta séance habituelle compte", x:"Une séance à ton volume habituel (ta moyenne des 30 derniers jours) remet ton Gymon à 100 %. Soulève plus que d'habitude et le surplus part au frigo pour les jours plus légers ; une séance plus légère ne suffit plus pour atteindre 100 %. Steaks et omelettes restent des bonus."},
