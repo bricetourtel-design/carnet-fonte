@@ -281,7 +281,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const cv = await p.evaluate(() => { const D = 86400000, n = Date.now(), saved = {c:JSON.stringify(S.profile.creature), w:S.workouts};
     const set = (w, r) => Array.from({length:3}, () => ({w:String(w), r:String(r), done:true, warm:false}));
     S.workouts = []; for(let i = 0; i < 12; i++){ const t = n - (40 - i*3)*D; S.workouts.push({id:"cv"+i, name:"x", start:t, end:t+3600000, prs:[], exercises:[{exId:"squat", feel:3, sets:set(80+i, 8)}]}); }
-    const c = creatureState(); c.born = n - 45*D; c.at = CREATURE_CFG.stageAt; c.fed = S.workouts.map(w => w.id); c.fidelity = 12; c.stage = stageFor(12, c); c.weight = 1.5; c.last = n - D; c.sat = 90; c.satT = n; c.full = 0; c.hist = null; c.histB = 0; c.dead = null;
+    const c = creatureState(); c.born = n - 45*D; c.at = CREATURE_CFG.stageAt; c.fed = S.workouts.map(w => w.id); c.fidelity = 12; c.tall = 12; c.stage = stageFor(12, c); c.weight = 1.5; c.last = n - D; c.sat = 90; c.satT = n; c.full = 0; c.hist = null; c.histB = 0; c.dead = null;
     creatureLog(c); const h = c.hist, est = h.filter(p => p[4]).length, last = h[h.length-1], up = h[0][2] <= last[2];
     tab = "creature"; render(); ACT["gy-curve"](document.querySelector('[data-act="gy-curve"][data-k="1"]'), {stopPropagation(){}}); const svg = !!document.querySelector(".curve-box svg"); closeSheet();
     const back = cleanCreature(JSON.parse(JSON.stringify(c))).hist.length === h.length;
@@ -687,6 +687,16 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     await p.evaluate(([st,lv]) => { const c = creatureState(); c.stage = st; MUSCLES.forEach(m => c.levels[m] = m==="Jambes" ? Math.min(lv,1) : lv); c.last = Date.now(); render(); }, [st,lv]);
     await p.locator(".creature").first().screenshot({path:path.join(SHOTS, `st${st}-lv${lv}.png`)}); } }
 
+  // Taille = assiduité : 6 cm + 3,3 cm par séance complète (≥ 60 % du volume habituel ; les 3 premières comptent toujours)
+  const tall = await p.evaluate(() => { const n = Date.now(), D = 864e5, H = 3600e3, W = S.workouts, saved = JSON.stringify(S.profile.creature);
+    const mk = (id, t, kg) => ({id, name:"x", start:t - H, end:t, prs:[], exercises:[{exId:"squat", sets:[{w:String(kg/10), r:"10", done:true}]}]});
+    S.workouts = [mk("t0", n - 20 * D, 5000), mk("t1", n - 18 * D, 5000), mk("t2", n - 16 * D, 5000), mk("t3", n - 14 * D, 1000), mk("t4", n - 12 * D, 4000)];
+    const c = S.profile.creature = {...JSON.parse(saved), fed:S.workouts.map(w => w.id), journal:[], hist:[], wv:2, dead:null};
+    creatureMassMigrate(c); const r = {mig:Math.round(creatureHeight(c) * 10) / 10, wv:c.wv};   // t3 bâclée (1 t pour 5 t d'habitude) : 4 séances complètes
+    const x = mk("t5", n, 1500); S.workouts.push(x); const h0 = creatureHeight(c); creatureFeed(x); r.short = creatureHeight(c) === h0 && c.lastMeal.short;
+    const y = mk("t6", n + 1000, 3500); S.workouts.push(y); creatureFeed(y); r.full = Math.round((creatureHeight(c) - h0) * 10) / 10;
+    S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return r; });
+  ok(tall.mig === 19.2 && tall.wv === 3 && tall.short && tall.full === 3.3, "taille : 6 cm + 3,3 cm par séance complète ; séance bâclée (< 60 % de l'habituel) : il ne grandit pas", tall);
   // Masse = image de la charge soulevée : 60 g + 0,3 kg par tonne, sans plancher ni bonus ; rejouée sur l'historique à la mise à jour
   const mass = await p.evaluate(() => { const n = Date.now(), D = 864e5, H = 3600e3, W = S.workouts, saved = JSON.stringify(S.profile.creature);
     const mk = (id, t, kg, prs) => ({id, name:"x", start:t - H, end:t, prs:prs || [], exercises:[{exId:"squat", sets:[{w:String(kg/10), r:"10", done:true}]}]});
@@ -696,7 +706,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const w0 = c.weight, x = mk("m-new", n, 10000, ["squat"]); S.workouts.push(x); c.sat = 100; c.satT = n; c.full = n + 6 * H; creatureFeed(x);
     r.gain = Math.round((c.weight - w0) * 1000) / 1000; const st = fridgeEatOldest(c); r.fridgeNoGain = Math.abs(c.weight - w0 - 3) < 1e-9;
     S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return r; });
-  ok(mass.mig === 15.06 && mass.wv === 2 && mass.gain === 3 && mass.fridgeNoGain, "masse : 60 g + 0,3 kg par tonne (50 t → 15,06 kg), même rassasié ; le frigo et le steak ne la changent pas", mass);
+  ok(mass.mig === 15.06 && mass.wv === 3 && mass.gain === 3 && mass.fridgeNoGain, "masse : 60 g + 0,3 kg par tonne (50 t → 15,06 kg), même rassasié ; le frigo et le steak ne la changent pas", mass);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de la créature passent");
