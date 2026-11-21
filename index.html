@@ -954,7 +954,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 f";
+const APP_VERSION = "2026-11-21 g";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -5514,7 +5514,7 @@ function sessExMin(ex, k, list){   // minutes restantes pour un exercice de la s
   return (left * (40 + (chained ? 15 : rest)) + (ex.sets.some(x => x.done) ? 0 : 90)) / 60;
 }
 // Heure réelle de fin (pratique pour reprendre le travail) : maintenant + ce qu'il reste à faire, recalculée à chaque série validée
-const sessClock = (a, endMin) => new Date(a.start + endMin * 60000).toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"}).replace(":", " h ");
+const sessClock = (a, endMin) => { const d = new Date(a.start + endMin * 60000); return `${d.getHours()}h${String(d.getMinutes()).padStart(2, "0")}`; };   // ex. 12h10
 const sessLeft = a => a.exercises.reduce((t, ex, k) => t + sessExMin(ex, k, a.exercises), 0);
 function sessPlanDay(a){ const r = a.routineId && S.profile.routines.find(x => x.id === a.routineId); return r && r.plan && S.profile.plan ? (S.profile.plan.days || []).find(d => d.dow === r.dow) : null; }
 function sessDur(a){
@@ -5526,7 +5526,7 @@ function sessBarHTML(){
   const a = S.profile.active; if(!a || !a.exercises.length) return "";
   const dur = sessDur(a), el = (Date.now() - a.start) / 60000, end = el + sessLeft(a), pct = Math.min(100, el / dur * 100);
   return `<section class="sess-bar${el > dur ? " over" : ""}" id="sess-bar"><div class="sess-top"><button class="sess-b" data-act="sess-dur" data-d="-${SESS.step}" aria-label="Raccourcir la séance de ${SESS.step} min">−</button>
-      <div class="sess-txt"><b id="sess-el">${fmtClock(Date.now() - a.start)}</b><span> / ${dur} min</span><small id="sess-end">fin prévue vers ${sessClock(a, end)}</small></div>
+      <div class="sess-txt"><b id="sess-el">${fmtClock(Date.now() - a.start)}</b><span> / ${dur} min</span><small id="sess-end">Fin prévue à ${sessClock(a, end)}</small></div>
       <button class="sess-b" data-act="sess-dur" data-d="${SESS.step}" aria-label="Rallonger la séance de ${SESS.step} min">+</button></div>
     <div class="sess-track"><i id="sess-fill" style="width:${pct.toFixed(1)}%"></i><em style="left:${Math.min(100, end / dur * 100).toFixed(1)}%" id="sess-mark" title="Fin prévue"></em></div></section>`;
 }
@@ -5535,7 +5535,7 @@ function sessTick(){
   const dur = sessDur(a), el = (Date.now() - a.start) / 60000; f.style.width = Math.min(100, el / dur * 100).toFixed(1) + "%";
   const t = document.getElementById("sess-el"); if(t) t.textContent = fmtClock(Date.now() - a.start);
   const end = el + sessLeft(a), e2 = document.getElementById("sess-end"), m = document.getElementById("sess-mark");
-  if(e2) e2.textContent = `fin prévue vers ${sessClock(a, end)}`; if(m) m.style.left = Math.min(100, end / dur * 100).toFixed(1) + "%";
+  if(e2) e2.textContent = `Fin prévue à ${sessClock(a, end)}`; if(m) m.style.left = Math.min(100, end / dur * 100).toFixed(1) + "%";
   document.getElementById("sess-bar").classList.toggle("over", el > dur);
 }
 // Un exercice de plus, dans la logique du programme : muscle du jour le moins servi (au poids du muscle), favoris et habitudes d'abord
@@ -5577,10 +5577,10 @@ function sessAdapt(a, dir){   // dir > 0 : rallonger (n'ajoute que), dir < 0 : r
 }
 function sessMsg(r, dur){
   const nm = e => e.name, sig = noxMet() ? "🧪 " : "⏱ ", ex = r.removed.filter(Boolean), sets = r.removed.length - ex.length;
-  if(r.added.length) return `${sig}${dur} min : j'ajoute ${r.added.map(e => `${nm(e)} (${primOf(e).toLowerCase()})`).join(", ")}. Fin vers ${sessClock(A(), r.end)}.`;
-  if(r.removed.length) return `${sig}${dur} min : je retire ${[ex.length ? ex.map(nm).join(", ") : "", sets ? `${sets} série${sets > 1 ? "s" : ""}` : ""].filter(Boolean).join(" et ")}. Fin vers ${sessClock(A(), r.end)}.`;
-  return r.end > dur + 4 ? `${sig}${dur} min : ton programme dépasse encore un peu (fin vers ${sessClock(A(), r.end)}). Raccourcis si tu es pressé.`
-    : `${sig}${dur} min : ta séance tient déjà dedans (fin vers ${sessClock(A(), r.end)}).`;
+  if(r.added.length) return `${sig}${dur} min : j'ajoute ${r.added.map(e => `${nm(e)} (${primOf(e).toLowerCase()})`).join(", ")}. Fin prévue à ${sessClock(A(), r.end)}.`;
+  if(r.removed.length) return `${sig}${dur} min : je retire ${[ex.length ? ex.map(nm).join(", ") : "", sets ? `${sets} série${sets > 1 ? "s" : ""}` : ""].filter(Boolean).join(" et ")}. Fin prévue à ${sessClock(A(), r.end)}.`;
+  return r.end > dur + 4 ? `${sig}${dur} min : ton programme dépasse encore un peu (fin prévue à ${sessClock(A(), r.end)}). Raccourcis si tu es pressé.`
+    : `${sig}${dur} min : ta séance tient déjà dedans (fin prévue à ${sessClock(A(), r.end)}).`;
 }
 function liveMeta(){
   const a = S.profile.active; if(!a) return "";
