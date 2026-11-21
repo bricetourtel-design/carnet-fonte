@@ -105,6 +105,7 @@ button.thumb{padding:0}
 
 /* Séance en cours */
 .live-head{display:flex;align-items:center;gap:12px}
+.act-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.act-b{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;background:var(--fill);border:0;color:var(--text);font-size:12.5px;text-align:center}.act-b span{font-size:24px}
 .sess-bar{background:var(--fill);border-radius:16px;padding:8px 10px 10px;margin-bottom:10px}.sess-top{display:flex;align-items:center;gap:10px}
 .sess-txt{flex:1;text-align:center;line-height:1.15}.sess-txt b{font-size:18px;font-variant-numeric:tabular-nums}.sess-txt span{color:var(--muted);font-size:14px}.sess-txt small{display:block;font-size:12px;color:var(--muted)}
 .sess-b{width:38px;height:38px;border-radius:50%;border:1px solid var(--line,rgba(127,127,127,.3));background:transparent;color:var(--accent);font-size:22px;font-weight:600;line-height:1}
@@ -954,7 +955,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 l";
+const APP_VERSION = "2026-11-21 m";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1698,7 +1699,44 @@ function cardioKcal(w, bw){ bw = bw || bodyweight(); let k = 0;
   return k; }
 // Ce que mange le Gymon : le poids soulevé, plus le cardio converti en poulet (poids de corps par défaut 75 kg s'il n'est pas renseigné)
 const cardioFood = w => Math.round(cardioKcal(w, bodyweight() || 75) * CARDIO_KG);
-const gymFood = w => wVolume(w) + cardioFood(w);
+/* Activités hors musculation (21 nov. 2026, décision du propriétaire) : natation, foot, vélo… rangées à part des exercices
+   (séance { act:{k, min, km} } sans exercice). Durée et/ou km → calories (MET × poids de corps × heures ; avec les km, le MET suit la vitesse)
+   → nourriture du Gymon (1 kcal = 15 kg, comme le cardio), masse et taille ; fatigue des muscles sollicités (séries équivalentes par heure). */
+const SPORTS = {
+  marche:{e:"🚶", n:"Marche", met:3.5, km:1, mus:{"Mollets":1.5, "Quadriceps":1}},
+  rando:{e:"🥾", n:"Randonnée", met:6, km:1, mus:{"Quadriceps":3, "Mollets":3, "Fessiers":2, "Ischios":2}},
+  course:{e:"🏃", n:"Course à pied", met:9.8, km:1, mus:{"Quadriceps":4, "Mollets":5, "Ischios":3, "Fessiers":3}},
+  velo:{e:"🚴", n:"Vélo", met:7.5, km:1, mus:{"Quadriceps":5, "Fessiers":2, "Mollets":2}},
+  natation:{e:"🏊", n:"Natation", met:8, km:1, mus:{"Grand dorsal":4, "Deltoïde avant":2, "Deltoïde arrière":2, "Triceps":2, "Pectoraux":2}},
+  foot:{e:"⚽", n:"Football", met:7, mus:{"Quadriceps":6, "Ischios":5, "Mollets":5, "Fessiers":4, "Adducteurs":4}},
+  basket:{e:"🏀", n:"Basket", met:6.5, mus:{"Quadriceps":4, "Mollets":4, "Fessiers":2, "Deltoïde avant":1}},
+  hand:{e:"🤾", n:"Handball", met:8, mus:{"Quadriceps":4, "Mollets":3, "Deltoïde avant":2, "Pectoraux":1}},
+  rugby:{e:"🏉", n:"Rugby", met:8.3, mus:{"Quadriceps":5, "Ischios":4, "Fessiers":3, "Haut du dos":3, "Pectoraux":2, "Grand dorsal":2}},
+  tennis:{e:"🎾", n:"Tennis", met:7.3, mus:{"Deltoïde avant":2, "Avant-bras":3, "Obliques":2, "Quadriceps":2, "Mollets":3}},
+  padel:{e:"🏓", n:"Padel", met:6, mus:{"Deltoïde avant":2, "Avant-bras":2, "Obliques":1, "Quadriceps":2, "Mollets":2}},
+  badminton:{e:"🏸", n:"Badminton", met:5.5, mus:{"Mollets":3, "Quadriceps":2, "Deltoïde avant":2, "Avant-bras":2}},
+  boxe:{e:"🥊", n:"Boxe", met:7.8, mus:{"Deltoïde avant":4, "Triceps":2, "Pectoraux":2, "Obliques":2, "Mollets":2}},
+  martial:{e:"🥋", n:"Arts martiaux", met:7, mus:{"Grand dorsal":2, "Haut du dos":2, "Quadriceps":3, "Avant-bras":3, "Abdos":2}},
+  danse:{e:"💃", n:"Danse", met:5, mus:{"Mollets":3, "Quadriceps":2, "Fessiers":2}},
+  yoga:{e:"🧘", n:"Yoga", met:2.5, mus:{"Abdos":1, "Lombaires":1}},
+  escalade:{e:"🧗", n:"Escalade", met:8, mus:{"Grand dorsal":5, "Avant-bras":6, "Biceps":3, "Haut du dos":2}},
+  ski:{e:"⛷️", n:"Ski", met:7, mus:{"Quadriceps":6, "Fessiers":3, "Adducteurs":2}},
+  aviron:{e:"🚣", n:"Aviron", met:7, km:1, mus:{"Grand dorsal":4, "Quadriceps":3, "Haut du dos":3, "Biceps":2, "Lombaires":2}},
+  travail:{e:"🧱", n:"Travail physique", met:4.5, mus:{"Lombaires":2, "Haut du dos":2, "Quadriceps":2, "Avant-bras":2}}
+};
+function actMet(a){
+  const d = SPORTS[a.k]; if(!d) return 0; const v = a.km > 0 && a.min > 0 ? a.km / (a.min / 60) : 0;   // vitesse en km/h
+  if(!v) return d.met;
+  if(a.k === "course") return Math.min(16, Math.max(6, v));
+  if(a.k === "marche") return v < 4 ? 3 : v < 5 ? 3.5 : v < 6 ? 4.3 : 5;
+  if(a.k === "velo") return v < 16 ? 6 : v < 20 ? 8 : v < 25 ? 10 : 12;
+  if(a.k === "natation") return v < 1.8 ? 6 : v < 2.5 ? 8.3 : 10;
+  if(a.k === "aviron") return v < 8 ? 7 : 9;
+  return d.met;
+}
+const actKcal = (w, bw) => w.act && SPORTS[w.act.k] ? actMet(w.act) * (bw || bodyweight() || 75) * w.act.min / 60 : 0;
+const actFood = w => w.act ? Math.round(actKcal(w, bodyweight() || 75) * CARDIO_KG) : 0;
+const gymFood = w => wVolume(w) + cardioFood(w) + actFood(w);
 const unitOf = e => TIMED.has(e && e.id) ? "s" : isCardio(e) ? "min" : "reps";
 function defaultRange(e){
   if(EX_RANGE[e.id]) return EX_RANGE[e.id];
@@ -3203,8 +3241,10 @@ function routineForDuo(ui, mins){
   const g = generatePlan({days:[{dow:todayDow(), muscles:DUOS[ui].m.slice(), off:{}, min:mins}], novOff:0, noNovelty:true});
   return {id:"today-duo-"+ui, name:DUOS[ui].label, items:g.days[0].items.map(it => ({exId:it.exId, sets:it.sets}))};
 }
+// 21 nov. 2026 (décision du propriétaire) : toujours une séance conseillée, même un jour de repos. Ordre de priorité :
+// 1. la fatigue musculaire (score de récupération), 2. la routine du professeur (+10), 3. le jour où elle est programmée (+8).
 function chooseToday(){
-  const t = todayDow(), r0 = S.profile.routines.find(r => r.plan && r.dow===t); if(!r0) return null;
+  const t = todayDow(), r0 = S.profile.routines.find(r => r.plan && r.dow===t) || null;
   const {resG:res} = strengthByMuscle(), weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible");
   const rec = {}; MUSCLES.forEach(m => rec[m] = recovery(m).pct);
   const score = (ms, bonus) => { const main = ms.filter(m => m!=="Abdos"); if(!main.length) return -999;
@@ -3215,25 +3255,28 @@ function chooseToday(){
   const swapped = new Set((S.profile.swaps||[]).filter(s => s.week===wk).flatMap(s => [s.a, s.b]));
   const cands = [];
   S.profile.routines.filter(r => r.plan).forEach(r => {
-    if(r!==r0 && (r.dow < t || doneWeek.has(r.id) || swapped.has(r.id))) return;   // seulement les séances encore à venir cette semaine
-    const ms = musclesOf(r); cands.push({key:r.id, kind:"plan", r, ms, name:r.name, score:score(ms, r===r0 ? 15 : 6)});
+    if(r !== r0 && (doneWeek.has(r.id) || swapped.has(r.id))) return;   // séances de la semaine pas encore faites
+    const ms = musclesOf(r); cands.push({key:r.id, kind:"plan", r, ms, name:r.name, score:score(ms, 10 + (r === r0 ? 8 : 0))});
   });
   DUOS.forEach((u,ui) => cands.push({key:"duo:"+ui, kind:"duo", ui, ms:u.m, name:u.label, score:score(u.m, 0)}));
   cands.sort((a,b) => b.score - a.score);
-  const planned = cands.find(c => c.r===r0), stored = S.profile.todayPick && S.profile.todayPick.date===dayKey() ? S.profile.todayPick.key : null;
-  let pick = stored ? (cands.find(c => c.key===stored) || planned) : (cands[0].score - planned.score >= 10 ? cands[0] : planned);
-  const eff = pick.kind==="plan" ? pick.r : routineForDuo(pick.ui, planMin(r0));
-  return {r0, planned, pick, eff, cands, rec, weak, switched: pick!==planned, manual: !!stored};
+  const planned = r0 ? cands.find(c => c.r===r0) : null, stored = S.profile.todayPick && S.profile.todayPick.date===dayKey() ? S.profile.todayPick.key : null;
+  let pick = stored ? (cands.find(c => c.key===stored) || planned || cands[0]) : planned && cands[0].score - planned.score < 10 ? planned : cands[0];
+  if(!pick || pick.score <= -900) return null;
+  const eff = pick.kind==="plan" ? pick.r : routineForDuo(pick.ui, r0 ? planMin(r0) : ((S.profile.plan || {}).days || [])[0] ? ((S.profile.plan.days[0] || {}).min || 60) : 60);
+  const doneToday = S.workouts.some(w => w.start >= new Date().setHours(0,0,0,0));
+  return {r0, planned, pick, eff, cands, rec, weak, switched: !!r0 && pick!==planned, manual: !!stored, restDay:!r0, doneToday};
 }
 function todayCardHTML(ch){
   const ad = adaptToday(ch.eff), its = ad.items, pct = m => Math.round(ch.rec[m]*100);
-  const tired = ch.planned.ms.filter(m => ch.rec[m] < 0.9 && m!=="Abdos");
+  const tired = (ch.planned || ch.pick).ms.filter(m => ch.rec[m] < 0.9 && m!=="Abdos");
   const why = ch.switched
     ? `<div class="alert warn"><b>Séance changée.</b> Prévu : ${esc(ch.r0.name)}${tired.length ? ` — ${tired.map(m => `${m.toLowerCase()} à ${pct(m)} %`).join(", ")}` : ""}. Plus adaptée aujourd'hui : <b>${esc(ch.eff.name)}</b> (${ch.pick.ms.filter(m=>m!=="Abdos").map(m => `${m.toLowerCase()} ${pct(m)} %`).join(", ")}).${ch.pick.kind==="plan" ? ` La séance prévue passe au ${DOWS[ch.pick.r.dow].toLowerCase()}.` : ""}</div>`
-    : tired.length ? `<div class="alert warn">${tired.map(m => `${m} à ${pct(m)} %`).join(", ")} de récupération, mais c'est encore la meilleure option du jour : séance allégée.</div>` : "";
+    : tired.length ? `<div class="alert warn">${tired.map(m => `${m} à ${pct(m)} %`).join(", ")} de récupération, mais c'est encore la meilleure option du jour : séance allégée.</div>`
+    : ch.restDay ? `<p class="small muted" style="margin:0">${ch.doneToday ? "Déjà une séance aujourd'hui." : "Pas de séance prévue aujourd'hui."} Si tu veux t'entraîner, voici la plus adaptée à ta récupération.</p>` : "";
   const alts = ch.cands.filter(c => c!==ch.pick && c.score > -900).slice(0,3);
   return `<div class="card routine todaycard">
-      <div><span class="ctag">Aujourd'hui</span>${ch.switched ? ' <span class="ctag soft">Changée</span>' : ""}</div>
+      <div>${noxMet() ? '<span class="nox-fio">🧪</span> ' : ""}<span class="ctag">${ch.restDay || ch.doneToday ? "Séance conseillée" : "Aujourd'hui"}</span>${ch.switched ? ' <span class="ctag soft">Changée</span>' : ""}</div>
       <div class="row"><h3>${esc(ch.eff.name)}</h3><span class="spacer"></span>
         ${ch.eff.id.startsWith("today-") ? "" : `<button class="btn sm ghost" data-act="edit-routine" data-id="${ch.eff.id}">Modifier</button>`}</div>
       ${why}
@@ -3242,7 +3285,7 @@ function todayCardHTML(ch){
       <ul>${its.map(it => `<li><b>${it.sets} ×</b> ${esc(exById(it.exId).name)}${it.added?' <span class="tagx ok">ajouté</span>':it.weak?' <span class="tagx ok">point faible</span>':it.flag==="rec"?' <span class="tagx warnx">allégé</span>':""}</li>`).join("") || "<li>Aucun exercice</li>"}</ul>
       <button class="btn primary" data-act="start-today">Démarrer ${esc(ch.eff.name)}</button>
       <details class="duos"><summary>Autres options du jour</summary><div class="duo-list">
-        ${ch.switched || ch.manual ? `<button class="duo" data-act="today-pick" data-k="${ch.r0.id}"><b>Garder la séance prévue : ${esc(ch.r0.name)}</b><span>${ch.planned.ms.filter(m=>m!=="Abdos").map(m => `${m} ${pct(m)} %`).join(", ")}</span></button>` : ""}
+        ${ch.r0 && (ch.switched || ch.manual) ? `<button class="duo" data-act="today-pick" data-k="${ch.r0.id}"><b>Garder la séance prévue : ${esc(ch.r0.name)}</b><span>${ch.planned.ms.filter(m=>m!=="Abdos").map(m => `${m} ${pct(m)} %`).join(", ")}</span></button>` : ""}
         ${alts.filter(c => c!==ch.planned).map(c => `<button class="duo" data-act="today-pick" data-k="${c.key}"><b>${esc(c.name)}${c.kind==="plan"?" (échange)":""}</b><span>${c.ms.filter(m=>m!=="Abdos").map(m => `${m} ${pct(m)} %`).join(", ")}${ch.weak.some(m=>c.ms.includes(m))?" · point faible":""}</span></button>`).join("")}
         ${ch.manual ? `<button class="duo" data-act="today-auto"><b>Laisser l'app choisir</b><span>Revenir à la proposition automatique</span></button>` : ""}
       </div></details>
@@ -3327,7 +3370,7 @@ function creatureHeight(c){
   return CREATURE_CFG.tallStart + CREATURE_CFG.cmPerSession * (c.tall ?? c.fidelity ?? 0);
 }
 // Type de séance : « cardio » si plus de la moitié de ce qu'elle rapporte vient du cardio, sinon « muscu » ; chaque séance se compare à son type
-const sessionKind = w => cardioFood(w) > wVolume(w) ? "cardio" : "muscu";
+const sessionKind = w => cardioFood(w) + actFood(w) > wVolume(w) ? "cardio" : "muscu";
 // Séance complète (elle fait grandir) : pas trop loin du volume habituel de son type ; les 3 premières de chaque type comptent toujours
 function sessionFull(w){
   const D = 86400000, t = w.end || w.start, k = sessionKind(w), l = S.workouts.filter(x => { const e = x.end || x.start; return x.id !== w.id && e < t && e >= t - SAT.rationDays * D && gymFood(x) > 0 && sessionKind(x) === k; });
@@ -4298,7 +4341,7 @@ function gyActionsHTML(c, v){
   const smelly = isSmelly(c), sweaty = isSweaty(c), food = (c.fridge || []).some(x => x.k !== "poulet" && x.k !== "or" || x.kg > 0);
   const newJ = (c.journal || []).some(j => j.ts > (c.jSeen || 0) && j.k !== "born");
   const A = [
-    {act:"goto", tab:"seance", e:"🏋️", l:S.profile.active ? "Reprendre" : "S'entraîner", a:S.profile.active ? "•" : "", s:S.profile.active ? "séance en cours" : "aller à la séance", cls:" go"},
+    {act:"train-best", e:"🏋️", l:S.profile.active ? "Reprendre" : "S'entraîner", a:S.profile.active ? "•" : "", s:S.profile.active ? "séance en cours" : "démarrer la séance conseillée", cls:" go"},
     {act:"fridge", e:"🍗", l:"Nourrir", a:v < 50 ? "!" : v < 100 && food ? "•" : "", w:v < 30, s:`Satiété ${v} %`},
     {act:"gy-wash", e:"🚿", l:"Laver", a:smelly ? "!" : sweaty ? "•" : "", w:smelly, s:smelly ? "il sent mauvais" : sweaty ? "il transpire" : "propre"},
     {act:"gy-pet", e:"💜", l:"Câlin", a:"", s:"un câlin"},
@@ -4482,6 +4525,7 @@ function celebHTML(w, cr, hatch){
    Durée plafonnée à 2 h 30 (séance oubliée ouverte). Sans poids de corps, pas d'estimation. */
 const KCAL_LOW = new Set(["Quadriceps", "Ischios", "Fessiers", "Lombaires"]);
 function wCalories(w){
+  if(w.act){ const bw = bodyweight(); return bw && SPORTS[w.act.k] ? {kcal:Math.round(actKcal(w, bw) / 5) * 5, met:actMet(w.act), h:w.act.min / 60, bw, cardio:0, cMin:0, act:true} : null; }
   const bw = bodyweight(), h = Math.min(2.5, Math.max(0, ((w.end || Date.now()) - w.start) / 3600000));
   const strength = w.exercises.filter(ex => !isCardio(exById(ex.exId))), sets = strength.flatMap(ex => workSets(ex).map(() => exById(ex.exId)));
   const cMin = w.exercises.filter(ex => isCardio(exById(ex.exId))).reduce((t, ex) => t + cardioMin(ex), 0), cK = cardioKcal(w, bw);
@@ -5048,6 +5092,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-21", t:"🏊 Tes autres sports comptent", x:"Natation, foot, vélo, marche, tennis, escalade… : sur la page Séance, « Autre activité » enregistre la durée et/ou les km. Ton Gymon mange, grossit et grandit, tes muscles sollicités se reposent, sans mélanger ces activités à tes exercices de musculation. Et la page Séance met maintenant en tête la séance la plus adaptée à ta récupération ; « S'entraîner » sur la page Gymon la démarre directement."},
   {d:"2026-11-21", t:"🏃 Le cardio a sa propre référence", x:"Une séance de cardio se compare maintenant à tes séances de cardio habituelles, et une séance de muscu à tes séances de muscu : un bon footing remet ton Gymon à 100 % et le fait grandir, même s'il pèse moins de tonnes qu'une séance de fonte. Le cardio nourrit et fait grossir ton Gymon, mais ne change plus la taille de ses muscles."},
   {d:"2026-11-21", t:"📏 La taille de ton Gymon = ton assiduité", x:"Ton Gymon grandit de 3,3 cm à chaque séance complète, au même rythme à tous les stades : deux joueurs avec autant de séances ont un Gymon de la même taille. Une séance compte si elle atteint au moins 60 % de ton volume habituel ; une séance bâclée le nourrit mais ne le fait pas grandir. Sa taille a été recalculée sur ton historique."},
   {d:"2026-11-21", t:"⚖️ La masse de ton Gymon = ta charge soulevée", x:"Ton Gymon prend 300 g par tonne soulevée (cardio compris), dès la fin de la séance et au même taux à tous les stades. Plus de poids minimum par stade, plus de bonus de régularité, et steaks, omelettes et portions dorées ne servent plus qu'à le rassasier. Sa masse a été recalculée sur tout ton historique : c'est l'image exacte de ce que tu as soulevé."},
@@ -5388,6 +5433,7 @@ function recoveryFine(m, now){
     w.exercises.forEach(ex => { const e = exById(ex.exId), n = workSets(ex).length; if(!n) return;
       const f = ex.feel>=5 ? 1.15 : ex.feel===4 ? 1.08 : ex.feel && ex.feel<=2 ? 0.9 : 1;
       const p = workPct(e, m); if(!p) return; load += n * p; if(p >= .5) hard = Math.max(hard, f); });
+    if(w.act && SPORTS[w.act.k]) load += (SPORTS[w.act.k].mus[m] || 0) * w.act.min / 60;   // activité hors muscu : séries équivalentes par heure
     if(load < 0.5) return;
     const need = Math.min(84, (REC_BASE[m] || 50) * Math.min(1.2, 0.6 + load/14) * hard);   // heures, 84 h max
     const h = (now - end)/3600000;
@@ -5398,6 +5444,36 @@ function recoveryFine(m, now){
 function recState(r){ return r.pct>=0.9 ? {k:"ok", label:"Récupéré"} : r.pct>=0.5 ? {k:"mid", label:"En récupération"} : {k:"low", label:"Fatigué"}; }
 const fmtHours = h => h < 1 ? "moins d'1 h" : h < 36 ? `${Math.round(h)} h` : `${Math.round(h/24)} j`;
 
+// Saisie d'une activité hors musculation : le type, puis la durée et/ou les km ; enregistrée comme une séance sans exercice
+const ACT_SPEED = {marche:5, rando:4, course:10, velo:18, natation:2, aviron:8};
+function actSheet(k){
+  if(!k || !SPORTS[k]) return openSheet(`<h3>Autre activité</h3><p class="small muted" style="margin:0">Elle nourrit ton Gymon et compte dans la récupération de tes muscles, sans se mêler à tes exercices de musculation.</p>
+    <div class="act-grid">${Object.entries(SPORTS).map(([key, a]) => `<button class="act-b" data-act="act-pick" data-k="${key}"><span>${a.e}</span>${esc(a.n)}</button>`).join("")}</div>
+    <button class="btn" data-act="close">Annuler</button>`);
+  const a = SPORTS[k];
+  openSheet(`<h3>${a.e} ${esc(a.n)}</h3>
+    <label class="field">Durée (minutes)<input id="act-min" inputmode="numeric" placeholder="ex. 45"></label>
+    ${a.km ? `<label class="field">Distance (km)${a.km ? " · facultatif si la durée est indiquée" : ""}<input id="act-km" inputmode="decimal" placeholder="ex. 5"></label>` : ""}
+    <p class="small muted" style="margin:0">On calcule les calories, ce que mange ton Gymon et les muscles sollicités : ${esc(Object.keys(a.mus).join(", ").toLowerCase())}.</p>
+    <button class="btn primary" data-act="act-save" data-k="${k}">Enregistrer</button><button class="btn" data-act="act-new">Changer d'activité</button>`);
+}
+function actSave(k){
+  const a = SPORTS[k]; if(!a) return; let min = Math.round(num((document.getElementById("act-min") || {}).value)), km = num((document.getElementById("act-km") || {}).value);
+  if(!(km > 0)) km = 0; if(!(min > 0) && km && ACT_SPEED[k]) min = Math.round(km / ACT_SPEED[k] * 60);
+  if(!(min > 0)){ toast(a.km ? "Indique la durée ou la distance" : "Indique la durée"); return; }
+  min = Math.min(600, min); km = Math.min(300, km);
+  const end = Date.now(), w = {id:uidGen("w"), name:`${a.e} ${a.n}`, start:end - min * 60000, end, act:{k, min, ...(km ? {km} : {})}, exercises:[], prs:[]};
+  const c0 = creatureState(), h0 = creatureHeight(c0);
+  S.workouts.push(w); touchProfile(); saveWorkout(w); fatigueMemo = null;
+  const cr = creatureFeed(w), c = creatureState(), k2 = wCalories(w), dh = creatureHeight(c) - h0; render();
+  openSheet(`<h3>Activité enregistrée : ${a.e} ${esc(a.n)}</h3>
+    <div class="tiles"><div class="tile"><span>Durée</span><strong>${min} min</strong></div>${km ? `<div class="tile"><span>Distance</span><strong>${fmtN(km, 1)} km</strong></div>` : ""}
+      <div class="tile"><span>Calories</span><strong>${k2 ? "≈ " + fmtN(k2.kcal, 0) + " kcal" : "—"}</strong></div></div>
+    ${cr && !cr.dead ? `<button class="cr-meal" data-act="cr-see">${creatureSVG(c, true)}<span><b>Ton Gymon a mangé</b> ≈ ${fmtVol(cr.vol)} · satiété ${Math.round(cr.satBefore)} → ${Math.round(cr.satAfter)} %
+      · masse +${fmtWeight(cr.gain)}${dh > 0 ? ` · taille +${fmtN(dh, 1)} cm` : " · pas de taille (plus léger que tes activités habituelles)"}</span></button>` : cr && cr.dead ? `<p class="small" style="margin:0">Ton Gymon est mort : cette activité l'attend pour quand tu le ressusciteras.</p>` : ""}
+    <p class="small muted" style="margin:0">Récupération : ${esc(Object.keys(a.mus).join(", ").toLowerCase())} sollicités.${k2 ? "" : " Indique ton poids dans Réglages pour les calories."}</p>
+    <button class="btn primary" data-act="close">Fermer</button>`);
+}
 function viewHome(){
   const now = Date.now(), ws = weekStart(now);
   const thisWeek = S.workouts.filter(w => w.start >= ws);
@@ -5409,12 +5485,12 @@ function viewHome(){
   const ord = planOrder(), t = todayDow();
   const badge = r => { const o = ord.find(x => x.r===r); if(!o) return "";
     return o.done ? '<span class="ctag ok">Faite aujourd\'hui</span>' : o.delta===0 ? '<span class="ctag">Aujourd\'hui</span>' : o.delta===1 ? '<span class="ctag soft">Demain</span>' : ""; };
-  const restBanner = ord.length && !ord.some(o => o.delta===0) ? `<div class="alert warn">Jour de repos aujourd'hui. Prochaine séance : <b>${esc(ord[0].r.name)}</b>.</div>` : "";
-  const ch = ord.some(o => o.delta===0 && !o.done) ? chooseToday() : null, wk = weekStart(now);
+  const restBanner = ord.length && !ord.some(o => o.delta===0) ? `<div class="alert warn">Jour de repos prévu. Prochaine séance de la routine : <b>${esc(ord[0].r.name)}</b>.</div>` : "";
+  const ch = chooseToday(), wk = weekStart(now);
   // Échanges de la semaine : la séance prévue aujourd'hui passe au jour de la séance choisie
   const swapMap = {}; (S.profile.swaps||[]).filter(x => x.week===wk).forEach(x => swapMap[x.b] = x.a);
   if(ch && ch.switched && ch.pick.kind==="plan") swapMap[ch.pick.r.id] = ch.r0.id;
-  const card = r0 => { if(ch && r0===ch.r0) return todayCardHTML(ch);
+  const card = r0 => {
     const r = swapMap[r0.id] ? (S.profile.routines.find(x => x.id===swapMap[r0.id]) || r0) : r0, ad = null, its = r.items; return `
     <div class="card routine">
       ${badge(r0) ? `<div>${badge(r0)}</div>` : ""}
@@ -5432,7 +5508,7 @@ function viewHome(){
     </div>`; };
   const others = S.profile.routines.filter(r => !r.plan);
   const routines = restBanner + ord.map(o => card(o.r)).join("") + (ord.length && others.length ? `<h2 class="big">Autres programmes</h2>` : "") + others.map(card).join("");
-  return `
+  return `${ch ? todayCardHTML(ch) : ""}
     <section class="card">
       <div class="week">${days}</div>
       <div class="stats">
@@ -5452,6 +5528,7 @@ function viewHome(){
       <p class="small muted" style="margin:10px 0 0">Calculé muscle par muscle sur 30 à 66 h, ajusté au nombre de séries, au ressenti et au travail indirect (ex. triceps dans les développés).</p>
     </section>
     <button class="btn primary wide" data-act="start-empty">Démarrer une séance libre</button>
+    <button class="btn wide" data-act="act-new">＋ Autre activité : natation, foot, vélo…</button>
     <button class="btn ghost wide" data-act="team-join">👥 Rejoindre la séance d'un ami</button>
     <h2 class="big">${ord.length ? "Ma semaine" : "Mes programmes"}</h2>
     ${ord.length ? "" : `<button class="btn ghost wide" data-act="goto" data-tab="routine">Créer ma routine de la semaine</button>`}
@@ -5661,6 +5738,9 @@ function viewHistory(){
   ws.forEach(w => {
     const m = fmtDate(w.start,{month:"long",year:"numeric"});
     if(m!==month){ month = m; out += `<h2>${esc(m)}</h2>`; }
+    if(w.act && SPORTS[w.act.k]){ const A = SPORTS[w.act.k], k = wCalories(w);
+      out += `<button class="card wk" data-act="open-w" data-id="${w.id}"><div class="wk-top"><b>${A.e} ${esc(A.n)}</b><span class="muted small">${esc(fmtDate(w.start))}</span></div>
+        <div class="wk-meta"><span>${w.act.min} min</span>${w.act.km ? `<span>${fmtN(w.act.km, 1)} km</span>` : ""}${k ? `<span>≈ ${fmtN(k.kcal, 0)} kcal</span>` : ""}</div></button>`; return; }
     const lines = w.exercises.map(ex => {
       const s = workSets(ex); if(!s.length) return "";
       const best = s.reduce((a,b) => e1rm(num(b.w),num(b.r)) > e1rm(num(a.w),num(a.r)) ? b : a);
@@ -6131,10 +6211,14 @@ const ACT = {
     else copy();
   },
   "cr-see": () => { closeSheet(); tab = "creature"; render(); window.scrollTo(0,0); },
-  "start-today": () => { const ch = chooseToday(); if(!ch) return; const its = adaptToday(ch.eff).items;
-    if(ch.switched && ch.pick.kind==="plan"){ const wk = weekStart(Date.now());
+  "start-today": () => { const ch = chooseToday(); if(!ch){ tab = "seance"; render(); return; } const its = adaptToday(ch.eff).items;
+    if(ch.switched && ch.r0 && ch.pick.kind==="plan"){ const wk = weekStart(Date.now());
       S.profile.swaps = (S.profile.swaps||[]).filter(x => x.week===wk).concat({week:wk, a:ch.r0.id, b:ch.pick.r.id}); }
-    startWorkout(ch.eff.name, its.map(it => ({exId:it.exId, plan:it.sets, ...(it.ss ? {ss:it.ss} : {}), sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), ch.pick.kind==="plan" ? ch.pick.r.id : ch.r0.id); },
+    startWorkout(ch.eff.name, its.map(it => ({exId:it.exId, plan:it.sets, ...(it.ss ? {ss:it.ss} : {}), sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), ch.pick.kind==="plan" ? ch.pick.r.id : ch.r0 ? ch.r0.id : null); },
+  "train-best": () => { if(S.profile.active){ tab = "seance"; render(); window.scrollTo(0, 0); return; } ACT["start-today"](); },
+  "act-new": () => actSheet(),
+  "act-pick": b => actSheet(b.dataset.k),
+  "act-save": b => actSave(b.dataset.k),
   "today-pick": b => { S.profile.todayPick = {date:dayKey(), key:b.dataset.k}; touchProfile(); render(); },
   "today-auto": () => { delete S.profile.todayPick; touchProfile(); render(); },
   "start-routine": b => { const r = S.profile.routines.find(x=>x.id===b.dataset.id); if(!r) return;
@@ -6378,6 +6462,10 @@ const ACT = {
   "flash-close": () => flash(null),
 
   "open-w": b => { const w = S.workouts.find(x=>x.id===b.dataset.id); if(!w) return;
+    if(w.act && SPORTS[w.act.k]){ const A = SPORTS[w.act.k], k = wCalories(w);
+      openSheet(`<h3>${A.e} ${esc(A.n)}</h3><p class="muted" style="margin:0">${esc(fmtDate(w.start,{weekday:"long",day:"numeric",month:"long",year:"numeric"}))} · ${w.act.min} min${w.act.km ? ` · ${fmtN(w.act.km, 1)} km` : ""}${k ? ` · ≈ ${fmtN(k.kcal, 0)} kcal` : ""}</p>
+        <p class="small muted" style="margin:0">Muscles sollicités : ${esc(Object.keys(A.mus).join(", ").toLowerCase())}.</p>
+        <button class="btn ghost danger" data-act="w-delete" data-id="${w.id}">Supprimer l'activité</button>`); return; }
     openSheet(`<h3>${esc(w.name)}</h3>
       <p class="muted" style="margin:0">${esc(fmtDate(w.start,{weekday:"long",day:"numeric",month:"long",year:"numeric"}))} · ${fmtDur((w.end||w.start)-w.start)} · ${fmtVol(wVolume(w))}</p>
       ${offReasonsHTML(w, "Pas en forme ce jour-là ? Indiquez pourquoi (facultatif)")}
@@ -7038,6 +7126,7 @@ function cleanImport(d){
   const workouts = d.workouts.map(w => keep(w && safeId(w.id) && isTime(w.start) && Array.isArray(w.exercises), () => ({...w,
     name:typeof w.name==="string" ? w.name : "Séance", end:isTime(w.end) ? w.end : w.start,
     routineId:safeId(w.routineId) ? w.routineId : null, prs:Array.isArray(w.prs) ? w.prs.filter(safeId) : [], team:sanitizeTeam(w.team),
+    act:w.act && SPORTS[w.act.k] ? {k:w.act.k, min:Math.min(600, Math.max(1, Math.round(num(w.act.min)) || 30)), ...(num(w.act.km) > 0 ? {km:Math.min(300, num(w.act.km))} : {})} : undefined,
     exercises:w.exercises.filter(ex => ex && safeId(ex.exId) && Array.isArray(ex.sets)).map(ex => ({...ex,
       feel:Math.min(5, Math.max(0, Math.round(num(ex.feel)))), uni:ex.uni ? 1 : undefined,
       sets:ex.sets.filter(st => st && typeof st==="object").map(st => ({...st, w:String(st.w ?? "").replace(/[^\d.,]/g,""), r:String(st.r ?? "").replace(/[^\d.,]/g,""), done:!!st.done, warm:!!st.warm}))}))}))).filter(Boolean);
