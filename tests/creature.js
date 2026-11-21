@@ -126,7 +126,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const s1 = Math.round(f1.satAfter), grew = c.weight > w0;
     const b = mk("fd2", 5000, ["squat"]); S.workouts.push(b); const f2 = creatureFeed(b);
     const s2 = Math.round(f2.satAfter), poulet = c.fridge.find(x => x.k === "poulet"), steak = c.fridge.some(x => x.k === "steak");
-    const w1 = c.weight, d = mk("fd3", 800); S.workouts.push(d); const f3 = creatureFeed(d); const ome = c.fridge.some(x => x.k === "omelette"), still = c.weight === w1;
+    const w1 = c.weight, d = mk("fd3", 800); S.workouts.push(d); const f3 = creatureFeed(d); const ome = c.fridge.some(x => x.k === "omelette"), still = Math.abs(c.weight - w1 - gymFood(d) / 1000 * CREATURE_CFG.kgPerTonne) < 1e-9;
     const res = {r1, s1, grew, s2, fr:poulet && poulet.kg, eaten2:Math.round(f2.eaten), steak, ome, still, full:f3.satAfter, plateau:c.full - n};
     S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return res; });
   ok(meal.r1 === 1000 && meal.s1 === 66 && meal.grew, "nouveau joueur : séance habituelle ≈ 2 333 kg ; 1 000 kg comblent 3/7 du creux (40 → 66 %), et il grossit", meal);
@@ -141,7 +141,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(usual.u === 6000 && usual.usual.join() === "100,0" && usual.long.join() === "100,0" && usual.more[0] === 100 && usual.more[1] === 1800 && usual.less[0] < 90 && usual.less[1] === 0,
     "séance habituelle : 100 % sans stock (même après 4 jours) ; +30 % : surplus au frigo ; −30 % : pas 100 %", usual);
   ok(meal.steak && meal.ome, "un record rapporte un steak, la 3e séance de la semaine une omelette (rangés au frigo)", meal);
-  ok(meal.still && meal.full === 100 && meal.plateau === 6*3600e3, "déjà rassasié : tout va au frigo et il ne grossit pas ; 6 h à 100 % après le repas", meal);
+  ok(meal.still && meal.full === 100 && meal.plateau === 6*3600e3, "déjà rassasié : tout va au frigo, mais la charge soulevée le fait grossir quand même (0,3 kg par tonne) ; 6 h à 100 % après le repas", meal);
   // Frigo : manger depuis le frigo, steak (12 h à 100 %), le plus ancien d'abord, péremption en 5 jours
   const fr = await p.evaluate(() => { const c = creatureState(), n = Date.now(), H = 3600e3, D = 864e5, saved = JSON.stringify(c), W = S.workouts;
     S.workouts = []; c.dead = null; c.sat = 50; c.satT = n; c.full = 0;
@@ -687,6 +687,16 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     await p.evaluate(([st,lv]) => { const c = creatureState(); c.stage = st; MUSCLES.forEach(m => c.levels[m] = m==="Jambes" ? Math.min(lv,1) : lv); c.last = Date.now(); render(); }, [st,lv]);
     await p.locator(".creature").first().screenshot({path:path.join(SHOTS, `st${st}-lv${lv}.png`)}); } }
 
+  // Masse = image de la charge soulevée : 60 g + 0,3 kg par tonne, sans plancher ni bonus ; rejouée sur l'historique à la mise à jour
+  const mass = await p.evaluate(() => { const n = Date.now(), D = 864e5, H = 3600e3, W = S.workouts, saved = JSON.stringify(S.profile.creature);
+    const mk = (id, t, kg, prs) => ({id, name:"x", start:t - H, end:t, prs:prs || [], exercises:[{exId:"squat", sets:[{w:String(kg/10), r:"10", done:true}]}]});
+    S.workouts = Array.from({length:10}, (_, k) => mk("m" + k, n - (20 - k * 2) * D, 5000, k === 3 ? ["squat"] : []));
+    const c = S.profile.creature = {...JSON.parse(saved), fed:S.workouts.map(w => w.id), journal:[], hist:[], wv:1, weight:999, dead:null};
+    creatureMassMigrate(c); const r = {mig:Math.round(c.weight * 1000) / 1000, wv:c.wv};
+    const w0 = c.weight, x = mk("m-new", n, 10000, ["squat"]); S.workouts.push(x); c.sat = 100; c.satT = n; c.full = n + 6 * H; creatureFeed(x);
+    r.gain = Math.round((c.weight - w0) * 1000) / 1000; const st = fridgeEatOldest(c); r.fridgeNoGain = Math.abs(c.weight - w0 - 3) < 1e-9;
+    S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return r; });
+  ok(mass.mig === 15.06 && mass.wv === 2 && mass.gain === 3 && mass.fridgeNoGain, "masse : 60 g + 0,3 kg par tonne (50 t → 15,06 kg), même rassasié ; le frigo et le steak ne la changent pas", mass);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de la créature passent");

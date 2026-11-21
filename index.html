@@ -954,7 +954,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-21 i";
+const APP_VERSION = "2026-11-21 j";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2704,13 +2704,12 @@ function noxCtrClean(c){
   return items.length ? {v:Math.round(num(c.v)) === 2 ? 2 : 1, weeks:NOX.weeks, items} : null;
 }
 const noxRoundKg = kg => kg < 1 ? Math.round(kg * 100) / 100 : kg < 10 ? Math.round(kg * 10) / 10 : Math.round(kg);
-// Projection du Gymon après k séances (mêmes règles que les repas : volume mangé × coefficient du stade × régularité)
+// Projection du Gymon après k séances : taille selon la fidélité, masse = 0,3 kg par tonne soulevée (séance moyenne des 30 derniers jours)
 function noxGymProj(c, k, n){
-  const D = 86400000, now = Date.now(), r = satRation(), recent = S.workouts.filter(w => now - (w.end || w.start) < 30 * D);
+  const D = 86400000, now = Date.now(), recent = S.workouts.filter(w => now - (w.end || w.start) < 30 * D);
   const vol = recent.length ? recent.reduce((t, w) => t + gymFood(w), 0) / recent.length : SAT.rationStart * 2;
-  const eat = Math.min(vol, r * 2.5), ff = 0.7 + 0.6 * Math.min(1, n * 0.8 * 2 / CREATURE_CFG.freq.target);
   let fid = c.fidelity, st = c.stage, kg = c.weight;
-  for(let i = 0; i < k; i++){ fid++; st = Math.max(st, stageFor(fid, c)); kg = Math.max(CREATURE_CFG.minWeight[st], kg + eat / 1000 * CREATURE_CFG.foodPerTonne[st] * ff); }
+  for(let i = 0; i < k; i++){ fid++; st = Math.max(st, stageFor(fid, c)); kg += vol / 1000 * CREATURE_CFG.kgPerTonne; }
   return {h:creatureHeight({...c, stage:st, fidelity:fid}), kg};
 }
 // Contrat du protocole en cours (créé à la volée pour les protocoles signés avant son arrivée ; v2 : clauses du Gymon)
@@ -3274,19 +3273,23 @@ const CREATURE_CFG = {
   // Satiété (13 nov. 2026, remplace la vitalité) : voir le bloc « Satiété » plus bas
   satiety: {plateauH:6, steakH:12, perRation:20, rationDays:30, rationStart:1000, rationMin:300, spoilDays:5,
     peas:{afterDays:30, chance:1/40, below:5, to:50}, festinMin:50},
-  resurrectWeightKeep: 0.7,                 // ressusciter garde tout, mais le Gymon a maigri (70 % du poids)
+  resurrectWeightKeep: 0.7,
+  // Masse = image de la charge soulevée (21 nov. 2026, décision du propriétaire) : 60 g à la naissance + 0,3 kg par tonne soulevée
+  // (cardio compris), comptée dès la séance, au même taux à tous les stades ; ni plancher, ni bonus de régularité, ni bonus d'aliments
+  massStart:0.06, kgPerTonne:0.3, massRefT:8,                 // ressusciter garde tout, mais le Gymon a maigri (70 % du poids)
   freq: {window:14, target:6}               // régularité : séances sur 14 jours, objectif 6 (3/semaine)
 };
 const rollStages = () => CREATURE_CFG.stageRange.map(([a,b]) => a + Math.floor(Math.random()*(b-a+1)));
 function creatureState(){
   if(!S.profile.creature) S.profile.creature = {v:4, mv:3, sv:1, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null,
-    sat:100, satT:Date.now(), full:0, fridge:[]};
+    sat:100, satT:Date.now(), full:0, fridge:[], wv:2};
   const c = S.profile.creature;
   if((c.v||0) < 4){   // passage de 4 à 13 formes : l'ancien stade garde sa forme la plus proche
     if(c.at && c.at.length < CREATURE_CFG.stages.length){ c.stage = [0, 2, 5, 9][c.stage] ?? c.stage; c.at = null; }
     c.v = 4;
   }
   if(!c.look){ c.look = rollLook(); saveLocal(); }
+  creatureMassMigrate(c);
   if(!c.ref && c.levels){ c.ref = snapNow(c); saveLocal(); }   // point de départ de l'avant / après   // couleur et short révélés aux Gymon d'avant la v1.9
   if(!c.at){   // Gymon d'avant : seuils tirés au hasard, en restant cohérents avec le stade déjà atteint
     c.at = rollStages().map((x,i) => i===0 ? 0 : c.stage >= i ? Math.min(x, c.fidelity) : Math.max(x, c.fidelity + 1));
@@ -3302,7 +3305,7 @@ function creatureResurrect(){
   const c = creatureState(); if(!c.dead) return;
   const pending = (c.pending || []).slice();
   c.dead = null; c.pending = []; memAdd(c, null, "Ressuscité !", Date.now(), "✨"); c.resurrections = (c.resurrections||0) + 1;
-  c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight * CREATURE_CFG.resurrectWeightKeep);
+  c.weight = c.weight * CREATURE_CFG.resurrectWeightKeep;
   c.last = Date.now(); c.sat = 100; c.satT = Date.now(); c.full = Date.now() + SAT.plateauH * 3600000;
   // Les séances faites pendant qu'il était mort le nourrissent maintenant
   S.workouts.filter(w => pending.includes(w.id)).sort((a,b) => a.start-b.start).forEach(w => creatureFeed(w));
@@ -3393,8 +3396,6 @@ function satEat(c, kg, at, plateauH, whole){
   if(eat <= 0) return 0;
   weekMinNote(c, cur, at);
   c.sat = Math.min(100, cur + gain); c.satT = at; c.ateTs = Date.now(); c.full = Math.max(c.full || 0, at + (plateauH || SAT.plateauH) * 3600000);
-  const ff = 0.7 + 0.6 * creatureRegularity(c).pct;   // 0,7 à 1,3 selon la régularité
-  c.weight = Math.max(CREATURE_CFG.minWeight[c.stage], c.weight + eat / 1000 * CREATURE_CFG.foodPerTonne[c.stage] * ff);
   { const pr = (S.profile.nox || {}).proto; if(pr && at >= pr.start) pr.satOn = 1; }   // contrat : la satiété est suivie à partir du premier repas après la signature
   return eat;
 }
@@ -3580,6 +3581,7 @@ function creatureFeed(w){
   const vol = gymFood(w), bonus = critVolume(w);
   c.food += vol;
   c.stage = Math.max(c.stage, stageFor(c.fidelity, c));              // un stade acquis ne se perd jamais
+  c.weight += vol / 1000 * CREATURE_CFG.kgPerTonne;                    // masse = charge soulevée, mangée ou non
   const ate = satEat(c, vol, t), ateB = bonus ? satEat(c, bonus, t) : 0, fr = [];
   if(vol - ate >= 1) fr.push(fridgeAdd(c, "poulet", vol - ate, t));
   if(bonus - ateB >= 1) fr.push(fridgeAdd(c, "or", bonus - ateB, t));
@@ -3598,13 +3600,29 @@ function creatureFeed(w){
    enregistré dans le téléphone à chaque ouverture et après chaque repas ; le passé (poids et taille) est reconstitué une fois
    en rejouant les séances mangées depuis la naissance. La vitalité n'est enregistrée qu'à partir de la mise à jour. */
 const histDay = (ts) => { const d = new Date(ts || Date.now()); return Math.floor((d - d.getTimezoneOffset()*60000) / 86400000); };
+// Masse à un instant donné, rejouée sur les séances mangées ; une résurrection garde 70 % (les séances faites pendant la mort comptent après)
+function creatureMassAt(c, t){
+  const j = c.journal || [], res = j.filter(x => x.t === "Ressuscité !" && x.ts <= t).map(x => x.ts), deaths = j.filter(x => x.t === "Il est mort de faim.").map(x => x.ts);
+  const ev = S.workouts.filter(w => (c.fed || []).includes(w.id)).map(w => { const e = w.end || w.start, r = res.find(R => e < R && deaths.some(d => d <= e));
+    return {t:r !== undefined ? r + 1 : e, kg:gymFood(w) / 1000 * CREATURE_CFG.kgPerTonne}; }).filter(x => x.t <= t);
+  res.forEach(R => ev.push({t:R, keep:CREATURE_CFG.resurrectWeightKeep}));
+  ev.sort((a, b) => a.t - b.t || (a.keep ? -1 : 1));
+  return ev.reduce((w, x) => x.keep ? w * x.keep : w + x.kg, CREATURE_CFG.massStart);
+}
+function creatureMassMigrate(c){
+  if((c.wv || 0) >= 2) return; const now = Date.now(), D = 86400000, tz = new Date().getTimezoneOffset() * 60000;
+  c.weight = creatureMassAt(c, now);
+  (c.hist || []).forEach(p => { p[1] = creatureMassAt(c, Math.min(now, (p[0] + 1) * D + tz - 1)); });
+  if(c.ref && c.ref.ts) c.ref.weight = creatureMassAt(c, c.ref.ts);
+  const pr = (S.profile.nox || {}).proto, g = pr && pr.contract && (pr.contract.items || []).find(x => x.k === "gym"), reg = pr && pr.contract && (pr.contract.items || []).find(x => x.k === "reg");
+  if(g){ g.w0 = creatureMassAt(c, pr.start); g.w = noxRoundKg(g.w0 + 0.85 * satUsual(pr.start).U / 1000 * CREATURE_CFG.kgPerTonne * ((reg || {}).want || 12)); }
+  c.wv = 2; saveLocal();
+}
 function creatureBackfill(c){
   if(c.histB) return; c.histB = 1;
   const ws = S.workouts.filter(w => (c.fed||[]).includes(w.id)).sort((a,b) => (a.end||a.start) - (b.end||b.start)), D = 86400000, F = CREATURE_CFG.freq;
-  let fid = 0, st = 0, kg = CREATURE_CFG.minWeight[0]; const out = [];
-  ws.forEach((w, i) => { const t = w.end || w.start; fid++; st = Math.max(st, stageFor(fid, c));
-    const n = ws.slice(0, i + 1).filter(x => t - (x.end||x.start) < F.window*D).length, ff = 0.7 + 0.6 * Math.min(1, n / F.target);
-    kg = Math.max(CREATURE_CFG.minWeight[st], kg + gymFood(w)/1000 * CREATURE_CFG.foodPerTonne[st] * ff);
+  let fid = 0, st = 0, kg; const out = [];
+  ws.forEach((w, i) => { const t = w.end || w.start; fid++; st = Math.max(st, stageFor(fid, c)); kg = creatureMassAt(c, t);
     const pt = [histDay(t), kg, creatureHeight({...c, stage:st, fidelity:fid}), null, 1];
     if(out.length && out[out.length-1][0] === pt[0]) out[out.length-1] = pt; else out.push(pt); });
   if(!out.length) return;
@@ -3723,7 +3741,9 @@ function creatureSVG(c, small, back, opt){
   // (17 muscles depuis le 13 nov. 2026 ; la moyenne ignore les muscles surtout travaillés en indirect)
   const MAIN = MUSC.filter(m => !MINOR.has(m)), LV = Object.fromEntries(MUSC.map(m => [m, muscleLevel(c, m)])), LAVG = MAIN.reduce((t,m) => t + LV[m], 0) / MAIN.length;
   const uid = "g" + Math.random().toString(36).slice(2,8), lvl = m => Math.max(0, Math.min(1, (LV[m] + 0.8 * (LV[m] - LAVG)) / 4.5));
-  const mw = CREATURE_CFG.minWeight, span = mw[Math.min(mw.length-1, st+1)] || 100, fat = Math.min(1, Math.max(0, (c.weight - mw[st]) / span));
+  // Ventre : masse comparée à celle d'un joueur à 8 t par séance au même stade (soulever plus que la moyenne = plus de ventre)
+  const at = stageAt(c), CF = CREATURE_CFG, ew = i => CF.massStart + (at[Math.min(at.length - 1, i)] || 0) * CF.massRefT * CF.kgPerTonne;
+  const fat = Math.min(1, Math.max(0, (c.weight - ew(st)) / Math.max(0.5, ew(st + 1) - ew(st) || ew(st) * 0.3)));
   let defs = "", g = "", haloY = 8;
   const VB = "0 -24 240 344";
   if(lk.kind==="egg"){
@@ -5003,6 +5023,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-21", t:"⚖️ La masse de ton Gymon = ta charge soulevée", x:"Ton Gymon prend 300 g par tonne soulevée (cardio compris), dès la fin de la séance et au même taux à tous les stades. Plus de poids minimum par stade, plus de bonus de régularité, et steaks, omelettes et portions dorées ne servent plus qu'à le rassasier. Sa masse a été recalculée sur tout ton historique : c'est l'image exacte de ce que tu as soulevé."},
   {d:"2026-11-21", t:"🍗 Satiété : ta séance habituelle compte", x:"Une séance à ton volume habituel (ta moyenne des 30 derniers jours) remet ton Gymon à 100 %. Soulève plus que d'habitude et le surplus part au frigo pour les jours plus légers ; une séance plus légère ne suffit plus pour atteindre 100 %. Steaks et omelettes restent des bonus."},
   {d:"2026-11-21", t:"⏱ La durée de ta séance", x:"En haut de la séance en cours, une barre se remplit avec le temps écoulé, face à la durée prévue, et l'heure réelle à laquelle elle se terminera (pratique pour reprendre le travail), recalculée à chaque série validée. Touche − ou + pour la raccourcir ou la rallonger de 10 minutes : le Pr Noxwell retire un exercice pas encore commencé, ou en ajoute un pour le muscle du jour le moins travaillé, en suivant ton programme (tes favoris d'abord)."},
   {d:"2026-11-21", t:"🐾 Le contrat signé à trois", x:"Le contrat du Pr Noxwell se signe maintenant pour de vrai : ta signature au doigt, celle du professeur et l'empreinte de ton Gymon. Il comprend la taille et la masse que ton Gymon atteindra si tu tiens tes séances, et une clause : ne jamais le laisser sous 50 % de satiété. Chaque clause tenue s'inscrit dans son carnet de santé ; contrat rempli, il brille d'étoiles pendant 2 jours."},
