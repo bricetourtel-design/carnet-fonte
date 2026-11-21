@@ -76,6 +76,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const recap = await p0.$eval(".nxe-body", e => e.textContent);
   ok(/Prendre du muscle/.test(recap) && /4 séances/.test(recap), "récapitulatif de ce qu'il a compris", recap.slice(0, 160));
   await next();
+  // Revue jour par jour : séance, explications, perf actuelle → visée, ↻ avec le professeur ; le programme signé est celui revu
+  const rv = await p0.evaluate(() => { const b = document.querySelector(".nxe-body"), t = b.textContent, first = b.querySelector(".rv-it .rv-n b").textContent;
+    b.querySelector(".rv-sw").click(); const after = document.querySelector(".nxe-body .rv-it .rv-n b").textContent;
+    return {step:NOX_STEPS[noxStep].k, day:/Séance 1 sur 4/.test(t), why:/Comment je l'ai construite/.test(t), perf:/1RM [\d,]+ → [\d,]+ kg/.test(t), swapped:first !== after, swappedTo:after,
+      btn:document.querySelector('[data-nxe="next"]').textContent}; });
+  ok(rv.step === "revue" && rv.day && rv.why && rv.perf && rv.swapped && /Séance suivante/.test(rv.btn), "revue : séance 1 sur 4, explications, 1RM actuel → visé, ↻ change un exercice", rv);
+  for(let k = 0; k < 3; k++) await next();
+  ok(/au contrat/.test(await p0.$eval('[data-nxe="next"]', e => e.textContent)), "dernière séance revue : « C'est validé, au contrat ! »");
+  await next();
   ok(/Priorité au haut du corps/.test(await p0.$eval(".nxe-body", e => e.textContent)), "protocole : leviers annoncés selon l'objectif");
   // Contrat signé à trois : bouton bloqué tant que le joueur n'a pas signé au doigt ; empreinte du Gymon et clauses du Gymon
   const pre = await p0.evaluate(() => ({dis:!document.querySelector('[data-nxe="next"]').disabled, paw:!!document.querySelector(".nox-paw svg"), nox:/Pr Noxwell/.test(document.querySelector(".nox-sigs").textContent),
@@ -89,9 +98,11 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await next(); await p0.waitForTimeout(300);
   const after = await p0.evaluate(() => ({goal:S.profile.goal, ex:S.profile.nox.exam, tpl:S.profile.plan && S.profile.plan.tpl, n:(S.profile.plan || {days:[]}).days.length, min:(S.profile.plan || {days:[{}]}).days[0].min,
     bw:S.profile.bw, h:S.profile.height, routines:S.profile.routines.filter(r => r.plan).length, tab}));
-  const exc = await p0.evaluate(() => ({excl:S.profile.excl, mon:(S.profile.plan.days.find(d => d.dow === 0) || {muscles:[]}).muscles, sun:(S.profile.plan.days.find(d => d.dow === 6) || {muscles:[]}).muscles, max:S.profile.maxes["dc-barre"],
+  const kept = await p0.evaluate(sw => S.profile.routines.some(r => r.plan && r.items.some(it => exById(it.exId).name === sw)), rv.swappedTo);
+  ok(kept, "le programme signé reprend l'exercice changé pendant la revue", rv.swappedTo);
+  const exc = await p0.evaluate(() => ({legsMon:(S.profile.routines.find(r => r.plan && r.dow === 0) || {items:[]}).items.filter(it => Object.entries(exWork(exById(it.exId))).some(([m, p]) => p >= 0.5 && GROUP_OF[m] === "Jambes")).map(it => it.exId), excl:S.profile.excl, mon:(S.profile.plan.days.find(d => d.dow === 0) || {muscles:[]}).muscles, sun:(S.profile.plan.days.find(d => d.dow === 6) || {muscles:[]}).muscles, max:S.profile.maxes["dc-barre"],
     est:(coach("di-barre") || {}).w, estTxt:(coach("di-barre") || {}).why}));
-  ok(exc.excl[0].join() === "Jambes" && !exc.mon.includes("Jambes") && !exc.sun.includes("Jambes") && exc.max === 100 && exc.est > 0 && /charge max déclarée/.test(exc.estTxt),
+  ok(exc.legsMon.length === 0 && exc.excl[0].join() === "Jambes" && !exc.mon.includes("Jambes") && !exc.sun.includes("Jambes") && exc.max === 100 && exc.est > 0 && /charge max déclarée/.test(exc.estTxt),
     "muscles à éviter respectés dans la routine ; premières charges tirées de la charge max déclarée", exc);
   ok(after.goal.obj === "muscle" && after.tpl === "ul2" && after.n === 4 && after.min === 45 && after.bw === 80 && after.h === 180 && after.routines === 4 && after.tab === "routine", "accepter : programme haut/bas sur 4 séances de 45 min enregistré, mesures gardées", after);
 
