@@ -966,7 +966,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 e";
+const APP_VERSION = "2026-11-22 f";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2269,9 +2269,11 @@ function generatePlan(d){
         let list = pool;
         const needC = j===0 && bigC; if(needC){ const comp = pool.filter(c => c.comp); if(comp.length) list = comp; }   // gros muscle : un polyarticulaire d'abord
         // Muscle fin visé : le moins servi cette semaine et pas encore ce jour (à égalité, l'ordre de la liste : quadriceps, ischios…)
-        const tgt = order.filter(f => !usedPrim.has(f) && (!needC || all.some(x => x.comp && planPrim(x.e) === f))).sort((a, b) => (weekPrim[a] || 0) - (weekPrim[b] || 0) || order.indexOf(a) - order.indexOf(b))[0];
+        const tgt = order.filter((f, oi) => !usedPrim.has(f) && (!needC || (all.some(x => x.comp && planPrim(x.e) === f) && (m !== "Jambes" || oi < 2)))).sort((a, b) => (weekPrim[a] || 0) - (weekPrim[b] || 0) || order.indexOf(a) - order.indexOf(b))[0];
         const favUp = list.some(x => (isFav(x.e.id) || lifts.includes(x.e.id)) && !used.has(x.e.id));   // un favori passe avant le muscle fin visé
-        if(tgt && !favUp){ const okT = x => planPrim(x.e) === tgt && (!needC || x.comp), t1 = list.filter(okT), t2 = t1.length ? t1 : all.filter(okT); if(t2.length) list = t2; }
+        if(tgt && !favUp){ const okT = x => planPrim(x.e) === tgt && (!needC || x.comp), t1 = list.filter(okT), t2 = t1.length ? t1 : all.filter(okT);
+          const known = t2.filter(x => x.n > 0 || isFav(x.e.id) || lifts.includes(x.e.id) || exBaseRank(x.e.id) < 99);   // on alterne entre exercices de base ou déjà pratiqués
+          if(t2.length) list = known.length ? known : t2; }
         let c = null; const base = list===pool ? (k-1)*cnt + j : (k-1);   // d'une séance à l'autre on alterne les exercices
         // Plusieurs exercices d'une même catégorie : d'abord un muscle principal pas encore travaillé ce jour (quadriceps, puis ischios…)
         const free = x => !used.has(x.e.id) && !usedFam.has(exFamily(x.e));
@@ -2317,7 +2319,9 @@ function generatePlan(d){
     const its = out.flatMap(day => day.items.filter(it => it.muscle===m));
     const [vLo0, vHi] = goalVolume(m), vLo = m === "Abdos" ? Math.min(vLo0, 6) : vLo0, cap = goalPrio(m) ? 5 : 4;   // abdos : 6 séries suffisent, ils travaillent aussi en gainage   // 10 à 20 par défaut ; objectif et expérience de l'examen de Noxwell
     while(weekly[m] < vLo && its.some(it => it.sets < cap)){ const it = its.filter(x => x.sets<cap).sort((a,b) => a.sets-b.sets || b.comp-a.comp)[0]; it.sets++; weekly[m]++; }
-    while(weekly[m] > vHi && its.some(it => it.sets > 2)){ const it = its.filter(x => x.sets>2).sort((a,b) => b.sets-a.sets || a.comp-b.comp)[0]; it.sets--; weekly[m]--; }
+    // jambes : 4 muscles fins, leurs propres objectifs font foi ; le 1er polyarticulaire d'une séance garde 3 séries
+    const firsts = new Set(out.map(day => day.items.filter(it => it.comp).sort((a, b) => PRIO.indexOf(a.muscle) - PRIO.indexOf(b.muscle))[0]));
+    while(m !== "Jambes" && weekly[m] > vHi && its.some(it => it.sets > (firsts.has(it) ? 3 : 2))){ const it = its.filter(x => x.sets > (firsts.has(x) ? 3 : 2)).sort((a,b) => b.sets-a.sets || a.comp-b.comp)[0]; it.sets--; weekly[m]--; }
   });
   // Puis par muscle fin : des séries en plus sur les exercices qui le ciblent (deltoïdes latéraux, ischios, mollets…)
   let fineW = planFineSets(out);
