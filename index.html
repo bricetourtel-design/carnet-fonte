@@ -966,7 +966,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 d";
+const APP_VERSION = "2026-11-22 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1714,10 +1714,10 @@ const cardioFood = w => Math.round(cardioKcal(w, bodyweight() || 75) * CARDIO_KG
    (séance { act:{k, min, km} } sans exercice). Durée et/ou km → calories (MET × poids de corps × heures ; avec les km, le MET suit la vitesse)
    → nourriture du Gymon (1 kcal = 15 kg, comme le cardio), masse et taille ; fatigue des muscles sollicités (séries équivalentes par heure). */
 const SPORTS = {
-  marche:{e:"🚶", n:"Marche", met:3.5, km:1, mus:{"Mollets":1.5, "Quadriceps":1}},
+  marche:{e:"🚶", n:"Marche", met:3.5, km:1, mus:{"Mollets":0.5, "Quadriceps":0.3}},
   rando:{e:"🥾", n:"Randonnée", met:6, km:1, mus:{"Quadriceps":3, "Mollets":3, "Fessiers":2, "Ischios":2}},
   course:{e:"🏃", n:"Course à pied", met:9.8, km:1, mus:{"Quadriceps":4, "Mollets":5, "Ischios":3, "Fessiers":3}},
-  velo:{e:"🚴", n:"Vélo", met:7.5, km:1, mus:{"Quadriceps":5, "Fessiers":2, "Mollets":2}},
+  velo:{e:"🚴", n:"Vélo", met:7.5, km:1, mus:{"Quadriceps":2.5, "Fessiers":1, "Mollets":1}},
   natation:{e:"🏊", n:"Natation", met:8, km:1, mus:{"Grand dorsal":4, "Deltoïde avant":2, "Deltoïde arrière":2, "Triceps":2, "Pectoraux":2}},
   foot:{e:"⚽", n:"Football", met:7, mus:{"Quadriceps":6, "Ischios":5, "Mollets":5, "Fessiers":4, "Adducteurs":4}},
   basket:{e:"🏀", n:"Basket", met:6.5, mus:{"Quadriceps":4, "Mollets":4, "Fessiers":2, "Deltoïde avant":1}},
@@ -1845,6 +1845,13 @@ function coach(exId, beforeTs, planned, pre){
   if(lightOn(beforeTs || Date.now()) && num(c.w) && !c.deload && !c.unit){ const e = exById(exId), st = stepFor(e, num(c.w)), big = st / num(c.w) > 0.1;   // gros palier : on garde la charge, 2 reps de moins
     c = {...c, w:+(big ? num(c.w) : Math.max(st, roundTo(num(c.w) * 0.9, st))).toFixed(2), ...(big && c.r ? {r:Math.max(1, c.r - 2)} : {}), dl:1, sets:Math.max(2, (c.sets || 3) - 1), tag:"Semaine légère", deload:true, light:true,
       why:"Semaine allégée : environ −10 % de charge et une série de moins sur tous les exercices. Le corps récupère, la force remonte, et on repart plus fort la semaine suivante.", notes:[]}; }
+  // Audit 4 : muscle principal pas récupéré → pas de hausse de charge ; sous 70 % → −5 % (seulement pour la séance d'aujourd'hui)
+  if(!beforeTs && num(c.w) && !c.deload && !c.unit){ const e0 = exById(exId), rp = e0 ? recovery(primOf(e0)).pct : 1, last = sessionsFor(exId).slice(-1)[0];
+    const lw = last ? Math.max(...last.sets.map(x => num(x.w))) : 0, st0 = stepFor(e0, num(c.w));
+    if(rp < 0.7) c = {...c, w:+Math.max(st0, roundTo(Math.min(num(c.w), lw || num(c.w)) * 0.95, st0)).toFixed(2), tag:"Récupération", recLow:true,
+      why:`${primOf(e0)} récupéré${/s$/.test(primOf(e0)) ? "s" : ""} à ${Math.round(rp * 100)} % : charge un peu plus légère (−5 %) pour aujourd'hui, la progression reprend à la prochaine séance.`};
+    else if(rp < 0.9 && lw && num(c.w) > lw) c = {...c, w:lw, tag:"Même charge", recLow:true,
+      why:`${primOf(e0)} pas encore tout à fait récupéré${/s$/.test(primOf(e0)) ? "s" : ""} (${Math.round(rp * 100)} %) : même charge que la dernière fois, on monte à la prochaine.`}; }
   if(f >= 0.999 || !c.r || c.deload || c.unit === "min") return c;
   const e = exById(exId), W = num(c.w), pct = Math.round((1 - f) * 100), {k} = fatigueK();
   let w = W, r;
@@ -3510,14 +3517,32 @@ function routineForDuo(ui, mins){
 }
 // 21 nov. 2026 (décision du propriétaire) : toujours une séance conseillée, même un jour de repos. Ordre de priorité :
 // 1. la fatigue musculaire (score de récupération), 2. la routine du professeur (+10), 3. le jour où elle est programmée (+8).
+// Heure habituelle d'entraînement (médiane des 10 dernières séances) ; maintenant si elle est déjà passée
+function trainAt(){
+  const now = Date.now(), hs = S.workouts.slice(-10).filter(w => w.exercises.length).map(w => { const d = new Date(w.start); return d.getHours() + d.getMinutes() / 60; }).sort((a, b) => a - b);
+  if(hs.length < 3) return now; const h = hs[Math.floor(hs.length / 2)], d = new Date(); d.setHours(Math.floor(h), Math.round(h % 1 * 60), 0, 0);
+  return d.getTime() > now ? d.getTime() : now;
+}
+function recGroup(m, at){
+  const l = (FINE[m] || [m]).filter(x => !MINOR.has(x) && x !== "Lombaires" && x !== "Avant-bras");
+  if(l.length < 2) return recovery(m, at).pct;
+  let w = 0, v = 0; l.forEach(f => { const k = REC_FULL[f] || 6; w += k; v += k * recoveryFine(f, at).pct; }); return v / w;
+}
 function chooseToday(){
   const t = todayDow(), r0 = S.profile.routines.find(r => r.plan && r.dow===t) || null, exToday = ((S.profile.excl || {})[t]) || [];
   const {resG:res} = strengthByMuscle(), weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible");
-  const rec = {}; MUSCLES.forEach(m => rec[m] = recovery(m).pct);
+  // Audit 4 : récupération évaluée à l'heure habituelle d'entraînement (si elle est encore à venir aujourd'hui),
+  // et pour une catégorie, moyenne de ses muscles fins pondérée par leur taille (un mollet fatigué ne bloque pas toute la jambe)
+  const at = trainAt(), exTomorrow = ((S.profile.excl || {})[(t + 1) % 7]) || [];
+  const rec = {}; MUSCLES.forEach(m => rec[m] = recGroup(m, at));
+  const wk0 = weekStart(Date.now()), setsW = {}; MUSCLES.forEach(m => setsW[m] = 0);
+  S.workouts.filter(w => w.start >= wk0).forEach(w => w.exercises.forEach(ex => { const e = exById(ex.exId); if(e && setsW[e.muscle] !== undefined) setsW[e.muscle] += workSets(ex).length; }));
   const score = (ms, bonus) => { const main = ms.filter(m => m!=="Abdos"); if(!main.length) return -999;
     let w = 0, v = 0; main.forEach(m => { w += WEIGHT[m]; v += WEIGHT[m]*rec[m]; });
     return v/w*100 - 40*main.filter(m => rec[m]<0.5).length - 12*main.filter(m => rec[m]>=0.5 && rec[m]<0.9).length
-      + 8*main.filter(m => weak.includes(m) && rec[m]>=0.9).length - 30*main.filter(m => exToday.includes(m)).length + bonus; };   // muscles à éviter aujourd'hui (autre sport, métier)
+      + 8*main.filter(m => weak.includes(m) && rec[m]>=0.9).length - 30*main.filter(m => exToday.includes(m)).length   // muscles à éviter aujourd'hui (autre sport, métier)
+      - 15*main.filter(m => exTomorrow.includes(m)).length                                   // et demain : on ne les fatigue pas la veille
+      + 10*main.filter(m => setsW[m] < goalVolume(m)[0] / 2 && rec[m] >= 0.9).length / main.length + bonus; };   // en retard sur la semaine (part des muscles, au plus +10)
   const wk = weekStart(Date.now()), doneWeek = new Set(S.workouts.filter(w => w.start >= wk).map(w => w.routineId));
   const swapped = new Set((S.profile.swaps||[]).filter(s => s.week===wk).flatMap(s => [s.a, s.b]));
   const cands = [];
@@ -3525,14 +3550,17 @@ function chooseToday(){
     if(r !== r0 && (doneWeek.has(r.id) || swapped.has(r.id))) return;   // séances de la semaine pas encore faites
     const ms = musclesOf(r); cands.push({key:r.id, kind:"plan", r, ms, name:r.name, score:score(ms, 10 + (r === r0 ? 8 : 0))});
   });
-  DUOS.forEach((u,ui) => cands.push({key:"duo:"+ui, kind:"duo", ui, ms:u.m, name:u.label, score:score(u.m, 0)}));
+  const recentDuo = l => S.workouts.some(w => w.name === l && Date.now() - w.start < 72 * 3600000);   // même duo il y a moins de 3 jours
+  DUOS.forEach((u,ui) => cands.push({key:"duo:"+ui, kind:"duo", ui, ms:u.m, name:u.label, score:score(u.m, recentDuo(u.label) ? -15 : 0)}));
   cands.sort((a,b) => b.score - a.score);
   const planned = r0 ? cands.find(c => c.r===r0) : null, stored = S.profile.todayPick && S.profile.todayPick.date===dayKey() ? S.profile.todayPick.key : null;
   let pick = stored ? (cands.find(c => c.key===stored) || planned || cands[0]) : planned && cands[0].score - planned.score < 10 ? planned : cands[0];
   if(!pick || pick.score <= -900) return null;
   const eff = pick.kind==="plan" ? pick.r : routineForDuo(pick.ui, r0 ? planMin(r0) : ((S.profile.plan || {}).days || [])[0] ? ((S.profile.plan.days[0] || {}).min || 60) : 60);
-  const doneToday = S.workouts.some(w => w.start >= new Date().setHours(0,0,0,0));
-  return {r0, planned, pick, eff, cands, rec, weak, switched: !!r0 && pick!==planned, manual: !!stored, restDay:!r0, doneToday};
+  const doneToday = S.workouts.some(w => w.start >= new Date().setHours(0,0,0,0) && w.exercises.some(ex => workSets(ex).length));
+  // Audit 4 : déjà une séance aujourd'hui, ou rien d'assez récupéré → repos conseillé ; la séance reste proposée, en option (décision du 21 nov.)
+  const restAdvised = doneToday || pick.score < 85;
+  return {r0, planned, pick, eff, cands, rec, weak, switched: !!r0 && pick!==planned, manual: !!stored, restDay:!r0, doneToday, restAdvised};
 }
 function todayCardHTML(ch){
   const ad = adaptToday(ch.eff), its = ad.items, pct = m => Math.round(ch.rec[m]*100);
@@ -3540,10 +3568,10 @@ function todayCardHTML(ch){
   const why = ch.switched
     ? `<div class="alert warn"><b>Séance changée.</b> Prévu : ${esc(ch.r0.name)}${tired.length ? ` — ${tired.map(m => `${m.toLowerCase()} à ${pct(m)} %`).join(", ")}` : ""}. Plus adaptée aujourd'hui : <b>${esc(ch.eff.name)}</b> (${ch.pick.ms.filter(m=>m!=="Abdos").map(m => `${m.toLowerCase()} ${pct(m)} %`).join(", ")}).${ch.pick.kind==="plan" ? ` La séance prévue passe au ${DOWS[ch.pick.r.dow].toLowerCase()}.` : ""}</div>`
     : tired.length ? `<div class="alert warn">${tired.map(m => `${m} à ${pct(m)} %`).join(", ")} de récupération, mais c'est encore la meilleure option du jour : séance allégée.</div>`
-    : ch.restDay ? `<p class="small muted" style="margin:0">${ch.doneToday ? "Déjà une séance aujourd'hui." : "Pas de séance prévue aujourd'hui."} Si tu veux t'entraîner, voici la plus adaptée à ta récupération.</p>` : "";
+    : ch.restDay || ch.restAdvised ? `<p class="small muted" style="margin:0">${ch.doneToday ? "Déjà une séance aujourd'hui : le repos est conseillé." : ch.restAdvised ? "Tes muscles ne sont pas encore bien récupérés : le repos est conseillé." : "Pas de séance prévue aujourd'hui."} Si tu veux t'entraîner quand même, voici la plus adaptée à ta récupération.</p>` : "";
   const alts = ch.cands.filter(c => c!==ch.pick && c.score > -900).slice(0,3);
   return `<div class="card routine todaycard">
-      <div>${noxMet() ? '<span class="nox-fio">🧪</span> ' : ""}<span class="ctag">${ch.restDay || ch.doneToday ? "Séance conseillée" : "Aujourd'hui"}</span>${ch.switched ? ' <span class="ctag soft">Changée</span>' : ""}</div>
+      <div>${noxMet() ? '<span class="nox-fio">🧪</span> ' : ""}<span class="ctag">${ch.restAdvised ? "Optionnel" : ch.restDay ? "Séance conseillée" : "Aujourd'hui"}</span>${ch.switched ? ' <span class="ctag soft">Changée</span>' : ""}</div>
       <div class="row"><h3>${esc(ch.eff.name)}</h3><span class="spacer"></span>
         ${ch.eff.id.startsWith("today-") ? "" : `<button class="btn sm ghost" data-act="edit-routine" data-id="${ch.eff.id}">Modifier</button>`}</div>
       ${why}
@@ -5360,6 +5388,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-22", t:"🛌 Récupération et séance du jour plus fines", x:"Une marche ou un petit footing ne fatiguent plus tes jambes comme une séance. Si un muscle n'est pas encore récupéré, le coach ne monte pas la charge (et l'allège un peu s'il est vraiment fatigué). La séance conseillée tient compte de ton heure habituelle, de ta semaine et de ce que tu fais demain ; après une séance, le repos est conseillé et la séance reste en option."},
   {d:"2026-11-22", t:"🧩 Un programme qui pense à chaque muscle", x:"Le programme vise maintenant chaque muscle à part : élévations latérales et face pull pour les épaules, quadriceps, ischios, fessiers et mollets travaillés séparément. Moins d'exercices en double, plus de séries sur ceux qui comptent, le soulevé de terre passe avec les jambes, et la durée prévue compte les séries d'approche. Si tu as une zone prioritaire, elle a vraiment plus de séries."},
   {d:"2026-11-22", t:"🏋️ Un coach de charges plus juste", x:"Après une décharge ou une pause, le coach repart de la bonne référence (séance lourde ou volume) et revient progressivement. Tes premières charges sont mieux estimées, une rep manquée sur la dernière série ne te fait plus reculer, et les charges lourdes ont un vrai échauffement (4 paliers). Pour tes 3 premières séances sur un exercice, l'écran de fin te demande ton ressenti en une touche."},
   {d:"2026-11-22", t:"🛡️ Perte de poids : des objectifs plus sûrs et plus justes", x:"Pour perdre du poids, le Pr Noxwell demande ton poids, ta taille et ton âge : jamais d'objectif sous la zone de santé ni avant 18 ans. Ton objectif de calories est calculé sur tes séances prévues, et il te dit ce que ça représente vraiment. Les calories de la musculation et du vélo sont plus justes, et les conseils suivent ton objectif."},
@@ -5713,15 +5742,21 @@ function recLoads(m, now){
     const end = w.end || w.start; if(now - end > 7*86400000 || end > now) return;
     let F = 0, eff = 1;
     w.exercises.forEach(ex => { const e = exById(ex.exId); if(!e) return; const f = REC_EFF[ex.feel || 0] || 1;
-      if(isCardio(e)){ const sp = SPORTS[CARDIO_SPORT[e.id] || "course"], min = cardioMin(ex); if(sp && min) F += (sp.mus[m] || 0) * min / 60 * f; return; }   // cardio en séance : selon les minutes
+      if(isCardio(e)){ const sp = SPORTS[CARDIO_SPORT[e.id] || "course"], min = cardioMin(ex); if(!sp || !min || (min < 20 && (ex.feel || 3) <= 3)) return;   // audit 4 : cardio court et facile ignoré
+        F += (sp.mus[m] || 0) * min / 60 * f * recInt(sp.met); return; }   // cardio en séance : selon les minutes et l'intensité
       const n = workSets(ex).length, p = workPct(e, m); if(!n || !p) return; F += n * p * f; if(p >= .5) eff = Math.max(eff, f); });
-    if(w.act && SPORTS[w.act.k]){ const A = SPORTS[w.act.k]; F += (A.mus[m] || 0) * w.act.min / 60 * (actMet(w.act) / A.met); }   // activité : durée × intensité
+    if(w.act && SPORTS[w.act.k]){ const A = SPORTS[w.act.k], hab = actHabit(w) ? 0.3 : 1;   // activité habituelle : le corps y est fait
+      F += (A.mus[m] || 0) * w.act.min / 60 * recInt(actMet(w.act)) * hab; }   // activité : durée × intensité
     if(F < 0.25) return;
-    const d = Math.min(1, F / (REC_FULL[m] || 6)), need = Math.min(84, (REC_BASE[m] || 50) * (0.5 + 0.5 * d) * eff);
+    const d = Math.min(1.5, F / (REC_FULL[m] || 6)), need = Math.min(84, (REC_BASE[m] || 50) * (0.5 + 0.5 * d) * eff);
     out.push({end, d, need});
   });
   return out;
 }
+// Audit 4 : l'intensité compte au-dessus de la marche tranquille (3,5 MET → 0 ; 7,5 MET → 1 ; 11,5 MET → 2)
+const recInt = met => Math.max(0, (met - 3.5) / 4);
+// Même activité au moins 3 fois sur les 3 semaines d'avant : habituelle (foot du dimanche, vélo pour aller au travail)
+const actHabit = w => S.workouts.filter(x => x.act && x.act.k === w.act.k && x.start < w.start && x.start > w.start - 21 * 86400000).length >= 3;
 const recResidual = (L, t) => L.reduce((r, x) => r + x.d * Math.max(0, 1 - (t - x.end) / 3600000 / x.need), 0);
 function recoveryFine(m, now){
   now = now || Date.now();
@@ -6509,7 +6544,7 @@ const ACT = {
   "start-today": () => { const ch = chooseToday(); if(!ch){ tab = "seance"; render(); return; } const its = adaptToday(ch.eff).items;
     if(ch.switched && ch.r0 && ch.pick.kind==="plan"){ const wk = weekStart(Date.now());
       S.profile.swaps = (S.profile.swaps||[]).filter(x => x.week===wk).concat({week:wk, a:ch.r0.id, b:ch.pick.r.id}); }
-    startWorkout(ch.eff.name, its.map(it => ({exId:it.exId, plan:it.sets, ...(it.ss ? {ss:it.ss} : {}), sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), ch.pick.kind==="plan" ? ch.pick.r.id : ch.r0 ? ch.r0.id : null); },
+    startWorkout(ch.eff.name, its.map(it => ({exId:it.exId, plan:it.sets, ...(it.ss ? {ss:it.ss} : {}), sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), ch.pick.kind==="plan" ? ch.pick.r.id : null); },   // audit 4 : un duo ne compte pas comme la séance prévue
   "train-best": () => { if(S.profile.active){ tab = "seance"; render(); window.scrollTo(0, 0); return; } ACT["start-today"](); },
   "act-new": () => actSheet(),
   "act-pick": b => actSheet(b.dataset.k),
