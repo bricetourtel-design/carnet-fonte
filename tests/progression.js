@@ -153,6 +153,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
         out.push({k:nd + "/" + min + " " + d.name, first:fc ? fc.sets : 3, leg:lg ? ["Quadriceps", "Ischios"].includes(planPrim(exById(lg.exId))) && lg.comp : true}); }); });
     S.workouts = W; return out; });
   ok(fin.every(x => x.first >= 3 && x.leg), "programme : 1er polyarticulaire ≥ 3 séries, jambes ouvertes par un squat ou un mouvement de hanche (2 à 6 séances, 60 à 90 min)", fin.filter(x => x.first < 3 || !x.leg));
+  const pill = await p.evaluate(() => { const ex = S.profile.nox; S.profile.nox = {v:1, intro:Date.now(), exam:{done:Date.now(), obj:"muscle", n:3}};
+    const r = [routineSrc({id:"x", plan:1}), routineSrc({id:"today-duo-0"}), routineSrc({id:"r-push"}), routineSrc({id:"u1"})]; S.profile.nox = {v:1}; r.push(routineSrc({id:"y", plan:1})); S.profile.nox = ex; return r.join(); });
+  ok(pill === "nox,nox,tpl,me,me", "pastille d'origine : programme et suggestion du Pr Noxwell, modèles de départ, séances créées par le joueur", pill);
   ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);

@@ -927,6 +927,11 @@ body.nox-shake main{animation:nxshake .38s linear}
 .ss-link button[aria-pressed="true"]{color:#fff;background:#ec4899;border-style:solid;border-color:#ec4899}
 .live-adj{margin:0 0 6px;font-size:13.5px;line-height:1.35;color:#0e7490;font-weight:600}
 :root:not([data-theme="light"]) .live-adj{color:#a5f3fc}
+.src-pill{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap;vertical-align:middle}
+.src-pill.nox{background:rgba(163,230,53,.16);color:#65a30d;border:1px solid rgba(163,230,53,.45)}
+.src-pill.me{background:rgba(56,189,248,.14);color:#0284c7;border:1px solid rgba(56,189,248,.4)}
+.src-pill.tpl{background:rgba(148,163,184,.14);color:var(--muted);border:1px solid rgba(148,163,184,.4)}
+@media (prefers-color-scheme: dark){ .src-pill.nox{color:#bef264} .src-pill.me{color:#7dd3fc} }
 .nox-fio{font-size:15px;filter:drop-shadow(0 0 4px rgba(163,230,53,.6))}
 .feel-how{margin-left:auto;font-size:12.5px;font-weight:700;color:#0891b2;background:none;border:0;padding:0}
 :root:not([data-theme="light"]) .feel-how{color:#67e8f9}
@@ -966,7 +971,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 g";
+const APP_VERSION = "2026-11-22 h";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -3575,7 +3580,7 @@ function todayCardHTML(ch){
     : ch.restDay || ch.restAdvised ? `<p class="small muted" style="margin:0">${ch.doneToday ? "Déjà une séance aujourd'hui : le repos est conseillé." : ch.restAdvised ? "Tes muscles ne sont pas encore bien récupérés : le repos est conseillé." : "Pas de séance prévue aujourd'hui."} Si tu veux t'entraîner quand même, voici la plus adaptée à ta récupération.</p>` : "";
   const alts = ch.cands.filter(c => c!==ch.pick && c.score > -900).slice(0,3);
   return `<div class="card routine todaycard">
-      <div>${noxMet() ? '<span class="nox-fio">🧪</span> ' : ""}<span class="ctag">${ch.restAdvised ? "Optionnel" : ch.restDay ? "Séance conseillée" : "Aujourd'hui"}</span>${ch.switched ? ' <span class="ctag soft">Changée</span>' : ""}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">${srcPill(routineSrc(ch.eff))}<span class="ctag">${ch.restAdvised ? "Optionnel" : ch.restDay ? "Séance conseillée" : "Aujourd'hui"}</span>${ch.switched ? ' <span class="ctag soft">Changée</span>' : ""}</div>
       <div class="row"><h3>${esc(ch.eff.name)}</h3><span class="spacer"></span>
         ${ch.eff.id.startsWith("today-") ? "" : `<button class="btn sm ghost" data-act="edit-routine" data-id="${ch.eff.id}">Modifier</button>`}</div>
       ${why}
@@ -5392,6 +5397,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-22", t:"🏷️ D'où vient chaque séance", x:"Sur la page Séance, une pastille indique l'origine de chaque séance : 🧪 Pr Noxwell (son programme et ses suggestions du jour), ✍️ créée par toi, ou 📋 modèle de départ."},
   {d:"2026-11-22", t:"🛌 Récupération et séance du jour plus fines", x:"Une marche ou un petit footing ne fatiguent plus tes jambes comme une séance. Si un muscle n'est pas encore récupéré, le coach ne monte pas la charge (et l'allège un peu s'il est vraiment fatigué). La séance conseillée tient compte de ton heure habituelle, de ta semaine et de ce que tu fais demain ; après une séance, le repos est conseillé et la séance reste en option."},
   {d:"2026-11-22", t:"🧩 Un programme qui pense à chaque muscle", x:"Le programme vise maintenant chaque muscle à part : élévations latérales et face pull pour les épaules, quadriceps, ischios, fessiers et mollets travaillés séparément. Moins d'exercices en double, plus de séries sur ceux qui comptent, le soulevé de terre passe avec les jambes, et la durée prévue compte les séries d'approche. Si tu as une zone prioritaire, elle a vraiment plus de séries."},
   {d:"2026-11-22", t:"🏋️ Un coach de charges plus juste", x:"Après une décharge ou une pause, le coach repart de la bonne référence (séance lourde ou volume) et revient progressivement. Tes premières charges sont mieux estimées, une rep manquée sur la dernière série ne te fait plus reculer, et les charges lourdes ont un vrai échauffement (4 paliers). Pour tes 3 premières séances sur un exercice, l'écran de fin te demande ton ressenti en une touche."},
@@ -5802,6 +5808,11 @@ function actSave(k){
     <p class="small muted" style="margin:0">Récupération : ${esc(Object.keys(a.mus).join(", ").toLowerCase())} sollicités.${k2 ? "" : " Indique ton poids dans Réglages pour les calories."}</p>
     <button class="btn primary" data-act="close">Fermer</button>`);
 }
+// Pastille d'origine (23 nov. 2026, demande du propriétaire) : séance du Pr Noxwell (programme ou suggestion du jour) ou créée par le joueur
+// Les 3 programmes de départ (Push, Pull, Legs) sont des modèles fournis par l'app
+const STARTER_IDS = new Set(["r-push", "r-pull", "r-legs"]);
+const srcPill = k => k === "nox" ? '<span class="src-pill nox">🧪 Pr Noxwell</span>' : k === "tpl" ? '<span class="src-pill tpl">📋 Modèle</span>' : '<span class="src-pill me">✍️ Créée par toi</span>';
+const routineSrc = r => !r ? "me" : (r.plan ? noxExam() : String(r.id || "").startsWith("today-")) ? "nox" : STARTER_IDS.has(r.id) ? "tpl" : "me";
 function viewHome(){
   const now = Date.now(), ws = weekStart(now);
   const thisWeek = S.workouts.filter(w => w.start >= ws);
@@ -5821,7 +5832,7 @@ function viewHome(){
   const card = r0 => {
     const r = swapMap[r0.id] ? (S.profile.routines.find(x => x.id===swapMap[r0.id]) || r0) : r0, ad = null, its = r.items; return `
     <div class="card routine">
-      ${badge(r0) ? `<div>${badge(r0)}</div>` : ""}
+      <div class="row" style="gap:6px;flex-wrap:wrap">${srcPill(routineSrc(r))}${badge(r0)}</div>
       ${(() => { const o = ord.find(x => x.r===r0); if(!o || o.delta>1 || o.done || ad) return "";
         const ms = [...new Set(r.items.map(it => exById(it.exId).muscle))], at = Date.now() + o.delta*86400000;
         const tired = ms.map(m => [m, recovery(m, o.delta ? new Date(new Date().setHours(18,0,0,0)).getTime() + 86400000 : at)]).filter(([,x]) => x.pct < 0.9);
