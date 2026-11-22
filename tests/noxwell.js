@@ -317,12 +317,18 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   const loss = await p1.evaluate(() => { const r = {}; closeSheet(); noxExamOpen(); Object.assign(noxA, {obj:"seche", prec:"partout", exp:"mid", n:3, days:[0,2,4], dur:2, lieu:"salle", org:"deux", ss:"non", autres:"non", bw:"90", height:"175", sexe:"h", ideal:"50"});
     noxStep = NOX_STEPS.findIndex(x => x.k === "ideal"); noxDraw(false); r.low = /zone de santé commence vers/.test(document.querySelector(".nxe-body").textContent) && noxLoss().target === 57;
     noxA.ideal = "65"; noxStep = noxMove(1); noxDraw(false); const t = document.querySelector(".nxe-body").textContent, L = noxLoss();
-    r.pal = L.pal === 4.5 && L.weeks === 9 && L.big && /médecin/.test(t) && /80 % dans l'assiette/.test(t) && /pas une application diététique/.test(t);
-    document.querySelector('[data-set="kcalW"][data-v="2000"]').click(); r.kw = noxA.kcalW === 2000;
+    r.pal = L.pal === 4.5 && L.weeks === 9 && L.big && /médecin/.test(t) && /surtout de l'alimentation/.test(t) && /pas une application diététique/.test(t);
+    const opts = noxKcalOpts(); document.querySelector(`[data-set="kcalW"][data-v="${opts[2]}"]`).click(); r.kw = noxA.kcalW === opts[2] && opts[1] === noxKcalPlan() && /Avec tes séances prévues/.test(document.querySelector(".nxe-body").textContent);
     noxA.sign = "M1 1 L20 20"; noxApply("keep"); const it = noxSt().proto.contract.items.find(x => x.k === "kcal");
-    r.clause = !!it && it.per === 2000 && it.want === 12000 && S.profile.loss.target === 65;
+    r.clause = !!it && it.per === opts[2] && it.want === opts[2] * 6 && S.profile.loss.target === 65;
     const t2 = Date.now(); S.workouts.push({id:"kc1", name:"🏃 Course", start:noxSt().proto.start + 1, end:t2 + 3600e3, act:{k:"course", min:60}, exercises:[], prs:[]});
     r.have = noxContractState(noxSt().proto.contract, noxSt().proto).find(x => x.k === "kcal").have > 500; S.workouts = S.workouts.filter(w => w.id !== "kc1"); return r; });
+  const guard = await p1.evaluate(() => { const r = {}; closeSheet(); noxExamOpen(); Object.assign(noxA, {obj:"seche", prec:"partout", exp:"mid", n:3, days:[0,2,4], dur:2, lieu:"salle", org:"deux", ss:"non", autres:"non", sexe:"h", bw:"60", height:"", age:"30"});
+    const mes = NOX_STEPS.find(x => x.k === "mes"); r.noHeight = !mes.ok(); noxA.height = "170"; noxA.bw = "50"; r.withHeight = mes.ok();
+    noxStep = NOX_STEPS.findIndex(x => x.k === "ideal"); noxDraw(false); r.thin = /sous la zone de santé/.test(document.querySelector(".nxe-body").textContent) && !NOX_STEPS[noxStep].ok();
+    noxA.bw = "80"; noxA.age = "16"; noxDraw(false); r.minor = /Avant 18 ans/.test(document.querySelector(".nxe-bub").textContent) && !noxLoss();
+    r.noPrec = NOX_STEPS.find(x => x.k === "prec").skip(); noxExamClose(); return r; });
+  ok(guard.noHeight && guard.withHeight && guard.thin && guard.minor && guard.noPrec, "sèche : taille et âge obligatoires, pas de perte en maigreur ni avant 18 ans, pas de « zone à affiner »", guard);
   ok(loss.low && loss.pal && loss.kw && loss.clause && loss.have, "perte de poids : pas sous un IMC de 18,5, paliers de 5 %, médecin pour une grosse perte, 80/20, calories par semaine au contrat (activités comprises)", loss);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
