@@ -77,7 +77,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   // Revue jour par jour : séance, explications, perf actuelle → visée, ↻ avec le professeur ; le programme signé est celui revu
   const rv = await p0.evaluate(() => { const b = document.querySelector(".nxe-body"), t = b.textContent, first = b.querySelector(".rv-it .rv-n b").textContent;
     b.querySelector(".rv-sw").click(); const after = document.querySelector(".nxe-body .rv-it .rv-n b").textContent;
-    return {step:NOX_STEPS[noxStep].k, day:/Séance 1 sur 4/.test(t), why:/Comment je l'ai construite/.test(t), perf:/1RM [\d,]+ → [\d,]+ kg/.test(t), swapped:first !== after, swappedTo:after,
+    return {step:NOX_STEPS[noxStep].k, day:/Séance 1 sur 4/.test(t), why:/Comment je l'ai construite/.test(t), perf:/1RM [\d,]+ → [\d,]+ kg/.test(t) && /1RM ≈ [\d,]+ kg estimé · à mesurer/.test(t), swapped:first !== after, swappedTo:after,
       btn:document.querySelector('[data-nxe="next"]').textContent}; });
   ok(rv.step === "revue" && rv.day && rv.why && rv.perf && rv.swapped && /Séance suivante/.test(rv.btn), "revue : séance 1 sur 4, explications, 1RM actuel → visé, ↻ change un exercice", rv);
   for(let k = 0; k < 3; k++) await next();

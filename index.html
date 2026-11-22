@@ -105,6 +105,8 @@ button.thumb{padding:0}
 
 /* Séance en cours */
 .live-head{display:flex;align-items:center;gap:12px}
+.fg{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);margin-bottom:10px}
+.fg-row{display:flex;flex-direction:column;gap:4px;font-size:14px}
 .act-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.act-b{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;background:var(--fill);border:0;color:var(--text);font-size:12.5px;text-align:center}.act-b span{font-size:24px}
 .sess-bar{background:var(--fill);border-radius:16px;padding:8px 10px 10px;margin-bottom:10px}.sess-top{display:flex;align-items:center;gap:10px}
 .sess-txt{flex:1;text-align:center;line-height:1.15}.sess-txt b{font-size:18px;font-variant-numeric:tabular-nums}.sess-txt span{color:var(--muted);font-size:14px}.sess-txt small{display:block;font-size:12px;color:var(--muted)}
@@ -964,7 +966,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 b";
+const APP_VERSION = "2026-11-22 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1773,7 +1775,7 @@ function sessionsFor(exId, beforeTs){
     if(beforeTs && w.start >= beforeTs) continue;
     if(offIgnored(w)) continue;   // séance « hors forme » : pas prise en compte pour les prochaines charges
     w.exercises.forEach((ex, i) => { if(ex.exId!==exId) return;
-      const sets = workSets(ex).filter(s => num(s.r)>0); if(sets.length) out.push({ts:w.start, sets, feel:ex.feel||0, pre:preLoad(w.exercises, i)}); });
+      const sets = workSets(ex).filter(s => num(s.r)>0); if(sets.length) out.push({ts:w.start, sets, feel:ex.feel||0, pre:preLoad(w.exercises, i), ...(ex.dl ? {dl:ex.dl} : {})}); });
   }
   return out;
 }
@@ -1818,7 +1820,7 @@ function freshSess(sess){
 function inferFeel(sess, lo, hi){
   if(!hi || !sess || !sess.sets.length) return 3;
   const W = Math.max(...sess.sets.map(x => num(x.w))), minR = Math.min(...sess.sets.filter(x => num(x.w) === W).map(x => num(x.r)));
-  return minR >= hi + 2 ? 2 : 3;   // objectif largement dépassé sans ressenti noté : « Facile » (audit du 19 nov. 2026)
+  return minR >= lo ? 2 : 3;   // audit 4 : sans ressenti noté, une séance réussie compte « Facile » (sinon le coach ne rattrape jamais une charge trop basse)
 }
 // Séries de la semaine pour un muscle, au prorata (un développé couché compte 0,5 série de triceps)
 function muscleSetsThisWeek(muscle, untilTs){
@@ -1836,11 +1838,12 @@ function novice(){
   return isFinite(first) && S.workouts.length >= 1 && Date.now() - first < 120 * 86400000 && S.workouts.length < 40;
 }
 // Semaine allégée (audit du 19 nov. 2026) : proposée par Noxwell en fin de protocole ou quand plusieurs exercices sont durs
+const DL_SINCE = Date.UTC(2026, 10, 22);   // à partir de cette date, les séances allégées par le coach portent un marqueur (dl)
 const lightOn = ts => { const l = S.profile.lightWeek; return !!(l && ts >= l.from && ts < l.until); };
 function coach(exId, beforeTs, planned, pre){
   let c = coachFresh(exId, beforeTs, planned); const f = fatigueFactor(pre);
-  if(lightOn(beforeTs || Date.now()) && num(c.w) && !c.deload && !c.unit){ const e = exById(exId), st = stepFor(e, num(c.w));
-    c = {...c, w:+Math.max(st, roundTo(num(c.w) * 0.9, st)).toFixed(2), sets:Math.max(2, (c.sets || 3) - 1), tag:"Semaine légère", deload:true, light:true,
+  if(lightOn(beforeTs || Date.now()) && num(c.w) && !c.deload && !c.unit){ const e = exById(exId), st = stepFor(e, num(c.w)), big = st / num(c.w) > 0.1;   // gros palier : on garde la charge, 2 reps de moins
+    c = {...c, w:+(big ? num(c.w) : Math.max(st, roundTo(num(c.w) * 0.9, st))).toFixed(2), ...(big && c.r ? {r:Math.max(1, c.r - 2)} : {}), dl:1, sets:Math.max(2, (c.sets || 3) - 1), tag:"Semaine légère", deload:true, light:true,
       why:"Semaine allégée : environ −10 % de charge et une série de moins sur tous les exercices. Le corps récupère, la force remonte, et on repart plus fort la semaine suivante.", notes:[]}; }
   if(f >= 0.999 || !c.r || c.deload || c.unit === "min") return c;
   const e = exById(exId), W = num(c.w), pct = Math.round((1 - f) * 100), {k} = fatigueK();
@@ -1881,11 +1884,14 @@ function coachFresh(exId, beforeTs, planned){
       why:`Première fois sur cet exercice : choisis une charge avec laquelle tu fais ${lo} à ${hi} reps, en t'arrêtant 1 ou 2 reps avant de ne plus pouvoir. Je calculerai la suite à partir de ce que tu auras noté.`}; }
   const last = hist[0];
   let feel = last.feel || inferFeel(last, lo, hi), f = FEEL[feel-1];
+  const rirL = feel === 1 && hist.length <= 3 ? 6 : f.rir;   // audit 4 : « Trop facile » aux premières séances = beaucoup de marge
   // Isolation (audit du 19 nov. 2026, Robinson 2024) : finir à 0–1 rep en réserve est la cible, « Dur » y vaut « Idéal »
   const isoNear = !isPoly(e) && !isBWX(e) && !TIMED.has(e.id) && e.equip !== "Poids du corps";
   if(isoNear && feel === 4) feel = 3;
   let W = Math.max(...last.sets.map(s => num(s.w))), top = last.sets.filter(s => num(s.w)===W);
   let minR = Math.min(...top.map(s => num(s.r))), lastR = num(top[top.length-1].r);
+  // Audit 4 : une rep de moins sur la dernière série seulement est tolérée (fatigue normale), elle ne fait pas reculer
+  if(top.length >= 2){ const others = Math.min(...top.slice(0, -1).map(s => num(s.r))); if(lastR === others - 1){ minR = others; lastR = others; } }
   const nSets = last.sets.filter(s => num(s.w) >= W*0.75).length;   // les séries dégressives légères ne comptent pas
   let sets = planned || Math.min(5, Math.max(2, nSets));
   const exGap = Math.round(((beforeTs || Date.now()) - last.ts) / 86400000);
@@ -1913,7 +1919,7 @@ function coachFresh(exId, beforeTs, planned){
   }
   let st = stepFor(e, W);
   // 1RM estimé corrigé par les reps en réserve (Epley)
-  let E = W * (1 + (lastR + f.rir)/30);
+  let E = W * (1 + (lastR + rirL)/30);
   const repsAt = w => Math.floor(30*(E/w - 1) - 1.5 + 1e-9);
   // Reprise après plus de 3 semaines sans cet exercice : -10 %
   if(exGap > 21 && gapDays <= 21){   // exercice repris, muscle entraîné récemment : même charge, mêmes reps
@@ -1921,9 +1927,12 @@ function coachFresh(exId, beforeTs, planned){
     return {lo, hi, rest, w:+W.toFixed(2), r, sets:Math.max(2, Math.min(sets, 3)), tag:"Retour", mode, from:{W, minR, feel},
       why:`Tu n'as pas fait cet exercice depuis ${Math.round(exGap/7)} semaines, mais tes ${primOf(e).toLowerCase()} ont travaillé récemment : on reprend la charge de la dernière fois (${fmtN(W)} kg × ${r}), sans alléger.`};
   }
+  // Audit 4 : en lourd / volume, décharge et reprise partent de la dernière séance DU MÊME TYPE (sinon 110 × 10 après des lourdes à 110 × 4)
+  const topW = x => Math.max(...x.sets.map(y => num(y.w))), tgtM = mode === "lourd" ? lo : lo + 2;
+  const baseW = mode ? (fromEst ? Math.max(st, roundTo(E / (1 + (tgtM + 1.5)/30), st)) : topW(ref)) : W;
   if(gapDays > 21){
-    const k = gapDays > 42 ? 0.8 : 0.9, w = Math.max(st, roundTo(W*k, st)), r = Math.max(lo, Math.min(hi, repsAt(w)));
-    return {lo, hi, rest, w, r, sets:Math.max(2, Math.min(sets, 3)), tag:"Reprise", deload:true,
+    const k = gapDays > 42 ? 0.8 : 0.9, w = Math.max(st, roundTo(baseW*k, st)), r = mode ? tgtM : Math.max(lo, Math.min(hi, repsAt(w)));
+    return {lo, hi, rest, w, r, sets:Math.max(2, Math.min(sets, 3)), tag:"Reprise", deload:true, dl:2, mode,
       why:`Tes ${primOf(e).toLowerCase()} n'ont pas travaillé depuis ${Math.round(gapDays/7)} semaines : on reprend plus léger (environ −${Math.round((1 - k) * 100)} %) pour réhabituer le corps sans risque. La progression normale repart dès la séance suivante.`};
   }
   // Décharge : 3 séances d'affilée notées « Dur/Trop dur » ou 1RM estimé en baisse sur 3 séances
@@ -1932,20 +1941,23 @@ function coachFresh(exId, beforeTs, planned){
   // (baisse du 1RM : au moins 5 %, sur 3 séances rapprochées, pour ne pas confondre le bruit avec de la fatigue)
   // Audit du 19 nov. 2026 : « Dur » est une zone normale (pas de décharge sur 3 « Dur ») ; une séance allégée notée facile
   // sous-estime la force et ne compte pas comme une baisse (sinon décharges en cascade) ; pas de décharge juste après un allègement.
-  const close3 = hist.length>=3 && hist[0].ts - hist[2].ts < 42*86400000, h3 = hist.slice(0, 3), topW = x => Math.max(...x.sets.map(y => num(y.w)));
+  const close3 = hist.length>=3 && hist[0].ts - hist[2].ts < 42*86400000, h3 = hist.slice(0, 3);
   const feelOf = x => x.feel || inferFeel(x, lo, hi), sameType = x => !dup || isHeavySess(x, dup) === isHeavySess(hist[0], dup);
   const prevSame = hist.slice(1).find(sameType), wasLight = !!prevSame && topW(hist[0]) <= topW(prevSame) * 0.92;   // en lourd/volume : comparé au même type
-  const tooHard = close3 && h3.every(x => feelOf(x) >= 4) && h3.filter(x => feelOf(x) === 5).length >= 2;
+  const tooHard = close3 && h3.every(x => feelOf(x) >= 4) && h3.filter(x => feelOf(x) === 5).length >= 2 && e1(hist[0]) < e1(hist[2]) * 0.97;   // audit 4 : avec une vraie baisse
   const decline = close3 && h3.every(x => feelOf(x) >= 3) && e1(hist[0]) < e1(hist[1]) && e1(hist[1]) < e1(hist[2]) && e1(hist[0]) < e1(hist[2])*0.95;
   if(close3 && !wasLight && (tooHard || decline)){
-    const w = Math.max(st, roundTo(W*0.9, st));
-    return {lo, hi, rest, w, r:lo, sets:Math.max(2, sets-1), tag:"Décharge", deload:true,
+    const w = Math.max(st, roundTo(baseW*0.9, st));
+    return {lo, hi, rest, w, r:mode ? tgtM : lo, sets:Math.max(2, sets-1), tag:"Décharge", deload:true, dl:1, mode,
       why:"Tes 3 dernières séances sur cet exercice étaient trop dures ou en baisse : c'est un signe de fatigue accumulée. On allège cette fois (environ −10 % et une série de moins) pour récupérer, puis on repart plus fort."};
   }
-  // Retour après un allègement : la séance d'avant était plus lourde (≥ 8 %), celle-ci a été facile → on reprend cette charge
-  const recent = hist.slice(1, 4).filter(x => last.ts - x.ts < 35*86400000 && (!mode || isHeavySess(x, dup) === isHeavySess(last, dup)));
-  const peakS = recent.filter(x => feelOf(x) <= 4).sort((a, b) => topW(b) - topW(a))[0], peak = peakS ? topW(peakS) : 0;
-  const rebound = peak && W <= peak * 0.92 && feel <= 3;
+  // Retour après un allègement (audit 4) : seulement après une séance allégée par le coach (marqueur dl), vers le pic du type de séance
+  // du jour ; après une reprise de plus de 3 semaines, d'abord 95 % du pic
+  const lightened = last.dl || (last.dl === undefined && last.ts < DL_SINCE && hist[1] && W <= topW(hist.slice(1).find(sameType) || hist[1]) * 0.92);
+  const recent = hist.slice(1, 5).filter(x => last.ts - x.ts < 49*86400000 && (!mode || isHeavySess(x, dup) === (mode === "lourd")));
+  const peakS = recent.filter(x => feelOf(x) <= 4).sort((a, b) => topW(b) - topW(a))[0], peak0 = peakS ? topW(peakS) : 0;
+  const peak = peak0 ? (last.dl === 2 ? Math.max(st, roundTo(peak0 * 0.95, st)) : peak0) : 0;
+  const rebound = !!(lightened && peak && feel <= 3 && (mode ? true : W <= peak));
   // Lourd / Volume : charge calée sur la force la plus récente (1RM estimé de la dernière séance, corrigé par le ressenti),
   // sans jamais reculer par rapport à la dernière séance du même type réussie
   if(mode){
@@ -1975,7 +1987,7 @@ function coachFresh(exId, beforeTs, planned){
   // Baisse jusqu'à retrouver le bas de la fourchette, 15 % maximum
   const lower = () => { let x = W - st; while(repsAt(x) < lo && x - st >= Math.max(st, W*0.85)) x -= st; return Math.max(st, x); };
   if(rebound){
-    w = peak; r = Math.max(lo, Math.min(hi, Math.min(...peakS.sets.filter(x => num(x.w) === peak).map(x => num(x.r)))));
+    w = Math.max(W, peak); r = Math.max(lo, Math.min(hi, Math.min(...peakS.sets.filter(x => num(x.w) === peak0).map(x => num(x.r))) - (last.dl === 2 ? 0 : 0)));
     why = `Fin de l'allègement : on reprend la charge d'avant (${fmtN(peak)} kg × ${r}).`;
   }else if(minR < lo && feel <= 3 && minR >= lo - 2){
     // Juste sous la fourchette sans difficulté : on garde la charge lourde et on va chercher les reps
@@ -2059,7 +2071,8 @@ function warmupFor(exId, beforeTs, planned, first, force){
     const w = Math.max(min, roundTo(W*0.5, st));
     return force && w < W*0.9 ? [{w, r:10}] : [];
   }
-  const plan = c.mode==="lourd" || c.lo <= 5 ? [[0.5,8],[0.75,3]] : [[0.6,6]], out = [];
+  const E = W * (1 + ((c.r || c.lo) + 1.5) / 30), heavy = (W >= 100 && c.lo <= 6) || c.lo <= 3;   // audit 4 : rampe en 4 paliers pour les vraies charges lourdes
+  const plan = heavy ? [[0.4,5],[0.6,3],[0.75,2],[0.85,1]] : c.mode==="lourd" || c.lo <= 5 ? [[0.5,8],[0.75,3]] : [[0.6,6]], out = [];   // audit 4 : 4 paliers dès 100 kg ou 80 % du max
   plan.forEach(([p, r]) => { const w = Math.max(min, roundTo(W*p, st)); if(w < W*0.9 && !out.some(x => x.w===w)) out.push({w, r}); });
   return out;
 }
@@ -2553,9 +2566,9 @@ function noxPrecTxt(a){
 const NOX_MAXL = [["dc-barre", "Développé couché"], ["squat", "Squat"], ["souleve-terre", "Soulevé de terre"]];
 const noxMaxTodo = () => ["salle", "petite"].includes(LIEU_EQ[noxA.lieu] || "salle") ? NOX_MAXL.filter(([id]) => !exHistory(id).length) : [];
 function noxMaxHyp(id){   // hypothèse prudente sans historique : niveau d'après l'expérience × poids de corps (tables de force)
-  const bw = num(noxA.bw) || bodyweight() || 75, L = ({deb:1, mid:2, pro:3})[noxA.exp] ?? 1, ref = STD[id] || 1, e = exById(id);
-  const scale = noxA.sexe === "f" ? (e && e.muscle === "Jambes" ? 0.75 : 0.6) : 1;
-  return Math.round(LMULT[L] * ref * scale * bw * 0.85 / 2.5) * 2.5;
+  const bw = num(noxA.bw) || bodyweight() || 75, L = ({deb:1.5, mid:2.5, pro:3.3})[noxA.exp] ?? 1.5, ref = STD[id] || 1, e = exById(id);
+  const scale = noxA.sexe === "f" ? (e && e.muscle === "Jambes" ? 0.75 : 0.6) : 1, i = Math.min(3, Math.floor(L)), lm = LMULT[i] + (L - i) * (LMULT[i + 1] - LMULT[i]);
+  return Math.round(lm * ref * scale * bw * 0.9 / 2.5) * 2.5;
 }
 const noxMinKg = () => { const h = num(noxA.height) / 100; return h > 1 ? Math.ceil(18.5 * h * h * 2) / 2 : 0; };   // IMC 18,5
 // IMC de départ (audit 4) : sous 18,5, pas de perte de poids ; sous 20, maintien ; dès 30, médecin conseillé ; pas d'objectif de poids avant 18 ans
@@ -2596,8 +2609,8 @@ function noxWithExam(a, fn){
 function noxPerf(id, a){
   const e = exById(id); if(!e || isCardio(e)) return null;
   const t0 = Date.now(), h = exHistory(id).filter(x => x.ts > t0 - 120 * 86400000 && x.best > 0);
-  let cur = h.length ? Math.max(...h.map(x => x.best)) : 0, est = false;
-  if(!cur){ const r = estimateNew(e, repRange(e)[0]); if(r && r.oneRM){ cur = r.oneRM; est = true; } }
+  let cur = noxBase(id, t0) || (h.length ? Math.max(...h.map(x => x.best)) : 0), est = false;
+  if(!cur){ const r = estimateNew(e, repRange(e)[0]); if(r && r.oneRM){ cur = r.oneRM; est = !((S.profile.maxes || {})[id] > 0); } }
   if(!cur) return null;
   const exp = NOX_RECS[a.exp] ? a.exp : "mid", rate = a.obj === "force" ? NOX_RATE.force[exp] : a.obj === "muscle" ? NOX_RATE.muscle[exp] : a.obj === "endu" ? NOX_RATE.muscle[exp] / 2 : 0;
   const st = stepFor(e, cur), r = v => Math.round(v / st) * st;
@@ -2610,7 +2623,7 @@ function noxReviewHTML(){
     const items = d.items.map(it => { const e = exById(it.exId); if(it.cardio) return `<li class="rv-it"><span class="rv-n">🫀 ${esc(e.name)}</span><span class="rv-p">≈ ${it.min || NOX_CARDIO_MIN} min de cardio</span></li>`;
       const c = coach(it.exId, undefined, it.sets), pf = noxPerf(it.exId, a);
       return `<li class="rv-it"><span class="rv-n"><b>${esc(e.name)}</b><small>${it.sets} × ${c.lo}–${c.hi} reps${c.w ? ` · départ ${fmtN(c.w)} kg` : ""}</small></span>
-        ${pf ? `<span class="rv-p">${pf.keep ? `1RM ≈ ${fmtN(pf.cur)} kg <small>à garder</small>` : `1RM ${fmtN(pf.cur)} → <b>${fmtN(pf.proj)} kg</b>`}${pf.est ? `<small>estimé</small>` : ""}</span>` : `<span class="rv-p"><small>au poids du corps</small></span>`}
+        ${pf ? `<span class="rv-p">${pf.est ? `1RM ≈ ${fmtN(pf.cur)} kg <small>estimé · à mesurer</small>` : pf.keep ? `1RM ≈ ${fmtN(pf.cur)} kg <small>à garder</small>` : `1RM ${fmtN(pf.cur)} → <b>${fmtN(pf.proj)} kg</b>`}</span>` : `<span class="rv-p"><small>au poids du corps</small></span>`}
         <button class="rv-sw" data-rvs="${esc(it.slot)}" data-rvd="${d.dow}" aria-label="Changer cet exercice">↻</button></li>`; }).join("");
     const why = [`Muscles du jour : ${d.muscles.join(", ").toLowerCase()}.`, "Les mouvements polyarticulaires d'abord, quand tu es frais ; l'isolation ensuite.",
       `${d.items.filter(x => !x.cardio).length} exercices pour tenir en ≈ ${d.est} min.`, ...(ex.length ? [`Pas de ${ex.join(", ").toLowerCase()} ce jour-là : tu me l'as demandé.`] : []),
@@ -2838,19 +2851,27 @@ function noxApply(mode){
 
 /* --- Propositions d'expérience (audit du 19 nov. 2026) --- */
 // Plateau : sur 8 séances récentes, les 4 dernières ne battent pas les 4 d'avant (1RM estimé, +1 % au moins)
+// 1RM estimé d'une séance, corrigé par les reps en réserve (ressenti noté, sinon déduit) : base des plateaux et du contrat (audit 4)
+function sessE(sess, e){ const [lo, hi] = repRange(e), W = Math.max(...sess.sets.map(x => num(x.w))); if(!W) return 0;
+  const r = Math.min(...sess.sets.filter(x => num(x.w) === W).map(x => num(x.r))), f = sess.feel || inferFeel(sess, lo, hi); return W * (1 + (Math.min(r, 12) + FEEL[f - 1].rir) / 30); }
+// Plateau (audit 4) : 1RM corrigé du ressenti ; au moins 4 semaines de chaque côté ; seuil = moitié du rythme attendu
 function plateaus(){
-  const now = Date.now(), dis = (noxSt().dis || {}), ids = [...new Set(S.workouts.flatMap(w => w.exercises.map(x => x.exId)))];
-  return ids.map(id => { const e = exById(id); if(!e || isCardio(e) || e.equip === "Poids du corps" || (dis[id] && now - dis[id] < 30 * 86400000)) return null;
-    const h = exHistory(id).filter(x => x.best > 0); if(h.length < 8) return null; const l8 = h.slice(-8);
-    if(now - l8[7].ts > 21 * 86400000 || l8[7].ts - l8[0].ts > 84 * 86400000) return null;
-    const a = Math.max(...l8.slice(0, 4).map(x => x.best)), b = Math.max(...l8.slice(4).map(x => x.best));
-    return b <= a * 1.01 ? {id, e, best:b} : null; }).filter(Boolean);
+  const now = Date.now(), D = 86400000, dis = (noxSt().dis || {}), ids = [...new Set(S.workouts.flatMap(w => w.exercises.map(x => x.exId)))];
+  const exp = ((noxExam() || {}).exp) || (novice() ? "deb" : "mid"), rate = (NOX_RATE.muscle[exp] || 0.35) / 100;
+  return ids.map(id => { const e = exById(id); if(!e || isCardio(e) || e.equip === "Poids du corps" || (dis[id] && now - dis[id] < 30 * D)) return null;
+    const h = sessionsFor(id).filter(x => now - x.ts < 84 * D).reverse(); if(h.length < 8 || now - h[h.length - 1].ts > 21 * D) return null;
+    const mid = h[h.length - 1].ts - 28 * D, A = h.filter(x => x.ts < mid), B = h.filter(x => x.ts >= mid);
+    if(A.length < 4 || B.length < 4 || mid - A[0].ts < 21 * D) return null;
+    const med = l => { const v = l.map(x => sessE(x, e)).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
+    const a = med(A), b = med(B), weeks = (h[h.length - 1].ts - A[0].ts) / (7 * D) / 2;
+    return b <= a * (1 + Math.max(0.01, rate * weeks / 2)) ? {id, e, best:b} : null; }).filter(Boolean);
 }
 const altRange = e => { const [lo] = repRange(e); return lo <= 6 ? [8, 12] : lo === 8 ? [6, 10] : [8, 12]; };
 // Fatigue générale : au moins 3 exercices dont les 2 dernières séances (sur 14 jours) étaient dures
 function tiredCount(){
   const now = Date.now(), ids = [...new Set(S.workouts.filter(w => now - w.start < 14 * 86400000).flatMap(w => w.exercises.map(x => x.exId)))];
-  return ids.filter(id => { const h = sessionsFor(id).slice(0, 2); return h.length === 2 && h.every(x => (x.feel || 3) >= 4) && now - h[1].ts < 14 * 86400000; }).length;
+  return ids.filter(id => { const e = exById(id), h = sessionsFor(id).slice(0, 2), iso = e && !isPoly(e) && e.equip !== "Poids du corps";   // audit 4 : en isolation, « Dur » est la cible
+    return h.length === 2 && h.every(x => (x.feel || 3) >= (iso ? 5 : 4)) && now - h[1].ts < 14 * 86400000; }).length;
 }
 function noxCycle(){
   const st = noxSt(), l = S.profile.lightWeek;
@@ -2877,8 +2898,12 @@ function noxProposals(){
 /* --- Contrat d'expérience (20 nov. 2026, demande du propriétaire) : des objectifs chiffrés que le joueur signe avec Noxwell.
    Calculés une fois au début du protocole, d'après son historique (120 jours avant) et son expérience : exigeants mais atteignables.
    Rythme de progression visé par semaine (1RM estimé) : plus lent quand on est confirmé. */
-const NOX_RATE = {force:{deb:1.5, mid:.75, pro:.4}, muscle:{deb:1, mid:.5, pro:.25}}, NOX_RECS = {deb:6, mid:4, pro:2};
-function noxBase(id, t0){ const b = exHistory(id).filter(x => x.ts < t0 && x.ts > t0 - 120 * 86400000 && x.best > 0); return b.length ? Math.max(...b.map(x => x.best)) : 0; }
+// audit 4 : rythmes réalistes (% de 1RM par semaine)
+const NOX_RATE = {force:{deb:1, mid:.5, pro:.2}, muscle:{deb:.7, mid:.35, pro:.15}}, NOX_RECS = {deb:6, mid:4, pro:2};
+// Force de référence (audit 4) : médiane des 3 meilleurs 1RM corrigés du ressenti sur une période (moins sensible au bruit qu'un maximum)
+function noxStrength(id, from, to){ const e = exById(id); if(!e) return 0; const v = sessionsFor(id).filter(x => x.ts >= from && x.ts < to).map(x => sessE(x, e)).filter(x => x > 0).sort((a, b) => b - a).slice(0, 3);
+  return v.length ? v[Math.floor((v.length - 1) / 2)] : 0; }
+function noxBase(id, t0){ return noxStrength(id, t0 - 120 * 86400000, t0); }
 function noxTopEx(t0){   // exercices avec charge les plus pratiqués dans les 120 jours avant le protocole
   const n = {}; S.workouts.forEach(w => { if(w.start >= t0 || w.start < t0 - 120 * 86400000) return; new Set(w.exercises.map(x => x.exId)).forEach(id => n[id] = (n[id] || 0) + 1); });
   return Object.keys(n).filter(id => { const e = exById(id); return e && !isCardio(e) && noxBase(id, t0) > 0; }).sort((a, b) => n[b] - n[a] || isCompound(exById(b)) - isCompound(exById(a)));
@@ -2945,7 +2970,7 @@ function noxContractState(c, pr){
     else if(it.k === "cardio") have = cmin(since).reduce((t, x) => t + x, 0);
     else if(it.k === "kcal") have = since.reduce((t, w) => t + ((wCalories(w) || {}).kcal || 0), 0);
     else if(it.k === "long") have = Math.max(0, ...cmin(since));
-    else if(it.k === "lift"){ const h = hist(it.id); have = h.length ? Math.max(...h.map(x => x.best)) : 0; }
+    else if(it.k === "lift"){ have = noxStrength(it.id, Math.max(start, Date.now() - 14 * 86400000), Infinity) || noxStrength(it.id, start, Infinity); }
     else if(it.k === "keep"){ const h = hist(it.id); have = h.length ? h[h.length - 1].best : 0; }
     if(it.k === "gym"){ const h = creatureHeight(cr), w = cr.weight, f = (v, a, b) => Math.max(0, Math.min(1, b > a ? (v - a) / (b - a) : 1));
       pct = (f(h, it.h0, it.h) + f(w, it.w0, it.w)) / 2; ok = !cr.dead && h >= it.h && w >= it.w; note = `${fmtN(h, 0)} cm · ${fmtWeight(w)}`; }
@@ -3264,15 +3289,15 @@ function estimateNew(e, lo){
   const ref = STD[e.id], bw = bodyweight(); if(!ref || !bw) return null;
   // Charge max déclarée à l'examen du Pr Noxwell (21 nov. 2026) : la même, ou celle d'un mouvement du même muscle, ramenée par les tables de force
   const mx = S.profile.maxes || {}, dk = mx[e.id] ? e.id : Object.keys(mx).find(id => mx[id] > 0 && STD[id] && exById(id) && exById(id).muscle === e.muscle);
-  if(dk){ const oneRM = mx[dk] * ref / STD[dk], st = stepFor(e, oneRM), w = Math.floor(oneRM / (1 + (lo + 2.5)/30) * 0.9 / st + 1e-9) * st;
+  if(dk){ const oneRM = mx[dk] * ref / STD[dk], st = stepFor(e, oneRM), w = Math.floor(oneRM / (1 + (lo + 2.5)/30) * 0.95 / st + 1e-9) * st;
     if(w >= st) return {w:+w.toFixed(2), oneRM, txt:`Elle part de ta charge max déclarée au Pr Noxwell (${fmtN(mx[dk], 1)} kg au ${exById(dk).name.toLowerCase()}).`}; }
   const sb = strengthByMuscle(), pm = primOf(e), rf = sb.res[pm], rg = sb.resG[e.muscle];
-  const own = !!(rf && rf.score !== null), grp = !own && !!(rg && rg.score !== null), hyp = ({deb:1, mid:2, pro:3})[S.profile.expHyp];
+  const own = !!(rf && rf.score !== null), grp = !own && !!(rg && rg.score !== null), hyp = ({deb:1.5, mid:2.5, pro:3.3})[S.profile.expHyp];   // audit 4 : hypothèses moins prudentes
   const L = own ? rf.score : grp ? rg.score : sb.avg ?? hyp;
   if(L === null || L === undefined) return null;
   const scale = S.profile.sex==="f" ? (e.muscle==="Jambes" ? 0.75 : 0.6) : 1, t = LMULT.map(m => m*ref*scale*bw), i = Math.min(4, Math.floor(L));
   const oneRM = L < 1 ? L*t[0] : L >= 5 ? t[4] : t[i-1] + (L-i)*(t[i]-t[i-1]);
-  const st = stepFor(e, oneRM), w = Math.floor(oneRM / (1 + (lo + 2.5)/30) * 0.9 / st + 1e-9) * st;
+  const st = stepFor(e, oneRM), w = Math.floor(oneRM / (1 + (lo + 2.5)/30) * 0.95 / st + 1e-9) * st;   // audit 4 : −5 % au lieu de −10 %
   if(w < st) return null;
   const lv = LEVELS[Math.min(4, Math.floor(L))] || LEVELS[0];
   return {w:+w.toFixed(2), oneRM, txt:`Elle part de ton niveau ${own ? `en ${pm.toLowerCase()}, mesuré sur tes autres exercices` : grp ? `en ${e.muscle.toLowerCase()}, mesuré sur tes autres exercices` : "moyen, mesuré sur tes autres exercices"} (${lv.toLowerCase()}), et de ton poids de corps (${fmtN(bw)} kg) : tu pourrais soulever environ ${fmtN(oneRM, 1)} kg une seule fois, et on retire 10 % par prudence.`};
@@ -5279,6 +5304,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-22", t:"🏋️ Un coach de charges plus juste", x:"Après une décharge ou une pause, le coach repart de la bonne référence (séance lourde ou volume) et revient progressivement. Tes premières charges sont mieux estimées, une rep manquée sur la dernière série ne te fait plus reculer, et les charges lourdes ont un vrai échauffement (4 paliers). Pour tes 3 premières séances sur un exercice, l'écran de fin te demande ton ressenti en une touche."},
   {d:"2026-11-22", t:"🛡️ Perte de poids : des objectifs plus sûrs et plus justes", x:"Pour perdre du poids, le Pr Noxwell demande ton poids, ta taille et ton âge : jamais d'objectif sous la zone de santé ni avant 18 ans. Ton objectif de calories est calculé sur tes séances prévues, et il te dit ce que ça représente vraiment. Les calories de la musculation et du vélo sont plus justes, et les conseils suivent ton objectif."},
   {d:"2026-11-22", t:"💪 Une récupération plus juste", x:"La récupération de tes muscles dépend maintenant de l'effort réel : nombre de séries, ressenti, durée et intensité de tes activités. 20 minutes de marche ou une série facile ne « fatiguent » presque plus tes jambes, une vraie séance de jambes compte toujours 2 à 3 jours, et deux séances rapprochées s'additionnent. « Prêt dans … » indique quand le muscle sera à 90 %."},
   {d:"2026-11-21", t:"🧪 Le Pr Noxwell dès le premier jour", x:"Les nouveaux joueurs rencontrent le Pr Noxwell dès le premier lancement : avant la première séance, il fait passer l'examen et construit la routine. La page Routine reste vide tant que l'examen n'est pas passé ; ensuite, tout reste modifiable à la main."},
@@ -6244,7 +6270,7 @@ function startWorkout(name, exercises, routineId){
 }
 function finishWorkout(){
   const a = S.profile.active;
-  const exercises = a.exercises.map(ex => ({exId:ex.exId, feel:ex.feel||0, ...(exOpt(ex.exId).uni ? {uni:1} : {}), sets:ex.sets.filter(s=>s.done).map(s=>({w:s.w, r:s.r, done:true, warm:!!s.warm, ...(critHit(s) && !s.warm ? {crit:1} : {})}))})).filter(ex => ex.sets.length);
+  const exercises = a.exercises.map(ex => ({exId:ex.exId, feel:ex.feel||0, ...(exOpt(ex.exId).uni ? {uni:1} : {}), ...((c => c && c.dl ? {dl:c.dl} : {})(coach(ex.exId, a.start, ex.plan))), sets:ex.sets.filter(s=>s.done).map(s=>({w:s.w, r:s.r, done:true, warm:!!s.warm, ...(critHit(s) && !s.warm ? {crit:1} : {})}))})).filter(ex => ex.sets.length);
   if(!exercises.length){ toast("Validez au moins une série avec ✓ avant de terminer"); return; }
   const w = {id:a.id, name:a.name.trim()||"Séance", start:a.start, end:Date.now(), routineId:a.routineId, exercises, prs:[], ...(a.team ? {team:teamRecord(a.team)} : {})};
   exercises.forEach(ex => {
@@ -6257,7 +6283,7 @@ function finishWorkout(){
   S.workouts.push(w); teamLog(w); S.profile.active = null; stopRest(); flash(null);
   touchProfile(); saveWorkout(w);
   const cr = creatureFeed(w); render(); gcRetention();
-  openSheet(`<div class="rating"><span class="remo">${w.rating.e}</span><div><h3>${esc(w.rating.label)}</h3>
+  openSheet(`${feelGateHTML(w)}<div class="rating"><span class="remo">${w.rating.e}</span><div><h3>${esc(w.rating.label)}</h3>
       <ul>${w.rating.why.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
     ${/correcte|dessous/.test(w.rating.label) ? offReasonsHTML(w) : ""}
     <div class="tiles">
@@ -6277,6 +6303,12 @@ function finishWorkout(){
   celebrate(w, cr);
 }
 
+// Audit 4 : sans ressenti, le coach ne voit pas la marge ; pour les 3 premières séances d'un exercice, l'écran de fin le demande en une touche
+function feelGateHTML(w){
+  const ask = w.exercises.map((ex, i) => ({ex, i})).filter(({ex}) => !ex.feel && !isCardio(exById(ex.exId)) && sessionsFor(ex.exId, w.start).length < 3);
+  return ask.length ? `<div class="fg"><b>Comment c'était ?</b><span class="small muted">Pour tes premières séances sur ${ask.length > 1 ? "ces exercices" : "cet exercice"}, ton ressenti règle la charge de la prochaine fois.</span>
+    ${ask.map(({ex, i}) => `<div class="fg-row"><span>${esc(exById(ex.exId).name)}</span><div class="feel-bar">${FEEL.map(f => `<button data-act="feel-gate" data-w="${esc(w.id)}" data-i="${i}" data-v="${f.v}" aria-pressed="false" style="--fc:var(${f.col})" aria-label="${f.label}"></button>`).join("")}</div></div>`).join("")}</div>` : "";
+}
 function feelCheck(i){
   const ex = A().exercises[i], e = exById(ex.exId), c = coach(ex.exId, A().start, ex.plan); let n = 0;
   const rows = ex.sets.filter(s => !s.warm).map(s => { n++; return s.done ? `<li><span class="muted">Série ${n}</span> <b>${esc(setTxt(s))}</b></li>` : ""; }).join("");
@@ -6653,6 +6685,8 @@ const ACT = {
   "ex-move": b => { const i = +b.dataset.i, d = +b.dataset.d, l = A().exercises; [l[i], l[i+d]] = [l[i+d], l[i]]; touchProfile(); closeSheet(); render(); },
   "duos-close": b => { const d = b.closest("details"); if(d) d.open = false; },
   "nox-toggle": () => { noxOpen = !noxOpen; render(); },
+  "feel-gate": b => { const w = S.workouts.find(x => x.id === b.dataset.w), ex = w && w.exercises[+b.dataset.i]; if(!ex) return; ex.feel = +b.dataset.v; saveWorkout(w); touchProfile();
+    b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); },
   "sess-dur": b => { const a = A(); if(!a) return; const d = Math.min(SESS.max, Math.max(SESS.min, sessDur(a) + +b.dataset.d)); if(d === a.dur){ toast(`Entre ${SESS.min} et ${SESS.max} min`); return; }
     a.dur = d; const r = sessAdapt(a, +b.dataset.d); if(r.added.length) critPlan(a); touchProfile(); render(); toast(sessMsg(r, d)); },
   "ex-remove": b => { A().exercises.splice(+b.dataset.i,1); touchProfile(); closeSheet(); render(); },
