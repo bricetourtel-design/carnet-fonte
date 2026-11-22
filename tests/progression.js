@@ -141,7 +141,8 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts = [{id:"wk", name:"x", start:n - 2 * H, end:n - H, act:{k:"marche", min:60}, exercises:[], prs:[]}]; r.walk60 = Math.round(recoveryFine("Quadriceps").pct * 100);
     S.workouts = [{id:"c1", name:"x", start:n - 5 * D, end:n - 5 * D + H, prs:[], exercises:[{exId:"leg-ext", feel:3, sets:set(60, 12, 3)}]}]; r.up = coach("leg-ext").w;
     S.workouts.push({id:"c2", name:"x", start:n - 3 * H, end:n - 2 * H, prs:[], exercises:[{exId:"squat", feel:4, sets:set(100, 8, 3)}]});
-    const c = coach("leg-ext"); r.tired = [c.w, c.tag]; r.restAdv = (chooseToday() || {}).restAdvised;
+    const c = coach("leg-ext"); r.tired = [c.w, c.tag]; const R0 = S.profile.routines; S.profile.routines = [{id:"u-t", name:"Test", items:[{exId:"curl-barre", sets:3}]}];
+    r.restAdv = (chooseToday() || {}).restAdvised; S.profile.routines = R0;
     S.workouts = W; S.profile.active = act; return r; });
   ok(ld.walk60 >= 95, "1 h de marche : les quadriceps restent récupérés", ld.walk60);
   ok(ld.up > 60 && ld.tired[0] <= 60 && /Récupération|Même charge/.test(ld.tired[1]), "quadriceps pas récupérés (squat il y a 2 h) : pas de hausse de charge au leg extension", ld);
@@ -154,8 +155,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts = W; return out; });
   ok(fin.every(x => x.first >= 3 && x.leg), "programme : 1er polyarticulaire ≥ 3 séries, jambes ouvertes par un squat ou un mouvement de hanche (2 à 6 séances, 60 à 90 min)", fin.filter(x => x.first < 3 || !x.leg));
   const pill = await p.evaluate(() => { const ex = S.profile.nox; S.profile.nox = {v:1, intro:Date.now(), exam:{done:Date.now(), obj:"muscle", n:3}};
-    const r = [routineSrc({id:"x", plan:1}), routineSrc({id:"today-duo-0"}), routineSrc({id:"r-push"}), routineSrc({id:"u1"})]; S.profile.nox = {v:1}; r.push(routineSrc({id:"y", plan:1})); S.profile.nox = ex; return r.join(); });
-  ok(pill === "nox,nox,tpl,me,me", "pastille d'origine : programme et suggestion du Pr Noxwell, modèles de départ, séances créées par le joueur", pill);
+    const r = [routineSrc({id:"x", plan:1}), routineSrc({id:"today-duo-0"}), routineSrc({id:"u1"})]; S.profile.nox = {v:1}; r.push(routineSrc({id:"y", plan:1})); S.profile.nox = ex; return r.join(); });
+  ok(pill === "nox,nox,me,me", "pastille d'origine : programme et suggestion du Pr Noxwell, séances créées par le joueur", pill);
+  // Plus de programmes de départ : retirés s'ils n'ont pas été modifiés ; page Séance vide → bilan ou séance à soi
+  const st = await p.evaluate(() => { const R = S.profile.routines, off = S.profile.startersOff, W = S.workouts, act = S.profile.active;
+    S.profile.routines = [clone(OLD_STARTERS[0]), {...clone(OLD_STARTERS[1]), name:"Mon pull"}, {id:"u9", name:"Bras", items:[{exId:"curl-barre", sets:3}]}]; delete S.profile.startersOff; dropStarters();
+    const kept = S.profile.routines.map(r => r.id).join(); S.profile.routines = []; S.profile.active = null; tab = "seance"; render();
+    const v = document.getElementById("view"), out = {kept, fresh:defaultProfile().routines.length, empty:!!v.querySelector(".seance-empty"), choose:chooseToday(),
+      exam:!!v.querySelector('.seance-empty [data-act="nox-exam"]'), mine:!!v.querySelector('.seance-empty [data-act="new-routine"]'), card:!!v.querySelector(".todaycard")};
+    S.profile.routines = R; S.profile.startersOff = off; S.workouts = W; S.profile.active = act; render(); return out; });
+  ok(st.kept === "r-pull,u9" && st.fresh === 0, "programmes de départ retirés, sauf s'ils ont été modifiés ; un nouveau joueur n'en a aucun", st);
+  ok(st.empty && st.choose === null && st.exam && st.mine && !st.card, "sans séance : « Pas encore de séance », bilan du Pr Noxwell ou séance à soi, aucune séance conseillée", st);
   ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);

@@ -487,7 +487,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const sv1 = document.querySelector(".sheet .curve-box svg"), r1 = sv1.getBoundingClientRect(); sv1.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true, clientX:r1.left + r1.width * 0.5, clientY:r1.top + 20}));
     const tip = document.querySelector(".sheet .curve-box .curve-tip").textContent; closeSheet();
     document.querySelector('.gy-act[data-act="gy-pet"]').click(); const pet = /encore/.test((document.querySelector(".gy-bubble") || {}).textContent || "") && !!document.querySelector(".gy-heart");
-    gyMsg = null; const act0 = S.profile.active; document.querySelector('.gy-act[data-act="train-best"]').click(); const go = tab + (S.profile.active && S.profile.active !== act0 ? "+séance" : ""); S.profile.active = act0; tab = "creature";
+    gyMsg = null; const act0 = S.profile.active, R0 = S.profile.routines; S.profile.routines = [{id:"u-t", name:"Test", items:[{exId:"squat", sets:3}]}]; document.querySelector('.gy-act[data-act="train-best"]').click(); S.profile.routines = R0; const go = tab + (S.profile.active && S.profile.active !== act0 ? "+séance" : ""); S.profile.active = act0; tab = "creature";
     S.profile.creature = JSON.parse(saved); saveLocal(); render();
     return {curves, tip, go, labels, washWarn, jOff, jOn, jRead, hungry, fridge, pet}; });
   ok(ac.labels === "S'entraîner,Nourrir,Laver,Câlin,Carnet de santé,Sociabiliser" && ac.go === "seance+séance", "barre d'actions : S'entraîner (démarre la séance conseillée), Nourrir, Laver, Câlin, Carnet de santé, Sociabiliser", ac);
