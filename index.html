@@ -966,7 +966,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 f";
+const APP_VERSION = "2026-11-22 g";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2703,7 +2703,7 @@ function noxReviewHTML(){
 const noxKcalDef = () => noxKcalPlan();
 const NOX_STEPS = [
   {k:"intro", say:() => "Premier examen ! Détends-toi, ça ne pique pas. Enfin, <b>presque</b> pas. Quelques questions, et je te concocte un protocole sur mesure.", f:"grin",
-   html:() => `<div class="nxe-q">🩺 Le diagnostic</div><div class="nxe-sum"><div><span>Durée</span><b>2 minutes</b></div><div><span>Ce que tu obtiens</span><b>Ton protocole sur mesure</b></div><div><span>Le dernier mot</span><b>C'est toujours toi</b></div></div>`,
+   html:() => `<div class="nxe-q">🩺 Le diagnostic</div><div class="nxe-sum"><div><span>Durée</span><b>2 minutes</b></div><div><span>Ce que tu obtiens</span><b>Ton protocole sur mesure</b></div><div><span>Le dernier mot</span><b>C'est toujours toi : modifiable à tout moment selon tes envies, je m'adapte et je recalcule</b></div></div>`,
    ok:() => true, btn:"C'est parti !"},
   {k:"obj", q:true, say:() => "Question capitale : qu'est-ce que tu veux changer dans ton corps ? <b>Un seul choix</b>, on se concentre !", f:"smirk",
    html:() => `<div class="nxe-q">Ton objectif</div>` + Object.entries(NOX_OBJ).map(([k, o]) => `<button class="nxe-opt" data-set="obj" data-v="${k}" aria-pressed="${noxA.obj === k}"><span class="e">${o.e}</span><span><b>${o.l}</b><small>${o.d}</small></span></button>`).join(""),
