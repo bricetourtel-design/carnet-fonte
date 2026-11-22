@@ -927,10 +927,10 @@ body.nox-shake main{animation:nxshake .38s linear}
 .ss-link button[aria-pressed="true"]{color:#fff;background:#ec4899;border-style:solid;border-color:#ec4899}
 .live-adj{margin:0 0 6px;font-size:13.5px;line-height:1.35;color:#0e7490;font-weight:600}
 :root:not([data-theme="light"]) .live-adj{color:#a5f3fc}
+.seance-empty{display:flex;flex-direction:column;gap:10px}.seance-empty h3{margin:0}
 .src-pill{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap;vertical-align:middle}
 .src-pill.nox{background:rgba(163,230,53,.16);color:#65a30d;border:1px solid rgba(163,230,53,.45)}
 .src-pill.me{background:rgba(56,189,248,.14);color:#0284c7;border:1px solid rgba(56,189,248,.4)}
-.src-pill.tpl{background:rgba(148,163,184,.14);color:var(--muted);border:1px solid rgba(148,163,184,.4)}
 @media (prefers-color-scheme: dark){ .src-pill.nox{color:#bef264} .src-pill.me{color:#7dd3fc} }
 .nox-fio{font-size:15px;filter:drop-shadow(0 0 4px rgba(163,230,53,.6))}
 .feel-how{margin-left:auto;font-size:12.5px;font-weight:700;color:#0891b2;background:none;border:0;padding:0}
@@ -971,7 +971,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 h";
+const APP_VERSION = "2026-11-22 i";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1559,14 +1559,16 @@ function thumb(e, act){
     : `<${tag} class="thumb ph" style="${mc(e.muscle)}">${esc(e.name.trim().charAt(0).toUpperCase())}</${end}>`;
 }
 
+// Anciens programmes de départ : retirés chez les joueurs qui ne les ont jamais modifiés
+const OLD_STARTERS = [
+  {id:"r-push",name:"Push",items:[{exId:"dc-barre",sets:4},{exId:"di-halteres",sets:3},{exId:"dm-halteres",sets:3},{exId:"elev-lat",sets:3},{exId:"ext-poulie",sets:3}]},
+  {id:"r-pull",name:"Pull",items:[{exId:"tractions",sets:4},{exId:"rowing-barre",sets:4},{exId:"tirage-horizontal",sets:3},{exId:"face-pull",sets:3},{exId:"curl-halteres",sets:3}]},
+  {id:"r-legs",name:"Legs",items:[{exId:"squat",sets:4},{exId:"sdt-roumain",sets:3},{exId:"presse",sets:3},{exId:"leg-curl",sets:3},{exId:"mollets",sets:4}]}
+];
 function defaultProfile(){
   return {
     version:2, rest:-1, ranges:{}, custom:[], active:null,
-    routines:[
-      {id:"r-push",name:"Push",items:[{exId:"dc-barre",sets:4},{exId:"di-halteres",sets:3},{exId:"dm-halteres",sets:3},{exId:"elev-lat",sets:3},{exId:"ext-poulie",sets:3}]},
-      {id:"r-pull",name:"Pull",items:[{exId:"tractions",sets:4},{exId:"rowing-barre",sets:4},{exId:"tirage-horizontal",sets:3},{exId:"face-pull",sets:3},{exId:"curl-halteres",sets:3}]},
-      {id:"r-legs",name:"Legs",items:[{exId:"squat",sets:4},{exId:"sdt-roumain",sets:3},{exId:"presse",sets:3},{exId:"leg-curl",sets:3},{exId:"mollets",sets:4}]}
-    ]
+    routines:[]   // plus de programmes de départ (22 nov. 2026, demande du propriétaire) : le Pr Noxwell ou le joueur les crée
   };
 }
 
@@ -1583,6 +1585,12 @@ function loadLocal(){
     S.profile = {...defaultProfile(), ...(d.profile||{})}; S.workouts = d.workouts||[]; } }catch(e){}
   // v2 : repos automatique selon l'exercice, fourchettes de reps personnalisables
   if((S.profile.version||1) < 2){ S.profile.version = 2; S.profile.rest = -1; S.profile.ranges = S.profile.ranges || {}; saveLocal(); }
+  dropStarters();
+}
+function dropStarters(){
+  if(S.profile.startersOff) return; const same = (a, b) => JSON.stringify({n:a.name, i:a.items}) === JSON.stringify({n:b.name, i:b.items});
+  S.profile.routines = (S.profile.routines || []).filter(r => { const o = OLD_STARTERS.find(x => x.id === r.id); return !o || !same(o, r); });
+  S.profile.startersOff = 1; saveLocal();
 }
 function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){} }
 function touchProfile(){ saveLocal(); }
@@ -3538,6 +3546,7 @@ function recGroup(m, at){
   let w = 0, v = 0; l.forEach(f => { const k = REC_FULL[f] || 6; w += k; v += k * recoveryFine(f, at).pct; }); return v / w;
 }
 function chooseToday(){
+  if(!(S.profile.routines || []).length) return null;   // ni programme ni séance : rien à conseiller (le joueur passe le bilan ou crée sa séance)
   const t = todayDow(), r0 = S.profile.routines.find(r => r.plan && r.dow===t) || null, exToday = ((S.profile.excl || {})[t]) || [];
   const {resG:res} = strengthByMuscle(), weak = MUSCLES.filter(m => res[m] && res[m].tag==="faible");
   // Audit 4 : récupération évaluée à l'heure habituelle d'entraînement (si elle est encore à venir aujourd'hui),
@@ -5397,6 +5406,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-22", t:"🧹 Plus de programmes imposés", x:"Les programmes Push, Pull et Legs de départ disparaissent (ceux que tu avais modifiés restent). Sans séance, la page Séance te propose le bilan du Pr Noxwell ou de créer ta propre séance."},
   {d:"2026-11-22", t:"🏷️ D'où vient chaque séance", x:"Sur la page Séance, une pastille indique l'origine de chaque séance : 🧪 Pr Noxwell (son programme et ses suggestions du jour), ✍️ créée par toi, ou 📋 modèle de départ."},
   {d:"2026-11-22", t:"🛌 Récupération et séance du jour plus fines", x:"Une marche ou un petit footing ne fatiguent plus tes jambes comme une séance. Si un muscle n'est pas encore récupéré, le coach ne monte pas la charge (et l'allège un peu s'il est vraiment fatigué). La séance conseillée tient compte de ton heure habituelle, de ta semaine et de ce que tu fais demain ; après une séance, le repos est conseillé et la séance reste en option."},
   {d:"2026-11-22", t:"🧩 Un programme qui pense à chaque muscle", x:"Le programme vise maintenant chaque muscle à part : élévations latérales et face pull pour les épaules, quadriceps, ischios, fessiers et mollets travaillés séparément. Moins d'exercices en double, plus de séries sur ceux qui comptent, le soulevé de terre passe avec les jambes, et la durée prévue compte les séries d'approche. Si tu as une zone prioritaire, elle a vraiment plus de séries."},
@@ -5809,10 +5819,8 @@ function actSave(k){
     <button class="btn primary" data-act="close">Fermer</button>`);
 }
 // Pastille d'origine (23 nov. 2026, demande du propriétaire) : séance du Pr Noxwell (programme ou suggestion du jour) ou créée par le joueur
-// Les 3 programmes de départ (Push, Pull, Legs) sont des modèles fournis par l'app
-const STARTER_IDS = new Set(["r-push", "r-pull", "r-legs"]);
-const srcPill = k => k === "nox" ? '<span class="src-pill nox">🧪 Pr Noxwell</span>' : k === "tpl" ? '<span class="src-pill tpl">📋 Modèle</span>' : '<span class="src-pill me">✍️ Créée par toi</span>';
-const routineSrc = r => !r ? "me" : (r.plan ? noxExam() : String(r.id || "").startsWith("today-")) ? "nox" : STARTER_IDS.has(r.id) ? "tpl" : "me";
+const srcPill = k => k === "nox" ? '<span class="src-pill nox">🧪 Pr Noxwell</span>' : '<span class="src-pill me">✍️ Créée par toi</span>';
+const routineSrc = r => r && (r.plan ? noxExam() : String(r.id || "").startsWith("today-")) ? "nox" : "me";
 function viewHome(){
   const now = Date.now(), ws = weekStart(now);
   const thisWeek = S.workouts.filter(w => w.start >= ws);
@@ -5847,7 +5855,13 @@ function viewHome(){
     </div>`; };
   const others = S.profile.routines.filter(r => !r.plan);
   const routines = restBanner + ord.map(o => card(o.r)).join("") + (ord.length && others.length ? `<h2 class="big">Autres programmes</h2>` : "") + others.map(card).join("");
-  return `${ch ? todayCardHTML(ch) : ""}
+  // Aucun programme ni séance (22 nov. 2026) : la page le dit, et propose le bilan du professeur ou une séance à soi
+  const empty = S.profile.routines.length ? "" : `<section class="card seance-empty"><h3>Pas encore de séance</h3>
+      <p class="small muted" style="margin:0">Deux façons de commencer :</p>
+      <button class="btn primary wide" data-act="nox-exam">🧪 Faire le bilan avec le Pr Noxwell</button>
+      <p class="small muted" style="margin:0">Il te construit un programme sur mesure, que tu peux modifier à tout moment.</p>
+      <button class="btn wide" data-act="new-routine">✍️ Créer ma propre séance</button></section>`;
+  return `${ch ? todayCardHTML(ch) : empty}
     <section class="card">
       <div class="week">${days}</div>
       <div class="stats">
@@ -5869,10 +5883,10 @@ function viewHome(){
     <button class="btn primary wide" data-act="start-empty">Démarrer une séance libre</button>
     <button class="btn wide" data-act="act-new">＋ Autre activité : natation, foot, vélo…</button>
     <button class="btn ghost wide" data-act="team-join">👥 Rejoindre la séance d'un ami</button>
-    <h2 class="big">${ord.length ? "Ma semaine" : "Mes programmes"}</h2>
+    ${S.profile.routines.length ? `<h2 class="big">${ord.length ? "Ma semaine" : "Mes programmes"}</h2>
     ${ord.length ? "" : `<button class="btn ghost wide" data-act="goto" data-tab="routine">Créer ma routine de la semaine</button>`}
     ${routines}
-    <button class="btn ghost wide" data-act="new-routine">+ Créer un programme</button>`;
+    <button class="btn ghost wide" data-act="new-routine">+ Créer un programme</button>` : ""}`;
 }
 
 function viewActive(){
