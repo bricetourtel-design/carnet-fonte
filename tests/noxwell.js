@@ -299,7 +299,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts.push({id:"leg-hard", name:"x", start:n - 10 * H, end:n - 9 * H, prs:[], exercises:[{exId:"squat", feel:5, sets:Array.from({length:6}, () => ({w:"100", r:"8", done:true}))}]});
     ch = chooseToday(); r.fatigue = ch && !ch.pick.ms.includes("Jambes");
     planDraft = {n:1, tpl:"", days:[{dow:other, muscles:["Pectoraux", "Triceps"], off:{}, min:45}], novOff:0}; planSave(); ch = chooseToday(); r.rest = !!ch && ch.restDay;
-    tab = "seance"; render(); r.top = /Séance conseillée/.test((document.querySelector("#view .todaycard") || {}).textContent || "") && document.querySelector("#view").firstElementChild.classList.contains("todaycard");
+    tab = "seance"; render(); r.top = /Séance conseillée|Optionnel/.test((document.querySelector("#view .todaycard") || {}).textContent || "") && document.querySelector("#view").firstElementChild.classList.contains("todaycard");
     // activité : natation 45 min, 1,5 km
     const c = creatureState(), m0 = c.weight; document.querySelector('[data-act="act-new"]').click(); r.grid = document.querySelectorAll(".act-b").length;
     document.querySelector('[data-act="act-pick"][data-k="natation"]').click(); document.getElementById("act-min").value = "45"; document.getElementById("act-km").value = "1,5";
