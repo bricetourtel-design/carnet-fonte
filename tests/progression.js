@@ -166,6 +166,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.profile.routines = R; S.profile.startersOff = off; S.workouts = W; S.profile.active = act; render(); return out; });
   ok(st.kept === "r-pull,u9" && st.fresh === 0, "programmes de départ retirés, sauf s'ils ont été modifiés ; un nouveau joueur n'en a aucun", st);
   ok(st.empty && st.choose === null && st.exam && st.mine && !st.card, "sans séance : « Pas encore de séance », bilan du Pr Noxwell ou séance à soi, aucune séance conseillée", st);
+  // Satiété (22 nov. 2026) : 20 min de marche ne remontent plus à 100 %, même pour un joueur qui marche souvent
+  const sat = await p.evaluate(() => { const D = 864e5, H = 36e5, n = Date.now(), W = S.workouts, saved = JSON.stringify(S.profile.creature || null), bw = S.profile.bw; S.profile.bw = 80;
+    const set = (w, r) => ({w:String(w), r:String(r), done:true}), mus = k => ({id:"sm" + k, name:"x", start:n - k * D - H, end:n - k * D, prs:[], exercises:[{exId:"squat", feel:3, sets:[set(80, 8), set(80, 8), set(80, 8)]}, {exId:"dc-barre", feel:3, sets:[set(60, 8), set(60, 8), set(60, 8)]}, {exId:"rowing-barre", feel:3, sets:[set(50, 10), set(50, 10), set(50, 10)]}]});
+    const walk = (k, min) => ({id:"sw" + k + "_" + min, name:"m", start:n - k * D - min * 60e3, end:n - k * D, act:{k:"marche", min}, exercises:[], prs:[]});
+    const feed = (hist, w) => { S.workouts = [...hist, w]; delete S.profile.creature; Object.assign(creatureState(), {fed:[], fridge:[], meal:null, sat:5, satT:n - 1, full:0, born:n - 100 * D}); return Math.round(creatureFeed(w).satAfter); };
+    const h = [mus(2), mus(4), mus(6), walk(3, 20), walk(5, 20), walk(8, 20)];
+    const r = {walk:feed(h, walk(0, 20)), mu:feed(h, {...mus(0), id:"sm0x"}), newWalk:feed([], walk(0, 20)), mass:gymFood(walk(0, 20)) > satFood(walk(0, 20))};
+    S.workouts = W; S.profile.creature = JSON.parse(saved); if(!S.profile.creature) delete S.profile.creature; S.profile.bw = bw; return r; });
+  ok(sat.walk <= 40 && sat.mu === 100 && sat.newWalk <= 40 && sat.mass, "satiété : 20 min de marche ne remontent plus de 5 à 100 % (même habituelles) ; la muscu habituelle oui ; la masse garde ses calories", sat);
   ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
