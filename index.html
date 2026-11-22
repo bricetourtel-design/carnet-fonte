@@ -971,7 +971,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 i";
+const APP_VERSION = "2026-11-22 j";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1761,6 +1761,15 @@ function actMet(a){
 const actKcal = (w, bw) => w.act && SPORTS[w.act.k] ? actMet(w.act) * (bw || bodyweight() || 75) * w.act.min / 60 : 0;
 const actFood = w => w.act ? Math.round(actKcal(w, bodyweight() || 75) * CARDIO_KG) : 0;
 const gymFood = w => wVolume(w) + cardioFood(w) + actFood(w);
+/* Satiété (22 nov. 2026, décision du propriétaire : remonter à 100 % doit rester dur) : le cardio et les activités comptent en calories nettes
+   (sans ce que le corps brûle au repos, 1 MET). La masse, elle, garde gymFood : rien de ce qui est déjà gagné ne bouge. */
+const netShare = met => met > 1 ? (met - 1) / met : 0;
+function satFood(w){
+  const bw = bodyweight() || 75; let k = 0;
+  w.exercises.forEach(ex => { const e = exById(ex.exId); if(!isCardio(e)) return; const m = (CARDIO_MET[e.id] || 6) * CARDIO_FEEL[ex.feel || 3]; k += m * bw * cardioMin(ex) / 60 * netShare(m); });
+  if(w.act && SPORTS[w.act.k]) k += actKcal(w, bw) * netShare(actMet(w.act));
+  return Math.round(wVolume(w) + k * CARDIO_KG);
+}
 const unitOf = e => TIMED.has(e && e.id) ? "s" : isCardio(e) ? "min" : "reps";
 function defaultRange(e){
   if(EX_RANGE[e.id]) return EX_RANGE[e.id];
@@ -3627,7 +3636,7 @@ const CREATURE_CFG = {
   // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
   setsThresholds: [20, 60, 120, 200],
   // Satiété (13 nov. 2026, remplace la vitalité) : voir le bloc « Satiété » plus bas
-  satiety: {plateauH:6, steakH:12, perRation:20, rationDays:30, rationStart:1000, rationMin:300, spoilDays:5,
+  satiety: {minU:3000, newU:4000, plateauH:6, steakH:12, perRation:20, rationDays:30, rationStart:1000, rationMin:300, spoilDays:5,
     peas:{afterDays:30, chance:1/40, below:5, to:50}, festinMin:50},
   resurrectWeightKeep: 0.7,
   // Masse = image de la charge soulevée (21 nov. 2026, décision du propriétaire) : 60 g à la naissance + 0,3 kg par tonne soulevée
@@ -3748,11 +3757,15 @@ function satRation(at){
    le remet à 100 % ; plus que d'habitude, le surplus va au frigo ; moins, il n'atteint pas 100 %. Valeur d'un repas : le creux à
    combler (au moins la baisse d'un écart habituel entre deux séances) pour un repas habituel, au prorata des kg. */
 function satUsual(at, kind){   // kind : « cardio » ou « muscu » (repas de séance, comparé aux séances du même type) ; sinon toutes les séances (frigo)
-  const D = 86400000, t = at || Date.now(), N = SAT.rationDays, l = S.workouts.filter(w => { const e = w.end || w.start; return e < t && e >= t - N * D && gymFood(w) > 0; });
-  const lk = kind ? l.filter(w => sessionKind(w) === kind) : l, ref = lk.length >= 3 ? lk : l;
-  const U = ref.length >= 3 ? ref.reduce((x, w) => x + gymFood(w), 0) / ref.length : satRation(t) * 7 / 3;   // nouveau joueur : comme avant (3 séances par semaine)
+  const D = 86400000, t = at || Date.now(), N = SAT.rationDays, l = S.workouts.filter(w => { const e = w.end || w.start; return e < t && e >= t - N * D && satFood(w) > 0; });
+  const avg = a => a.reduce((x, w) => x + satFood(w), 0) / a.length, lk = kind ? l.filter(w => sessionKind(w) === kind) : l, ref = lk.length >= 3 ? lk : l;
+  // Nouveau joueur (moins de 3 séances en 30 jours) : une séance de débutant complète, ≈ 4 t (15 à 20 séries)
+  let U = ref.length >= 3 ? avg(ref) : SAT.newU;
+  // Le cardio n'est jamais plus facile que la muscu habituelle du joueur : 20 min de marche ne remplacent pas une séance
+  const lm = l.filter(w => sessionKind(w) === "muscu"); if(kind === "cardio" && lm.length >= 3) U = Math.max(U, avg(lm));
+  U = Math.max(SAT.minU, U);   // une séance habituelle vaut au moins ≈ 30 min d'effort modéré
   const gapH = l.length >= 3 ? Math.min(120, Math.max(24, N * 24 / l.length)) : 56;
-  return {U:Math.max(SAT.rationMin, U), low:Math.max(10, 100 - satDecay(100, Math.max(0, gapH - SAT.plateauH)))};
+  return {U, low:Math.max(10, 100 - satDecay(100, Math.max(0, gapH - SAT.plateauH)))};
 }
 // Manger kg (équivalent poulet) jusqu'à 100 % ; steak et omelette (whole) : 1 ration = +20 %, mangés en entier. Seul ce qui est mangé fait grossir.
 function satEat(c, kg, at, plateauH, whole, kind){
@@ -3953,8 +3966,9 @@ function creatureFeed(w){
   c.stage = Math.max(c.stage, stageFor(c.fidelity, c));              // un stade acquis ne se perd jamais
   c.weight += vol / 1000 * CREATURE_CFG.kgPerTonne;                    // masse = charge soulevée, mangée ou non
   const full = sessionFull(w); if(full) c.tall = (c.tall ?? 0) + 1;      // taille = séances complètes
-  c.meal = null; const ate = satEat(c, vol, t, undefined, false, sessionKind(w)), ateB = bonus ? satEat(c, bonus, t) : 0, fr = [];
-  if(vol - ate >= 1) fr.push(fridgeAdd(c, "poulet", vol - ate, t));
+  const sf = satFood(w);   // ce qui nourrit la satiété (calories nettes pour le cardio)
+  c.meal = null; const ate = satEat(c, sf, t, undefined, false, sessionKind(w)), ateB = bonus ? satEat(c, bonus, t) : 0, fr = [];
+  if(sf - ate >= 1) fr.push(fridgeAdd(c, "poulet", sf - ate, t));
   if(bonus - ateB >= 1) fr.push(fridgeAdd(c, "or", bonus - ateB, t));
   if((w.prs || []).length) fr.push(fridgeAdd(c, "steak", 0, t));
   const ws = weekStart(w.end || w.start), nWeek = S.workouts.filter(x => c.fed.includes(x.id) && (x.end || x.start) >= ws && (x.end || x.start) <= (w.end || w.start)).length;
@@ -5406,6 +5420,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-22", t:"🍗 Ton Gymon a plus d'appétit", x:"Remonter sa satiété demande maintenant un vrai effort : 20 min de marche ne suffisent plus à le remplir. Ta séance habituelle le remet toujours à 100 %, mais le cardio ne peut pas faire plus facile que ta muscu habituelle, et il compte seulement les calories dépensées en plus du repos. Sa masse et sa taille ne changent pas."},
   {d:"2026-11-22", t:"🧹 Plus de programmes imposés", x:"Les programmes Push, Pull et Legs de départ disparaissent (ceux que tu avais modifiés restent). Sans séance, la page Séance te propose le bilan du Pr Noxwell ou de créer ta propre séance."},
   {d:"2026-11-22", t:"🏷️ D'où vient chaque séance", x:"Sur la page Séance, une pastille indique l'origine de chaque séance : 🧪 Pr Noxwell (son programme et ses suggestions du jour), ✍️ créée par toi, ou 📋 modèle de départ."},
   {d:"2026-11-22", t:"🛌 Récupération et séance du jour plus fines", x:"Une marche ou un petit footing ne fatiguent plus tes jambes comme une séance. Si un muscle n'est pas encore récupéré, le coach ne monte pas la charge (et l'allège un peu s'il est vraiment fatigué). La séance conseillée tient compte de ton heure habituelle, de ta semaine et de ce que tu fais demain ; après une séance, le repos est conseillé et la séance reste en option."},

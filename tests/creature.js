@@ -129,7 +129,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const w1 = c.weight, d = mk("fd3", 800); S.workouts.push(d); const f3 = creatureFeed(d); const ome = c.fridge.some(x => x.k === "omelette"), still = Math.abs(c.weight - w1 - gymFood(d) / 1000 * CREATURE_CFG.kgPerTonne) < 1e-9;
     const res = {r1, s1, grew, s2, fr:poulet && poulet.kg, eaten2:Math.round(f2.eaten), steak, ome, still, full:f3.satAfter, plateau:c.full - n};
     S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return res; });
-  ok(meal.r1 === 1000 && meal.s1 === 66 && meal.grew, "nouveau joueur : séance habituelle ≈ 2 333 kg ; 1 000 kg comblent 3/7 du creux (40 → 66 %), et il grossit", meal);
+  ok(meal.r1 === 1000 && meal.s1 === 55 && meal.grew, "nouveau joueur : séance de référence 4 t ; 1 000 kg comblent 1/4 du creux (40 → 55 %), et il grossit", meal);
   ok(meal.s2 === 100 && meal.fr + meal.eaten2 === 5000 && meal.fr > 0, "il mange jusqu'à 100 %, le reste part au frigo", meal);
   // Séance habituelle → 100 % sans stock ; plus que d'habitude → surplus au frigo ; moins → pas 100 %
   const usual = await p.evaluate(() => { const n = Date.now(), D = 864e5, H = 3600e3, W = S.workouts, saved = JSON.stringify(S.profile.creature);
@@ -613,9 +613,9 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const run = (id, t) => ({id, name:"c", start:t - H, end:t, prs:[], exercises:[{exId:"footing", feel:3, sets:[{w:"", r:"30", done:true}]}]});
     S.workouts = []; for(let k = 0; k < 4; k++){ S.workouts.push(mu("km" + k, n - (20 - k * 4) * D)); S.workouts.push(run("kc" + k, n - (18 - k * 4) * D)); }
     const r = {kindRun:sessionKind(run("x", n)), kindMu:sessionKind(mu("y", n))}, x = run("kc-new", n);
-    r.full = sessionFull(x); const c = {sat:100, satT:n - 56 * H, full:0, stage:5, weight:5, fridge:[], fed:[], born:n - 60 * D}; satEat(c, gymFood(x), n, undefined, false, "cardio"); r.sat = Math.round(c.sat);
+    r.full = sessionFull(x); const c = {sat:100, satT:n - 56 * H, full:0, stage:5, weight:5, fridge:[], fed:[], born:n - 60 * D}; satEat(c, satFood(x), n, undefined, false, "cardio"); r.sat = Math.round(c.sat);
     S.workouts = W; S.profile.creature = JSON.parse(saved); S.profile.bw = bw; saveLocal(); return r; });
-  ok(kind.kindRun === "cardio" && kind.kindMu === "muscu" && kind.full && kind.sat === 100, "séance cardio comparée aux séances cardio : footing habituel = séance complète et 100 %", kind);
+  ok(kind.kindRun === "cardio" && kind.kindMu === "muscu" && kind.full && kind.sat > 50 && kind.sat < 100, "footing habituel : séance complète (taille), mais la satiété ne remonte pas plus facilement qu'avec sa muscu habituelle (8 t)", kind);
   ok(cd.next[0] === 32 && cd.next[1] === "min" && /\+2 min/.test(cd.next[2]), "cardio : la prochaine fois, le coach propose 2 min de plus (ressenti idéal)", cd.next);
   ok(cd.backRed === 2 && cd.backNo === 0, "fessiers sollicités : rouges à travers le short, de dos", cd);
 
