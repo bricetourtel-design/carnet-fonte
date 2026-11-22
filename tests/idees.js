@@ -7,6 +7,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
 (async () => {
   const b = await chromium.launch(), errs = [];
   const ctx = await b.newContext({...devices["iPhone 13"]}), p = await ctx.newPage();
+  await p.addInitScript(() => addEventListener("DOMContentLoaded", () => { noxMaybeIntro = () => {}; noxCalm = () => false; }));   // le Pr Noxwell ne surgit pas pendant ces tests
   p.on("pageerror", e => errs.push(e.message));
   // Partage simulé : on garde le texte envoyé
   await p.addInitScript(() => { window.__shared = null; navigator.share = d => { window.__shared = d.text; return Promise.resolve(); }; });
@@ -37,6 +38,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
 
   // Sans partage disponible : copie dans le presse-papiers
   const ctx2 = await b.newContext({permissions:["clipboard-read","clipboard-write"]}), p2 = await ctx2.newPage();
+  await p2.addInitScript(() => addEventListener("DOMContentLoaded", () => { noxMaybeIntro = () => {}; noxCalm = () => false; }));   // le Pr Noxwell ne surgit pas pendant ces tests
   p2.on("pageerror", e => errs.push(e.message));
   await p2.addInitScript(() => { delete Navigator.prototype.share; navigator.share = undefined; });
   await p2.goto(URL); await p2.waitForTimeout(300); await p2.click('.sheet [data-act="close"]').catch(()=>{});

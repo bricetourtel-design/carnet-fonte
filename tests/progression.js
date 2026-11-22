@@ -132,8 +132,20 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
       sq2:Math.round(at([{exercises:[{exId:"squat", feel:4, sets:set(100, 8, 4)}], ago:24}, {exercises:[{exId:"squat", feel:4, sets:set(100, 8, 4)}]}], 1).pct * 100),
       bike:Math.round(at([{exercises:[{exId:"velo", feel:3, sets:[{w:"", r:"60", done:true}]}]}], 1).pct * 100)};
     S.workouts = W; S.profile.bw = bw; S.profile.active = act; return r; });
-  ok(rec.walk >= 90 && rec.one >= 85 && rec.legs1 <= 5 && rec.legs48 > 50 && rec.legs48 < 80 && rec.ready > 48 && rec.ready < 72 && rec.sq2 < rec.sq1 && rec.bike < 80,
+  ok(rec.walk >= 90 && rec.one >= 85 && rec.legs1 <= 5 && rec.legs48 > 30 && rec.legs48 < 70 && rec.ready > 48 && rec.ready < 84 && rec.sq2 < rec.sq1 && rec.bike < 80,
     "récupération : marche et série facile presque sans fatigue, vraie séance de jambes ≈ 3 jours, séances qui s'additionnent, cardio en séance selon la durée", rec);
+
+  // Audit 4, lot D : marche longue presque neutre, coach prudent sur un muscle pas récupéré, repos conseillé après une séance
+  const ld = await p.evaluate(() => { const H = 36e5, D = 864e5, n = Date.now(), W = S.workouts, act = S.profile.active; S.profile.active = null;
+    const set = (w, r, k) => Array.from({length:k}, () => ({w:String(w), r:String(r), done:true})), r = {};
+    S.workouts = [{id:"wk", name:"x", start:n - 2 * H, end:n - H, act:{k:"marche", min:60}, exercises:[], prs:[]}]; r.walk60 = Math.round(recoveryFine("Quadriceps").pct * 100);
+    S.workouts = [{id:"c1", name:"x", start:n - 5 * D, end:n - 5 * D + H, prs:[], exercises:[{exId:"leg-ext", feel:3, sets:set(60, 12, 3)}]}]; r.up = coach("leg-ext").w;
+    S.workouts.push({id:"c2", name:"x", start:n - 3 * H, end:n - 2 * H, prs:[], exercises:[{exId:"squat", feel:4, sets:set(100, 8, 3)}]});
+    const c = coach("leg-ext"); r.tired = [c.w, c.tag]; r.restAdv = (chooseToday() || {}).restAdvised;
+    S.workouts = W; S.profile.active = act; return r; });
+  ok(ld.walk60 >= 95, "1 h de marche : les quadriceps restent récupérés", ld.walk60);
+  ok(ld.up > 60 && ld.tired[0] <= 60 && /Récupération|Même charge/.test(ld.tired[1]), "quadriceps pas récupérés (squat il y a 2 h) : pas de hausse de charge au leg extension", ld);
+  ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();

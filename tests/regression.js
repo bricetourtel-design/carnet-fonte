@@ -65,6 +65,7 @@ async function snapshot(page){
 
 async function uiChecks(browser){
   const ctx = await browser.newContext({...devices["iPhone 13"]}), page = await ctx.newPage(), errs = [];
+  await page.addInitScript(() => addEventListener("DOMContentLoaded", () => { noxMaybeIntro = () => {}; noxCalm = () => false; }));   // le Pr Noxwell (testé dans noxwell.js) ne surgit pas
   page.on("pageerror", e => errs.push(e.message));
   await page.goto(URL); await page.waitForTimeout(300);
   const res = {};
@@ -104,6 +105,7 @@ async function uiChecks(browser){
 (async () => {
   const browser = await chromium.launch();
   const page = await (await browser.newContext()).newPage(), errs = [];
+  await page.addInitScript(() => addEventListener("DOMContentLoaded", () => { noxMaybeIntro = () => {}; noxCalm = () => false; }));   // le Pr Noxwell (testé dans noxwell.js) ne surgit pas
   page.on("pageerror", e => errs.push(e.message));
   await page.goto(URL); await page.waitForTimeout(200);
   const snap = await snapshot(page);
