@@ -966,7 +966,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 c";
+const APP_VERSION = "2026-11-22 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2171,9 +2171,13 @@ const usableEx = e => { const q = equipMode();
   return true; };
 // Sans historique, les grands classiques passent avant les variantes (bibliothèque de 200+ exercices, 14 nov. 2026)
 const EX_CORE = new Set(EX.slice(0, 41).map(e => e.id));
+// Audit 4 : sans historique, l'exercice de base de chaque muscle fin passe en premier (squat avant fentes, élévations latérales, face pull…)
+const EX_BASE = ["squat","dc-barre","tractions","rowing-barre","dm-halteres","elev-lat","face-pull","sdt-roumain","hip-thrust","leg-curl","presse","leg-ext","mollets",
+  "dc-halteres","di-halteres","tirage-vertical","rowing-haltere","tirage-horizontal","oiseau","ext-poulie","barre-front","curl-barre","curl-halteres","crunch-poulie","releve-jambes"];
+const exBaseRank = id => { const i = EX_BASE.indexOf(id); return i < 0 ? 99 : i; };
 function candidatesFor(m, st){
   return allEx().filter(e => e.muscle===m && usableEx(e) && !isCardio(e)).map(e => ({e, n:(st[e.id]||{}).n||0, last:(st[e.id]||{}).last||0, comp:isCompound(e)}))
-    .sort((a,b) => b.n-a.n || b.comp-a.comp || (EX_CORE.has(b.e.id)?1:0)-(EX_CORE.has(a.e.id)?1:0) || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
+    .sort((a,b) => b.n-a.n || exBaseRank(a.e.id)-exBaseRank(b.e.id) || (EX_CORE.has(b.e.id)?1:0)-(EX_CORE.has(a.e.id)?1:0) || b.last-a.last || (b.e.img?1:0)-(a.e.img?1:0) || a.e.name.localeCompare(b.e.name,"fr"));
 }
 // Même mouvement (15 nov. 2026) : deux exercices qui ne diffèrent que par le matériel (développé incliné barre / haltères / Smith / machine)
 // forment une famille. Jamais deux de la même famille dans une séance du programme : plutôt plus de séries sur un seul (demande du propriétaire).
@@ -2186,7 +2190,7 @@ const candidatesPrim = (m, st) => candidatesFor(GROUP_OF[m] || m, st).filter(c =
 function estMinutes(items){
   return 5 + items.reduce((t,it,k) => { const e = exById(it.exId), rest = S.profile.rest<0 ? (REST_BY_RANGE[repRange(e)[0]]||120) : (S.profile.rest||90);
     const chained = it.ss && items[k+1] && items[k+1].ss === it.ss;   // 1er exercice d'un superset : pas de repos, on enchaîne
-    return t + (it.sets*(40 + (chained ? 15 : rest)) + 90)/60; }, 0);
+    return t + (it.sets*(40 + (chained ? 15 : rest)) + 90)/60 + (it.comp ? 2 : 0); }, 0);   // audit 4 : ~2 min de séries d'approche par polyarticulaire
 }
 /* Supersets (20 nov. 2026) : deux exercices enchaînés sans pause, repos après le 2e. Paires = [créneau A, créneau B].
    Automatique : jamais le 1er exercice (gros mouvement, repos complet) ; muscles différents et non synergiques (pecs + dos, biceps + triceps…). */
@@ -2204,38 +2208,75 @@ function ssApply(day, pairs){
     const L = String.fromCharCode(65 + k++), B = day.items.splice(ib, 1)[0], ja = day.items.indexOf(day.items.find(it => it.slot === a));
     day.items.splice(ja + 1, 0, B); day.items[ja].ss = L; B.ss = L; });
 }
+/* Audit 4 (22 nov. 2026) : le programme raisonne par muscle fin.
+   - chaque créneau vise d'abord le muscle fin le moins servi de la semaine (élévations latérales, face pull, ischios, mollets…) ;
+   - lombaires et avant-bras ne prennent pas de créneau (ils travaillent déjà dans les tirages et soulevés), sauf favori ;
+   - le soulevé de terre est un mouvement de hanche : il passe dans les jambes ;
+   - les jambes pèsent plus lourd dans le partage des créneaux (4 muscles fins) ;
+   - volume visé par muscle fin, l'indirect compte au plus pour une demi-série. */
+const SLOT_W = {...WEIGHT, Jambes:2.8};
+const PLAN_HINGE = new Set(["souleve-terre", "souleve-deficit"]);
+const NO_SLOT = new Set(["Lombaires", "Avant-bras", "Adducteurs", "Obliques"]);
+const planPrim = e => PLAN_HINGE.has(e.id) ? "Ischios" : primOf(e);
+const fineOrder = (m, ms) => m === "Jambes" ? ["Quadriceps", "Ischios", "Fessiers", "Mollets"] : m === "Dos" ? ["Grand dorsal", "Haut du dos"]
+  : m === "Épaules" ? (ms.includes("Pectoraux") ? ["Deltoïde latéral", "Deltoïde arrière"] : ["Deltoïde avant", "Deltoïde latéral", "Deltoïde arrière"]) : [FINE_DEFAULT[m] || m];
+// Séries par semaine visées pour un muscle fin (null : pas d'objectif propre, il travaille en indirect)
+function fineVolume(f){
+  if(f === "Deltoïde avant" || f === "Abdos" || NO_SLOT.has(f)) return null;
+  const [lo, hi] = goalVolume(GROUP_OF[f] || f);
+  if(f === "Fessiers" || f === "Mollets") return [Math.min(lo, 8), Math.min(hi, 16)];
+  if(f === "Deltoïde arrière") return [Math.min(lo, 6), Math.min(hi, 16)];
+  if(f === "Deltoïde latéral") return [Math.min(lo, 8), hi];
+  return [lo, hi];
+}
+// Séries de la semaine par muscle fin : directes pour le muscle principal, indirectes plafonnées à une demi-série
+function planFineSets(out){
+  const w = {}; MUSC.forEach(m => w[m] = 0);
+  out.forEach(day => day.items.forEach(it => { if(it.cardio) return; const e = exById(it.exId), pm = planPrim(e);
+    Object.entries(exWork(e)).forEach(([m, p]) => { w[m] = (w[m] || 0) + it.sets * (m === pm ? 1 : Math.min(0.5, p)); });
+    if(!(pm in exWork(e))) w[pm] = (w[pm] || 0) + it.sets; }));
+  return w;
+}
 function generatePlan(d){
-  const st = exStats(), seen = {}, days = d.days.slice().sort((a,b)=>a.dow-b.dow), lifts = goalLifts();
+  const st = exStats(), seen = {}, weekPrim = {}, days = d.days.slice().sort((a,b)=>a.dow-b.dow), lifts = goalLifts();
   // Favoris d'abord (20 nov. 2026, demande du propriétaire) : étoilés à la main ou fréquents ; objectif force : les mouvements choisis avant tout
   const prefer = arr => arr.slice().sort((a, b) => (lifts.includes(b.e.id) - lifts.includes(a.e.id)) || (isFav(b.e.id) - isFav(a.e.id)));
   const out = days.map(day => {
     const ms = day.muscles.slice().sort((a,b) => PRIO.indexOf(a)-PRIO.indexOf(b));
-    const mins = day.min || 60, sumW = ms.reduce((t,m) => t+WEIGHT[m], 0);
-    const slots = Math.max(2, Math.min(9, Math.floor((mins - 5)/9.5 + 0.3)));   // ~9,5 min par exercice de 3 séries, 5 min d'échauffement
+    const mins = day.min || 60, sumW = ms.reduce((t,m) => t+SLOT_W[m], 0);
+    // ~9,5 min par exercice de 3 séries (8 avec les supersets), 5 min d'échauffement général et ~3 de séries d'approche
+    const slots = Math.max(2, Math.min(9, Math.floor((mins - 8)/(S.profile.ssPref === "oui" ? 8 : 9.5) + 0.3)));
     const items = [], used = new Set(), usedPrim = new Set(), usedFam = new Set();
     // Muscles à éviter ce jour-là (autre sport, métier ; examen du Pr Noxwell) : pas d'exercice qui les sollicite fortement (soulevé de terre un jour sans jambes)
     const exG = (((S.profile.excl || {})[day.dow]) || []).filter(g => !ms.includes(g)), avoid = c => exG.length && Object.entries(exWork(c.e)).some(([mm, p]) => p >= 0.5 && exG.includes(GROUP_OF[mm] || mm));
     ms.forEach(m => {
       const k = seen[m] = (seen[m]||0) + 1;           // k-ième séance de la semaine pour ce muscle
-      const cnt = m==="Abdos" ? (slots>=5 ? 1 : 0) : Math.max(1, Math.round(WEIGHT[m]/sumW*slots));
-      const all = prefer(candidatesFor(m, st).filter(c => !avoid(c))), done = all.filter(c => c.n>0 || lifts.includes(c.e.id) || isFav(c.e.id));
+      const cnt = m==="Abdos" ? (slots>=5 ? 1 : 0) : Math.max(1, Math.round(SLOT_W[m]/sumW*slots));
+      const keepIt = c => !NO_SLOT.has(planPrim(c.e)) || isFav(c.e.id) || lifts.includes(c.e.id);
+      const raw = m === "Jambes" ? [...candidatesFor(m, st), ...candidatesFor("Dos", st).filter(c => PLAN_HINGE.has(c.e.id))] : m === "Dos" ? candidatesFor(m, st).filter(c => !PLAN_HINGE.has(c.e.id)) : candidatesFor(m, st);
+      const all = prefer(raw.filter(c => !avoid(c) && keepIt(c))), done = all.filter(c => c.n>0 || lifts.includes(c.e.id) || isFav(c.e.id));
+      const order = fineOrder(m, ms), bigC = WEIGHT[m] >= 2 || (m === "Épaules" && !ms.includes("Pectoraux"));
       const pool = done.length >= cnt ? done : all;
       for(let j=0;j<cnt;j++){
         const off = day.off[m+":"+j] || 0;
         let list = pool;
-        if(j===0 && WEIGHT[m]>=1.5){ const comp = pool.filter(c => c.comp); if(comp.length) list = comp; }   // gros muscle : un polyarticulaire d'abord
+        const needC = j===0 && bigC; if(needC){ const comp = pool.filter(c => c.comp); if(comp.length) list = comp; }   // gros muscle : un polyarticulaire d'abord
+        // Muscle fin visé : le moins servi cette semaine et pas encore ce jour (à égalité, l'ordre de la liste : quadriceps, ischios…)
+        const tgt = order.filter(f => !usedPrim.has(f) && (!needC || all.some(x => x.comp && planPrim(x.e) === f))).sort((a, b) => (weekPrim[a] || 0) - (weekPrim[b] || 0) || order.indexOf(a) - order.indexOf(b))[0];
+        const favUp = list.some(x => (isFav(x.e.id) || lifts.includes(x.e.id)) && !used.has(x.e.id));   // un favori passe avant le muscle fin visé
+        if(tgt && !favUp){ const okT = x => planPrim(x.e) === tgt && (!needC || x.comp), t1 = list.filter(okT), t2 = t1.length ? t1 : all.filter(okT); if(t2.length) list = t2; }
         let c = null; const base = list===pool ? (k-1)*cnt + j : (k-1);   // d'une séance à l'autre on alterne les exercices
         // Plusieurs exercices d'une même catégorie : d'abord un muscle principal pas encore travaillé ce jour (quadriceps, puis ischios…)
         const free = x => !used.has(x.e.id) && !usedFam.has(exFamily(x.e));
-        for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(free(x) && !usedPrim.has(primOf(x.e))) c = x; }
+        for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(free(x) && !usedPrim.has(planPrim(x.e))) c = x; }
         for(let t=0;t<list.length && !c;t++){ const x = list[(base + t) % list.length]; if(free(x)) c = x; }
         if(!c) for(const x of all) if(free(x)){ c = x; break; }
         // Plus d'autre mouvement pour ce muscle : des séries en plus sur l'exercice déjà prévu plutôt qu'un doublon
         if(!c){ const it = items.filter(x => x.muscle === m).sort((a, b) => a.sets - b.sets)[0]; if(it && it.sets < 5) it.sets++; continue; }
         // ↻ sur ce créneau : un autre exercice du même muscle principal (un quadriceps reste un quadriceps), d'un autre mouvement
-        if(off){ const pm = primOf(c.e), same = [...pool, ...all].filter((x, i, l) => primOf(x.e) === pm && free(x) && l.findIndex(y => y.e.id === x.e.id) === i);
+        if(off){ const pm = planPrim(c.e), same = [...pool, ...all].filter((x, i, l) => planPrim(x.e) === pm && free(x) && l.findIndex(y => y.e.id === x.e.id) === i);
           const i0 = same.findIndex(x => x.e.id === c.e.id); if(same.length) c = same[(Math.max(0, i0) + off) % same.length]; }
-        used.add(c.e.id); usedPrim.add(primOf(c.e)); usedFam.add(exFamily(c.e)); items.push({exId:c.e.id, muscle:m, slot:m+":"+j, comp:c.comp, n:c.n, sets:3});
+        used.add(c.e.id); usedPrim.add(planPrim(c.e)); weekPrim[planPrim(c.e)] = (weekPrim[planPrim(c.e)] || 0) + 1; usedFam.add(exFamily(c.e)); items.push({exId:c.e.id, muscle:m, slot:m+":"+j, comp:c.comp, n:c.n, sets:3});
       }
     });
     return {dow:day.dow, muscles:ms, name:dayName(ms), items, min:mins};
@@ -2267,17 +2308,24 @@ function generatePlan(d){
   out.forEach(day => day.items.forEach(it => weekly[it.muscle] += it.sets));
   MUSCLES.forEach(m => {
     const its = out.flatMap(day => day.items.filter(it => it.muscle===m));
-    const [vLo, vHi] = goalVolume(m), cap = goalPrio(m) ? 5 : 4;   // 10 à 20 par défaut ; objectif et expérience de l'examen de Noxwell
+    const [vLo0, vHi] = goalVolume(m), vLo = m === "Abdos" ? Math.min(vLo0, 6) : vLo0, cap = goalPrio(m) ? 5 : 4;   // abdos : 6 séries suffisent, ils travaillent aussi en gainage   // 10 à 20 par défaut ; objectif et expérience de l'examen de Noxwell
     while(weekly[m] < vLo && its.some(it => it.sets < cap)){ const it = its.filter(x => x.sets<cap).sort((a,b) => a.sets-b.sets || b.comp-a.comp)[0]; it.sets++; weekly[m]++; }
     while(weekly[m] > vHi && its.some(it => it.sets > 2)){ const it = its.filter(x => x.sets>2).sort((a,b) => b.sets-a.sets || a.comp-b.comp)[0]; it.sets--; weekly[m]--; }
   });
+  // Puis par muscle fin : des séries en plus sur les exercices qui le ciblent (deltoïdes latéraux, ischios, mollets…)
+  let fineW = planFineSets(out);
+  MUSC.forEach(f => { const v = fineVolume(f); if(!v) return; const its = out.flatMap(day => day.items.filter(it => !it.cardio && planPrim(exById(it.exId)) === f)), cap = goalPrio(GROUP_OF[f]) ? 5 : 4;
+    while(fineW[f] < v[0] && its.some(it => it.sets < cap)){ const it = its.filter(x => x.sets < cap).sort((a, b) => a.sets - b.sets)[0]; it.sets++; weekly[it.muscle]++; fineW = planFineSets(out); } });
   // Cardio de l'objectif (sèche, endurance) : en fin de séance, sur les premières séances de la semaine ; son temps est réservé
   const nCardio = goalCardioDays(out.length), cardioEx = nCardio ? goalCardioEx() : null, cardioDow = new Set(cardioEx ? out.slice(0, nCardio).map(x => x.dow) : []);
   // Temps disponible : on retire des séries d'isolation, puis des exercices, si la séance déborde
   out.forEach(day => {
+    const first = day.items.filter(it => it.comp).sort((a, b) => PRIO.indexOf(a.muscle) - PRIO.indexOf(b.muscle))[0];   // le 1er polyarticulaire garde ses 3 séries
     while(estMinutes(day.items) > (day.min - (cardioDow.has(day.dow) ? cardioMinFor(day.min) : 0))*1.05){
-      const iso = day.items.filter(it => it.sets>2).sort((a,b) => goalPrio(a.muscle)-goalPrio(b.muscle) || a.comp-b.comp || b.sets-a.sets)[0];
-      if(iso){ iso.sets--; weekly[iso.muscle]--; continue; }
+      // on retire d'abord une série là où le muscle fin a le plus de marge sur son objectif de la semaine
+      const sur = it => { const f = planPrim(exById(it.exId)), v = fineVolume(f); return v ? fineW[f] - v[0] : 99; };
+      const iso = day.items.filter(it => it.sets > (it === first ? 3 : 2)).sort((a,b) => goalPrio(a.muscle)-goalPrio(b.muscle) || sur(b)-sur(a) || a.comp-b.comp || b.sets-a.sets)[0];
+      if(iso){ iso.sets--; weekly[iso.muscle]--; fineW = planFineSets(out); continue; }
       if(day.items.length <= 2) break;
       const drop = day.items.slice().reverse().find(it => !it.comp && !goalPrio(it.muscle)) || day.items.slice().reverse().find(it => !it.comp) || day.items[day.items.length-1];
       day.items.splice(day.items.indexOf(drop),1); weekly[drop.muscle] -= drop.sets;
@@ -2299,6 +2347,10 @@ function generatePlan(d){
     const syn = new Set();
     a.muscles.forEach(m => SYN[m].forEach(y => { if(b.muscles.includes(y) && !shared.includes(y)) syn.add(`${y} (déjà sollicités ${DOWS[a.dow].toLowerCase()} par ${m.toLowerCase()})`); }));
     b.muscles.forEach(m => SYN[m].forEach(y => { if(a.muscles.includes(y) && !shared.includes(y)) syn.add(`${y} (travaillés ${DOWS[a.dow].toLowerCase()}, resollicités par ${m.toLowerCase()})`); }));
+    // Audit 4 : muscle fin chargé deux jours de suite par des groupes différents (soulevé de terre puis squat → ischios, fessiers)
+    const ld = x => { const o = {}; x.items.forEach(it => { if(it.cardio) return; Object.entries(exWork(exById(it.exId))).forEach(([m, p]) => { if(p >= 0.5) o[m] = (o[m] || 0) + it.sets * p; }); }); return o; };
+    const la = ld(a), lb = ld(b);
+    Object.keys(la).filter(f => la[f] >= 3 && (lb[f] || 0) >= 3 && !shared.includes(GROUP_OF[f]) && !NO_SLOT.has(f)).forEach(f => syn.add(`${f.toLowerCase()} (${DOWS[a.dow].toLowerCase()} puis ${DOWS[nd].toLowerCase()})`));
     if(syn.size) alerts.push({dow:nd, level:"warn", text:`Récupération partielle : ${[...syn].join(" ; ")}.`});
   });
   const freq = {}; MUSCLES.forEach(m => freq[m] = out.filter(x => x.muscles.includes(m)).length);
@@ -2352,7 +2404,10 @@ const goal = () => S.profile.goal && NOX_OBJ[S.profile.goal.obj] ? S.profile.goa
 function goalVolume(m){
   const g = goal(), ex = noxExam(), exp = ex && ex.exp;
   let lo = exp === "pro" ? 12 : 10, hi = exp === "deb" ? 16 : 20;
-  if(g && g.obj === "muscle" && ((g.prec === "haut" && NOX_UPPER.includes(m)) || (g.prec === "bas" && NOX_LOWER.includes(m)))) lo = Math.max(lo, 14);
+  if(g && g.obj === "muscle" && (g.prec === "haut" || g.prec === "bas")){
+    if((g.prec === "haut" ? NOX_UPPER : NOX_LOWER).includes(m)) lo = Math.max(lo, 14);
+    else { lo = 6; hi = 8; }   // audit 4 : une vraie priorité, le reste du corps en entretien
+  }
   return [lo, Math.max(lo, hi)];
 }
 // Muscles de la zone choisie (prise de muscle) : protégés quand une séance doit être raccourcie
@@ -2378,13 +2433,14 @@ const cardioMinFor = min => (min || 60) <= 45 ? 8 : NOX_CARDIO_MIN;   // audit 4
 function noxLevers(g){
   if(!g) return [];
   const L = {
-    muscle:[["🎯","Séries arrêtées 1 à 2 reps avant l'échec : la zone où le muscle grossit le plus"],["📈","10 à 20 séries par muscle et par semaine"]],
+    muscle:[["🎯","Séries arrêtées 1 à 2 reps avant l'échec : la zone où le muscle grossit le plus"],["📈",`${goalVolume("Pectoraux").join(" à ")} séries par muscle et par semaine${g.prec === "haut" || g.prec === "bas" ? " pour la zone prioritaire" : ""}`],
+      ["🧩","Chaque muscle a son exercice : élévations latérales, oiseau ou face pull, ischios et mollets travaillés à part"]],
     seche:[["🏋️","Charges gardées lourdes pour garder tes muscles"],["🔥",`8 à ${NOX_CARDIO_MIN} min de cardio en fin de chaque séance`],["🚶","De la marche ou une activité en plus, les autres jours"],["🍽️","L'assiette compte énormément : ce n'est pas mon labo"]],
     force:[["🏋️",`Au programme chaque semaine, en début de séance : ${(Array.isArray(g.prec) ? g.prec : []).map(k => (NOX_LIFTS[k] || [,""])[1]).filter(Boolean).join(", ") || "les grands mouvements"}`],["🎯","Charges lourdes : 5 à 8 reps sur les grands mouvements à la barre"],["📊","Ce sont eux qui prouveront tes progrès"]],
-    endu:[["🫀",`${Math.max(1, Math.round(num(g.prec)) || 1)} bloc${num(g.prec) > 1 ? "s" : ""} de cardio par semaine, en fin de séance`],["📈","10 à 20 séries par muscle et par semaine"]]
+    endu:[["🫀",`${Math.max(1, Math.round(num(g.prec)) || 1)} bloc${num(g.prec) > 1 ? "s" : ""} de cardio par semaine, en fin de séance`],["📈",`${goalVolume("Pectoraux").join(" à ")} séries par muscle et par semaine`]]
   }[g.obj].slice();
   if(S.profile.ssPref === "oui") L.push(["⛓", "Supersets : deux exercices de muscles différents enchaînés sans pause, repos après le 2e"]);
-  if(g.obj === "muscle" && (g.prec === "haut" || g.prec === "bas")) L.push(["⬆️", `Priorité au ${g.prec === "haut" ? "haut" : "bas"} du corps : plus de séries par semaine quand le temps de séance le permet`]);
+  if(g.obj === "muscle" && (g.prec === "haut" || g.prec === "bas")) L.push(["⬆️", `Priorité au ${g.prec === "haut" ? "haut" : "bas"} du corps : ${goalVolume(g.prec === "haut" ? "Pectoraux" : "Jambes").join(" à ")} séries par muscle et par semaine, le reste en entretien (${goalVolume(g.prec === "haut" ? "Jambes" : "Pectoraux").join(" à ")})`]);
   return L;
 }
 
@@ -5304,6 +5360,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-22", t:"🧩 Un programme qui pense à chaque muscle", x:"Le programme vise maintenant chaque muscle à part : élévations latérales et face pull pour les épaules, quadriceps, ischios, fessiers et mollets travaillés séparément. Moins d'exercices en double, plus de séries sur ceux qui comptent, le soulevé de terre passe avec les jambes, et la durée prévue compte les séries d'approche. Si tu as une zone prioritaire, elle a vraiment plus de séries."},
   {d:"2026-11-22", t:"🏋️ Un coach de charges plus juste", x:"Après une décharge ou une pause, le coach repart de la bonne référence (séance lourde ou volume) et revient progressivement. Tes premières charges sont mieux estimées, une rep manquée sur la dernière série ne te fait plus reculer, et les charges lourdes ont un vrai échauffement (4 paliers). Pour tes 3 premières séances sur un exercice, l'écran de fin te demande ton ressenti en une touche."},
   {d:"2026-11-22", t:"🛡️ Perte de poids : des objectifs plus sûrs et plus justes", x:"Pour perdre du poids, le Pr Noxwell demande ton poids, ta taille et ton âge : jamais d'objectif sous la zone de santé ni avant 18 ans. Ton objectif de calories est calculé sur tes séances prévues, et il te dit ce que ça représente vraiment. Les calories de la musculation et du vélo sont plus justes, et les conseils suivent ton objectif."},
   {d:"2026-11-22", t:"💪 Une récupération plus juste", x:"La récupération de tes muscles dépend maintenant de l'effort réel : nombre de séries, ressenti, durée et intensité de tes activités. 20 minutes de marche ou une série facile ne « fatiguent » presque plus tes jambes, une vraie séance de jambes compte toujours 2 à 3 jours, et deux séances rapprochées s'additionnent. « Prêt dans … » indique quand le muscle sera à 90 %."},

@@ -5372,23 +5372,15 @@
     [
      [
       "dc-barre",
-      2
+      3
      ],
      [
-      "di-halteres",
-      2
+      "tractions",
+      4
      ],
      [
-      "rowing-barre",
-      2
-     ],
-     [
-      "tirage-vertical",
-      2
-     ],
-     [
-      "dm-halteres",
-      2
+      "elev-lat",
+      4
      ],
      [
       "ext-poulie",
@@ -5406,23 +5398,23 @@
     [
      [
       "squat",
-      3
+      4
      ],
      [
       "hip-thrust",
       3
      ],
      [
-      "mollets",
-      2
+      "leg-curl",
+      3
      ],
      [
-      "leg-curl",
-      2
+      "mollets",
+      4
      ],
      [
       "crunch",
-      4
+      2
      ]
     ]
    ],
@@ -5432,27 +5424,19 @@
     [
      [
       "di-halteres",
-      2
-     ],
-     [
-      "dc-barre",
-      2
-     ],
-     [
-      "tirage-vertical",
-      2
+      4
      ],
      [
       "rowing-barre",
-      2
+      4
      ],
      [
-      "dm-halteres",
+      "face-pull",
       2
      ],
      [
       "ext-poulie",
-      2
+      3
      ],
      [
       "curl-halteres",
@@ -5465,36 +5449,36 @@
     "Jambes",
     [
      [
+      "squat",
+      4
+     ],
+     [
       "hip-thrust",
       3
      ],
      [
-      "squat",
+      "leg-curl",
       3
      ],
      [
       "mollets",
-      2
-     ],
-     [
-      "leg-curl",
-      2
+      3
      ],
      [
       "crunch",
-      4
+      3
      ]
     ]
    ]
   ],
   "planWeekly": {
-   "Pectoraux": 8,
+   "Pectoraux": 7,
    "Dos": 8,
-   "Épaules": 4,
+   "Épaules": 6,
    "Biceps": 4,
-   "Triceps": 4,
-   "Jambes": 20,
-   "Abdos": 8
+   "Triceps": 5,
+   "Jambes": 27,
+   "Abdos": 5
   },
   "estMinutes": 27,
   "gravl": {
