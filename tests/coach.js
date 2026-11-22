@@ -35,7 +35,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(R.heavyUp[0] === "lourd" && R.heavyUp[1] === 90, "haut de la fourchette lourde atteint (87,5 × 6) : +2,5 kg", R.heavyUp);
   ok(R.heavyRep[0] === "lourd" && R.heavyRep[1] === 87.5 && R.heavyRep[2] === 5, "même charge lourde : une rep de plus (87,5 × 4 → 5)", R.heavyRep);
   ok(R.iso[0] === null && R.iso[1] === 8, "isolation : pas d'alternance, fourchette 8–12", R.iso);
-  ok(R.pull[0] === 4, "tractions sans ressenti noté : +1 rep (plus de blocage en « Consolider »)", R.pull);
+  ok(R.pull[0] === 5, "tractions 4 puis 3 reps sans ressenti noté : une rep de moins sur la dernière série est tolérée → +1 rep", R.pull);
   ok(R.spread !== "Décharge", "séances espacées : pas de décharge sur du bruit", R.spread);
   ok(R.close === "Décharge", "3 séances rapprochées en baisse de plus de 5 % : décharge", R.close);
   ok(R.restH === 180 && R.restV === 120, "repos : 3 min en séance lourde, 2 min en séance volume", [R.restH, R.restV]);
@@ -53,7 +53,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
     const out = {warm, ph, hint: hint ? hint.textContent : "", btn:!!btn, forced}; S.profile.active = null; return out; });
   ok(/45 kg × 8 puis 65 kg × 3/.test(wu.hint), "message « Échauffement d'abord » visible au-dessus des séries", wu.hint);
   ok(wu.btn && wu.forced === 1, "bouton « + Échauffement » sur un exercice sans échauffement (curls) : ajoute une série légère", wu);
-  ok(wu.warm.join() === "2,0,0,2", "échauffement : 2 séries avant le 1er exercice lourd de chaque muscle (développé, squat), aucune sur le 2e exercice pecs ni sur les curls", wu.warm);
+  ok(wu.warm.join() === "2,0,0,4", "échauffement : 2 séries avant le développé, 4 paliers avant le squat lourd (≥ 100 kg, 40→85 %), aucune sur le 2e exercice pecs ni sur les curls", wu.warm);
   ok(wu.ph[0][0] === "45" && wu.ph[0][1] === "8" && wu.ph[1][0] === "65" && wu.ph[1][1] === "3", "échauffement proposé : ~50 % × 8 puis ~75 % × 3 de la charge de travail (87,5 kg)", wu.ph);
   // « Trop dur » : fenêtre qui demande de vérifier la saisie (13 nov. 2026)
   const td = await p.evaluate(() => { S.workouts = []; S.profile.active = null;
@@ -96,7 +96,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
     S.workouts.push({id:"hp", name:"x", start:n-2*D, end:n-2*D, exercises:[{exId:"dc-barre", feel:3, sets:[set(80,8)]}, {exId:"di-halteres", feel:3, sets:[set(26,9)]}]});
     const pec = run(["dc-barre","di-halteres"]).r;
     S.profile.active = null; S.workouts = []; return {...out, added, pec}; });
-  ok(/^[12],1$/.test(lz.a.r) && lz.a.ph.length === 1 && /×12/.test(lz.a.ph[0]), "jambes : hip thrust puis leg curl → les ischios ont aussi leur série légère (~50 % × 12)", lz.a);
+  ok(/^[124],1$/.test(lz.a.r) && lz.a.ph.length === 1 && /×12/.test(lz.a.ph[0]), "jambes : hip thrust puis leg curl → les ischios ont aussi leur série légère (~50 % × 12)", lz.a);
   ok(/^[12],0,1,1$/.test(lz.b.r), "jambes : squat échauffé, presse non (quadriceps déjà chauds), leg curl et mollets une série légère chacun", lz.b);
   ok(/^[12],1,0$/.test(lz.c.r) && /×5/.test(lz.c.ph[0] || ""), "jambes : soulevé de terre roumain après squat → une série à ~60 % × 5 ; hip thrust non (fessiers déjà chauds)", lz.c);
   ok(/^1,[12]$/.test(lz.d.r), "jambes : leg extension en premier → une série légère ; le squat garde sa série d'approche (la leg extension ne prépare pas une charge lourde)", lz.d);

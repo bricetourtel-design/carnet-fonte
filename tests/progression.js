@@ -56,6 +56,10 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     // décharge puis séance facile : on reprend la charge d'avant, sans nouvelle décharge
     reset(); S.workouts = [W(12, "leg-ext", 3, [[60, 10], [60, 10], [60, 10]]), W(8, "leg-ext", 4, [[62.5, 9], [62.5, 9], [62.5, 8]]), W(4, "leg-ext", 1, [[55, 8], [55, 8]])];
     let c = coach("leg-ext"); r.rebound = [c.w, c.tag];
+    // audit 4 : après une décharge en alternance lourd/volume, le rebond reprend la charge du même type (jamais la charge lourde en volume)
+    reset(); const dlw = W(2, "dc-barre", 2, [[72.5, 8], [72.5, 8]]); dlw.exercises[0].dl = 1;
+    S.workouts = [W(10, "dc-barre", 3, [[80, 8], [80, 8], [80, 8]]), W(6, "dc-barre", 3, [[95, 5], [95, 5], [95, 5]]), dlw];
+    c = coach("dc-barre"); r.dupRebound = [c.mode, c.w, c.r, c.tag];
     // trois séances « Dur » (pas « Trop dur ») : pas de décharge
     reset(); S.workouts = [W(12, "squat", 4, [[100, 8], [100, 8]]), W(8, "squat", 4, [[100, 8], [100, 8]]), W(4, "squat", 4, [[100, 8], [100, 7]])];
     c = coach("squat"); r.dur3 = c.tag;
@@ -75,7 +79,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     reset(); S.workouts = [W(3, "leg-ext", 3, [[60, 10], [60, 10], [60, 10]])]; const n0 = coach("leg-ext"); S.profile.lightWeek = {from:now - D, until:now + 6 * D, proto:1}; const n1 = coach("leg-ext");
     r.light = [n0.w, n1.w, n0.sets, n1.sets, n1.tag];
     // plateau : 8 séances à la même force
-    reset(); for(let k = 0; k < 8; k++) S.workouts.push(W(40 - k * 5, "curl-halteres", 3, [[14, 10], [14, 10], [14, 10]])); S.profile.nox = {v:1, intro:now, exam:{done:now, obj:"muscle", n:3}};
+    reset(); for(let k = 0; k < 10; k++) S.workouts.push(W(60 - k * 6, "curl-halteres", 3, [[14, 10], [14, 10], [14, 10]])); S.profile.nox = {v:1, intro:now, exam:{done:now, obj:"muscle", n:3}};
     r.plateau = plateaus().map(x => x.id);
     return r;
   });
@@ -84,6 +88,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(t.ss.sans === 0 && t.ss.avec.every(n => n >= 2 && n % 2 === 0) && t.ss.firstFree, "supersets : aucun sans accord, des paires sinon, jamais sur le 1er exercice", t.ss);
   ok(t.ss.gain > 0, "les supersets raccourcissent la séance prévue", t.ss.gain);
   ok(t.rebound[0] === 62.5 && /^(\+|Retour|.*kg)/.test(t.rebound[1] || ""), "après un allègement facile, on reprend la charge d'avant (62,5 kg)", t.rebound);
+  ok(t.dupRebound[1] >= 80 && (t.dupRebound[0] !== "volume" || t.dupRebound[1] < 95) && (t.dupRebound[0] !== "lourd" || t.dupRebound[1] >= 95), "alternance : après la décharge, on reprend la charge du même type (volume ≈ 80 kg, lourd ≈ 95 kg)", t.dupRebound);
   ok(t.dur3 !== "Décharge", "trois séances « Dur » ne déclenchent plus de décharge", t.dur3);
   ok(t.infer === 2, "ressenti non noté et objectif dépassé de 2 reps : « Facile »", t.infer);
   ok(t.rep4 === 55 && t.rep8 === 47.5, "reprise : −10 % après 4 semaines, −20 % après 8", [t.rep4, t.rep8]);
@@ -91,7 +96,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(t.cardio[0] === 30 && t.cardio[1] === "Intensité", "cardio plafonné à la durée visée, puis plus d'intensité", t.cardio);
   ok(t.gainage[0] === 60 && t.gainage[1] === "Variante", "gainage plafonné, puis une variante plus dure", t.gainage);
   ok(t.light[1] < t.light[0] && t.light[3] === t.light[2] - 1 && t.light[4] === "Semaine légère", "semaine légère : charge −10 % et une série de moins", t.light);
-  ok(t.plateau.includes("curl-halteres"), "plateau détecté sur 8 séances sans progrès", t.plateau);
+  ok(t.plateau.includes("curl-halteres"), "plateau détecté sur 10 séances (9 semaines) sans progrès", t.plateau);
 
   // 3. Ajustement en cours de séance : 3 reps de plus que l'objectif → charge plus lourde pour les séries suivantes
   const live = await p.evaluate(() => {
