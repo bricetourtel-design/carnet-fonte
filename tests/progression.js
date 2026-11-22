@@ -145,6 +145,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts = W; S.profile.active = act; return r; });
   ok(ld.walk60 >= 95, "1 h de marche : les quadriceps restent récupérés", ld.walk60);
   ok(ld.up > 60 && ld.tired[0] <= 60 && /Récupération|Même charge/.test(ld.tired[1]), "quadriceps pas récupérés (squat il y a 2 h) : pas de hausse de charge au leg extension", ld);
+  // Vérification finale : 1er polyarticulaire à 3 séries au moins, jambes ouvertes par un squat ou un mouvement de hanche
+  const fin = await p.evaluate(() => { const W = S.workouts, out = []; S.workouts = []; S.profile.equip = "salle"; S.profile.ssPref = "non"; S.profile.nox = {v:1};
+    [[2, 90], [3, 60], [4, 90], [6, 90]].forEach(([nd, min]) => { const tpl = TEMPLATES[nd][0];
+      const g = generatePlan({days:DEFAULT_DAYS[nd].map((dow, i) => ({dow, muscles:tpl.days[i].slice(), off:{}, min})), noNovelty:true});
+      g.days.forEach(d => { const fc = d.items.filter(i => i.comp).sort((a, b) => PRIO.indexOf(a.muscle) - PRIO.indexOf(b.muscle))[0], lg = d.items.find(i => i.muscle === "Jambes");
+        out.push({k:nd + "/" + min + " " + d.name, first:fc ? fc.sets : 3, leg:lg ? ["Quadriceps", "Ischios"].includes(planPrim(exById(lg.exId))) && lg.comp : true}); }); });
+    S.workouts = W; return out; });
+  ok(fin.every(x => x.first >= 3 && x.leg), "programme : 1er polyarticulaire ≥ 3 séries, jambes ouvertes par un squat ou un mouvement de hanche (2 à 6 séances, 60 à 90 min)", fin.filter(x => x.first < 3 || !x.leg));
   ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
