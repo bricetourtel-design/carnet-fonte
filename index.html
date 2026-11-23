@@ -971,7 +971,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-22 j";
+const APP_VERSION = "2026-11-23 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2635,7 +2635,11 @@ function noxExamOpen(at){
     <div class="nxe-nox"><div class="nxe-face">${noxSVG(NOX_HEAD)}</div><div class="nxe-bub"></div></div><div class="nxe-body"></div><div class="nxe-foot"></div>`;
   document.body.appendChild(el); lockBody(); noxDraw(false);
   el.addEventListener("click", noxExamClick);
-  el.addEventListener("input", e => { const k = e.target.dataset.in; if(k){ noxA[k] = e.target.value.replace(/[^\d.,]/g, ""); } });
+  // Saisie (poids, taille, âge, poids visé, charges max) : le bouton suit la réponse tout de suite, sans redessiner sous le doigt
+  // (23 nov. 2026 : il restait grisé jusqu'à « Précédent » puis « Suivant »)
+  const typed = e => { const k = e.target.dataset.in; if(!k) return; noxA[k] = e.target.value.replace(/[^\d.,]/g, "");
+    const nb = el.querySelector('[data-nxe="next"]'); if(nb) nb.disabled = !NOX_STEPS[noxStep].ok(); };
+  el.addEventListener("input", typed); el.addEventListener("change", typed);   // change : remplissage automatique du clavier
 }
 function noxExamClose(){ const el = document.getElementById("nox-exam"); if(el) el.remove(); unlockBody(); render(); }
 const noxRec = n => n <= 3 ? "Full body" : n === 4 ? "du haut / bas" : n === 5 ? "du haut / bas + push / pull / jambes" : "du push / pull / jambes deux fois";
@@ -5420,6 +5424,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-23", t:"🩺 Examen du Pr Noxwell réparé", x:"Après avoir tapé ton poids, ta taille, ton âge ou ton poids visé, le bouton pour continuer s'active tout de suite : plus besoin de revenir en arrière pour le débloquer."},
   {d:"2026-11-22", t:"🍗 Ton Gymon a plus d'appétit", x:"Remonter sa satiété demande maintenant un vrai effort : 20 min de marche ne suffisent plus à le remplir. Ta séance habituelle le remet toujours à 100 %, mais le cardio ne peut pas faire plus facile que ta muscu habituelle, et il compte seulement les calories dépensées en plus du repos. Sa masse et sa taille ne changent pas."},
   {d:"2026-11-22", t:"🧹 Plus de programmes imposés", x:"Les programmes Push, Pull et Legs de départ disparaissent (ceux que tu avais modifiés restent). Sans séance, la page Séance te propose le bilan du Pr Noxwell ou de créer ta propre séance."},
   {d:"2026-11-22", t:"🏷️ D'où vient chaque séance", x:"Sur la page Séance, une pastille indique l'origine de chaque séance : 🧪 Pr Noxwell (son programme et ses suggestions du jour), ✍️ créée par toi, ou 📋 modèle de départ."},

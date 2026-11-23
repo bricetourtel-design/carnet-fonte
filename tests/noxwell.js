@@ -331,6 +331,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(guard.noHeight && guard.withHeight && guard.thin && guard.minor && guard.noPrec, "sèche : taille et âge obligatoires, pas de perte en maigreur ni avant 18 ans, pas de « zone à affiner »", guard);
   ok(loss.low && loss.pal && loss.kw && loss.clause && loss.have, "perte de poids : pas sous un IMC de 18,5, paliers de 5 %, médecin pour une grosse perte, 80/20, calories par semaine au contrat (activités comprises)", loss);
 
+  // Bug remonté (23 nov. 2026) : après la saisie au clavier, le bouton restait grisé jusqu'à « Précédent » puis « Suivant »
+  const pT = await phone(base);
+  await pT.evaluate(() => { noxExamOpen("mes"); Object.assign(noxA, {obj:"seche", sexe:"h", bw:"", height:"", age:""}); noxDraw(false); });
+  const dis0 = await pT.$eval('[data-nxe="next"]', x => x.disabled);
+  await pT.fill('[data-in="bw"]', "90"); await pT.fill('[data-in="height"]', "180"); await pT.fill('[data-in="age"]', "35");
+  const dis1 = await pT.$eval('[data-nxe="next"]', x => x.disabled);
+  await pT.click('[data-nxe="next"]'); await pT.waitForTimeout(120);
+  const st1 = await pT.evaluate(() => NOX_STEPS[noxStep].k), dis2 = await pT.$eval('[data-nxe="next"]', x => x.disabled);
+  await pT.fill('[data-in="ideal"]', "80"); const dis3 = await pT.$eval('[data-nxe="next"]', x => x.disabled);
+  await pT.click('[data-nxe="next"]'); await pT.waitForTimeout(120); const st2 = await pT.evaluate(() => NOX_STEPS[noxStep].k);
+  ok(dis0 && !dis1 && st1 === "ideal" && dis2 && !dis3 && st2 !== "ideal", "saisie au clavier : le bouton s'active dès que les mesures puis le poids visé sont tapés, sans revenir en arrière", {dis0, dis1, st1, dis2, dis3, st2});
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de Noxwell passent");
