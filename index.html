@@ -741,6 +741,52 @@ body[data-tab="creature"] .top h1{font-size:20px;letter-spacing:-.01em}
 body[data-tab="creature"]{overscroll-behavior:none}
 body[data-fit="1"] main{padding-bottom:0}
 .gy-aura,.gy-spark{pointer-events:none}
+/* Aura (24 nov. 2026) : décor de la page Gymon derrière le contenu, jauge verticale à gauche */
+#aura-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;display:none}
+body.aura-on[data-tab="creature"] #aura-bg{display:block}
+body.aura-on[data-tab="creature"] #view{position:relative;z-index:1}
+body.aura-on[data-tab="creature"] .gy-aura,body.aura-on[data-tab="creature"] .gy-spark{display:none}
+#aura-bg .ly{position:absolute;inset:0;transition:opacity 1s ease}
+#aura-bg .l0{background:radial-gradient(120% 80% at 50% 45%,#0d0b12 0%,#050407 100%)}
+#aura-bg .l1{background:radial-gradient(110% 75% at 50% 45%,#1a1530 0%,#0b0914 100%)}
+#aura-bg .l2{background:radial-gradient(95% 70% at 50% 45%,#2A1F4D 0%,#140F24 70%)}
+#aura-bg .l3{background:radial-gradient(95% 70% at 50% 45%,#3b2a6e 0%,#1a1338 70%)}
+#aura-bg .l4{background:radial-gradient(100% 75% at 50% 42%,#4d3591 0%,#22164a 72%)}
+#aura-bg .la{background:linear-gradient(172deg,rgba(48,209,160,0) 6%,rgba(48,209,160,.32) 16%,rgba(139,92,246,.30) 28%,rgba(236,72,153,.22) 38%,rgba(236,72,153,0) 48%);filter:blur(16px)}
+#aura-bg i{position:absolute;display:block;transition:opacity 1s ease}
+#aura-bg .st{border-radius:50%;background:#fff;box-shadow:0 0 5px rgba(255,255,255,.55);animation:auTw 3.2s ease-in-out infinite}
+#aura-bg .rn{width:1.5px;height:26px;background:linear-gradient(180deg,rgba(185,179,204,0),rgba(185,179,204,.6));animation:auRain 1.1s linear infinite}
+#aura-bg .fl{width:3px;height:3px;border-radius:50%;background:#fff6c8;box-shadow:0 0 6px 2px rgba(255,236,150,.7);animation:auFly 6s ease-in-out infinite}
+#aura-bg .sh{width:110px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform:rotate(-24deg);animation:auShoot 4.6s ease-in infinite}
+#aura-bg .bu{width:84px;height:84px;border-radius:50%;animation:auBurst 2.8s ease-out infinite;background:radial-gradient(circle,rgba(255,255,255,0) 38%,rgba(255,214,120,.95) 40%,rgba(255,214,120,0) 46%,rgba(236,72,153,0) 60%,rgba(236,72,153,.85) 62%,rgba(236,72,153,0) 68%)}
+body.aura-on[data-tab="creature"] .gy-stage .creature{filter:brightness(calc(.45 + .55 * var(--aura-lift,1))) saturate(calc(.3 + .7 * var(--aura-lift,1)));transition:filter 1s ease}
+body.aura-on.aura-glow[data-tab="creature"] .gy-stage .creature{filter:drop-shadow(0 0 10px rgba(255,236,170,.6))}
+.aura-g{position:absolute;left:-14px;top:12%;height:66%;width:26px;padding:0;border:0;background:transparent;display:flex;justify-content:center;z-index:3;cursor:pointer}
+.aura-g:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.aura-t{position:relative;display:block;width:6px;height:100%;border-radius:999px;background:rgba(185,179,204,.16);overflow:hidden}
+.aura-t b{position:absolute;left:0;right:0;bottom:0;border-radius:999px;transition:height 1.2s cubic-bezier(.2,.9,.3,1.1),background 1s,box-shadow 1s}
+.aura-g.pulse .aura-t{animation:auPulse .7s ease}
+.aura-fly{position:absolute;left:4px;font-size:18px;pointer-events:none;animation:auFall 1.6s ease-in both}
+.aura-fly.up{animation-name:auRise}
+.aura-ev{display:flex;flex-direction:column}
+.aura-ev>div{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line,rgba(127,127,127,.2))}
+.aura-ev .ar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex:none}
+.aura-ev .ar.up{background:rgba(48,209,88,.18);color:#30D158}.aura-ev .ar.dn{background:rgba(255,159,10,.16);color:#FF9F0A}
+.aura-ev b{flex:1;font-size:15px;font-weight:600}.aura-ev small{color:var(--muted);font-size:12.5px}
+.aura-h{margin:6px 0 0;font-size:15px}
+.aura-sec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.aura-sec>div{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:12px;background:rgba(127,127,127,.08);font-size:12.5px;line-height:1.3;color:var(--muted)}
+.aura-sec>div.on{background:rgba(139,92,246,.14);color:var(--text,inherit)}
+.aura-sec i{font-style:normal;font-size:16px;line-height:1}
+@keyframes auTw{0%,100%{transform:scale(1)}50%{transform:scale(.55)}}
+@keyframes auRain{0%{transform:translateY(-40px)}100%{transform:translateY(110vh)}}
+@keyframes auFly{0%,100%{transform:translate(0,0)}33%{transform:translate(12px,-16px)}66%{transform:translate(-9px,-5px)}}
+@keyframes auShoot{0%,70%{transform:translate(0,0) rotate(-24deg);opacity:0}74%{opacity:1}100%{transform:translate(-220px,100px) rotate(-24deg);opacity:0}}
+@keyframes auBurst{0%{transform:scale(.15)}60%{transform:scale(1)}100%{transform:scale(1.15);filter:brightness(.4)}}
+@keyframes auPulse{0%{transform:scaleX(1)}40%{transform:scaleX(2)}100%{transform:scaleX(1)}}
+@keyframes auFall{0%{top:0;opacity:0}20%{opacity:1}100%{top:90%;opacity:0}}
+@keyframes auRise{0%{top:90%;opacity:0}20%{opacity:1}100%{top:0;opacity:0}}
+@media (prefers-reduced-motion: reduce){#aura-bg i,.aura-g.pulse .aura-t,.aura-fly{animation:none}.aura-fly{display:none}}
 .gy-stage .creature{height:96%;max-width:100%}
 .gy-lv{display:flex;align-items:flex-end;gap:3px;height:26px;margin-top:3px}
 .gy-lv i{display:block;width:7px;border-radius:3px;min-height:3px;background:var(--mc)}
@@ -971,7 +1017,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-24 d";
+const APP_VERSION = "2026-11-24 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2599,6 +2645,11 @@ const NOX_PHEN = [
   {k:"record", on:() => S.workouts.some(w => (w.prs || []).length), t:["UN RECORD ! FASCINANT !", "Chaque record lui donne un bonus de muscle et un steak qui le cale longtemps. Ta force et la sienne sont liées."]},
   {k:"festin", on:c => (c.journal || []).some(j => j.k && /^f\d/.test(j.k)), t:["Un festin ! Quelle semaine…", "Une semaine sans jamais le laisser avoir faim, et le dimanche il a droit à un festin. La régularité, ça se mange."]},
   {k:"pois", on:c => !!c.peas || (c.journal || []).some(j => /pois chiches/.test(j.t || "")), t:["Une boîte de pois chiches ? Mystérieux…", "Elles arrivent rarement. Quand il est à bout de forces, il l'ouvre tout seul pour tenir. Garde-la précieusement."]},
+  {k:"aura", on:c => (c.auraLog || []).length > 0, t:["QU'EST-CE QUE C'EST QUE ÇA ?! Le ciel… il RÉPOND !", "Mes instruments s'affolent ! Regarde la petite jauge, à gauche… elle BOUGE ! J'appelle ça… l'<b>aura</b>. Oui. L'aura. Je viens de l'inventer.",
+    "Hypothèse n° 1 : elle mesure le lien entre toi et le spécimen. Pas tes muscles : son <b>cœur</b>. Hypothèse n° 2… je n'en ai pas encore.", "Elle ne change ni sa force, ni sa faim, ni sa taille. Juste son ciel, et son humeur. Touche la jauge : je note chaque découverte. À toi de percer ses secrets !"]},
+  {k:"aura-bas", on:c => (c.aura ?? 50) < 30 && (c.auraLog || []).length > 0, t:["Le ciel s'éteint… INQUIÉTANT.", "Le spécimen se sent seul. Je ne sais pas encore tout ce qui l'éteint… mais toi, tu sais ce que tu as oublié de faire."]},
+  {k:"aura-haut", on:c => (c.aura ?? 50) >= 80, t:["IL RAYONNE ! Une aurore… dans ton téléphone !", "Tu as trouvé comment le rendre heureux. Attention : plus elle est haute, plus elle retombe vite si tu le délaisses."]},
+  {k:"aura-secrets", on:c => Object.keys(c.auraSecrets || {}).length >= 6, t:["Six secrets d'aura percés ! Tu me dépasses, collègue.", "Il en reste… et certains sont bien cachés : des rituels, des moments, des nuits. Je n'en dis pas plus. Pour la science !"]},
   {k:"ami", on:() => (S.profile.friends || []).length > 0, t:["Un autre spécimen ! Pour la science, c'est inestimable.", "S'entraîner à deux, c'est plus de régularité. Et voir son Gymon à côté d'un autre… très instructif."]}
 ];
 function noxMaybePop(){
@@ -2608,7 +2659,7 @@ function noxMaybePop(){
   const go = (steps, btns, onPick) => { st.popDay = today; touchProfile(); noxStage(steps, btns, onPick); };
   const ph = NOX_PHEN.find(x => !st.seen[x.k] && x.on(c));
   if(ph){ st.seen[ph.k] = Date.now(); if(ph.k === "evo") st.stageSeen = c.stage;
-    return go([{t:ph.t[0], f:"grin", boom:true}, {t:ph.t[1], f:"smirk", end:true}], [["ok", "Compris !", true]], (k, leave) => leave("La science avance. J'observe !")); }
+    return go(ph.t.map((t, i) => ({t, f:i === 0 ? "grin" : i % 2 ? "smirk" : "grin", ...(i === 0 ? {boom:true} : {}), ...(i === ph.t.length - 1 ? {end:true} : {})})), [["ok", "Compris !", true]], (k, leave) => leave("La science avance. J'observe !")); }
   if(c.stage > (st.stageSeen ?? c.stage)) st.stageSeen = c.stage;   // évolution déjà expliquée une fois : on suit sans revenir
   const ex = noxExam(), pr = noxProof(), p = st.proto; if(!ex || !p) return;
   if(pr && pr.week > NOX.weeks && !(st.report || {})[p.k]){ (st.report = st.report || {})[p.k] = Date.now();
@@ -3139,7 +3190,7 @@ function noxContractAward(){
   st.forEach((x, i) => { if(!x.ok || won.includes(i)) return; won.push(i); n++;
     memAdd(c, `nx${p.k}-${i}`, "Clause tenue : " + noxClauseTxt(x)[1].replace(/<[^>]+>/g, "") + ".", now, "📜"); });
   const full = n && won.length === st.length && !p.full;
-  if(full){ p.full = 1; c.boost = {until:now + STARS_H * 3600000}; memAdd(c, `nx${p.k}-full`, "Contrat rempli avec le Pr Noxwell, clause par clause ! Il a brillé d'étoiles pendant 2 jours.", now, "🏅"); }
+  if(full){ p.full = 1; c.boost = {until:now + STARS_H * 3600000}; auraAdd(c, "contract"); memAdd(c, `nx${p.k}-full`, "Contrat rempli avec le Pr Noxwell, clause par clause ! Il a brillé d'étoiles pendant 2 jours.", now, "🏅"); }
   if(n){ touchProfile(); toast(full ? `⭐ Contrat rempli ! ${creatureState().name || "Ton Gymon"} brille d'étoiles pendant 2 jours` : `📜 Clause tenue ! ${won.length}/${st.length} au contrat`); }
   return full ? 2 : n ? 1 : 0;
 }
@@ -3704,7 +3755,7 @@ function creatureState(){
 function creatureResurrect(){
   const c = creatureState(); if(!c.dead) return;
   const pending = (c.pending || []).slice();
-  c.dead = null; c.pending = []; memAdd(c, null, "Ressuscité !", Date.now(), "✨"); c.resurrections = (c.resurrections||0) + 1;
+  c.dead = null; c.pending = []; memAdd(c, null, "Ressuscité !", Date.now(), "✨"); c.aura = Math.max(c.aura || 0, 5); c.auraT = Date.now(); auraAdd(c, "resurrect"); c.resurrections = (c.resurrections||0) + 1;
   c.weight = c.weight * CREATURE_CFG.resurrectWeightKeep;
   c.last = Date.now(); c.sat = 100; c.satT = Date.now(); c.full = Date.now() + SAT.plateauH * 3600000;
   // Les séances faites pendant qu'il était mort le nourrissent maintenant
@@ -3769,7 +3820,8 @@ function satTick(c, now){
     const t5 = satStart(c) + satHoursTo(c.sat ?? 100, SAT.peas.below) * 3600000;
     c.sat = SAT.peas.to; c.satT = Math.min(now, t5); c.full = 0; c.peasUsed = {ts:c.satT}; c.peas = null; memAdd(c, null, "Il a ouvert la boîte de pois chiches pour tenir.", c.satT, "🥫"); saveLocal(); }
   if(satExact(c, now) <= 0){ const t0 = satStart(c) + satHoursTo(c.sat ?? 100, 0) * 3600000;
-    c.dead = {ts:Math.min(now, t0), since:c.last || c.born}; c.pending = []; memAdd(c, null, "Il est mort de faim.", c.dead.ts, "🪦"); saveLocal(); }
+    c.dead = {ts:Math.min(now, t0), since:c.last || c.born}; c.pending = []; memAdd(c, null, "Il est mort de faim.", c.dead.ts, "🪦");
+    if(typeof c.aura === "number" && c.aura > 0){ c.aura = 0; auraLog(c, "death", 0, c.dead.ts); (c.auraSecrets = c.auraSecrets || {}).death = Date.now(); } saveLocal(); }
 }
 // Jours restants avant la mort sans manger (boîte de pois chiches comprise)
 function creatureDaysLeft(c){
@@ -3840,6 +3892,7 @@ function fridgeEat(c, id){
   if(satExact(c, at) >= 99.5) return {full:true, it};
   if(it.k === "steak" || it.k === "omelette"){
     const e = satEat(c, satRation(at), at, it.k === "steak" ? SAT.steakH : SAT.plateauH, true); c.fridge = c.fridge.filter(x => x !== it); return {eaten:e, it}; }
+  if(satExact(c, at) >= 50) auraAdd(c, "feed");
   const e = satEat(c, it.kg, at); it.kg = Math.round(it.kg - e); if(it.kg < 1) c.fridge = c.fridge.filter(x => x !== it);
   return {eaten:e, it};
 }
@@ -3861,7 +3914,7 @@ function festinCheck(c, now){
   const d = new Date(now);
   if(d.getDay() === 0 && d.getHours() >= 18 && c.wk.full && c.wk.min >= SAT.festinMin && c.festDone !== c.wk.k) c.festDue = c.wk.k;
   if(!c.festDue || c.festDone === c.festDue) return false;
-  c.festDone = c.festDue; c.festDue = null; fridgeAdd(c, "steak", 0, now); memAdd(c, "f" + c.festDone, "Festin du dimanche : il n'a jamais eu faim de la semaine.", now, "🎉"); saveLocal(); return true;
+  c.festDone = c.festDue; c.festDue = null; fridgeAdd(c, "steak", 0, now); auraAdd(c, "festin"); memAdd(c, "f" + c.festDone, "Festin du dimanche : il n'a jamais eu faim de la semaine.", now, "🎉"); saveLocal(); return true;
 }
 function festinShow(c){
   celebClose(true);
@@ -4012,6 +4065,11 @@ function creatureFeed(w){
   c.weight += vol / 1000 * CREATURE_CFG.kgPerTonne;                    // masse = charge soulevée, mangée ou non
   const full = sessionFull(w); if(full) c.tall = (c.tall ?? 0) + 1;      // taille = séances complètes
   const sf = satFood(w);   // ce qui nourrit la satiété (calories nettes pour le cardio)
+  if(satBefore >= 50) auraAdd(c, "feed");
+  if((w.prs || []).length) auraAdd(c, "record");
+  { const r = (S.profile.routines || []).find(x => x.id === w.routineId); if(r && r.plan && noxExam()) auraAdd(c, "prof"); }
+  { const hs = S.workouts.filter(x => x !== w && (c.fed || []).includes(x.id)).slice(-10).map(x => new Date(x.start).getHours()), h = new Date(w.start).getHours();
+    if(hs.length >= 4 && hs.filter(x => Math.abs(x - h) <= 1).length >= hs.length * 0.6) auraAdd(c, "hour"); }
   c.meal = null; const ate = satEat(c, sf, t, undefined, false, sessionKind(w)), ateB = bonus ? satEat(c, bonus, t) : 0, fr = [];
   if(sf - ate >= 1) fr.push(fridgeAdd(c, "poulet", sf - ate, t));
   if(bonus - ateB >= 1) fr.push(fridgeAdd(c, "or", bonus - ateB, t));
@@ -4600,7 +4658,7 @@ function memVisit(c){
     memAdd(c, null, `Retrouvailles après ${n} jours.`, now, "🤗"); gyMsg = {ts:now, txt:`Tu m'as manqué ! 🥺 ${n} jours sans te voir…`, cls:"gy-hop", eye:"happy", arm:0}; }
   if(!c.seen || now - c.seen > 3600000){ c.seen = now; saveLocal(); }
   MEM.anniv.forEach(([d, l]) => { if(now - c.born >= d * D && !(c.anniv || []).includes(d)){ (c.anniv = c.anniv || []).push(d); const at = c.born + d * D, fresh = now - at < 7 * D;
-    memAdd(c, "a" + d, `${l} ensemble !`, fresh ? now : at, "🎂"); if(fresh) show = l; } });
+    memAdd(c, "a" + d, `${l} ensemble !`, fresh ? now : at, "🎂"); if(fresh){ show = l; auraAdd(c, "anniv"); } } });
   const v = satExact(c, now);
   if(v < 30 && !c.hungry){ c.hungry = 1; memAdd(c, null, "Il a eu très faim…", now, "😣"); } else if(v >= 50 && c.hungry) c.hungry = 0;
   if(show) saveLocal();
@@ -4651,6 +4709,7 @@ function showerAnim(zone, done){
   setTimeout(() => { el.remove(); zone.classList.remove("gy-showering"); if(done) done(); }, 2400);
 }
 function washGymon(){ const c = creatureState(), first = !c.washTs || !(c.journal || []).some(j => j.k === "wash1");
+  if(isSmelly(c)) auraAdd(c, "washLate"); else if(isSweaty(c)) auraAdd(c, "wash");
   c.washTs = Date.now(); if(first) memAdd(c, "wash1", "Première douche !", Date.now(), "🚿"); touchProfile(); }
 /* Case « Satiété » (option C, 13 nov. 2026) : satiété, petit frigo et ce qu'il contient ; la toucher ouvre le frigo */
 const FRIDGE_SVG = open => `<svg viewBox="0 0 40 60" aria-hidden="true"><rect x="3" y="2" width="34" height="56" rx="6" fill="#dfe4f1" stroke="#7d86a3" stroke-width="2"/>
@@ -4686,6 +4745,7 @@ function fridgeSheet(){
 // Caresse (appui long) et chatouilles (double toucher) : une réaction, des cœurs, aucune règle touchée
 let gyMsg = null, gyTapAt = 0, gyTapT = null, gyPetAt = 0, gyPress = null;
 function gyGesture(k){
+  if(k === "pet") auraAdd(creatureState(), "hug");
   gyMsg = k === "pet" ? {ts:Date.now(), txt:"Rrrr… encore ! 💜", cls:"gy-pet", eye:"sleep"} : {ts:Date.now(), txt:"Hihi ! Arrête, ça chatouille ! 😆", cls:"gy-tickle", eye:"happy"};
   render();
   const st = document.querySelector(".gy-stage"); if(!st) return;
@@ -4722,8 +4782,174 @@ function gyActionsHTML(c, v){
   return `<nav class="gy-acts" aria-label="S'occuper de ${esc(c.name || "ton Gymon")}">${A.map(x => `<button class="gy-act${x.cls || ""}${x.a ? " on" : ""}${x.w ? " warn" : ""}" data-act="${x.act}"${x.tab ? ` data-tab="${x.tab}"` : ""} aria-label="${x.l} : ${esc(x.s)}">
     <span class="ga-i">${x.e}${x.a ? `<b class="ga-b">${x.a === "!" ? "!" : ""}</b>` : ""}</span><span class="ga-l">${x.l}</span></button>`).join("")}</nav>`;
 }
+/* ---------- Aura (24 nov. 2026, décision du propriétaire, idée n° 7) ----------
+   L'aura mesure le lien entre le joueur et son Gymon (soin, attention, vie sociale), pas le sport. Purement cosmétique : elle ne change
+   que le fond d'écran de la page Gymon et ses répliques ; jamais le stade, la fidélité, les muscles ni la satiété. Seule jauge qui baisse
+   vraiment, sans danger. Jauge verticale discrète à gauche, sans pourcentage, sans couleur d'aura. Mort = 0. Pas de lampe (24 nov.).
+   Le joueur découvre les règles petit à petit : chaque source, la première fois, fait parler le Gymon et ajoute un « secret » à la fiche. */
+const AURA = {start:50, floorMax:20, floorPerSession:0.4, logMax:14, erode:0.04, absentDays:3};
+// Sources : d = effet, cap = fois par jour (au-delà : rien), hint = ce que dit le Gymon la première fois, sec = le secret dans la fiche
+const AURA_SRC = {
+  hug:{e:"💜", l:"Câlin", d:3, cap:5, hint:"Un câlin ! Je me sens tout lumineux 💜", sec:"Les câlins le font briller (5 par jour, pas plus)."},
+  hugs:{e:"😅", l:"Trop de câlins", d:-2, cap:3, hint:"Ok ok, ça suffit les câlins 😅", sec:"Au-delà de 5 câlins par jour, il en a marre."},
+  feed:{e:"🍗", l:"Nourri avant d'avoir faim", d:3, cap:2, hint:"Manger avant d'avoir faim… quel luxe ✨", sec:"Le nourrir avant qu'il ait faim (satiété au-dessus de 50 %)."},
+  wash:{e:"🚿", l:"Douche après l'effort", d:5, cap:1, hint:"Ahh, je sens bon, je brille !", sec:"Une douche tant qu'il transpire."},
+  washLate:{e:"🧼", l:"Douche (enfin !)", d:2, cap:1, hint:"Enfin propre ! Il était temps…", sec:"Une douche quand il sent mauvais : mieux que rien."},
+  visit:{e:"👋", l:"Visite du jour", d:2, cap:1, hint:"Tu passes me voir ? Ça me fait chaud au cœur.", sec:"Une petite visite chaque jour."},
+  variety:{e:"🌈", l:"Plein d'attentions", d:3, cap:1, hint:"Câlin, repas, douche… tu me gâtes aujourd'hui !", sec:"Plusieurs gestes différents dans la même journée."},
+  duo:{e:"🤝", l:"Séance en duo", d:10, cap:2, hint:"Ton pote est trop cool !", sec:"S'entraîner en duo avec un ami."},
+  duoNew:{e:"🆕", l:"Nouveau pote", d:5, cap:1, hint:"Un nouveau copain Gymon ! Le monde s'agrandit.", sec:"Un duo avec un nouveau pote : encore mieux."},
+  maitre:{e:"👑", l:"Maître du duo", d:3, cap:1, hint:"C'est toi qui menais la séance ? Trop fort !", sec:"Être le maître d'un duo."},
+  contract:{e:"🏆", l:"Contrat rempli", d:20, cap:1, hint:"Promesse tenue ! Regarde le ciel !", sec:"Remplir le contrat du Pr Noxwell : énorme bonus."},
+  prof:{e:"🧪", l:"Programme du professeur", d:2, cap:1, hint:"Le programme du professeur ! Je me sens… scientifique.", sec:"Suivre une séance du programme du Pr Noxwell."},
+  festin:{e:"🍖", l:"Festin du dimanche", d:8, cap:1, hint:"Un festin ! Je n'ai jamais été aussi heureux.", sec:"Le festin du dimanche."},
+  record:{e:"⭐", l:"Record", d:1, cap:1, hint:"Un record ! Ça me fait briller un tout petit peu.", sec:"Un record donne un petit coup de pouce (petit seulement)."},
+  hour:{e:"⏰", l:"Ton heure habituelle", d:2, cap:1, hint:"Pile à l'heure, comme d'habitude. J'adore les rituels.", sec:"S'entraîner à la même heure, semaine après semaine."},
+  sleep:{e:"🌙", l:"Nuit tranquille", d:1, cap:1, hint:"J'ai dormi comme un bébé. Merci de m'avoir laissé tranquille.", sec:"Il adore qu'on le laisse dormir la nuit."},
+  anniv:{e:"🎂", l:"Anniversaire", d:10, cap:1, hint:"On fête notre anniversaire ! Je rayonne !", sec:"Fêter son anniversaire avec lui."},
+  resurrect:{e:"✨", l:"Résurrection", d:15, cap:1, hint:"Je suis revenu… grâce à toi.", sec:"Le ressusciter : il repart de presque rien, mais avec toi."},
+  night:{e:"🥱", l:"Réveillé la nuit", d:-3, cap:1, hint:"Mmh… il est tard… je dormais…", sec:"Ouvrir l'app entre minuit et 6 h le réveille."},
+  smell:{e:"🦨", l:"Il sent mauvais", d:-2, hint:"Je sens fort… et je me sens terne.", sec:"Une semaine sans douche : l'aura s'éteint doucement."},
+  hunger:{e:"😣", l:"Faim", d:-2, hint:"J'ai faim… tout devient gris.", sec:"La faim l'éteint (sous 50 %, et plus vite sous 30 %)."},
+  absent:{e:"💤", l:"Absence", d:-3, hint:"Tu étais où ? Il fait si sombre sans toi…", sec:"Plus de 3 jours sans visite : son aura s'érode."},
+  neglect:{e:"🍂", l:"Un peu délaissé", d:-1, hint:"Personne ne s'occupe de moi aujourd'hui ?", sec:"Plus son aura est haute, plus elle fond vite quand on le délaisse."},
+  contractFail:{e:"📉", l:"Contrat raté", d:-10, cap:1, hint:"Le contrat… on ne l'a pas tenu. Ça me rend triste.", sec:"Un contrat raté ou abandonné le rend morose."},
+  death:{e:"🪦", l:"Mort de faim", d:0, hint:"", sec:"S'il meurt, son aura retombe à zéro."}
+};
+const AURA_DOWN_DAILY = new Set(["smell", "hunger", "absent", "neglect"]);
+const auraFloor = c => c.dead ? 0 : Math.min(AURA.floorMax, (c.fidelity || 0) * AURA.floorPerSession);   // un vieux Gymon ne retombe jamais tout à fait au niveau d'un nouveau-né
+const auraTier = a => a < 12 ? 0 : a < 37 ? 1 : a < 62 ? 2 : a < 87 ? 3 : 4;
+const AURA_TIERS = ["Éteint", "Morose", "Normal", "Joyeux", "Rayonnant"];
+const AURA_MOOD = ["est dans le noir.", "est un peu morose.", "va bien.", "est joyeux.", "rayonne."];
+const AURA_LINES = [["…", "Il fait froid.", "Tu reviens ?"], ["Bof.", "Un câlin, peut-être ?", "Il fait un peu sombre ici…"], [],
+  ["On fait quoi aujourd'hui ?!", "J'ai bien dormi ✨", "Regarde les lucioles !"], ["Regarde comme ça brille ! C'est grâce à toi.", "Le ciel est en fête !", "Je me sens invincible !"]];
+let auraHint = null, auraPulse = 0;
+// Aura de départ, calculée sur l'histoire d'un Gymon existant (aucun vétéran dans le noir le jour de la mise à jour) ; mort = 0
+function auraInit(c){
+  if(typeof c.aura === "number") return;
+  const now = Date.now(), D = 86400000;
+  if(c.dead){ c.aura = 0; }
+  else { const fest = (c.journal || []).filter(j => j.k && /^f\d/.test(j.k)).length, duos = (S.profile.teams || []).length;
+    const recent = (c.fed || []).length ? S.workouts.filter(w => (c.fed || []).includes(w.id) && now - (w.end || w.start) < 30 * D).length : 0;
+    const washed = c.washTs && now - c.washTs < MEM.smellDays * D;
+    c.aura = Math.round(Math.min(85, Math.max(AURA.start - 10, 40 + 3 * Math.min(5, fest) + 4 * Math.min(5, duos) + Math.min(15, recent) + (washed ? 5 : 0)))); }
+  c.auraT = now; c.auraLog = []; c.auraSecrets = {}; c.auraSeen = c.aura;
+}
+function auraLog(c, k, d, ts){
+  const l = c.auraLog = Array.isArray(c.auraLog) ? c.auraLog : [], same = AURA_DOWN_DAILY.has(k) && l.slice(0, 6).find(e => e.k === k && (ts || Date.now()) - e.t < 7 * 86400000);
+  if(same){ same.d = Math.round((same.d + d) * 10) / 10; same.t = Math.max(same.t, ts || Date.now()); l.sort((x, y) => y.t - x.t); }   // les baisses lentes se cumulent en une ligne par cause
+  else l.unshift({k, d:Math.round(d * 10) / 10, t:ts || Date.now()});
+  if(l.length > AURA.logMax) l.length = AURA.logMax;
+}
+function auraDiscover(c, k){
+  c.auraSecrets = c.auraSecrets || {};
+  if(c.auraSecrets[k]) return;
+  c.auraSecrets[k] = Date.now(); const src = AURA_SRC[k];
+  // Découverte : une notification discrète (la bulle reste aux répliques importantes) ; la fiche « Son aura » garde le secret
+  if(src && src.sec && k !== "death"){ const n = Object.keys(c.auraSecrets).filter(x => x !== "death").length, all = Object.keys(AURA_SRC).length - 1;
+    clearTimeout(auraDiscover.t); auraDiscover.t = setTimeout(() => toast(`✨ Secret d'aura ${n}/${all} : ${src.sec}`), 400); }
+}
+// Un geste : saut visible tout de suite ; rendements décroissants vers le haut ; plafond par jour et par source
+function auraAdd(c, k, opt){
+  const src = AURA_SRC[k]; if(!src || !c || (c.dead && k !== "death")) return 0;
+  auraInit(c); auraTick(c);
+  const today = dayKey(), dd = c.auraDay && c.auraDay.d === today ? c.auraDay : (c.auraDay = {d:today, n:{}});
+  if(k === "hug" && (dd.n.hug || 0) >= 5) return auraAdd(c, "hugs");   // au-delà de 5 câlins, il en a marre
+  if(src.cap && (dd.n[k] || 0) >= src.cap) return 0;
+  dd.n[k] = (dd.n[k] || 0) + 1;
+  let d = (opt && opt.d) ?? src.d;
+  if(d > 0) d *= 1 - c.aura / 150;
+  const before = c.aura;
+  c.aura = Math.max(d < 0 ? Math.min(c.aura, auraFloor(c)) : 0, Math.min(100, c.aura + d));
+  if(Math.abs(c.aura - before) >= 0.05 || k === "death") auraLog(c, k, c.aura - before);
+  auraDiscover(c, k); auraPulse = Date.now();
+  // Variété : trois attentions différentes dans la journée
+  if(k !== "variety" && ["hug", "feed", "wash", "washLate", "visit"].filter(x => dd.n[x]).length >= 3) auraAdd(c, "variety");
+  touchProfile();
+  return c.aura - before;
+}
+// Baisses lentes et érosion, rattrapées jour par jour depuis la dernière mise à jour
+function auraTick(c, now){
+  auraInit(c); now = now || Date.now(); const D = 86400000; if(c.dead){ if(c.aura > 0){ c.aura = 0; auraLog(c, "death", 0); } c.auraT = now; return; }
+  const p = noxSt().proto;
+  if(p && !p.full && !p.auraFail && noxContract && now > p.start + NOX.weeks * 7 * D){ p.auraFail = 1; auraAdd(c, "contractFail"); }
+  let t = c.auraT || now, steps = 0;
+  while(now - t >= D && steps < 90){ t += D; steps++;
+    const fl = auraFloor(c), dn = (k, d) => { if(c.aura <= fl) return; const b = c.aura; c.aura = Math.max(fl, c.aura - d); auraLog(c, k, c.aura - b, t); auraDiscover(c, k); };
+    const seen = c.seen || c.born || t, v = satExact(c, t);
+    if(t - seen > AURA.absentDays * D) dn("absent", 3);
+    if(c.stage >= 2 && c.washTs && t - c.washTs > MEM.smellDays * D) dn("smell", 2);
+    if(v < 30) dn("hunger", 4); else if(v < 50) dn("hunger", 2);
+    const cared = (c.auraLog || []).some(e => e.d > 0 && e.t > t - D && e.t <= t);
+    if(!cared && c.aura > fl + 5) dn("neglect", Math.max(0.5, AURA.erode * (c.aura - fl)));
+  }
+  c.auraT = steps ? t : (c.auraT || now);
+}
+// Visite de la page Gymon : une fois par jour ; la nuit (minuit–6 h) elle le réveille ; une nuit tranquille, il remercie
+function auraVisit(c){
+  if(c.dead || c.stage < 2) return;
+  const h = gyHourFix ?? new Date().getHours(), today = dayKey();
+  if(h < 6){ c.auraNight = today; auraAdd(c, "night"); return; }
+  if(c.auraVisitDay === today) return;
+  const first = !c.auraVisitDay; c.auraVisitDay = today;
+  if(!first && c.auraNight !== today) auraAdd(c, "sleep");
+  auraAdd(c, "visit");
+}
+function auraGaugeHTML(c){
+  const a = c.aura ?? AURA.start, seen = c.auraSeen ?? a, clamp = v => Math.max(0, Math.min(1, v));
+  const fill = v => `height:${Math.max(3, Math.round(v))}%;background:rgba(255,255,255,${(0.35 + 0.65 * clamp(v / 100)).toFixed(2)});box-shadow:0 0 ${Math.round(18 * clamp((v - 50) / 50))}px rgba(255,255,255,.75)`;
+  return `<button class="aura-g${Date.now() - auraPulse < 900 ? " pulse" : ""}" data-act="aura-sheet" aria-label="Son aura : ${AURA_TIERS[auraTier(a)].toLowerCase()}" data-to="${fill(a)}"><span class="aura-t"><b style="${fill(seen)}"></b></span></button>`;
+}
+// Décor : fondu continu entre les paliers (noir et pluie → étoiles → lucioles et étoiles filantes → aurore et feux d'artifice)
+function auraBg(c){
+  let el = document.getElementById("aura-bg");
+  if(!el){ el = document.createElement("div"); el.id = "aura-bg"; el.setAttribute("aria-hidden", "true");
+    const h = ['<div class="ly l0"></div><div class="ly l1"></div><div class="ly l2"></div><div class="ly l3"></div><div class="ly l4"></div><div class="ly la"></div>'];
+    for(let i = 0; i < 22; i++) h.push(`<i class="rn" style="left:${3 + i * 4.5}%;top:${(i * 53) % 90}%;animation-delay:${((i * 0.37) % 1.1).toFixed(2)}s"></i>`);
+    AURA_STARS.forEach(([x, y, z], i) => h.push(`<i class="st" style="left:${x}%;top:${y}%;width:${z}px;height:${z}px;animation-delay:${(i % 7) * 0.45}s"></i>`));
+    [[80,6],[58,16]].forEach(([x, y], i) => h.push(`<i class="sh" style="left:${x}%;top:${y}%;animation-delay:${i * 2.3}s"></i>`));
+    [[30,1],[72,13],[4,15]].forEach(([x, y], i) => h.push(`<i class="bu" style="left:${x}%;top:${y}%;animation-delay:${i * 0.9}s"></i>`));
+    [[14,44],[26,36],[78,42],[86,34],[68,52],[10,58],[90,56],[40,60]].forEach(([x, y], i) => h.push(`<i class="fl" style="left:${x}%;top:${y}%;animation-delay:${i * 0.7}s"></i>`));
+    el.innerHTML = h.join(""); document.body.prepend(el); }
+  const a = c.aura ?? AURA.start, clamp = v => Math.max(0, Math.min(1, v)), o = [1, clamp(a / 25), clamp((a - 25) / 25), clamp((a - 50) / 25), clamp((a - 75) / 25), clamp((a - 80) / 20)];
+  el.querySelectorAll(".ly").forEach((x, i) => x.style.opacity = o[i]);
+  el.querySelectorAll(".rn").forEach(x => x.style.opacity = clamp((22 - a) / 22));
+  el.querySelectorAll(".st").forEach((x, i) => x.style.opacity = clamp((a - AURA_STARS[i][3]) / 12));
+  el.querySelectorAll(".sh").forEach(x => x.style.opacity = clamp((a - 68) / 10));
+  el.querySelectorAll(".bu").forEach(x => x.style.opacity = clamp((a - 88) / 10));
+  el.querySelectorAll(".fl").forEach(x => x.style.opacity = clamp((a - 62) / 14));
+  document.body.style.setProperty("--aura-lift", clamp(a / 50).toFixed(2));
+  document.body.classList.toggle("aura-glow", a > 72);
+}
+const AURA_STARS = [[8,8,2.5,26],[18,4,3.5,30],[30,11,2.5,34],[44,3,2.5,38],[57,9,3.5,28],[70,5,2.5,42],[84,12,2.5,32],[92,4,3.5,46],[12,20,2.5,48],[24,26,3.5,52],[38,17,2.5,36],[62,21,2.5,56],[78,24,3.5,40],[90,29,2.5,60],[6,35,2.5,64],[20,40,2.5,44],[86,42,2.5,68],[50,14,3.5,58],[34,33,2.5,72],[66,33,2.5,76],[16,52,2.5,80],[82,55,2.5,84],[48,27,2.5,66],[74,15,2.5,50]];
+// Après le rendu : la jauge rattrape sous les yeux du joueur ce qui s'est passé pendant son absence, les icônes des causes tombent
+function auraAfterRender(c){
+  const g = document.querySelector(".aura-g"); if(!g) return;
+  const a = c.aura ?? AURA.start, seen = c.auraSeen ?? a;
+  if(Math.abs(a - seen) >= 0.5){
+    const since = (c.auraLog || []).filter(e => e.t > (c.auraSeenT || 0)).slice(0, 4);
+    requestAnimationFrame(() => setTimeout(() => { const b = g.querySelector("b"); if(b) b.setAttribute("style", g.dataset.to); g.classList.add("pulse"); }, 350));
+    since.forEach((e, i) => { const s = document.createElement("span"); s.className = "aura-fly " + (e.d < 0 ? "down" : "up"); s.textContent = (AURA_SRC[e.k] || {}).e || "✨";
+      s.style.animationDelay = (0.25 + i * 0.25) + "s"; g.appendChild(s); setTimeout(() => s.remove(), 2600); });
+    c.auraSeen = a; c.auraSeenT = Date.now(); saveLocal();
+  }
+}
+function auraSheet(){
+  const c = creatureState(); auraTick(c); const a = c.aura ?? AURA.start, nm = c.name || "Ton Gymon", when = t => { const d = Math.floor((Date.now() - t) / 86400000);
+    return Date.now() - t < 3600000 ? "à l'instant" : d === 0 ? "aujourd'hui" : d === 1 ? "hier" : d < 7 ? `il y a ${d} j` : "cette semaine"; };
+  const log = (c.auraLog || []).slice(0, 5), found = Object.keys(AURA_SRC).filter(k => (c.auraSecrets || {})[k]), all = Object.keys(AURA_SRC).filter(k => k !== "death");
+  openSheet(`<h3>Son aura</h3>
+    <p class="small muted" style="margin:0">${esc(nm)} ${AURA_MOOD[auraTier(a)]} Son aura dit à quel point il se sent entouré : tes soins, ta présence, tes potes. Elle ne change que son décor et son humeur, jamais ses stats.</p>
+    ${log.length ? `<div class="aura-ev">${log.map(e => `<div><span class="ar ${e.d < 0 ? "dn" : "up"}">${e.d < 0 ? "↓" : "↑"}</span><b>${(AURA_SRC[e.k] || {}).e || ""} ${esc((AURA_SRC[e.k] || {}).l || "")}</b><small>${when(e.t)}</small></div>`).join("")}</div>`
+      : `<p class="small muted" style="margin:0">Rien encore. Occupe-toi de lui, et regarde la jauge.</p>`}
+    <h4 class="aura-h">Secrets d'aura · ${found.filter(k => k !== "death").length} / ${all.length}</h4>
+    <div class="aura-sec">${all.map(k => (c.auraSecrets || {})[k] ? `<div class="on"><i>${AURA_SRC[k].e}</i><span>${esc(AURA_SRC[k].sec)}</span></div>` : `<div><i>?</i><span>Encore un mystère…</span></div>`).join("")}</div>
+    <button class="btn" data-act="close">Fermer</button>`, null, "aura-sheet");
+}
+
 function viewCreature(){
   const c = creatureState(), vit = creatureSatiety(c); creatureLog(c);
+  auraInit(c); auraTick(c); if(tab === "creature") auraVisit(c);
   const annivL = c.dead ? null : memVisit(c);
   { const aw = !c.dead && noxExam() ? noxContractAward() : 0;
     if(aw) gyMsg = {ts:Date.now(), txt:aw === 2 ? "Contrat rempli ! Regarde-moi briller ⭐⭐⭐" : "Une clause du contrat de tenue ! Le Pr Noxwell va être fier 📜", eye:"happy"}; }
@@ -4752,7 +4978,7 @@ function viewCreature(){
     <section class="gy ${c.stage < 2 ? "gy-egg" : ""} ${m0 === "sleep" ? "gy-night" : ""}">
       ${beforeAfterHTML(c)}
       <div class="gy-stage" data-act="gy-more-tap" role="button" aria-label="Voir mon Gymon de plus près">
-        <div class="gy-aura"></div>
+        <div class="gy-aura"></div>${c.stage >= 2 || c.dead ? auraGaugeHTML(c) : ""}
         ${boostOn(c) ? (() => { const f = 0.30 + 0.70 * Math.min(1, Math.log(Math.max(6, creatureHeight(c)) / 6) / Math.log(350 / 6));   // autour du Gymon, à sa taille (même échelle que gyZoom)
           return `<span class="gy-stars" style="top:${(100 - f * 48).toFixed(1)}%;--r:${Math.round(55 + f * 110)}px" aria-label="Contrat rempli : il brille d'étoiles">${"<i>★</i>".repeat(6)}</span>`; })() : ""}
         <i class="gy-spark" style="--x:18%;--y:22%;--d:0s"></i><i class="gy-spark" style="--x:80%;--y:30%;--d:1.3s"></i>
@@ -5397,6 +5623,7 @@ function gymonLines(c){
       const g = st.find(x => x.k === "gym"); if(g && !g.ok) L.push(`Le Pr Noxwell parie que j'atteindrai ${fmtN(g.h, 0)} cm. On lui montre ? 📏`); } }
   const v = creatureSatiety(c); if(v < 50) L.push(fridgeKg(c) ? "Il reste du poulet au frigo… j'ai faim 🍗" : "J'ai faim… une séance ?");
   L.prio = L.length;   // tout ce qui touche au jeu passe avant les conseils
+  { const tl = AURA_LINES[auraTier(c.aura ?? AURA.start)]; if(tl.length) L.push(tl[Math.floor(now / 3600000) % tl.length]); }   // aura : son humeur, juste après les phrases du jeu
   return L;
 }
 
@@ -5465,6 +5692,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-24", t:"🌌 L'aura de ton Gymon", x:"Une petite jauge est apparue à gauche de ton Gymon : son aura. Elle dit à quel point il se sent entouré, et change son ciel, de la nuit noire à l'aurore. Ce qui la fait monter ou descendre ? À toi de le découvrir… le Pr Noxwell enquête aussi. Elle ne touche jamais à sa force, sa faim ni sa taille."},
   {d:"2026-11-24", t:"🧬 Ton Gymon, fidèle à ta force", x:"Le coach monte toujours la charge quand tu dépasses l'objectif sans difficulté (fini les haltères bloqués à la même charge). Ta force est mieux mesurée, en comptant les reps que tu avais encore en réserve. Lombaires, avant-bras, adducteurs et obliques suivent leur groupe, et le Pr Noxwell prévoit des abdos chaque semaine. Ton Gymon a été recalculé une fois de plus sur ton historique."},
   {d:"2026-11-24", t:"💪 Les muscles de ton Gymon suivent ta force", x:"Ton Gymon grossit quand tu deviens plus fort : chaque muscle suit ta charge max rapportée à ton poids de corps, plus ton volume ou ta fidélité. Un 10/10 se mérite, c'est un physique d'athlète. Ses muscles ont été recalculés sur ton historique, ils ont pu baisser."},
   {d:"2026-11-24", t:"⏱️ Heure de fin plus juste", x:"La barre de séance compte maintenant ton repos en cours et tes séries d'échauffement, et affiche le temps qu'il reste. L'heure de fin ne fait plus de bonds quand tu coches une série : elle bouge seulement si tu vas plus vite ou plus lentement que prévu."},
@@ -5799,7 +6027,7 @@ function render(){
   document.querySelector('.tabs [data-tab="creature"]').classList.toggle("sick", !!sick);
   v.innerHTML = installHint() + (tab==="creature" ? viewCreature() : tab==="seance" ? (S.profile.active ? viewActive() : gymonHealthAlert() + viewHome())
     : tab==="routine" ? viewPlan() : tab==="progres" ? (progSub==="hist" ? progSeg() + viewHistory() : progSeg() + viewProgress()) : tab==="reglages" ? viewSettings() : viewExercises());
-  delete document.body.dataset.fit; if(tab === "creature"){ fitGymon(); noxSchedule(); }
+  delete document.body.dataset.fit; if(tab === "creature"){ fitGymon(); noxSchedule(); const ac = creatureState(); if(ac.stage >= 2 || ac.dead){ document.body.classList.add("aura-on"); auraBg(ac); auraAfterRender(ac); } else document.body.classList.remove("aura-on"); }
   tickClock(); wakeLock();
 }
 
@@ -6589,6 +6817,7 @@ const ACT = {
     touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:"🍗", k:"poulet", kg}; tab = "creature"; render(); feedThrow("🍗"); },
     "gy-wash": (b, e) => { if(e) e.stopPropagation(); washGymon(); const z = document.querySelector(".gy-stage");
     showerAnim(z, () => { gyMsg = {ts:Date.now(), txt:"Tout propre ! ✨ Merci !", eye:"happy", cls:"gy-hop"}; render(); }); },
+  "aura-sheet": (b, e) => { if(e) e.stopPropagation(); auraSheet(); },
   "gy-journal": (b, e) => { if(e) e.stopPropagation(); const c = creatureState(); c.jSeen = Math.max(Date.now(), ...(c.journal || []).map(j => j.ts)); saveLocal(); journalSheet(); render(); },
   "gy-pet": (b, e) => { if(e) e.stopPropagation(); if(gymonAsleep(creatureState())){ ACT["gy-wake"](); return; } gyGesture("pet"); },
   "celeb-wash": b => { washGymon(); b.disabled = true; showerAnim(document.getElementById("celeb-gy"), () => { b.textContent = "✨ Tout propre !"; }); },
@@ -7336,7 +7565,9 @@ function teamRecord(team){ if(!team) return null; return {v:team.v || TEAM_V, ro
 function teamLog(w){ if(!w.team) return; const l = S.profile.teams = Array.isArray(S.profile.teams) ? S.profile.teams : [];
   l.push({v:TEAM_V, wid:w.id, ts:w.start, role:w.team.role, friend:w.team.friend ? {uid:w.team.friend.uid, name:w.team.friend.name, lvl:w.team.friend.lvl} : null});
   if(l.length > 500) l.splice(0, l.length - 500);
-  if(w.team.friend){ const f = (S.profile.friends || []).find(x => x.uid === w.team.friend.uid); if(f) f.together = (f.together || 0) + 1; } }
+  if(w.team.friend){ const f = (S.profile.friends || []).find(x => x.uid === w.team.friend.uid); if(f) f.together = (f.together || 0) + 1; }
+  { const c = creatureState(), f = w.team.friend && (S.profile.friends || []).find(x => x.uid === w.team.friend.uid);
+    auraAdd(c, "duo"); if(f && (f.together || 0) <= 1) auraAdd(c, "duoNew"); if(w.team.role === "maitre") auraAdd(c, "maitre"); } }
 function sanitizeTeam(t){ if(!t || typeof t !== "object") return undefined;
   const fr = t.friend && typeof t.friend === "object" ? {uid:teamClean(t.friend.uid, 12), name:teamClean(t.friend.name), lvl:Math.max(-1, Math.min(4, Math.round(num(t.friend.lvl)))), n:Math.max(0, Math.round(num(t.friend.n))), card:typeof t.friend.card === "string" ? t.friend.card.slice(0, 120) : ""} : null;
   return {v:Math.round(num(t.v)) || 1, role:t.role === "suiveur" ? "suiveur" : "maitre", ts:isTime(t.ts) ? t.ts : Date.now(), friend:fr}; }
@@ -7434,7 +7665,10 @@ function cleanCreature(x){
     weight:n(x.weight, 0, 1e6, CREATURE_CFG.minWeight[stage]), stage, levels:byMuscle(x.levels, 0, 4.5), lastWorked:byMuscle(x.lastWorked, 0, now), peak:byMuscle(x.peak, 0, 4.5),
     last:n(x.last, 0, now, 0), lastMeal:null, ...(x.sv === 1 ? {sv:1, sat:n(x.sat, 0, 100, 100), satT:n(x.satT, 0, now, now), full:n(x.full, 0, now + 13*3600000, 0)} : {vit:n(x.vit, 0, 100, 100)}),
     fridge:(Array.isArray(x.fridge) ? x.fridge : []).filter(it => it && FOODS[it.k] && isTime(it.t)).slice(-60).map(it => ({id:safeId(it.id) ? it.id : uidGen("f"), k:it.k, kg:Math.round(n(it.kg, 0, 1e7, 0)), t:it.t})),
-    ...(x.peas && isTime(x.peas.t) ? {peas:{t:x.peas.t}} : {}),     ...(x.boost && isTime(x.boost.until) ? {boost:{until:Math.min(x.boost.until, now + 30 * 86400000)}} : {}), ...(typeof x.festDone === "number" && isFinite(x.festDone) ? {festDone:x.festDone} : {}), mv:Math.round(n(x.mv, 0, 99, 0)), resurrections:Math.round(n(x.resurrections, 0, 1e4, 0)),
+    ...(x.peas && isTime(x.peas.t) ? {peas:{t:x.peas.t}} : {}),     ...(x.boost && isTime(x.boost.until) ? {boost:{until:Math.min(x.boost.until, now + 30 * 86400000)}} : {}), ...(typeof x.festDone === "number" && isFinite(x.festDone) ? {festDone:x.festDone} : {}),
+    ...(typeof x.aura === "number" && isFinite(x.aura) ? {aura:Math.min(100, Math.max(0, x.aura)), auraT:isTime(x.auraT) ? Math.min(x.auraT, now) : now, auraSeen:Math.min(100, Math.max(0, n(x.auraSeen, 0, 100, x.aura))),
+      auraSecrets:Object.fromEntries(Object.keys(AURA_SRC).filter(k => x.auraSecrets && isTime(x.auraSecrets[k])).map(k => [k, x.auraSecrets[k]])),
+      auraLog:(Array.isArray(x.auraLog) ? x.auraLog : []).filter(e => e && AURA_SRC[e.k] && isTime(e.t) && typeof e.d === "number" && isFinite(e.d)).slice(0, AURA.logMax).map(e => ({k:e.k, d:Math.max(-100, Math.min(100, e.d)), t:e.t}))} : {}), mv:Math.round(n(x.mv, 0, 99, 0)), resurrections:Math.round(n(x.resurrections, 0, 1e4, 0)),
     dead:x.dead && isTime(x.dead.ts) ? {ts:x.dead.ts, since:isTime(x.dead.since) ? x.dead.since : x.dead.ts} : null,
     graves:(Array.isArray(x.graves) ? x.graves : []).filter(t => t && typeof t === "object").slice(-50).map(t => ({stage:Math.round(n(t.stage, 0, N - 1, 0)), fidelity:Math.round(n(t.fidelity, 0, 1e5, 0)), died:n(t.died, 0, now, now)}))};
   if(Array.isArray(x.at) && x.at.length === N && x.at.every(v => typeof v === "number" && isFinite(v))) c.at = x.at.map(v => Math.max(0, Math.round(v)));
