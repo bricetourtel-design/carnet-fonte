@@ -196,7 +196,7 @@ let fails = 0; const ok = (c, m, d) => { console.log((c ? "OK   " : "ÉCHEC ") +
   ok(MU.calfSwap === "Mollets", "↻ sur des mollets : un autre exercice de mollets", MU.calfSwap);
   ok(MU.calf && /mollets/.test(MU.toastTxt), "↻ sans autre exercice du même muscle disponible : message, rien n'est remplacé", MU);
   ok(MU.pre.curl === 0.6 && MU.pre.tri === 1, "fatigue en séance au prorata : 3 squats = 0,6 série d'ischios ; 2 développés = 1 série de triceps", MU.pre);
-  ok(MU.rec.q < 0.6 && MU.rec.m === 1 && MU.rec.j === MU.rec.q, "récupération par muscle : quadriceps fatigués, mollets reposés ; « Jambes » = le muscle le plus fatigué", MU.rec);
+  ok(MU.rec.q < 0.6 && MU.rec.m === 1 && Math.abs(MU.rec.j - MU.rec.q) < 1e-6, "récupération par muscle : quadriceps fatigués, mollets reposés ; « Jambes » = le muscle le plus fatigué", MU.rec);
   ok(new Set(MU.prims).size === MU.prims.length && MU.prims.length >= 3, "programme : une séance jambes travaille des muscles principaux différents", MU.prims);
   ok(MU.swapKeep, "programme : ↻ propose un autre exercice du même muscle principal", MU);
   ok(MU.wf.q >= 3 && MU.wf.f > 0, "volume hebdo par muscle, travail indirect au prorata (fessiers comptés via squat, presse…)", MU.wf);

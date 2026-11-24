@@ -182,6 +182,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const r = {walk:feed(h, walk(0, 20)), mu:feed(h, {...mus(0), id:"sm0x"}), newWalk:feed([], walk(0, 20)), mass:gymFood(walk(0, 20)) > satFood(walk(0, 20))};
     S.workouts = W; S.profile.creature = JSON.parse(saved); if(!S.profile.creature) delete S.profile.creature; S.profile.bw = bw; return r; });
   ok(sat.walk <= 40 && sat.mu === 100 && sat.newWalk <= 40 && sat.mass, "satiété : 20 min de marche ne remontent plus de 5 à 100 % (même habituelles) ; la muscu habituelle oui ; la masse garde ses calories", sat);
+  // Heure de fin (24 nov. 2026) : au rythme prévu (série, puis repos entier), elle reste stable d'une série à l'autre, repos en cours compris
+  const fin2 = await p.evaluate(() => { const W = S.workouts, act = S.profile.active, rs = restState; S.workouts = [];
+    startWorkout("T", ["dc-barre", "elev-lat"].map(id => ({exId:id, sets:[blankSet(), blankSet(), blankSet()]}))); const a = A(); a.exercises.forEach(ex => ex.sets = ex.sets.filter(x => !x.warm));
+    const ends = [], endAt = () => a.start + ((Date.now() - a.start) / 60000 + sessLeft(a)) * 60000;
+    const first = endAt(); a.start -= 90 * 1000;   // mise en place du 1er exercice
+    a.exercises.forEach((ex, i) => ex.sets.forEach((st, j) => { if(j === 0 && i > 0) a.start -= 90 * 1000;
+      a.start -= 40 * 1000; st.w = "20"; st.r = "10"; st.done = true; const r = sessRestOf(exById(ex.exId)); restState = {end:Date.now() + r * 1000, total:r * 1000};
+      ends.push(endAt()); a.start -= r * 1000; restState = null; }));
+    const spread = Math.round((Math.max(...ends.slice(0, -1)) - Math.min(...ends.slice(0, -1))) / 60000 * 10) / 10, txt = sessLeftTxt(a);
+    S.profile.active = act; S.workouts = W; restState = rs; return {spread, drift:Math.round((ends[0] - first) / 60000 * 10) / 10, txt}; });
+  ok(fin2.spread <= 1.5 && Math.abs(fin2.drift) <= 1.5, "heure de fin stable (±1,5 min) quand la séance suit le rythme prévu, repos en cours compté", fin2);
   ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);

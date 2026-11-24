@@ -971,7 +971,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-24 a";
+const APP_VERSION = "2026-11-24 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -5434,6 +5434,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-24", t:"⏱️ Heure de fin plus juste", x:"La barre de séance compte maintenant ton repos en cours et tes séries d'échauffement, et affiche le temps qu'il reste. L'heure de fin ne fait plus de bonds quand tu coches une série : elle bouge seulement si tu vas plus vite ou plus lentement que prévu."},
   {d:"2026-11-24", t:"✏️ Les corrections comptent tout de suite", x:"Tu t'es trompé de reps ou de charge sur une série déjà validée ? Corrige-la : le Pr Noxwell recalcule aussitôt ses conseils pour les séries suivantes et pour la prochaine fois."},
   {d:"2026-11-23", t:"🩺 Examen du Pr Noxwell réparé", x:"Après avoir tapé ton poids, ta taille, ton âge ou ton poids visé, le bouton pour continuer s'active tout de suite : plus besoin de revenir en arrière pour le débloquer."},
   {d:"2026-11-22", t:"🍗 Ton Gymon a plus d'appétit", x:"Remonter sa satiété demande maintenant un vrai effort : 20 min de marche ne suffisent plus à le remplir. Ta séance habituelle le remet toujours à 100 %, mais le cardio ne peut pas faire plus facile que ta muscu habituelle, et il compte seulement les calories dépensées en plus du repos. Sa masse et sa taille ne changent pas."},
@@ -6035,12 +6036,22 @@ const SESS = {step:10, min:15, max:180, slack:8};
 function sessExMin(ex, k, list){   // minutes restantes pour un exercice de la séance (mêmes temps que estMinutes)
   const e = exById(ex.exId); if(!e) return 0; const left = ex.sets.filter(x => !x.done && !x.warm).length;
   if(isCardio(e)) return left * (num((ex.sets.find(x => !x.done) || {}).r) || NOX_CARDIO_MIN);
-  const rest = S.profile.rest < 0 ? (REST_BY_RANGE[repRange(e)[0]] || 120) : (S.profile.rest || 90), chained = ex.ss && list[k + 1] && list[k + 1].ss === ex.ss;
-  return (left * (40 + (chained ? 15 : rest)) + (ex.sets.some(x => x.done) ? 0 : 90)) / 60;
+  const rest = sessRestOf(e), chained = ex.ss && list[k + 1] && list[k + 1].ss === ex.ss, warm = ex.sets.filter(x => x.warm && !x.done).length;
+  return (left * (40 + (chained ? 15 : rest)) + warm * 75 + (ex.sets.some(x => x.done) ? 0 : 90)) / 60;   // échauffement : ≈ 45 s + 30 s de pause par série
 }
+const sessRestOf = e => S.profile.rest < 0 ? (REST_BY_RANGE[repRange(e)[0]] || 120) : (S.profile.rest || 90);
 // Heure réelle de fin (pratique pour reprendre le travail) : maintenant + ce qu'il reste à faire, recalculée à chaque série validée
 const sessClock = (a, endMin) => { const d = new Date(a.start + endMin * 60000); return `${d.getHours()}h${String(d.getMinutes()).padStart(2, "0")}`; };   // ex. 12h10
-const sessLeft = a => a.exercises.reduce((t, ex, k) => t + sessExMin(ex, k, a.exercises), 0);
+/* Temps restant (24 nov. 2026, remonté par le propriétaire : l'heure de fin semblait figée) : le repos en cours compte,
+   et la toute dernière série n'est suivie d'aucun repos. Ainsi l'heure de fin reste stable quand on suit le rythme prévu. */
+function sessLeft(a){
+  let t = a.exercises.reduce((x, ex, k) => x + sessExMin(ex, k, a.exercises), 0);
+  const lastEx = a.exercises.slice().reverse().find(ex => { const e = exById(ex.exId); return e && !isCardio(e) && ex.sets.some(x => !x.done && !x.warm); });
+  if(lastEx) t -= sessRestOf(exById(lastEx.exId)) / 60;
+  if(restState) t += Math.max(0, restState.end - Date.now()) / 60000;
+  return Math.max(0, t);
+}
+const sessLeftTxt = a => { const m = Math.round(sessLeft(a)); return m < 1 ? "presque fini" : `encore ≈ ${m} min`; };
 function sessPlanDay(a){ const r = a.routineId && S.profile.routines.find(x => x.id === a.routineId); return r && r.plan && S.profile.plan ? (S.profile.plan.days || []).find(d => d.dow === r.dow) : null; }
 function sessDur(a){
   if(!a.dur){ const d = sessPlanDay(a), est = 5 + sessLeft(a);
@@ -6051,7 +6062,7 @@ function sessBarHTML(){
   const a = S.profile.active; if(!a || !a.exercises.length) return "";
   const dur = sessDur(a), el = (Date.now() - a.start) / 60000, end = el + sessLeft(a), pct = Math.min(100, el / dur * 100);
   return `<section class="sess-bar${el > dur ? " over" : ""}" id="sess-bar"><div class="sess-top"><button class="sess-b" data-act="sess-dur" data-d="-${SESS.step}" aria-label="Raccourcir la séance de ${SESS.step} min">−</button>
-      <div class="sess-txt"><b id="sess-el">${fmtClock(Date.now() - a.start)}</b><span> / ${dur} min</span><small id="sess-end">Fin prévue à ${sessClock(a, end)}</small></div>
+      <div class="sess-txt"><b id="sess-el">${fmtClock(Date.now() - a.start)}</b><span> / ${dur} min</span><small id="sess-end">Fin prévue à ${sessClock(a, end)} · ${sessLeftTxt(a)}</small></div>
       <button class="sess-b" data-act="sess-dur" data-d="${SESS.step}" aria-label="Rallonger la séance de ${SESS.step} min">+</button></div>
     <div class="sess-track"><i id="sess-fill" style="width:${pct.toFixed(1)}%"></i><em style="left:${Math.min(100, end / dur * 100).toFixed(1)}%" id="sess-mark" title="Fin prévue"></em></div></section>`;
 }
@@ -6060,7 +6071,7 @@ function sessTick(){
   const dur = sessDur(a), el = (Date.now() - a.start) / 60000; f.style.width = Math.min(100, el / dur * 100).toFixed(1) + "%";
   const t = document.getElementById("sess-el"); if(t) t.textContent = fmtClock(Date.now() - a.start);
   const end = el + sessLeft(a), e2 = document.getElementById("sess-end"), m = document.getElementById("sess-mark");
-  if(e2) e2.textContent = `Fin prévue à ${sessClock(a, end)}`; if(m) m.style.left = Math.min(100, end / dur * 100).toFixed(1) + "%";
+  if(e2) e2.textContent = `Fin prévue à ${sessClock(a, end)} · ${sessLeftTxt(a)}`; if(m) m.style.left = Math.min(100, end / dur * 100).toFixed(1) + "%";
   document.getElementById("sess-bar").classList.toggle("over", el > dur);
 }
 // Un exercice de plus, dans la logique du programme : muscle du jour le moins servi (au poids du muscle), favoris et habitudes d'abord
