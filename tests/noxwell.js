@@ -279,7 +279,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     startWorkout(rt.name, rt.items.map(it => ({exId:it.exId, plan:it.sets, sets:Array.from({length:coach(it.exId, undefined, it.sets).sets}, blankSet)})), rt.id);
     const a = A(); r.bar = !!document.getElementById("sess-bar"); r.dur0 = sessDur(a); r.n0 = a.exercises.length;
     const t0 = document.getElementById("sess-end").textContent; a.exercises.forEach(x => x.sets.forEach(y => { if(!y.warm) y.done = true; })); sessTick();
-    r.endClock = /^Fin prévue à \d{1,2}h\d\d$/.test(t0) && document.getElementById("sess-end").textContent !== t0; a.exercises.forEach(x => x.sets.forEach(y => y.done = false));
+    r.endClock = /^Fin prévue à \d{1,2}h\d\d · (encore ≈ \d+ min|presque fini)$/.test(t0) && document.getElementById("sess-end").textContent !== t0; a.exercises.forEach(x => x.sets.forEach(y => y.done = false));
     a.exercises[0].sets.filter(x => !x.warm)[0].done = true; const first = a.exercises[0].exId;
     for(let k = 0; k < 3; k++) document.querySelector('[data-act="sess-dur"][data-d="10"]').click();
     r.dur1 = A().dur; r.n1 = A().exercises.length; const add = A().exercises.filter(x => x.nox).map(x => exById(x.exId));
