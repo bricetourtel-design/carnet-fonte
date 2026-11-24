@@ -971,7 +971,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-24 b";
+const APP_VERSION = "2026-11-24 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1656,7 +1656,9 @@ function lastSetsFor(exId, beforeTs){
   }
   return [];
 }
+let exHistMemo = null;   // cache le temps d'un rejeu (musculature du Gymon) : l'historique ne change pas pendant ce calcul
 function exHistory(exId){
+  if(exHistMemo && exHistMemo[exId]) return exHistMemo[exId];
   const out = [];
   S.workouts.forEach(w => w.exercises.forEach(ex => {
     if(ex.exId!==exId) return;
@@ -1666,7 +1668,7 @@ function exHistory(exId){
       vol += W*R*(ex.uni ? 2 : 1); reps += R; if(W>maxW) maxW=W; if(e>best){ best=e; bestSet=s; } });
     out.push({ts:w.start, wid:w.id, sets, best, maxW, bestSet, vol, reps});
   }));
-  return out.sort((a,b) => a.ts - b.ts);
+  out.sort((a,b) => a.ts - b.ts); if(exHistMemo) exHistMemo[exId] = out; return out;
 }
 function weekStart(ts){ const d = new Date(ts); d.setHours(0,0,0,0); const k = (d.getDay()+6)%7; d.setDate(d.getDate()-k); return d.getTime(); }
 
@@ -3405,15 +3407,16 @@ function estimateNew(e, lo){
   const lv = LEVELS[Math.min(4, Math.floor(L))] || LEVELS[0];
   return {w:+w.toFixed(2), oneRM, txt:`Elle part de ton niveau ${own ? `en ${pm.toLowerCase()}, mesuré sur tes autres exercices` : grp ? `en ${e.muscle.toLowerCase()}, mesuré sur tes autres exercices` : "moyen, mesuré sur tes autres exercices"} (${lv.toLowerCase()}), et de ton poids de corps (${fmtN(bw)} kg) : tu pourrais soulever environ ${fmtN(oneRM, 1)} kg une seule fois, et on retire 10 % par prudence.`};
 }
-function strengthByMuscle(){
+function strengthByMuscle(at){
   // Par muscle (13 nov. 2026) : chaque exercice compte pour son muscle principal ; resG = moyenne par catégorie (silhouette, choix de séance)
-  const bw = bodyweight(), female = S.profile.sex==="f", now = Date.now(), res = {}, resG = {};
+  // at (24 nov. 2026) : la force telle qu'elle était à cette date (rejeu de la musculature du Gymon)
+  const bw = bodyweight(), female = S.profile.sex==="f", now = at || Date.now(), res = {}, resG = {};
   MUSC.forEach(m => res[m] = {m, ex:[], score:null, trend:null});
   MUSCLES.forEach(g => resG[g] = {m:g, score:null});
   if(!bw) return {bw, res, resG, avg:null};
   allEx().forEach(e => {
     const ref0 = STD[e.id], refR = STD_REPS[e.id]; if(!ref0 && !refR) return;
-    const h = exHistory(e.id); if(!h.length) return;
+    const h = at ? exHistory(e.id).filter(x => x.ts <= at) : exHistory(e.id); if(!h.length) return;
     const recent = h.filter(x => now - x.ts < 120*86400000), base = recent.length ? recent : h;
     const scale = female ? (e.muscle==="Jambes" ? 0.75 : 0.6) : 1;
     let score, val, txt;
@@ -3642,9 +3645,11 @@ const CREATURE_CFG = {
   minWeight: [0.06, 0.06, 0.05, 0.3, 1, 2.5, 6, 15, 30, 60, 90, 120, 200],   // poids minimal de chaque stade (kg)
   height: [[6,7], [7,7], [8,14], [15,25], [26,40], [40,55], [55,80], [80,110], [110,150], [150,200], [200,230], [230,260], [260,350]],   // cm
   heightPerSessionAfter: 1,                 // cm par séance après le dernier seuil
-  // Musculature v2 (niveau 0 à 4,5) : grossit avec les séries de chaque séance, de moins en moins vite en approchant du haut,
-  // bonus quand on bat un record ; fond doucement après 14 jours sans travailler le muscle (jamais sous 40 % de son maximum)
-  growth: {perSet:0.04, maxSession:0.45, ceiling:5, max:4.5, prBonus:0.15, target:0.9, catchUp:0.4},
+  // Musculature v4 (24 nov. 2026, décision du propriétaire) : le physique du Gymon suit la force réelle du joueur, pas sa fidélité
+  // ni le volume soulevé. Un muscle grossit jusqu'à 90 % de son score de force (0 à 5 : 1RM rapporté au poids de corps), jamais au-delà :
+  // 10/10 demande un développé couché ≈ 1,65 × le poids de corps. Il fond après 14 jours sans être travaillé (jamais sous 40 % de son maximum).
+  // Sans mesure de force (pas de poids de corps ni d'exercice de référence) : plafond « unmeasured » (≈ 3/10).
+  growth: {perSet:0.04, maxSession:0.45, ceiling:5, max:4.5, prBonus:0.15, target:0.9, catchUp:0.4, unmeasured:1.35},
   atrophy: {afterDays:14, perDay:0.05, floorRatio:0.4},
   levelThresholds: {default:[1.5, 2.5, 3.25, 4]},
   // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
@@ -3663,7 +3668,7 @@ const CREATURE_CFG = {
 };
 const rollStages = () => CREATURE_CFG.stageRange.map(([a,b]) => a + Math.floor(Math.random()*(b-a+1)));
 function creatureState(){
-  if(!S.profile.creature) S.profile.creature = {v:4, mv:3, sv:1, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null,
+  if(!S.profile.creature) S.profile.creature = {v:4, mv:4, sv:1, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null,
     sat:100, satT:Date.now(), full:0, fridge:[], wv:3, tall:0};
   const c = S.profile.creature;
   if((c.v||0) < 4){   // passage de 4 à 13 formes : l'ancien stade garde sa forme la plus proche
@@ -3896,43 +3901,49 @@ function muscleLevel(c, m, at){
 // Niveau d'une catégorie (case « Muscles ») : moyenne de ses muscles, hors muscles surtout travaillés en indirect
 const groupLevel = (c, g, at) => { const l = (FINE[g] || [g]).filter(m => !MINOR.has(m)); return l.reduce((t, m) => t + muscleLevel(c, m, at), 0) / l.length; };
 const muscleMelting = (c, m, at) => muscleLevel(c, m, at) < ((c.levels||{})[m] || 0) - 0.01;
-// Croissance v2 : chaque séance qui travaille un muscle le fait grossir selon ses séries (4 séries ≈ +0,16 au départ),
-// de moins en moins vite près du sommet, +0,15 de bonus sur un record. Plus de plafond lié à la force : tant qu'on s'entraîne, il grossit.
+// Croissance v4 (24 nov. 2026) : chaque séance qui travaille un muscle le rapproche de sa force réelle (au moins 40 % de l'écart,
+// ou la croissance habituelle selon les séries, +0,15 sur un record), sans jamais la dépasser. Plus fort = plus gros ; plus de volume ≠ plus gros.
 function growMuscles(c, w){
   const G = CREATURE_CFG.growth, t = w.end || w.start, sets = {}, pr = new Set();
   c.levels = c.levels || {}; c.lastWorked = c.lastWorked || {}; c.peak = c.peak || {};
-  // 17 muscles (13 nov. 2026) : chaque série compte pour chaque muscle au prorata de l'exercice (squat : quadriceps 1, fessiers 0,7…) ;
-  // le bonus record va au muscle principal. Moins d'une demi-série équivalente : pas de croissance.
-  w.exercises.forEach(ex => { const e = exById(ex.exId); if(isCardio(e)) return;   // cardio : ne change pas les muscles (21 nov. 2026, décision du propriétaire)
+  // Chaque série compte pour chaque muscle au prorata de l'exercice (squat : quadriceps 1, fessiers 0,7…). Moins d'une demi-série : rien.
+  const via = {};   // muscle → exercices qui l'ont travaillé (pour un muscle sans mesure de force propre)
+  w.exercises.forEach(ex => { const e = exById(ex.exId); if(!e || isCardio(e)) return;   // cardio : ne change pas les muscles (21 nov. 2026)
     const n = workSets(ex).length; if(!n) return;
-    Object.entries(exWork(e)).forEach(([m, p]) => sets[m] = (sets[m]||0) + n * p);
+    Object.entries(exWork(e)).forEach(([m, p]) => { sets[m] = (sets[m]||0) + n * p; (via[m] = via[m] || []).push([primOf(e), n * p]); });
     if((w.prs||[]).includes(ex.exId)) pr.add(primOf(e)); });
-  // Rattrapage selon la force (15 nov. 2026, décision du propriétaire) : un pratiquant avancé doit vite avoir un Gymon à son image,
-  // sans pénaliser les novices. Cible = 90 % du score de force du muscle (0 à 5, 1RM rapporté au poids de corps, barème femmes) ;
-  // sous la cible, chaque séance qui travaille le muscle rapporte au moins 40 % de l'écart. Au-dessus, la croissance habituelle.
-  const sb = Object.keys(sets).length ? strengthByMuscle() : null;
+  if(!Object.keys(sets).length) return;
+  const sb = strengthByMuscle(t), scoreOf = m => { const x = sb.res[m] && sb.res[m].score; return typeof x === "number" && isFinite(x) ? x : null; };
   Object.entries(sets).forEach(([m, n]) => { if(n < 0.5) return;
     const cur = muscleLevel(c, m, t);   // la fonte éventuelle est d'abord appliquée
-    const sc = sb && sb.res[m] && sb.res[m].score, T = typeof sc === "number" && isFinite(sc) ? G.target * sc : 0;
+    c.lastWorked[m] = Math.max(c.lastWorked[m] || 0, t);   // travaillé : il ne fond plus, même s'il ne grossit pas
+    // Sans mesure propre : la force des exercices qui l'ont travaillé (fessiers d'un squat = force au squat), sinon la moyenne de tes muscles
+    let sc = scoreOf(m);
+    if(sc === null){ let a = 0, wt = 0; (via[m] || []).forEach(([pm, k]) => { const v = scoreOf(pm); if(v !== null){ a += v * k; wt += k; } }); sc = wt ? a / wt : sb.avg; }
+    const T = Math.min(G.max, typeof sc === "number" && isFinite(sc) ? G.target * sc : G.unmeasured);
+    if(cur >= T){ c.levels[m] = Math.round(cur * 100) / 100; return; }   // déjà à l'image de ta force : il faut devenir plus fort
     const base = Math.min(G.maxSession, G.perSet * n) * Math.max(0.08, 1 - cur / G.ceiling);
-    const gain = (cur < T ? Math.max(base, G.catchUp * (T - cur)) : base) + (pr.has(m) ? G.prBonus : 0);
-    c.levels[m] = Math.round(Math.min(G.max, cur + gain) * 100) / 100;
-    c.lastWorked[m] = Math.max(c.lastWorked[m] || 0, t); c.peak[m] = Math.max(c.peak[m] || 0, c.levels[m]);
+    // Rattrapage au prorata du travail : complet à partir de 3 séries équivalentes (un squat fait plus pour les quadriceps que pour les adducteurs)
+    const gain = Math.max(base, G.catchUp * Math.min(1, n / 3) * (T - cur)) + (pr.has(m) ? G.prBonus : 0);
+    c.levels[m] = Math.round(Math.min(T, cur + gain) * 100) / 100;
+    c.peak[m] = Math.max(c.peak[m] || 0, c.levels[m]);
   });
 }
 // Correctif : recalcule la musculature à partir des seules séances réellement faites depuis la naissance
 function creatureFixLevels(){
-  const c = S.profile.creature; if(!c || (c.mv || 0) >= 3) return;
+  const c = S.profile.creature; if(!c || (c.mv || 0) >= 4) return;
   // Musculature v2 : rejouée sur les séances déjà mangées, avec la nouvelle croissance et la fonte.
   // v3 (13 nov. 2026, 17 muscles) : rejouée de même, chaque muscle au prorata ; décision du propriétaire : les niveaux
   // reflètent l'historique réel, quitte à baisser pour un muscle jamais travaillé (exception à « un niveau ne se perd jamais »).
-  c.levels = {}; c.lastWorked = {}; c.peak = {};
-  S.workouts.filter(w => c.fed.includes(w.id)).sort((a,b) => a.start-b.start).forEach(w => growMuscles(c, w));
+  // v4 (24 nov. 2026, décision du propriétaire) : rejouée avec la croissance liée à la force, chaque séance avec la force de ce jour-là ;
+  // les niveaux peuvent baisser (même exception, voulue).
+  c.levels = {}; c.lastWorked = {}; c.peak = {}; const fed = new Set(c.fed);
+  exHistMemo = {}; try{ S.workouts.filter(w => fed.has(w.id)).sort((a,b) => a.start-b.start).forEach(w => growMuscles(c, w)); } finally { exHistMemo = null; }
   const now = Date.now(), grace = now - CREATURE_CFG.atrophy.afterDays * 86400000;   // la fonte démarre à partir d'aujourd'hui
   MUSC.forEach(m => { if(c.lastWorked[m]){ c.levels[m] = muscleLevel(c, m, now); c.lastWorked[m] = Math.max(c.lastWorked[m], grace); } });
   if(c.ref) c.ref = snapNow(c);   // l'avant / après repart des nouveaux muscles
   if(c.lastMeal) c.lastMeal = {...c.lastMeal, ups:[], dl:{}};
-  c.mv = 3; c.v = Math.max(c.v || 0, 2); saveLocal();
+  c.mv = 4; c.v = Math.max(c.v || 0, 2); saveLocal();
 }
 /* Coup critique (décidé le 12 nov. 2026) : à partir de la 3e série de travail, 12 % de chances qu'une série nourrisse double le Gymon,
    2 fois au plus par séance. Le volume de la séance (historique, records, coach) ne change pas : seul le repas du Gymon compte le bonus.
@@ -5434,6 +5445,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-24", t:"💪 Les muscles de ton Gymon suivent ta force", x:"Ton Gymon grossit quand tu deviens plus fort : chaque muscle suit ta charge max rapportée à ton poids de corps, plus ton volume ou ta fidélité. Un 10/10 se mérite, c'est un physique d'athlète. Ses muscles ont été recalculés sur ton historique, ils ont pu baisser."},
   {d:"2026-11-24", t:"⏱️ Heure de fin plus juste", x:"La barre de séance compte maintenant ton repos en cours et tes séries d'échauffement, et affiche le temps qu'il reste. L'heure de fin ne fait plus de bonds quand tu coches une série : elle bouge seulement si tu vas plus vite ou plus lentement que prévu."},
   {d:"2026-11-24", t:"✏️ Les corrections comptent tout de suite", x:"Tu t'es trompé de reps ou de charge sur une série déjà validée ? Corrige-la : le Pr Noxwell recalcule aussitôt ses conseils pour les séries suivantes et pour la prochaine fois."},
   {d:"2026-11-23", t:"🩺 Examen du Pr Noxwell réparé", x:"Après avoir tapé ton poids, ta taille, ton âge ou ton poids visé, le bouton pour continuer s'active tout de suite : plus besoin de revenir en arrière pour le débloquer."},
@@ -6534,7 +6546,7 @@ const ACT = {
     openSheet(`<h3>Mon Gymon</h3>
       <p class="muted" style="margin:-4px 0 0">${c.lastMeal ? `Dernier repas : ${fmtVol(c.lastMeal.vol)} soulevés.` : "Il attend son premier repas."} Il a partagé ${c.fidelity} séance${c.fidelity>1?"s":""} avec toi.</p>
       <div class="vol">${MUSCLES.map(g => `<p class="vol-g">${g}</p>` + FINE[g].map(m => { const l = muscleLevel(c, m); return `<div class="vol-row"><span>${m}</span><div class="vol-bar"><i style="width:${Math.max(3, Math.min(100, l/4.5*100))}%;${mc(g)}"></i></div><b class="num">${Math.round(l/4.5*10)}/10</b></div>`; }).join("")).join("")}</div>
-      <p class="small muted" style="margin:0">Chaque muscle travaillé (série validée) grossit, et fond s'il est oublié plus de 14 jours. Le volume soulevé le nourrit, ta fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
+      <p class="small muted" style="margin:0">Ses muscles suivent ta force réelle (ta charge max rapportée à ton poids de corps) : pour qu'ils grossissent, deviens plus fort. Un muscle oublié plus de 14 jours fond. Le volume soulevé le nourrit, ta fidélité le fait grandir. Quand évoluera-t-il ? Lui seul le sait.</p>
       <button class="btn" data-act="close">Fermer</button>`); },
   "gy-flip": (b, e) => { e.stopPropagation(); gyBack = !gyBack; gyFlipAnim = true; render(); gyFlipAnim = false; },
   "gy-curve": (b, e) => { e.stopPropagation(); const c = creatureState(), k = +b.dataset.k; creatureLog(c);
