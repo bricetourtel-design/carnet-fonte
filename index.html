@@ -971,7 +971,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-24 c";
+const APP_VERSION = "2026-11-24 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -1666,7 +1666,7 @@ function exHistory(exId){
     let best = 0, maxW = 0, bestSet = null, vol = 0, reps = 0;
     sets.forEach(s => { const W=num(s.w), R=num(s.r), e=e1rm(W,R);
       vol += W*R*(ex.uni ? 2 : 1); reps += R; if(W>maxW) maxW=W; if(e>best){ best=e; bestSet=s; } });
-    out.push({ts:w.start, wid:w.id, sets, best, maxW, bestSet, vol, reps});
+    out.push({ts:w.start, wid:w.id, sets, best, maxW, bestSet, vol, reps, feel:ex.feel || 0});
   }));
   out.sort((a,b) => a.ts - b.ts); if(exHistMemo) exHistMemo[exId] = out; return out;
 }
@@ -2004,6 +2004,11 @@ function coachFresh(exId, beforeTs, planned){
       else if(rFeel === 4 && rMin >= lo && x <= rW){ x = rW; minRep = rMin;   // audit du 19 nov. 2026 : plus de zigzag (6 → 4 reps, −2,5 kg puis +2,5 kg)
         note = `Même charge que ta dernière séance ${mode==="lourd"?"lourde":"volume"} (${fmtN(rW)} kg × ${rMin}), qui était dure : on garde ${rMin} reps pour les rendre plus faciles.`; }
     }
+    // Double progression (audit du 24 nov. 2026) : objectif dépassé de 2 reps sans difficulté à une charge → la charge monte d'un palier.
+    // Sans cela, une séance « lourde » faite à 9 reps comptait comme « volume », la suivante repartait de l'estimation et l'arrondi
+    // au palier redonnait la même charge (haltères bloqués à 10 kg × 7 pendant des mois).
+    { const lW = Math.max(...last.sets.map(s => num(s.w))), lMin = Math.min(...last.sets.filter(s => num(s.w) === lW).map(s => num(s.r)));
+      if(lW > 0 && (last.feel || 3) <= 3 && lMin >= target + 2 && x <= lW){ x = lW + stepFor(e, lW); note = `La dernière fois : ${lMin} reps à ${fmtN(lW)} kg, au-delà de l'objectif (${target}) : on monte la charge.`; } }
     if(rebound && x < peak){ x = peak; note = `Fin de l'allègement : on reprend la charge d'avant (${fmtN(peak)} kg).`; }
     const wk = muscleSetsThisWeek(primOf(e), last.ts + 1);
     const notes = [];
@@ -2371,6 +2376,11 @@ function generatePlan(d){
   out.forEach(day => day.items.sort((a,b) => (a.muscle==="Abdos")-(b.muscle==="Abdos") || b.comp-a.comp || PRIO.indexOf(a.muscle)-PRIO.indexOf(b.muscle)));
   // Supersets (20 nov. 2026) : paires choisies à la main pour ce jour, sinon proposées si le joueur les accepte (examen de Noxwell)
   out.forEach(day => { const dd = days.find(x => x.dow === day.dow); ssApply(day, dd && Array.isArray(dd.ss) ? dd.ss : S.profile.ssPref === "oui" ? ssAuto(day.items) : []); day.est = Math.round(estMinutes(day.items)); });
+  // Abdos (audit du 24 nov. 2026) : en full body ou en séances courtes, aucun créneau abdos de la semaine ; on en ajoute un en fin de séance
+  if(out.length && !out.some(day => day.items.some(it => it.muscle === "Abdos"))){
+    const ab = prefer(candidatesFor("Abdos", st))[0], day = out.slice().sort((a, b) => (b.min - b.est) - (a.min - a.est))[0];
+    if(ab && day){ day.items.push({exId:ab.e.id, muscle:"Abdos", slot:"Abdos:w", comp:false, n:ab.n, sets:2}); day.est = Math.round(estMinutes(day.items)); }
+  }
   out.forEach(day => { if(cardioDow.has(day.dow) && day.items.length){ day.items.push({exId:cardioEx.id, muscle:"Cardio", slot:"cardio", comp:false, n:0, sets:1, cardio:true, min:cardioMinFor(day.min)}); day.est += cardioMinFor(day.min); } });
   // Alertes de récupération entre jours consécutifs
   const alerts = [], dset = new Set(out.map(x => x.dow));
@@ -3421,7 +3431,10 @@ function strengthByMuscle(at){
     const scale = female ? (e.muscle==="Jambes" ? 0.75 : 0.6) : 1;
     let score, val, txt;
     if(refR){ val = Math.max(...base.flatMap(x => x.sets.map(s => num(s.r)))); score = levelScore(val, refR*scale); txt = `${val} reps`; }
-    else { val = Math.max(...base.map(x => x.best)) / bw; score = levelScore(val, ref0*scale); txt = `1RM ${fmtN(val*bw)} kg = ${fmtN(val,2)} × poids de corps`; }
+    // 1RM estimé en comptant les reps en réserve indiquées par le ressenti (audit du 24 nov. 2026 : un joueur qui s'arrête 1 à 2 reps
+    // avant l'échec, comme le demande le coach, était sous-estimé de 5 à 10 %) ; sans ressenti, la série telle quelle
+    else { const rir = f => ({1:4, 2:3, 3:1.5, 4:0.5})[f] || 0, e1 = x => Math.max(...x.sets.map(s => e1rm(num(s.w), num(s.r) + rir(x.feel))));
+      val = Math.max(...base.map(e1)) / bw; score = levelScore(val, ref0*scale); txt = `1RM ${fmtN(val*bw)} kg = ${fmtN(val,2)} × poids de corps`; }
     // Évolution : meilleur 1RM des 6 dernières semaines de pratique vs les 6 semaines précédentes
     const lastTs = h[h.length-1].ts, cut = lastTs - 42*86400000, cut2 = cut - 42*86400000;
     const a = h.filter(x => x.ts > cut), b = h.filter(x => x.ts <= cut && x.ts > cut2);
@@ -3668,7 +3681,7 @@ const CREATURE_CFG = {
 };
 const rollStages = () => CREATURE_CFG.stageRange.map(([a,b]) => a + Math.floor(Math.random()*(b-a+1)));
 function creatureState(){
-  if(!S.profile.creature) S.profile.creature = {v:4, mv:4, sv:1, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null,
+  if(!S.profile.creature) S.profile.creature = {v:4, mv:5, sv:1, at:rollStages(), born:Date.now(), fed:[], fidelity:0, food:0, weight:CREATURE_CFG.minWeight[0], stage:0, levels:{}, last:0, lastMeal:null,
     sat:100, satT:Date.now(), full:0, fridge:[], wv:3, tall:0};
   const c = S.profile.creature;
   if((c.v||0) < 4){   // passage de 4 à 13 formes : l'ancien stade garde sa forme la plus proche
@@ -3928,22 +3941,29 @@ function growMuscles(c, w){
     c.levels[m] = Math.round(Math.min(T, cur + gain) * 100) / 100;
     c.peak[m] = Math.max(c.peak[m] || 0, c.levels[m]);
   });
+  // Muscles sans créneau propre (lombaires, avant-bras, adducteurs, obliques), surtout travaillés en indirect : ils suivent leur groupe
+  // quand il est travaillé (audit du 24 nov. 2026 ; à la maison, sans soulevé de terre, les lombaires restaient à 0/10)
+  NO_SLOT.forEach(m => { const g = GROUP_OF[m], main = (FINE[g] || []).filter(x => !NO_SLOT.has(x)); if(!main.some(x => (sets[x] || 0) >= 0.5)) return;
+    const avg = main.reduce((a, x) => a + muscleLevel(c, x, t), 0) / main.length, cur = muscleLevel(c, m, t);
+    if(avg > cur){ c.levels[m] = Math.round(avg * 100) / 100; c.peak[m] = Math.max(c.peak[m] || 0, c.levels[m]); }
+    c.lastWorked[m] = Math.max(c.lastWorked[m] || 0, t); });
 }
 // Correctif : recalcule la musculature à partir des seules séances réellement faites depuis la naissance
 function creatureFixLevels(){
-  const c = S.profile.creature; if(!c || (c.mv || 0) >= 4) return;
+  const c = S.profile.creature; if(!c || (c.mv || 0) >= 5) return;
   // Musculature v2 : rejouée sur les séances déjà mangées, avec la nouvelle croissance et la fonte.
   // v3 (13 nov. 2026, 17 muscles) : rejouée de même, chaque muscle au prorata ; décision du propriétaire : les niveaux
   // reflètent l'historique réel, quitte à baisser pour un muscle jamais travaillé (exception à « un niveau ne se perd jamais »).
   // v4 (24 nov. 2026, décision du propriétaire) : rejouée avec la croissance liée à la force, chaque séance avec la force de ce jour-là ;
-  // les niveaux peuvent baisser (même exception, voulue).
+  // les niveaux peuvent baisser (même exception, voulue). v5 (audit du 24 nov. 2026) : force avec reps en réserve, muscles sans créneau
+  // qui suivent leur groupe ; rejouée une fois de plus.
   c.levels = {}; c.lastWorked = {}; c.peak = {}; const fed = new Set(c.fed);
   exHistMemo = {}; try{ S.workouts.filter(w => fed.has(w.id)).sort((a,b) => a.start-b.start).forEach(w => growMuscles(c, w)); } finally { exHistMemo = null; }
   const now = Date.now(), grace = now - CREATURE_CFG.atrophy.afterDays * 86400000;   // la fonte démarre à partir d'aujourd'hui
   MUSC.forEach(m => { if(c.lastWorked[m]){ c.levels[m] = muscleLevel(c, m, now); c.lastWorked[m] = Math.max(c.lastWorked[m], grace); } });
   if(c.ref) c.ref = snapNow(c);   // l'avant / après repart des nouveaux muscles
   if(c.lastMeal) c.lastMeal = {...c.lastMeal, ups:[], dl:{}};
-  c.mv = 4; c.v = Math.max(c.v || 0, 2); saveLocal();
+  c.mv = 5; c.v = Math.max(c.v || 0, 2); saveLocal();
 }
 /* Coup critique (décidé le 12 nov. 2026) : à partir de la 3e série de travail, 12 % de chances qu'une série nourrisse double le Gymon,
    2 fois au plus par séance. Le volume de la séance (historique, records, coach) ne change pas : seul le repas du Gymon compte le bonus.
@@ -5445,6 +5465,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-24", t:"🧬 Ton Gymon, fidèle à ta force", x:"Le coach monte toujours la charge quand tu dépasses l'objectif sans difficulté (fini les haltères bloqués à la même charge). Ta force est mieux mesurée, en comptant les reps que tu avais encore en réserve. Lombaires, avant-bras, adducteurs et obliques suivent leur groupe, et le Pr Noxwell prévoit des abdos chaque semaine. Ton Gymon a été recalculé une fois de plus sur ton historique."},
   {d:"2026-11-24", t:"💪 Les muscles de ton Gymon suivent ta force", x:"Ton Gymon grossit quand tu deviens plus fort : chaque muscle suit ta charge max rapportée à ton poids de corps, plus ton volume ou ta fidélité. Un 10/10 se mérite, c'est un physique d'athlète. Ses muscles ont été recalculés sur ton historique, ils ont pu baisser."},
   {d:"2026-11-24", t:"⏱️ Heure de fin plus juste", x:"La barre de séance compte maintenant ton repos en cours et tes séries d'échauffement, et affiche le temps qu'il reste. L'heure de fin ne fait plus de bonds quand tu coches une série : elle bouge seulement si tu vas plus vite ou plus lentement que prévu."},
   {d:"2026-11-24", t:"✏️ Les corrections comptent tout de suite", x:"Tu t'es trompé de reps ou de charge sur une série déjà validée ? Corrige-la : le Pr Noxwell recalcule aussitôt ses conseils pour les séries suivantes et pour la prochaine fois."},
