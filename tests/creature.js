@@ -223,14 +223,15 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(mig2.join() === "70,40", "mise à jour : satiété = vitalité du moment (70 %), 40 % au moins pour que personne ne meure de la mise à jour", mig2);
   await p.click('.tabs [data-tab="creature"]'); if(SHOTS) await p.screenshot({path:path.join(SHOTS, "c3.png"), fullPage:true});
 
-  // Croissance v2 : chaque séance fait grossir le muscle travaillé, sans plafond de force, de moins en moins vite, max 4,5
-  const grow = await p.evaluate(() => { const c = {levels:{}}, out = [], n = Date.now(), W = (i, prs) => ({end:n + i*3600000, prs:prs||[], exercises:[{exId:"dc-barre", sets:[1,2,3,4].map(() => ({w:"60", r:"10", done:true}))}]});
+  // Croissance v4 (24 nov. 2026) : chaque séance rapproche le muscle travaillé de sa force réelle, sans la dépasser
+  const grow = await p.evaluate(() => { const bw0 = S.profile.bw, W0 = S.workouts; S.profile.bw = 50; S.workouts = [{id:"gr", name:"x", start:Date.now() - 864e5, end:Date.now() - 864e5, prs:[], exercises:[{exId:"dc-barre", sets:[{w:"75", r:"5", done:true}]}]}];   // 1RM ≈ 87 kg = 1,75 × 50 kg : élite
+    const c = {levels:{}}, out = [], n = Date.now(), W = (i, prs) => ({end:n + i*3600000, prs:prs||[], exercises:[{exId:"dc-barre", sets:[1,2,3,4].map(() => ({w:"60", r:"10", done:true}))}]});
     for(let i=0;i<4;i++){ growMuscles(c, W(i)); out.push(c.levels.Pectoraux); }
     for(let i=4;i<120;i++) growMuscles(c, W(i));
     const a = {levels:{Pectoraux:2}}, b = {levels:{Pectoraux:2}}; growMuscles(a, W(1)); growMuscles(b, W(1, ["dc-barre"]));
-    return {out, last:c.levels.Pectoraux, legs:c.levels.Jambes||0, gain:a.levels.Pectoraux - 2, prGain:b.levels.Pectoraux - 2}; });
+    const r = {out, last:c.levels.Pectoraux, legs:c.levels.Jambes||0, gain:a.levels.Pectoraux - 2, prGain:b.levels.Pectoraux - 2}; S.profile.bw = bw0; S.workouts = W0; return r; });
   ok(grow.out[0] > 0.1 && grow.out.every((x,i,a) => i===0 || x > a[i-1]), "chaque séance fait grossir le muscle travaillé (4 séries ≈ +0,16)", grow.out);
-  ok(grow.last > 4 && grow.last <= 4.5 && grow.legs === 0, "plus de plafond de force : il continue de grossir jusqu'à 4,5 ; les muscles non travaillés ne bougent pas", grow);
+  ok(grow.last > 4 && grow.last <= 4.5 && grow.legs === 0, "force d'élite : il monte jusqu'à 4,5 (10/10) ; les muscles non travaillés ne bougent pas", grow);
   ok(grow.prGain > grow.gain + 0.1, "un record donne un bonus de croissance", grow);
   // Fonte : après 14 jours sans travailler un muscle, il fond doucement (jamais sous 40 % de son maximum)
   const melt = await p.evaluate(() => { const D = 864e5, n = Date.now(), c = {levels:{Jambes:3}, lastWorked:{Jambes:n - 20*D}, peak:{Jambes:3}};
@@ -405,7 +406,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.profile.creature = JSON.parse(saved); saveLocal(); closeSheet(); render();
     return {r1, r2, r3, r4:{stage:r4.stage, look:r4.look, biceps:r4.levels.Biceps}, bad};
   });
-  ok(rs.r1.stage === 7 && rs.r1.fid === 25 && rs.r1.name === "Rocky<b>" && rs.r1.col === 18 && rs.r1.jambes === 4.5, "sauvegarde : un Gymon plus avancé remplace l'œuf (stade, séances, nom, couleur rare, muscles bornés)", rs.r1);
+  ok(rs.r1.stage === 7 && rs.r1.fid === 25 && rs.r1.name === "Rocky<b>" && rs.r1.col === 18 && !(rs.r1.jambes > 4.5), "sauvegarde : un Gymon plus avancé remplace l'œuf (stade, séances, nom, couleur rare, muscles bornés)", rs.r1);
   ok(!rs.r1.hack && rs.r1.fed.join() === "w1" && rs.r1.graves === 1, "sauvegarde : champs inconnus et identifiants douteux écartés ; l'œuf neuf ne laisse pas de souvenir", rs.r1);
   ok(rs.r2.fid === 40, "sauvegarde : un Gymon du téléphone plus avancé est gardé", rs.r2);
   ok(rs.r3.fid === 25 && rs.r3.graves === 2 && rs.r3.last === 10, "sauvegarde : le Gymon remplacé part dans les souvenirs", rs.r3);
@@ -427,7 +428,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
     return {sq, mig, bars, sheet:/Quadriceps/.test(sheet) && /Ischios/.test(sheet) && /JAMBES|Jambes/.test(sheet), svgOk}; });
   ok(g17.sq.Quadriceps > g17.sq.Fessiers && g17.sq.Fessiers > g17.sq.Adducteurs && !g17.sq.Mollets && !g17.sq.Jambes, "squat : quadriceps > fessiers > adducteurs, mollets intacts", g17.sq);
-  ok(g17.mig.mv === 3 && !g17.mig.keys.includes("Jambes") && g17.mig.q > 0 && g17.mig.m === 0 && g17.mig.refQ, "mise à jour : niveaux recalculés par muscle depuis l'historique (mollets jamais travaillés : 0), avant/après remis à zéro", g17.mig);
+  ok(g17.mig.mv === 4 && !g17.mig.keys.includes("Jambes") && g17.mig.q > 0 && g17.mig.m === 0 && g17.mig.refQ, "mise à jour : niveaux recalculés par muscle depuis l'historique (mollets jamais travaillés : 0), avant/après remis à zéro", g17.mig);
   ok(g17.bars === 7 && g17.sheet && g17.svgOk, "page Gymon : case « Muscles » par catégorie, fiche détaillée par muscle", g17);
 
   // Souvenirs et douche (14 nov. 2026)
@@ -542,7 +543,19 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     return {adv, nov, nobw}; });
   ok(cu.adv.score >= 4 && cu.adv.lv[0] >= 1.4 && cu.adv.lv[3] >= 2.9 && cu.adv.lv[3] <= 0.9 * cu.adv.score + 0.01, "avancé : chaque séance comble 40 % de l'écart à sa force (≈ 1,4 puis ≈ 3 après 4 séances)", cu.adv);
   ok(cu.nov.lv[0] >= 0.16 && cu.nov.lv[0] <= 0.35 && cu.nov.lv[3] < 1 && cu.nov.lv[3] < cu.adv.lv[0], "débutant : jamais moins que la croissance par séries, cible basse (vite atteinte)", cu.nov);
-  ok(cu.nobw.lv[0] < 0.2, "sans poids de corps : pas de cible, croissance habituelle", cu.nobw);
+  // Musculature v4 (24 nov. 2026) : le Gymon ne dépasse jamais la force réelle, quel que soit le volume ; plus fort = plus gros
+  const v4 = await p.evaluate(() => { const c = creatureState(), saved = JSON.stringify(c), W = JSON.stringify(S.workouts), bw0 = S.profile.bw, sx0 = S.profile.sex, n = Date.now(), D = 864e5;
+    S.profile.bw = 80; S.profile.sex = "h"; const set = (w, r) => ({w:String(w), r:String(r), done:true});
+    const mk = (i, kg, k) => ({id:"v4" + i, name:"x", start:n - (60 - i) * D, end:n - (60 - i) * D + 36e5, prs:[], exercises:[{exId:"dc-barre", sets:Array.from({length:k}, () => set(kg, 5))}]});
+    S.workouts = []; c.levels = {}; c.peak = {}; c.lastWorked = {};
+    for(let i = 0; i < 40; i++){ const w = mk(i, 70, 8); S.workouts.push(w); growMuscles(c, w); }
+    const flat = c.levels.Pectoraux, T = 0.9 * strengthByMuscle().res.Pectoraux.score;
+    for(let i = 40; i < 46; i++){ const w = mk(i, 100, 3); S.workouts.push(w); growMuscles(c, w); }
+    const strong = c.levels.Pectoraux;
+    S.profile.bw = bw0; S.profile.sex = sx0; S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
+    return {flat, T:Math.round(T * 100) / 100, strong, ten:Math.round(flat / 4.5 * 10)}; });
+  ok(v4.flat <= v4.T + 0.01 && v4.ten <= 6 && v4.strong > v4.flat + 0.5, "40 séances × 8 séries au même développé (70 kg × 5 pour 80 kg) : bloqué à sa force (≤ 6/10) ; plus fort (100 kg) → plus gros", v4);
+  ok(cu.nobw.score === null && Math.max(...cu.nobw.lv) <= 1.35, "sans poids de corps : force non mesurée, muscles plafonnés à ≈ 3/10", cu.nobw);
 
   // Bandeau de repos : chrono et boutons sur une seule ligne, même avec la réaction du Gymon au-dessus (15 nov. 2026)
   const rl = await p.evaluate(() => { const W = JSON.stringify(S.workouts); S.profile.active = null;
