@@ -111,6 +111,13 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   await p.click('tr[data-j="0"] [data-act="check"]'); await p.waitForTimeout(200);
   const after = await p.evaluate(() => ({adj:A().exercises[0].adj, next:A().exercises[0].sets[1].w, txt:(document.querySelector(".live-adj") || {}).textContent || ""}));
   ok(after.adj && after.adj.w > live.w && Number(after.next) === after.adj.w && /au lieu de/.test(after.txt), "série nettement au-dessus de l'objectif : charge recalculée pour la suite", {live, after});
+  // Bug remonté (24 nov. 2026) : série validée avec une erreur de reps, puis corrigée → l'ajustement est annulé et recalculé
+  await p.fill("#r-0-0", String(live.r)); await p.press("#r-0-0", "Tab"); await p.waitForTimeout(300);
+  const fixed = await p.evaluate(() => ({adj:A().exercises[0].adj || null, next:A().exercises[0].sets[1].w, txt:(document.querySelector(".live-adj") || {}).textContent || ""}));
+  ok(!fixed.adj && !/au lieu de/.test(fixed.txt) && (fixed.next === "" || Number(fixed.next) === live.w), "série corrigée après validation (reps visées) : message retiré, charge suivante remise", fixed);
+  await p.fill("#r-0-0", String(live.r - 3)); await p.press("#r-0-0", "Tab"); await p.waitForTimeout(300);
+  const low = await p.evaluate(() => ({adj:A().exercises[0].adj || null, next:A().exercises[0].sets[1].w}));
+  ok(low.adj && low.adj.w < live.w && Number(low.next) === low.adj.w, "corrigée vers moins de reps : nouvel ajustement, plus léger", low);
 
   const ssLive = await p.evaluate(() => { stopRest(); S.profile.active = {id:"b", name:"T", start:Date.now(), exercises:[{exId:"dc-barre", sets:[{w:"60", r:"8"}]}, {exId:"rowing-barre", sets:[{w:"60", r:"8"}]}]}; tab = "seance"; render();
     ACT["ex-ss"]({dataset:{i:"0"}}); return {ss:A().exercises.map(x => x.ss), wrap:!!document.querySelector(".ss-wrap"), n:document.querySelectorAll(".ss-wrap .ex").length}; });
