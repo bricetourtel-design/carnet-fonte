@@ -729,6 +729,28 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     r.gain = Math.round((c.weight - w0) * 1000) / 1000; const st = fridgeEatOldest(c); r.fridgeNoGain = Math.abs(c.weight - w0 - 3) < 1e-9;
     S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return r; });
   ok(mass.mig === 15.06 && mass.wv === 3 && mass.gain === 3 && mass.fridgeNoGain, "masse : 60 g + 0,3 kg par tonne (50 t → 15,06 kg), même rassasié ; le frigo et le steak ne la changent pas", mass);
+  // Aura (24 nov. 2026) : le lien joueur–Gymon ; cosmétique (décor et répliques), découverte petit à petit, Noxwell la présente
+  const au = await p.evaluate(() => { const saved = JSON.stringify(S.profile.creature), W = S.workouts, D = 864e5, now = Date.now(), r = {};
+    const fresh = extra => { const c = creatureState(); delete c.aura; delete c.auraT; delete c.auraLog; delete c.auraSecrets; delete c.auraDay; delete c.auraVisitDay; delete c.auraNight;
+      Object.assign(c, {dead:null, stage:5, fidelity:10, sat:90, satT:now, full:0, washTs:now, seen:now}, extra || {}); auraInit(c); return c; };
+    let c = fresh(); r.init = c.aura; const stats0 = JSON.stringify([c.stage, c.fidelity, c.levels, c.weight]);
+    const a0 = c.aura; auraAdd(c, "hug"); r.hugUp = c.aura > a0; for(let i = 0; i < 5; i++) auraAdd(c, "hug"); r.hugLog = c.auraLog.slice(0, 2).map(e => e.k);
+    r.secrets = Object.keys(c.auraSecrets).sort().join(); r.statsSame = JSON.stringify([c.stage, c.fidelity, c.levels, c.weight]) === stats0;
+    c = fresh({washTs:now - 12 * D, seen:now - 6 * D}); c.aura = 70; c.auraT = now - 6 * D; auraTick(c); r.decay = [Math.round(c.aura), c.auraLog.map(e => e.k).sort().join()];
+    c = fresh({fidelity:200, washTs:now - 40 * D, seen:now - 40 * D, sat:10}); c.aura = 30; c.auraT = now - 40 * D; auraTick(c); r.floor = Math.round(c.aura * 10) / 10;
+    c = fresh(); c.dead = {ts:now}; auraTick(c); r.dead = c.aura;
+    c = fresh(); c.aura = 60; tab = "creature"; render(); const g = document.querySelector(".aura-g");
+    r.gauge = !!g && !/%/.test(g.textContent) && !!document.getElementById("aura-bg");
+    g.click(); const sh = document.getElementById("sheet-in").textContent; r.sheet = /Son aura/.test(sh) && /Secrets d'aura/.test(sh) && /\d+ \/ \d+/.test(sh); closeSheet();
+    const ph = NOX_PHEN.find(x => x.k === "aura"); r.nox = !!ph && ph.t.length >= 3 && /!/.test(ph.t[0]) && /[A-Z]{4,}/.test(ph.t[0]);
+    r.fly = getComputedStyle(document.querySelector("#aura-bg .fl")).width;
+    S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); render(); return r; });
+  ok(au.init >= 40 && au.init <= 85 && au.dead === 0, "aura de départ calculée sur l'histoire (40 à 85) ; un Gymon mort est à 0", au);
+  ok(au.hugUp && au.hugLog[0] === "hugs" && /hug/.test(au.secrets) && au.statsSame, "un câlin la fait monter ; au 6e de la journée, elle baisse ; découverte notée ; stade, fidélité, muscles et poids intacts", au);
+  ok(au.decay[0] < 70 && /absent/.test(au.decay[1]) && /smell/.test(au.decay[1]), "absence et odeur : elle s'érode doucement, jour après jour", au.decay);
+  ok(au.floor >= 19.9 && au.floor <= 30, "un vieux Gymon ne retombe jamais tout à fait au niveau d'un nouveau-né (plancher selon l'ancienneté)", au.floor);
+  ok(au.gauge && au.sheet, "jauge verticale à gauche sans pourcentage, décor en fond ; la toucher ouvre « Son aura » avec ses secrets", au);
+  ok(au.nox && au.fly === "3px", "le Pr Noxwell présente l'aura en plusieurs temps, fou d'abord ; lucioles fines (3 px)", au);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de la créature passent");
