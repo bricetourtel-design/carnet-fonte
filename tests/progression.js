@@ -193,6 +193,21 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const spread = Math.round((Math.max(...ends.slice(0, -1)) - Math.min(...ends.slice(0, -1))) / 60000 * 10) / 10, txt = sessLeftTxt(a);
     S.profile.active = act; S.workouts = W; restState = rs; return {spread, drift:Math.round((ends[0] - first) / 60000 * 10) / 10, txt}; });
   ok(fin2.spread <= 1.5 && Math.abs(fin2.drift) <= 1.5, "heure de fin stable (±1,5 min) quand la séance suit le rythme prévu, repos en cours compté", fin2);
+  // Audit masse musculaire (24 nov. 2026) : double progression garantie, abdos chaque semaine, muscles sans créneau qui suivent leur groupe
+  const am = await p.evaluate(() => { const D = 864e5, n = Date.now(), W = S.workouts, eq = S.profile.equip, bw = S.profile.bw, r = {}; S.profile.bw = 80; S.profile.exOpts = {}; S.profile.ranges = {}; delete S.profile.lightWeek;
+    S.workouts = []; const seq = [];
+    for(let k = 0; k < 6; k++){ const t = n - (30 - k * 4) * D, c = coach("dc-halteres", t, 3), w = num(c.w) || 10, rr = (num(c.r) || c.lo) + 2; seq.push(w);
+      S.workouts.push({id:"am" + k, name:"x", start:t, end:t + 36e5, prs:[], exercises:[{exId:"dc-halteres", feel:2, sets:[1, 2, 3].map(() => ({w:String(w), r:String(rr), done:true}))}]}); }
+    r.seq = seq; S.profile.equip = "salle"; S.workouts = []; S.profile.nox = {v:1};
+    const g = generatePlan({days:DEFAULT_DAYS[3].map((dow, i) => ({dow, muscles:TEMPLATES[3][0].days[i].slice(), off:{}, min:45})), noNovelty:true});
+    r.abs = g.days.flatMap(d => d.items).filter(it => it.muscle === "Abdos").length;
+    const c = {levels:{}, lastWorked:{}, peak:{}}, set = (w, rr) => ({w:String(w), r:String(rr), done:true});
+    S.workouts = [{id:"lw", name:"x", start:n - D, end:n - D, prs:[], exercises:[{exId:"tractions", feel:3, sets:[set("", 12), set("", 12), set("", 12)]}, {exId:"rowing-barre", feel:3, sets:[set(80, 8), set(80, 8), set(80, 8)]}]}];
+    growMuscles(c, S.workouts[0]); r.lomb = c.levels.Lombaires || 0; r.dos = c.levels["Grand dorsal"] || 0;
+    S.workouts = W; S.profile.equip = eq; S.profile.bw = bw; return r; });
+  ok(am.seq[5] > am.seq[1], "objectif dépassé de 2 reps, ressenti facile : la charge monte (plus jamais bloquée par l'arrondi au palier)", am.seq);
+  ok(am.abs >= 1, "full body court : au moins un exercice d'abdos dans la semaine", am.abs);
+  ok(am.lomb > 0 && am.dos > 0, "muscles sans créneau (lombaires) : ils suivent leur groupe travaillé", am);
   ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);

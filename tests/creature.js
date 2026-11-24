@@ -428,7 +428,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     S.workouts = JSON.parse(W); S.profile.creature = JSON.parse(saved); saveLocal(); render();
     return {sq, mig, bars, sheet:/Quadriceps/.test(sheet) && /Ischios/.test(sheet) && /JAMBES|Jambes/.test(sheet), svgOk}; });
   ok(g17.sq.Quadriceps > g17.sq.Fessiers && g17.sq.Fessiers > g17.sq.Adducteurs && !g17.sq.Mollets && !g17.sq.Jambes, "squat : quadriceps > fessiers > adducteurs, mollets intacts", g17.sq);
-  ok(g17.mig.mv === 4 && !g17.mig.keys.includes("Jambes") && g17.mig.q > 0 && g17.mig.m === 0 && g17.mig.refQ, "mise à jour : niveaux recalculés par muscle depuis l'historique (mollets jamais travaillés : 0), avant/après remis à zéro", g17.mig);
+  ok(g17.mig.mv === 5 && !g17.mig.keys.includes("Jambes") && g17.mig.q > 0 && g17.mig.m === 0 && g17.mig.refQ, "mise à jour : niveaux recalculés par muscle depuis l'historique (mollets jamais travaillés : 0), avant/après remis à zéro", g17.mig);
   ok(g17.bars === 7 && g17.sheet && g17.svgOk, "page Gymon : case « Muscles » par catégorie, fiche détaillée par muscle", g17);
 
   // Souvenirs et douche (14 nov. 2026)
