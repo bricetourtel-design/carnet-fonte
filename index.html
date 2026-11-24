@@ -971,7 +971,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-23 a";
+const APP_VERSION = "2026-11-24 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -3278,8 +3278,18 @@ function liveAdjust(i, j){
   if(diff > 0){ x = Math.min(Math.max(x, w + st), roundTo(w * 1.15, st)); while(x - st > w && repsAt(x) < tr) x -= st; }
   else { x = Math.max(Math.min(x, w - st), roundTo(w * 0.8, st), st); }
   if(x === w) return;
-  ex.adj = {w:+x.toFixed(2), r:tr, txt:`Série ${ex.sets.filter((y, k) => k <= j && !y.warm).length} : ${reps} reps au lieu de ${tr}. ${x > w ? "Tu es plus fort que prévu" : "C'était lourd"} : ${fmtN(x)} kg pour les séries suivantes.`};
-  ex.sets.forEach((y, k) => { if(k > j && !y.done && !y.warm && (y.w === "" || num(y.w) === w)) y.w = String(+x.toFixed(2)); });
+  const ch = ex.sets.map((y, k) => k > j && !y.done && !y.warm && (y.w === "" || num(y.w) === w) ? k : -1).filter(k => k >= 0);
+  ex.adj = {w:+x.toFixed(2), r:tr, j, from:s.w, ch, txt:`Série ${ex.sets.filter((y, k) => k <= j && !y.warm).length} : ${reps} reps au lieu de ${tr}. ${x > w ? "Tu es plus fort que prévu" : "C'était lourd"} : ${fmtN(x)} kg pour les séries suivantes.`};
+  ch.forEach(k => { ex.sets[k].w = String(+x.toFixed(2)); });
+}
+/* Série corrigée après validation (24 nov. 2026, bug remonté) : l'ajustement qu'elle avait déclenché est annulé (message retiré,
+   charges suivantes remises si elles n'ont pas été touchées), puis recalculé sur les bonnes valeurs ; « La prochaine fois » aussi. */
+function liveRecheck(i, j){
+  const a = A(), ex = a && a.exercises[i], s = ex && ex.sets[j]; if(!s || s.warm) return;
+  if(ex.adj && ex.adj.j === j){ const ad = ex.adj; delete ex.adj;
+    (ad.ch || []).forEach(k => { const y = ex.sets[k]; if(y && !y.done && num(y.w) === ad.w) y.w = ad.from; }); }
+  if(s.done) liveAdjust(i, j);
+  if(ex.feel) ex.noxNext = noxNext(i);
 }
 function noxHow(){
   openSheet(noxSays("Après le dernier effort, demande-toi : <b>combien de reps aurais-tu encore pu faire</b> avec une bonne technique ? Sois honnête, c'est pour la science !",
@@ -5424,6 +5434,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-24", t:"✏️ Les corrections comptent tout de suite", x:"Tu t'es trompé de reps ou de charge sur une série déjà validée ? Corrige-la : le Pr Noxwell recalcule aussitôt ses conseils pour les séries suivantes et pour la prochaine fois."},
   {d:"2026-11-23", t:"🩺 Examen du Pr Noxwell réparé", x:"Après avoir tapé ton poids, ta taille, ton âge ou ton poids visé, le bouton pour continuer s'active tout de suite : plus besoin de revenir en arrière pour le débloquer."},
   {d:"2026-11-22", t:"🍗 Ton Gymon a plus d'appétit", x:"Remonter sa satiété demande maintenant un vrai effort : 20 min de marche ne suffisent plus à le remplir. Ta séance habituelle le remet toujours à 100 %, mais le cardio ne peut pas faire plus facile que ta muscu habituelle, et il compte seulement les calories dépensées en plus du repos. Sa masse et sa taille ne changent pas."},
   {d:"2026-11-22", t:"🧹 Plus de programmes imposés", x:"Les programmes Push, Pull et Legs de départ disparaissent (ceux que tu avais modifiés restent). Sans séance, la page Séance te propose le bilan du Pr Noxwell ou de créer ta propre séance."},
@@ -6779,7 +6790,7 @@ const ACT = {
       const nx = ex.sets[j+1]; if(nx && !nx.done && !nx.warm && nx.w==="" && s.w!=="" && !s.warm) nx.w = s.w;
       if(!s.warm) setReaction(ex, s);
       if(!s.warm) liveAdjust(i, j);
-    } else { s.done = false; delete s.critOK; }
+    } else { s.done = false; delete s.critOK; liveRecheck(i, j); }
     touchProfile(); render();
   },
   // Toucher le numéro d'une série la passe en échauffement, placée en tête (un échauffement après les séries de travail n'a pas de sens) ; toucher « É » l'annule
@@ -7446,6 +7457,9 @@ document.addEventListener("input", e => {
   else if(t.id==="pick-q" && picker){ exFilter.q = t.value; refreshPicker(); }
 });
 document.addEventListener("change", e => {
+  // Reps ou charge d'une série déjà validée corrigées : le professeur recalcule (au départ du champ, sans redessiner sous le doigt)
+  if(e.target.dataset.f && A()){ const tr = e.target.closest("tr"); if(!tr) return; const i = +tr.dataset.i, j = +tr.dataset.j, ex = A().exercises[i], st = ex && ex.sets[j];
+    if(st && st.done && !st.warm){ liveRecheck(i, j); touchProfile(); pendingRender = true; flushPending(); } return; }
   if(e.target.id==="imp-file"){ const f = e.target.files && e.target.files[0]; e.target.value = ""; if(!f) return;
     const rd = new FileReader(); rd.onload = () => importText(String(rd.result)); rd.onerror = () => toast("Lecture du fichier impossible"); rd.readAsText(f); return; }
   if(e.target.id==="ph-file"){ const f = e.target.files && e.target.files[0], id = e.target.dataset.id; e.target.value = ""; if(f && id) addPhoto(id, f); return; }
