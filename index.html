@@ -742,6 +742,7 @@ body[data-tab="creature"]{overscroll-behavior:none}
 body[data-fit="1"] main{padding-bottom:0}
 .gy-aura,.gy-spark{pointer-events:none}
 .fr-row.bad{opacity:.62;filter:grayscale(.7)}.fr-row.bad .fr-t span{color:#ff9f0a}
+.fr-q{display:block;font-size:15px;line-height:1.25;letter-spacing:-3px;margin:1px 0 2px;white-space:normal}.fr-q i{font-style:normal;font-weight:800;letter-spacing:0;margin-left:5px;color:var(--muted)}
 .fr-clean{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px}.fr-clean small{font-size:12.5px;font-weight:500;opacity:.9}
 /* Aura (24 nov. 2026) : décor de la page Gymon derrière le contenu, jauge verticale à gauche */
 #aura-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;display:none}
@@ -1019,7 +1020,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-25 b";
+const APP_VERSION = "2026-11-25 c";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -4732,7 +4733,7 @@ function satChipHTML(c, v){
 }
 // Frigo regroupé (25 nov. 2026, demande du propriétaire) : une ligne par aliment (poulet, portion dorée, steaks, omelettes, fioles),
 // le plus ancien mangé d'abord ; le périmé n'a plus de lignes, il est résumé dans le bouton « Nettoyer le frigo »
-const FR_ORDER = ["poulet", "or", "steak", "omelette", "fiole"];
+const FR_ORDER = ["poulet", "or", "steak", "omelette", "fiole"], FR_ICON_KG = 1000, FR_ICON_MAX = 12;
 function fridgeGroups(c){
   return FR_ORDER.map(k => { const l = (c.fridge || []).filter(it => !it.bad && it.k === k).sort((a, b) => a.t - b.t);
     return l.length ? {k, items:l, kg:l.reduce((t, it) => t + (it.kg || 0), 0), first:l[0]} : null; }).filter(Boolean);
@@ -4755,7 +4756,10 @@ function fridgeSheet(){
       : g.k === "steak" ? "1 ration (+20 %) et 12 h à 100 %" : g.k === "fiole" ? "Des étoiles autour de lui pendant 2 jours, pour le plaisir" : "1 ration (+20 %)";
     const badge = g.k === "fiole" ? `<span class="fr-d">sérum</span>` : g.k === "omelette" ? `<span class="fr-d">ne périme pas</span>`
       : `<span class="fr-d ${d <= 1 ? "w" : ""}">${left < 12*3600000 ? "périme bientôt" : d <= 1 ? "périme demain" : (n > 1 ? "dès " : "") + d + " j"}</span>`;
-    return `<button class="fr-row" data-act="fr-eat" data-k="${g.k}" data-id="${g.first.id}"><span class="fr-e">${f.e}</span><span class="fr-t"><b>${esc(title)}</b><span>${esc(sub)}</span></span>${badge}</button>`; };
+    // Quantité visible d'un coup d'œil (25 nov. 2026) : un pilon par tonne (12 au plus, puis « + »), sinon un par aliment
+    const q = bulk ? Math.max(1, Math.round(g.kg / FR_ICON_KG)) : n, shown = Math.min(FR_ICON_MAX, q);
+    const strip = `<span class="fr-q" aria-hidden="true">${f.e.repeat(shown)}${q > FR_ICON_MAX ? "<i>+</i>" : ""}</span>`;
+    return `<button class="fr-row" data-act="fr-eat" data-k="${g.k}" data-id="${g.first.id}"><span class="fr-e">${f.e}</span><span class="fr-t"><b>${esc(title)}</b>${strip}<span>${esc(sub)}</span></span>${badge}</button>`; };
   openSheet(`<div class="fr-head"><span class="fr-ico">${FRIDGE_SVG(true)}</span><div><h3>Le frigo de ${esc(nm)}</h3>
       <p class="small muted" style="margin:2px 0 6px">Satiété ${v} % · une séance habituelle (≈ ${fmtVol(u.U)}) le remet à 100 %, le surplus va au frigo</p><span class="sat-bar wide"><i style="width:${v}%;background:${satColor(v)}"></i></span></div></div>
     ${bad.length ? `<button class="btn primary fr-clean" data-act="fr-clean">🧽 Nettoyer le frigo<small>${bad.length > 1 ? `${bad.length} aliments ont périmé` : "Un aliment a périmé"}${badKg ? ` (${fmtVol(badKg)} de poulet)` : ""} : il n'en veut plus</small></button>` : ""}
@@ -5719,7 +5723,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
-  {d:"2026-11-25", t:"🍗 Un frigo plus lisible", x:"Une ligne par aliment : tout ton poulet sur une seule ligne (il mange le plus ancien d'abord), les steaks et omelettes avec leur nombre. Ce qui a périmé est résumé dans le bouton « Nettoyer le frigo »."},
+  {d:"2026-11-25", t:"🍗 Un frigo plus lisible", x:"Une ligne par aliment : tout ton poulet sur une seule ligne (il mange le plus ancien d'abord), avec un pilon par tonne pour voir d'un coup d'œil si le frigo est plein ; les steaks et omelettes avec leur nombre. Ce qui a périmé est résumé dans le bouton « Nettoyer le frigo »."},
   {d:"2026-11-25", t:"🧽 Nettoyer le frigo", x:"Ce qui périme reste maintenant dans le frigo, grisé : ton Gymon n'en veut plus et ça sent mauvais. Ouvre le frigo et touche « Nettoyer le frigo » pour le jeter. Ton Gymon adore quand c'est propre."},
   {d:"2026-11-24", t:"🌌 L'aura de ton Gymon", x:"Une petite jauge est apparue à gauche de ton Gymon : son aura. Elle dit à quel point il se sent entouré, et change son ciel, de la nuit noire à l'aurore. Ce qui la fait monter ou descendre ? À toi de le découvrir… le Pr Noxwell enquête aussi. Elle ne touche jamais à sa force, sa faim ni sa taille."},
   {d:"2026-11-24", t:"🧬 Ton Gymon, fidèle à ta force", x:"Le coach monte toujours la charge quand tu dépasses l'objectif sans difficulté (fini les haltères bloqués à la même charge). Ta force est mieux mesurée, en comptant les reps que tu avais encore en réserve. Lombaires, avant-bras, adducteurs et obliques suivent leur groupe, et le Pr Noxwell prévoit des abdos chaque semaine. Ton Gymon a été recalculé une fois de plus sur ton historique."},
