@@ -741,6 +741,8 @@ body[data-tab="creature"] .top h1{font-size:20px;letter-spacing:-.01em}
 body[data-tab="creature"]{overscroll-behavior:none}
 body[data-fit="1"] main{padding-bottom:0}
 .gy-aura,.gy-spark{pointer-events:none}
+.fr-row.bad{opacity:.62;filter:grayscale(.7)}.fr-row.bad .fr-t span{color:#ff9f0a}
+.fr-clean{width:100%}
 /* Aura (24 nov. 2026) : décor de la page Gymon derrière le contenu, jauge verticale à gauche */
 #aura-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;display:none}
 body.aura-on[data-tab="creature"] #aura-bg{display:block}
@@ -1017,7 +1019,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-24 e";
+const APP_VERSION = "2026-11-25 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -2641,6 +2643,7 @@ const NOX_PHEN = [
   {k:"odeur", on:c => isSmelly(c), t:["Pouah ! Ces vapeurs vertes… et cette mouche !", "Après une bonne semaine sans douche, le spécimen sent. Aucun danger pour sa santé, beaucoup pour mon nez. Une douche, et c'est réglé."]},
   {k:"sueur", on:c => isSweaty(c), t:["Il transpire ! Signe d'un bon effort.", "Après une séance, il sue un moment. Une petite douche le remet à neuf."]},
   {k:"frigo", on:c => (c.fridge || []).length > 0, t:["Tiens, des restes au frigo !", "Ce qu'il ne mange pas tout de suite part au frigo. Ça se garde quelques jours, le plus ancien d'abord. Ne laisse rien périmer !"]},
+  {k:"perime", on:c => fridgeBad(c).length > 0, t:["POUAH ! Quelque chose a pourri dans le frigo !", "Ce qui périme ne se mange plus : ça reste là, ça pue, et ton spécimen fait la grimace. Ouvre le frigo et nettoie. Il adore quand c'est propre."]},
   {k:"crit", on:() => S.workouts.some(w => w.exercises.some(x => x.sets.some(y => y.crit))), t:["Coup critique réussi ! J'ai vu l'éclair ⚡", "Certaines séances cachent une série critique, sur un exercice qui te sort de ta zone de confort. Atteins l'objectif, et il mange double."]},
   {k:"record", on:() => S.workouts.some(w => (w.prs || []).length), t:["UN RECORD ! FASCINANT !", "Chaque record lui donne un bonus de muscle et un steak qui le cale longtemps. Ta force et la sienne sont liées."]},
   {k:"festin", on:c => (c.journal || []).some(j => j.k && /^f\d/.test(j.k)), t:["Un festin ! Quelle semaine…", "Une semaine sans jamais le laisser avoir faim, et le dimanche il a droit à un festin. La régularité, ça se mange."]},
@@ -3879,15 +3882,19 @@ function fioleDrink(c, it){
   c.boost = {until:Math.max(now, (c.boost || {}).until || 0) + STARS_H * 3600000}; return {eaten:0, it, fiole:true};
 }
 function fridgeAdd(c, k, kg, t){ const it = {id:uidGen("f"), k, kg:Math.round(kg || 0), t:t || Date.now()}; (c.fridge = c.fridge || []).push(it); return it; }
+// Périmé (25 nov. 2026, demande du propriétaire) : il reste au frigo, grisé et immangeable, jusqu'à ce que le joueur le nettoie
 function fridgeTick(c, now){
-  now = now || Date.now(); const f = c.fridge || [], gone = f.filter(it => spoilAt(it) <= now); if(!gone.length) return;
-  c.fridge = f.filter(it => spoilAt(it) > now);
+  now = now || Date.now(); const gone = (c.fridge || []).filter(it => !it.bad && spoilAt(it) <= now); if(!gone.length) return;
+  gone.forEach(it => it.bad = Math.min(now, spoilAt(it)));
   c.spoiled = {kg:gone.reduce((t, it) => t + (it.k === "poulet" || it.k === "or" ? it.kg : 0), 0), n:gone.length, ts:now}; saveLocal();
 }
-const fridgeKg = c => (c.fridge || []).reduce((t, it) => t + (it.k === "poulet" || it.k === "or" ? it.kg : 0), 0);
+const fridgeBad = c => (c.fridge || []).filter(it => it.bad);
+function fridgeClean(c){ const n = fridgeBad(c).length; if(!n) return 0; c.fridge = (c.fridge || []).filter(it => !it.bad); c.spoiled = null; auraAdd(c, "clean"); touchProfile(); return n; }
+const fridgeKg = c => (c.fridge || []).reduce((t, it) => t + (!it.bad && (it.k === "poulet" || it.k === "or") ? it.kg : 0), 0);
 // Manger un aliment du frigo (jusqu'à 100 %) ; renvoie {eaten, it} ou {full:true}
 function fridgeEat(c, id){
   const at = Math.max(Date.now(), c.satT || 0), it = (c.fridge || []).find(x => x.id === id); if(!it || c.dead) return null;
+  if(it.bad) return {bad:true, it};   // périmé : il n'en veut pas
   if(it.k === "fiole") return fioleDrink(c, it);
   if(satExact(c, at) >= 99.5) return {full:true, it};
   if(it.k === "steak" || it.k === "omelette"){
@@ -3949,7 +3956,7 @@ function peasSheet(c){
 }
 function fridgeEatOldest(c){
   let tot = 0;
-  for(const it of (c.fridge || []).filter(x => x.k === "poulet" || x.k === "or").sort((a, b) => a.t - b.t)){
+  for(const it of (c.fridge || []).filter(x => !x.bad && (x.k === "poulet" || x.k === "or")).sort((a, b) => a.t - b.t)){
     const r = fridgeEat(c, it.id); if(!r || r.full) break; tot += r.eaten; if(satExact(c) >= 99.5) break; }
   return tot;
 }
@@ -4717,17 +4724,18 @@ const FRIDGE_SVG = open => `<svg viewBox="0 0 40 60" aria-hidden="true"><rect x=
   : `<rect x="3" y="20" width="34" height="2" fill="#7d86a3"/><rect x="29" y="8" width="3" height="9" rx="1.5" fill="#7d86a3"/><rect x="29" y="26" width="3" height="14" rx="1.5" fill="#7d86a3"/>`}</svg>`;
 const satColor = v => v >= 70 ? "#3bd16f" : v >= 45 ? "#ffd23f" : v >= 25 ? "#ff9f43" : "#ff5a5f";
 function satChipHTML(c, v){
-  const kg = fridgeKg(c), sp = (c.fridge || []).filter(x => x.k !== "poulet" && x.k !== "or").length;
+  const kg = fridgeKg(c), sp = (c.fridge || []).filter(x => !x.bad && x.k !== "poulet" && x.k !== "or").length, bad = fridgeBad(c).length;
   const t = kg >= 1000 ? `${fmtN(kg / 1000, 1)} t` : kg ? `${Math.round(kg)} kg` : "";
   return `<button class="gy-chip bl gy-sat" data-act="fridge" aria-label="Satiété ${v} %, ouvrir le frigo"><small>Satiété</small>${v} %
     <span class="sat-bar"><i style="width:${v}%;background:${satColor(v)}"></i></span>
-    <span class="sat-row"><span class="mini-fr">${FRIDGE_SVG(false)}</span><b>${t || (sp ? "" : "vide")}${sp ? `${t ? " " : ""}+${sp}` : ""}</b>${c.peas ? "<i>🥫</i>" : ""}</span></button>`;
+    <span class="sat-row"><span class="mini-fr">${FRIDGE_SVG(false)}</span><b>${t || (sp ? "" : "vide")}${sp ? `${t ? " " : ""}+${sp}` : ""}</b>${c.peas ? "<i>🥫</i>" : ""}${bad ? "<i>🤢</i>" : ""}</span></button>`;
 }
 function fridgeSheet(){
   const c = creatureState(), now = Date.now(), v = creatureSatiety(c), u = satUsual(), nm = c.name || "ton Gymon", D = 86400000;
-  const items = (c.fridge || []).slice().sort((a, b) => (a.k === "omelette") - (b.k === "omelette") || a.t - b.t);
+  const items = (c.fridge || []).slice().sort((a, b) => (!!b.bad - !!a.bad) || (a.k === "omelette") - (b.k === "omelette") || a.t - b.t), bad = items.filter(x => x.bad);
   const gain = kg => Math.min(100 - v, kg * Math.max(100 - v, u.low) / u.U);
   const row = it => { const f = FOODS[it.k], left = spoilAt(it) - now, d = Math.ceil(left / D);
+    if(it.bad) return `<button class="fr-row bad" data-act="fr-eat" data-id="${it.id}"><span class="fr-e">🤢</span><span class="fr-t"><b>${esc(f.n)}${it.k === "poulet" || it.k === "or" ? " · " + fmtVol(it.kg) : ""}</b><span>périmé : il n'en veut plus</span></span><span class="fr-d w">périmé</span></button>`;
     const title = it.k === "poulet" || it.k === "or" ? `${f.n} · ${fmtVol(it.kg)}` : f.n;
     const sub = it.k === "poulet" ? `≈ +${fmtN(gain(it.kg), 0)} % de satiété` : it.k === "or" ? `bonus du coup critique · ≈ +${fmtN(gain(it.kg), 0)} %`
       : it.k === "steak" ? "1 ration (+20 %) et 12 h à 100 %" : it.k === "fiole" ? "Des étoiles autour de lui pendant 2 jours, pour le plaisir" : "1 ration (+20 %)";
@@ -4736,10 +4744,11 @@ function fridgeSheet(){
   openSheet(`<div class="fr-head"><span class="fr-ico">${FRIDGE_SVG(true)}</span><div><h3>Le frigo de ${esc(nm)}</h3>
       <p class="small muted" style="margin:2px 0 6px">Satiété ${v} % · une séance habituelle (≈ ${fmtVol(u.U)}) le remet à 100 %, le surplus va au frigo</p><span class="sat-bar wide"><i style="width:${v}%;background:${satColor(v)}"></i></span></div></div>
     ${v >= 99.5 ? `<p class="small" style="margin:0">Il n'a plus faim pour l'instant.</p>` : items.length ? `<p class="small muted" style="margin:0">Touche un aliment pour le lui donner : il mange jusqu'à 100 %.</p>` : ""}
+    ${bad.length ? `<button class="btn primary fr-clean" data-act="fr-clean">🧽 Nettoyer le frigo · jeter ${bad.length > 1 ? `les ${bad.length} aliments périmés` : "l'aliment périmé"}</button>` : ""}
     ${items.length || c.peas ? `<div class="fr-list">${items.map(row).join("")}
       ${c.peas ? `<div class="fr-row peas"><span class="fr-e">🥫</span><span class="fr-t"><b>Boîte de pois chiches</b><span>mangée toute seule sous 5 % : remonte à 50 %</span></span><span class="fr-d">réserve</span></div>` : ""}</div>`
       : `<p class="small muted" style="margin:0">Le frigo est vide. Après chaque séance, ce que ${esc(nm)} ne peut pas manger y est rangé (5 jours avant de périmer).</p>`}
-    ${items.some(x => x.k === "poulet" || x.k === "or") && v < 99.5 ? `<button class="btn primary" data-act="fr-oldest">Nourrir avec le plus ancien</button>` : ""}
+    ${items.some(x => !x.bad && (x.k === "poulet" || x.k === "or")) && v < 99.5 ? `<button class="btn${bad.length ? "" : " primary"}" data-act="fr-oldest">Nourrir avec le plus ancien</button>` : ""}
     <button class="btn" data-act="gy-curve" data-k="3">Courbe de la satiété</button>`, null, "fr-sheet");
 }
 // Caresse (appui long) et chatouilles (double toucher) : une réaction, des cœurs, aucune règle touchée
@@ -4770,11 +4779,11 @@ function feedThrow(emoji){
 }
 // Barre d'actions façon Tamagotchi (15 nov. 2026) : s'entraîner, nourrir, laver, câlin, carnet de santé ; une pastille signale ce qui est attendu
 function gyActionsHTML(c, v){
-  const smelly = isSmelly(c), sweaty = isSweaty(c), food = (c.fridge || []).some(x => x.k !== "poulet" && x.k !== "or" || x.kg > 0);
+  const smelly = isSmelly(c), sweaty = isSweaty(c), food = (c.fridge || []).some(x => !x.bad && (x.k !== "poulet" && x.k !== "or" || x.kg > 0)), rot = fridgeBad(c).length > 0;
   const newJ = (c.journal || []).some(j => j.ts > (c.jSeen || 0) && j.k !== "born");
   const A = [
     {act:"train-best", e:"🏋️", l:S.profile.active ? "Reprendre" : "S'entraîner", a:S.profile.active ? "•" : "", s:S.profile.active ? "séance en cours" : "démarrer la séance conseillée", cls:" go"},
-    {act:"fridge", e:"🍗", l:"Nourrir", a:v < 50 ? "!" : v < 100 && food ? "•" : "", w:v < 30, s:`Satiété ${v} %`},
+    {act:"fridge", e:"🍗", l:"Nourrir", a:v < 50 || rot ? "!" : v < 100 && food ? "•" : "", w:v < 30 || rot, s:rot ? "du périmé à jeter au frigo" : `Satiété ${v} %`},
     {act:"gy-wash", e:"🚿", l:"Laver", a:smelly ? "!" : sweaty ? "•" : "", w:smelly, s:smelly ? "il sent mauvais" : sweaty ? "il transpire" : "propre"},
     {act:"gy-pet", e:"💜", l:"Câlin", a:"", s:"un câlin"},
     {act:"gy-journal", e:"🩺", l:"Carnet de santé", a:newJ ? "•" : "", s:newJ ? "nouveau fait marquant" : "courbes et faits marquants"},
@@ -4794,6 +4803,8 @@ const AURA_SRC = {
   hugs:{e:"😅", l:"Trop de câlins", d:-2, cap:3, hint:"Ok ok, ça suffit les câlins 😅", sec:"Au-delà de 5 câlins par jour, il en a marre."},
   feed:{e:"🍗", l:"Nourri avant d'avoir faim", d:3, cap:2, hint:"Manger avant d'avoir faim… quel luxe ✨", sec:"Le nourrir avant qu'il ait faim (satiété au-dessus de 50 %)."},
   wash:{e:"🚿", l:"Douche après l'effort", d:5, cap:1, hint:"Ahh, je sens bon, je brille !", sec:"Une douche tant qu'il transpire."},
+  clean:{e:"🧽", l:"Frigo nettoyé", d:2, cap:1, hint:"Le frigo est tout propre !", sec:"Nettoyer le frigo quand quelque chose a périmé."},
+  fridgeBad:{e:"🤢", l:"Du périmé au frigo", d:-1, hint:"Ça pue dans le frigo…", sec:"Du périmé qui traîne au frigo l'éteint doucement."},
   washLate:{e:"🧼", l:"Douche (enfin !)", d:2, cap:1, hint:"Enfin propre ! Il était temps…", sec:"Une douche quand il sent mauvais : mieux que rien."},
   visit:{e:"👋", l:"Visite du jour", d:2, cap:1, hint:"Tu passes me voir ? Ça me fait chaud au cœur.", sec:"Une petite visite chaque jour."},
   variety:{e:"🌈", l:"Plein d'attentions", d:3, cap:1, hint:"Câlin, repas, douche… tu me gâtes aujourd'hui !", sec:"Plusieurs gestes différents dans la même journée."},
@@ -4816,7 +4827,7 @@ const AURA_SRC = {
   contractFail:{e:"📉", l:"Contrat raté", d:-10, cap:1, hint:"Le contrat… on ne l'a pas tenu. Ça me rend triste.", sec:"Un contrat raté ou abandonné le rend morose."},
   death:{e:"🪦", l:"Mort de faim", d:0, hint:"", sec:"S'il meurt, son aura retombe à zéro."}
 };
-const AURA_DOWN_DAILY = new Set(["smell", "hunger", "absent", "neglect"]);
+const AURA_DOWN_DAILY = new Set(["smell", "hunger", "absent", "neglect", "fridgeBad"]);
 const auraFloor = c => c.dead ? 0 : Math.min(AURA.floorMax, (c.fidelity || 0) * AURA.floorPerSession);   // un vieux Gymon ne retombe jamais tout à fait au niveau d'un nouveau-né
 const auraTier = a => a < 12 ? 0 : a < 37 ? 1 : a < 62 ? 2 : a < 87 ? 3 : 4;
 const AURA_TIERS = ["Éteint", "Morose", "Normal", "Joyeux", "Rayonnant"];
@@ -4880,6 +4891,7 @@ function auraTick(c, now){
     if(t - seen > AURA.absentDays * D) dn("absent", 3);
     if(c.stage >= 2 && c.washTs && t - c.washTs > MEM.smellDays * D) dn("smell", 2);
     if(v < 30) dn("hunger", 4); else if(v < 50) dn("hunger", 2);
+    if((c.fridge || []).some(it => it.bad && t - it.bad > D)) dn("fridgeBad", 1);
     const cared = (c.auraLog || []).some(e => e.d > 0 && e.t > t - D && e.t <= t);
     if(!cared && c.aura > fl + 5) dn("neglect", Math.max(0.5, AURA.erode * (c.aura - fl)));
   }
@@ -5613,8 +5625,9 @@ function gymonLines(c){
     if(v <= 30) melt.unshift(`Je meurs de faim ! Plus que ${left} jour${left > 1 ? "s" : ""}… ${fk ? "le frigo ou une séance, vite 🍗" : "une séance, vite 🏋️"}`); }
   // Frigo (13 nov. 2026) : boîte de pois chiches ouverte, poulet périmé, poulet qui va périmer — dits en premier
   if(c.peasUsed && now - c.peasUsed.ts < 3*D) melt.unshift("J'ai dû ouvrir la boîte de pois chiches… ouf ! Reviens vite me nourrir 🥫");
-  if(c.spoiled && now - c.spoiled.ts < 2*D) melt.unshift(c.spoiled.kg ? `Beurk ! ${fmtVol(c.spoiled.kg)} de poulet ont périmé au frigo 🤢` : "Beurk ! Quelque chose a périmé au frigo 🤢");
-  if((c.fridge || []).some(it => spoilAt(it) - now < D)) melt.push("Le frigo sent bizarre… donne-moi vite ce qui va périmer 🍗");
+  { const bad = fridgeBad(c); if(bad.length){ const kg = bad.reduce((t, it) => t + (it.k === "poulet" || it.k === "or" ? it.kg : 0), 0);
+    melt.unshift(kg ? `Beurk ! ${fmtVol(kg)} de poulet ont périmé au frigo 🤢 Tu peux le nettoyer ? 🧽` : "Beurk ! Quelque chose a périmé au frigo 🤢 Tu peux le nettoyer ? 🧽"); } }
+  if((c.fridge || []).some(it => !it.bad && spoilAt(it) - now < D)) melt.push("Le frigo sent bizarre… donne-moi vite ce qui va périmer 🍗");
   L.unshift(...melt); L.prio = melt.length;   // la fonte et le frigo sont dits en premier
   if(boostOn(c)) L.unshift("Contrat rempli avec le Pr Noxwell ⭐ Je brille !");
   { const ctr = noxExam() && noxContract(), p = noxSt().proto;
@@ -5692,6 +5705,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-25", t:"🧽 Nettoyer le frigo", x:"Ce qui périme reste maintenant dans le frigo, grisé : ton Gymon n'en veut plus et ça sent mauvais. Ouvre le frigo et touche « Nettoyer le frigo » pour le jeter. Ton Gymon adore quand c'est propre."},
   {d:"2026-11-24", t:"🌌 L'aura de ton Gymon", x:"Une petite jauge est apparue à gauche de ton Gymon : son aura. Elle dit à quel point il se sent entouré, et change son ciel, de la nuit noire à l'aurore. Ce qui la fait monter ou descendre ? À toi de le découvrir… le Pr Noxwell enquête aussi. Elle ne touche jamais à sa force, sa faim ni sa taille."},
   {d:"2026-11-24", t:"🧬 Ton Gymon, fidèle à ta force", x:"Le coach monte toujours la charge quand tu dépasses l'objectif sans difficulté (fini les haltères bloqués à la même charge). Ta force est mieux mesurée, en comptant les reps que tu avais encore en réserve. Lombaires, avant-bras, adducteurs et obliques suivent leur groupe, et le Pr Noxwell prévoit des abdos chaque semaine. Ton Gymon a été recalculé une fois de plus sur ton historique."},
   {d:"2026-11-24", t:"💪 Les muscles de ton Gymon suivent ta force", x:"Ton Gymon grossit quand tu deviens plus fort : chaque muscle suit ta charge max rapportée à ton poids de corps, plus ton volume ou ta fidélité. Un 10/10 se mérite, c'est un physique d'athlète. Ses muscles ont été recalculés sur ton historique, ils ont pu baisser."},
@@ -6809,7 +6823,9 @@ const ACT = {
       <button class="btn" data-act="close">Fermer</button>`);
     curvePts = pts; curveFmt = L[1]; },
     fridge: (b, e) => { if(e) e.stopPropagation(); fridgeSheet(); },
+  "fr-clean": () => { const c = creatureState(), n = fridgeClean(c); if(!n) return; toast(`🧽 Frigo tout propre : ${n > 1 ? `${n} aliments périmés jetés` : "l'aliment périmé est jeté"} ✨`); fridgeSheet(); render(); },
   "fr-eat": b => { const c = creatureState(), r = fridgeEat(c, b.dataset.id); if(!r) return;
+    if(r.bad){ toast("Beurk, c'est périmé ! Nettoie le frigo 🧽"); return; }
     if(r.fiole){ touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:"🧪", k:"fiole"}; tab = "creature"; render(); feedThrow("🧪"); return; }
     if(r.full){ toast("Il n'a plus faim pour l'instant"); return; }
     touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:FOODS[r.it.k].e, k:r.it.k}; tab = "creature"; render(); feedThrow(FOODS[r.it.k].e); },
@@ -7664,7 +7680,7 @@ function cleanCreature(x){
   const c = {v:4, born:x.born, fed:ids(x.fed).slice(-1000), pending:ids(x.pending), fidelity:Math.round(n(x.fidelity, 0, 1e5, 0)), food:n(x.food, 0, 1e9, 0),
     weight:n(x.weight, 0, 1e6, CREATURE_CFG.minWeight[stage]), stage, levels:byMuscle(x.levels, 0, 4.5), lastWorked:byMuscle(x.lastWorked, 0, now), peak:byMuscle(x.peak, 0, 4.5),
     last:n(x.last, 0, now, 0), lastMeal:null, ...(x.sv === 1 ? {sv:1, sat:n(x.sat, 0, 100, 100), satT:n(x.satT, 0, now, now), full:n(x.full, 0, now + 13*3600000, 0)} : {vit:n(x.vit, 0, 100, 100)}),
-    fridge:(Array.isArray(x.fridge) ? x.fridge : []).filter(it => it && FOODS[it.k] && isTime(it.t)).slice(-60).map(it => ({id:safeId(it.id) ? it.id : uidGen("f"), k:it.k, kg:Math.round(n(it.kg, 0, 1e7, 0)), t:it.t})),
+    fridge:(Array.isArray(x.fridge) ? x.fridge : []).filter(it => it && FOODS[it.k] && isTime(it.t)).slice(-60).map(it => ({id:safeId(it.id) ? it.id : uidGen("f"), k:it.k, kg:Math.round(n(it.kg, 0, 1e7, 0)), t:it.t, ...(isTime(it.bad) ? {bad:it.bad} : {})})),
     ...(x.peas && isTime(x.peas.t) ? {peas:{t:x.peas.t}} : {}),     ...(x.boost && isTime(x.boost.until) ? {boost:{until:Math.min(x.boost.until, now + 30 * 86400000)}} : {}), ...(typeof x.festDone === "number" && isFinite(x.festDone) ? {festDone:x.festDone} : {}),
     ...(typeof x.aura === "number" && isFinite(x.aura) ? {aura:Math.min(100, Math.max(0, x.aura)), auraT:isTime(x.auraT) ? Math.min(x.auraT, now) : now, auraSeen:Math.min(100, Math.max(0, n(x.auraSeen, 0, 100, x.aura))),
       auraSecrets:Object.fromEntries(Object.keys(AURA_SRC).filter(k => x.auraSecrets && isTime(x.auraSecrets[k])).map(k => [k, x.auraSecrets[k]])),

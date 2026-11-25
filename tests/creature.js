@@ -149,11 +149,17 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const st = fridgeEat(c, "f-st"); const s1 = Math.round(satExact(c)), pl = Math.round((c.full - n)/H);
     c.sat = 50; c.satT = n; c.full = 0; const kg = fridgeEatOldest(c); const oldGone = !c.fridge.some(x => x.id === "f-old"), s2 = Math.round(satExact(c));
     const again = fridgeEat(c, "f-new");
-    c.fridge.push({id:"f-rot", k:"poulet", kg:700, t:n - 5*D - 6e4}); fridgeTick(c); const rot = !c.fridge.some(x => x.id === "f-rot") && c.spoiled && c.spoiled.kg === 700, ome = c.fridge.some(x => x.id === "f-om");
-    S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return {s1, pl, steak:!c.fridge.some(x => x.id === "f-st"), kg:Math.round(kg), oldGone, s2, full:again && again.full, rot, ome}; });
+    c.fridge.push({id:"f-rot", k:"poulet", kg:700, t:n - 5*D - 6e4}); fridgeTick(c); const rot = c.fridge.some(x => x.id === "f-rot" && x.bad) && c.spoiled && c.spoiled.kg === 700, ome = c.fridge.some(x => x.id === "f-om");
+    // Périmé (25 nov. 2026) : il reste, grisé et immangeable, ne compte plus dans le frigo ; « Nettoyer le frigo » le jette
+    c.sat = 40; c.satT = n; const refuse = fridgeEat(c, "f-rot"), kgBad = fridgeKg(c) - c.fridge.filter(x => !x.bad && (x.k === "poulet" || x.k === "or")).reduce((t, x) => t + x.kg, 0), bubble = gymonLines(c).join(" | ");
+    tab = "creature"; render(); fridgeSheet(); const sh = document.getElementById("sheet-in"), btn = !!sh.querySelector('[data-act="fr-clean"]'), grey = !!sh.querySelector(".fr-row.bad");
+    sh.querySelector('[data-act="fr-clean"]').click(); const cleaned = !c.fridge.some(x => x.bad) && c.fridge.some(x => x.id === "f-om"); closeSheet();
+    S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return {s1, pl, steak:!c.fridge.some(x => x.id === "f-st"), kg:Math.round(kg), oldGone, s2, full:again && again.full, rot, ome,
+      refuse:!!(refuse && refuse.bad), kgBad, bubble:/nettoyer/.test(bubble), btn, grey, cleaned}; });
   ok(fr.steak && fr.s1 === 70 && fr.pl === 12, "steak : +1 ration (50 → 70 %) et 12 h à 100 %… au niveau atteint", fr);
   ok(fr.oldGone && fr.s2 === 100 && fr.full, "« Nourrir avec le plus ancien » : le poulet le plus vieux d'abord, jusqu'à 100 % ; rassasié, il refuse", fr);
   ok(fr.rot && fr.ome, "le poulet périme au bout de 5 jours (message) ; l'omelette ne périme pas", fr);
+  ok(fr.refuse && fr.kgBad === 0 && fr.bubble && fr.btn && fr.grey && fr.cleaned, "périmé : reste au frigo grisé, il le refuse, ne compte plus ; il demande de nettoyer ; « Nettoyer le frigo » le jette (l'omelette reste)", fr);
   // Boîte de pois chiches : après 30 jours, 1 chance sur 40 par jour, une seule ; ouverte toute seule sous 5 % → 50 %
   const peas = await p.evaluate(() => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c), W = S.workouts, r0 = PEAS.roll;
     PEAS.roll = () => true; c.dead = null; c.peas = null; c.peasDay = null;
