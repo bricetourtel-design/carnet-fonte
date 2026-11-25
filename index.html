@@ -265,6 +265,15 @@ textarea{min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:13p
 .scan-frame{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
 .team-ex{margin:0;padding-left:22px;font-size:14px;line-height:1.5}
 .friends{display:flex;flex-direction:column;gap:6px}.friend{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:12px;background:var(--fill)}
+button.friend{width:100%;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:48px}button.friend>span:nth-child(2){flex:1}.fr-go{font-style:normal;font-size:22px;color:var(--muted)}
+.cmp-duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cmp-g{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.cmp-g .duo-svg{width:100%;height:170px;display:flex;align-items:flex-end;justify-content:center}.cmp-g .duo-svg svg{height:100%;width:auto;max-width:100%}
+.cmp-g small{color:var(--muted)}
+.cmp{display:flex;flex-direction:column;gap:6px}.cmp-h{margin:6px 0 0;text-align:center;font-weight:700;font-size:14px;color:var(--muted)}
+.cmp-r{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}.cmp-l{font-size:13px;color:var(--muted);text-align:center;min-width:76px}
+.cmp-v{position:relative;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;padding-bottom:6px}.cmp-v.b{text-align:left}
+.cmp-v.win{color:var(--accent)}
+.cmp-v i{position:absolute;bottom:0;right:0;height:4px;border-radius:2px;background:currentColor;opacity:.55}.cmp-v.b i{right:auto;left:0}
 .friend .fr-svg{height:46px;width:40px;display:flex;align-items:flex-end;justify-content:center}.friend .fr-svg .creature{height:46px;width:auto}
 .friend small{display:block;color:var(--muted);font-size:12px}
 .celeb-team{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}.celeb-team .team-duo{background:rgba(255,255,255,.08);width:100%}
@@ -1021,7 +1030,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-25 d";
+const APP_VERSION = "2026-11-25 e";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -3724,7 +3733,7 @@ const CREATURE_CFG = {
   // Sans score de force (abdos, pas de poids de corps…) : nombre de séries de travail du muscle
   setsThresholds: [20, 60, 120, 200],
   // Satiété (13 nov. 2026, remplace la vitalité) : voir le bloc « Satiété » plus bas
-  satiety: {minU:3000, newU:4000, plateauH:6, steakH:12, perRation:20, rationDays:30, rationStart:1000, rationMin:300, spoilDays:5,
+  satiety: {minU:3000, newU:4000, plateauH:6, steakH:12, perRation:20, rationDays:30, rationStart:1000, rationMin:300, spoilDays:5, shrimpDays:2,
     peas:{afterDays:30, chance:1/40, below:5, to:50}, festinMin:50},
   resurrectWeightKeep: 0.7,
   // Masse = image de la charge soulevée (21 nov. 2026, décision du propriétaire) : 60 g à la naissance + 0,3 kg par tonne soulevée
@@ -3873,8 +3882,9 @@ function satEat(c, kg, at, plateauH, whole, kind){
 /* Frigo : ce qu'il ne peut pas manger y part ; périme en 5 jours (l'omelette jamais) ; il mange d'abord le plus ancien.
    Aliments : 🍗 poulet (kg soulevés), 🍤 portion dorée (bonus du coup critique ; une étoile jusqu'au 25 nov. 2026), 🥩 steak (record : 1 ration et 12 h à 100 %),
    🥚 omelette (3e séance de la semaine : 1 ration, ne périme pas). La boîte de pois chiches est à part (c.peas). */
-const FOODS = {poulet:{e:"🍗", n:"Poulet"}, or:{e:"🍤", n:"Portion dorée"}, steak:{e:"🥩", n:"Steak du record"}, omelette:{e:"🥚", n:"Omelette de la régularité"}, fiole:{e:"🧪", n:"Fiole de sérum"}};
-const spoilAt = it => it.k === "omelette" || it.k === "fiole" ? Infinity : it.t + SAT.spoilDays * 86400000;
+const FOODS = {poulet:{e:"🍗", n:"Poulet"}, or:{e:"🍤", n:"Crevettes dorées"}, steak:{e:"🥩", n:"Steak du record"}, omelette:{e:"🥚", n:"Omelette de la régularité"}, fiole:{e:"🧪", n:"Fiole de sérum"}};
+// Crevettes dorées (bonus du coup critique, 25 nov. 2026, demande du propriétaire) : fruits de mer, elles périment en 2 jours
+const spoilAt = it => it.k === "omelette" || it.k === "fiole" ? Infinity : it.t + (it.k === "or" ? SAT.shrimpDays : SAT.spoilDays) * 86400000;
 /* Étoiles du contrat rempli (21 nov. 2026, décision du propriétaire) : pendant 2 jours, des étoiles tournent autour du Gymon.
    Aucun effet sur le jeu. Une fiole 🧪 reçue le 21 nov. (version retirée le jour même) ne fait plus que ça quand on la boit. */
 const STARS_H = 48;
@@ -4768,7 +4778,7 @@ function fridgeSheet(){
   const row = g => { const f = FOODS[g.k], n = g.items.length, left = spoilAt(g.first) - now, d = Math.ceil(left / D), bulk = g.k === "poulet" || g.k === "or";
     const title = bulk ? `${f.n} · ${fmtVol(g.kg)}` : `${f.n}${n > 1 ? ` × ${n}` : ""}`;
     const sub = g.k === "poulet" ? `≈ +${fmtN(gain(g.kg), 0)} % de satiété${n > 1 ? ` · ${n} restes, le plus ancien d'abord` : ""}`
-      : g.k === "or" ? `bonus du coup critique · ≈ +${fmtN(gain(g.kg), 0)} %`
+      : g.k === "or" ? `bonus du coup critique · ≈ +${fmtN(gain(g.kg), 0)} % · fraîches 2 jours`
       : g.k === "steak" ? "1 ration (+20 %) et 12 h à 100 %" : g.k === "fiole" ? "Des étoiles autour de lui pendant 2 jours, pour le plaisir" : "1 ration (+20 %)";
     const badge = g.k === "fiole" ? `<span class="fr-d">sérum</span>` : g.k === "omelette" ? `<span class="fr-d">ne périme pas</span>`
       : `<span class="fr-d ${d <= 1 ? "w" : ""}">${left < 12*3600000 ? "périme bientôt" : d <= 1 ? "périme demain" : (n > 1 ? "dès " : "") + d + " j"}</span>`;
@@ -5739,6 +5749,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-25", t:"🤝 Compare ton Gymon à celui d'un ami", x:"Dans Sociabiliser, touche un ami Gymon : vos deux Gymon s'affichent côte à côte, avec poids, taille, séances et chaque groupe de muscles. Et le bonus du coup critique devient des crevettes dorées 🍤 : attention, elles ne se gardent que 2 jours au frigo !"},
   {d:"2026-11-25", t:"⏱️ Gymon et minuteur de repos", x:"Pendant une séance, le minuteur de repos ne cache plus les boutons de la page Gymon. Et la portion dorée du frigo a un nouveau visuel : une crevette dorée 🍤, riche en protéines."},
   {d:"2026-11-25", t:"🍗 Un frigo plus lisible", x:"Une ligne par aliment : tout ton poulet sur une seule ligne (il mange le plus ancien d'abord), avec un pilon par tonne pour voir d'un coup d'œil si le frigo est plein ; les steaks et omelettes avec leur nombre. Ce qui a périmé est résumé dans le bouton « Nettoyer le frigo »."},
   {d:"2026-11-25", t:"🧽 Nettoyer le frigo", x:"Ce qui périme reste maintenant dans le frigo, grisé : ton Gymon n'en veut plus et ça sent mauvais. Ouvre le frigo et touche « Nettoyer le frigo » pour le jeter. Ton Gymon adore quand c'est propre."},
@@ -7635,10 +7646,36 @@ function socialSheet(){
     <button class="btn" data-act="team-join">📷 Rejoindre la séance d'un ami</button>
     <div class="row"><button class="btn" style="flex:1" data-act="team-mycard">🤝 Montrer mon Gymon</button><button class="btn" style="flex:1" data-act="team-scan">📷 Scanner un Gymon</button></div>
     ${fr.length ? `<p class="hs-h">Mes amis Gymon (${fr.length})</p><div class="friends">${fr.map(f => { const p = friendFromCard(f);
-      return `<div class="friend">${p ? `<span class="fr-svg">${friendSVG(p.gy, true)}</span>` : ""}<span><b>${esc(f.name)}</b><small>${f.lvl >= 0 ? esc(levelTxt(f.lvl)) : "Ami Gymon"}${f.together ? ` · ${f.together} séance${f.together > 1 ? "s" : ""} ensemble` : ""}</small></span></div>`; }).join("")}</div>` : ""}
+      return `<button class="friend" data-act="friend-cmp" data-uid="${esc(f.uid)}"${p ? "" : " disabled"}>${p ? `<span class="fr-svg">${friendSVG(p.gy, true)}</span>` : ""}<span><b>${esc(f.name)}</b><small>${f.lvl >= 0 ? esc(levelTxt(f.lvl)) : "Ami Gymon"}${f.together ? ` · ${f.together} séance${f.together > 1 ? "s" : ""} ensemble` : ""}</small></span>${p ? `<i class="fr-go" aria-hidden="true">›</i>` : ""}</button>`; }).join("")}</div>` : ""}
     <button class="btn ghost" data-act="close">Fermer</button>`);
 }
+/* Comparer avec un ami (25 nov. 2026, demande du propriétaire) : les deux Gymon côte à côte, tels qu'au dernier scan de l'ami.
+   Poids, taille, séances, puis chaque groupe de muscles en /10 ; le meilleur de chaque ligne est mis en avant. */
+function friendCompare(uid){
+  const f = (S.profile.friends || []).find(x => x.uid === uid), p = friendFromCard(f); if(!p) return;
+  const c = creatureState(), me = teamClean(S.profile.firstName) || "Toi", ten = l => Math.round(l / 4.5 * 10);
+  const grp = (lv, g) => { const l = (FINE[g] || [g]).filter(m => !MINOR.has(m)); return l.reduce((t, m) => t + (lv(m) || 0), 0) / l.length; };
+  const mine = g => ten(grp(m => muscleLevel(c, m), g)), his = g => ten(grp(m => p.gy.lv[m], g));
+  const row = (label, a, b, fmt, bar) => { const w = a > b ? "a" : b > a ? "b" : "";
+    return `<div class="cmp-r"><span class="cmp-v ${w === "a" ? "win" : ""}">${fmt(a)}${bar ? `<i style="width:${a * 10}%"></i>` : ""}</span><span class="cmp-l">${label}</span><span class="cmp-v b ${w === "b" ? "win" : ""}">${fmt(b)}${bar ? `<i style="width:${b * 10}%"></i>` : ""}</span></div>`; };
+  const days = Math.floor((Date.now() - (f.last || Date.now())) / 86400000);
+  openSheet(`<h3>${esc(me)} et ${esc(f.name)}</h3>
+    <p class="small muted" style="margin:0">Le Gymon de ${esc(f.name)} tel que tu l'as vu ${days <= 0 ? "aujourd'hui" : days === 1 ? "hier" : `il y a ${days} jours`}. Scanne-le à nouveau pour le mettre à jour.</p>
+    <div class="cmp-duo"><div class="cmp-g"><div class="duo-svg">${mySVG(false)}</div><b>${esc(c.name || me)}</b><small>${esc(me)}</small></div>
+      <div class="cmp-g"><div class="duo-svg b">${friendSVG(p.gy, false)}</div><b>${esc(p.gy.gname || "Son Gymon")}</b><small>${esc(f.name)}</small></div></div>
+    <div class="cmp">
+      ${row("Poids", c.weight || 0, p.gy.weight, fmtWeight)}
+      ${row("Taille", Math.round(creatureHeight(c)), p.gy.height, v => `${fmtN(v, 0)} cm`)}
+      ${row("Séances", c.fidelity || 0, f.n || 0, v => fmtN(v, 0))}
+      <p class="cmp-h">Muscles</p>
+      ${MUSCLES.map(g => row(g, mine(g), his(g), v => `${v}/10`, true)).join("")}
+    </div>
+    ${f.together ? `<p class="small muted" style="margin:0;text-align:center">🤝 ${f.together} séance${f.together > 1 ? "s" : ""} ensemble</p>` : ""}
+    <button class="btn" data-act="gy-social-back">‹ Mes amis Gymon</button>`, null, "cmp-sheet");
+}
 Object.assign(ACT, {
+  "friend-cmp": b => friendCompare(b.dataset.uid),
+  "gy-social-back": () => socialSheet(),
   "gy-social": (b, e) => { if(e) e.stopPropagation(); socialSheet(); },
   "team-share": () => { closeSheet(); showQR("session"); },
   "team-mycard": () => { closeSheet(); showQR("friend"); },
