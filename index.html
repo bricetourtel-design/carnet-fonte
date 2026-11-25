@@ -742,7 +742,7 @@ body[data-tab="creature"]{overscroll-behavior:none}
 body[data-fit="1"] main{padding-bottom:0}
 .gy-aura,.gy-spark{pointer-events:none}
 .fr-row.bad{opacity:.62;filter:grayscale(.7)}.fr-row.bad .fr-t span{color:#ff9f0a}
-.fr-clean{width:100%}
+.fr-clean{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px}.fr-clean small{font-size:12.5px;font-weight:500;opacity:.9}
 /* Aura (24 nov. 2026) : décor de la page Gymon derrière le contenu, jauge verticale à gauche */
 #aura-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;display:none}
 body.aura-on[data-tab="creature"] #aura-bg{display:block}
@@ -1019,7 +1019,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-25 a";
+const APP_VERSION = "2026-11-25 b";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -4730,25 +4730,39 @@ function satChipHTML(c, v){
     <span class="sat-bar"><i style="width:${v}%;background:${satColor(v)}"></i></span>
     <span class="sat-row"><span class="mini-fr">${FRIDGE_SVG(false)}</span><b>${t || (sp ? "" : "vide")}${sp ? `${t ? " " : ""}+${sp}` : ""}</b>${c.peas ? "<i>🥫</i>" : ""}${bad ? "<i>🤢</i>" : ""}</span></button>`;
 }
+// Frigo regroupé (25 nov. 2026, demande du propriétaire) : une ligne par aliment (poulet, portion dorée, steaks, omelettes, fioles),
+// le plus ancien mangé d'abord ; le périmé n'a plus de lignes, il est résumé dans le bouton « Nettoyer le frigo »
+const FR_ORDER = ["poulet", "or", "steak", "omelette", "fiole"];
+function fridgeGroups(c){
+  return FR_ORDER.map(k => { const l = (c.fridge || []).filter(it => !it.bad && it.k === k).sort((a, b) => a.t - b.t);
+    return l.length ? {k, items:l, kg:l.reduce((t, it) => t + (it.kg || 0), 0), first:l[0]} : null; }).filter(Boolean);
+}
+function fridgeEatGroup(c, k){
+  const l = (c.fridge || []).filter(it => !it.bad && it.k === k).sort((a, b) => a.t - b.t); if(!l.length) return null;
+  if(k !== "poulet" && k !== "or") return fridgeEat(c, l[0].id);
+  let tot = 0, any = null;
+  for(const it of l){ const r = fridgeEat(c, it.id); if(!r) break; if(r.full){ if(!any) return r; break; } any = any || r; tot += r.eaten || 0; if(satExact(c) >= 99.5) break; }
+  return any ? {...any, eaten:tot} : null;
+}
 function fridgeSheet(){
   const c = creatureState(), now = Date.now(), v = creatureSatiety(c), u = satUsual(), nm = c.name || "ton Gymon", D = 86400000;
-  const items = (c.fridge || []).slice().sort((a, b) => (!!b.bad - !!a.bad) || (a.k === "omelette") - (b.k === "omelette") || a.t - b.t), bad = items.filter(x => x.bad);
+  const groups = fridgeGroups(c), bad = fridgeBad(c), badKg = bad.reduce((t, it) => t + (it.k === "poulet" || it.k === "or" ? it.kg : 0), 0);
   const gain = kg => Math.min(100 - v, kg * Math.max(100 - v, u.low) / u.U);
-  const row = it => { const f = FOODS[it.k], left = spoilAt(it) - now, d = Math.ceil(left / D);
-    if(it.bad) return `<button class="fr-row bad" data-act="fr-eat" data-id="${it.id}"><span class="fr-e">🤢</span><span class="fr-t"><b>${esc(f.n)}${it.k === "poulet" || it.k === "or" ? " · " + fmtVol(it.kg) : ""}</b><span>périmé : il n'en veut plus</span></span><span class="fr-d w">périmé</span></button>`;
-    const title = it.k === "poulet" || it.k === "or" ? `${f.n} · ${fmtVol(it.kg)}` : f.n;
-    const sub = it.k === "poulet" ? `≈ +${fmtN(gain(it.kg), 0)} % de satiété` : it.k === "or" ? `bonus du coup critique · ≈ +${fmtN(gain(it.kg), 0)} %`
-      : it.k === "steak" ? "1 ration (+20 %) et 12 h à 100 %" : it.k === "fiole" ? "Des étoiles autour de lui pendant 2 jours, pour le plaisir" : "1 ration (+20 %)";
-    const badge = it.k === "fiole" ? `<span class="fr-d">sérum</span>` : it.k === "omelette" ? `<span class="fr-d">ne périme pas</span>` : `<span class="fr-d ${d <= 1 ? "w" : ""}">${left < 12*3600000 ? "périme bientôt" : d <= 1 ? "périme demain" : d + " j"}</span>`;
-    return `<button class="fr-row" data-act="fr-eat" data-id="${it.id}"><span class="fr-e">${f.e}</span><span class="fr-t"><b>${esc(title)}</b><span>${esc(sub)}</span></span>${badge}</button>`; };
+  const row = g => { const f = FOODS[g.k], n = g.items.length, left = spoilAt(g.first) - now, d = Math.ceil(left / D), bulk = g.k === "poulet" || g.k === "or";
+    const title = bulk ? `${f.n} · ${fmtVol(g.kg)}` : `${f.n}${n > 1 ? ` × ${n}` : ""}`;
+    const sub = g.k === "poulet" ? `≈ +${fmtN(gain(g.kg), 0)} % de satiété${n > 1 ? ` · ${n} restes, le plus ancien d'abord` : ""}`
+      : g.k === "or" ? `bonus du coup critique · ≈ +${fmtN(gain(g.kg), 0)} %`
+      : g.k === "steak" ? "1 ration (+20 %) et 12 h à 100 %" : g.k === "fiole" ? "Des étoiles autour de lui pendant 2 jours, pour le plaisir" : "1 ration (+20 %)";
+    const badge = g.k === "fiole" ? `<span class="fr-d">sérum</span>` : g.k === "omelette" ? `<span class="fr-d">ne périme pas</span>`
+      : `<span class="fr-d ${d <= 1 ? "w" : ""}">${left < 12*3600000 ? "périme bientôt" : d <= 1 ? "périme demain" : (n > 1 ? "dès " : "") + d + " j"}</span>`;
+    return `<button class="fr-row" data-act="fr-eat" data-k="${g.k}" data-id="${g.first.id}"><span class="fr-e">${f.e}</span><span class="fr-t"><b>${esc(title)}</b><span>${esc(sub)}</span></span>${badge}</button>`; };
   openSheet(`<div class="fr-head"><span class="fr-ico">${FRIDGE_SVG(true)}</span><div><h3>Le frigo de ${esc(nm)}</h3>
       <p class="small muted" style="margin:2px 0 6px">Satiété ${v} % · une séance habituelle (≈ ${fmtVol(u.U)}) le remet à 100 %, le surplus va au frigo</p><span class="sat-bar wide"><i style="width:${v}%;background:${satColor(v)}"></i></span></div></div>
-    ${v >= 99.5 ? `<p class="small" style="margin:0">Il n'a plus faim pour l'instant.</p>` : items.length ? `<p class="small muted" style="margin:0">Touche un aliment pour le lui donner : il mange jusqu'à 100 %.</p>` : ""}
-    ${bad.length ? `<button class="btn primary fr-clean" data-act="fr-clean">🧽 Nettoyer le frigo · jeter ${bad.length > 1 ? `les ${bad.length} aliments périmés` : "l'aliment périmé"}</button>` : ""}
-    ${items.length || c.peas ? `<div class="fr-list">${items.map(row).join("")}
+    ${bad.length ? `<button class="btn primary fr-clean" data-act="fr-clean">🧽 Nettoyer le frigo<small>${bad.length > 1 ? `${bad.length} aliments ont périmé` : "Un aliment a périmé"}${badKg ? ` (${fmtVol(badKg)} de poulet)` : ""} : il n'en veut plus</small></button>` : ""}
+    ${v >= 99.5 ? `<p class="small" style="margin:0">Il n'a plus faim pour l'instant.</p>` : groups.length ? `<p class="small muted" style="margin:0">Touche un aliment pour le lui donner : il mange jusqu'à 100 %, le plus ancien d'abord.</p>` : ""}
+    ${groups.length || c.peas ? `<div class="fr-list">${groups.map(row).join("")}
       ${c.peas ? `<div class="fr-row peas"><span class="fr-e">🥫</span><span class="fr-t"><b>Boîte de pois chiches</b><span>mangée toute seule sous 5 % : remonte à 50 %</span></span><span class="fr-d">réserve</span></div>` : ""}</div>`
-      : `<p class="small muted" style="margin:0">Le frigo est vide. Après chaque séance, ce que ${esc(nm)} ne peut pas manger y est rangé (5 jours avant de périmer).</p>`}
-    ${items.some(x => !x.bad && (x.k === "poulet" || x.k === "or")) && v < 99.5 ? `<button class="btn${bad.length ? "" : " primary"}" data-act="fr-oldest">Nourrir avec le plus ancien</button>` : ""}
+      : bad.length ? "" : `<p class="small muted" style="margin:0">Le frigo est vide. Après chaque séance, ce que ${esc(nm)} ne peut pas manger y est rangé (5 jours avant de périmer).</p>`}
     <button class="btn" data-act="gy-curve" data-k="3">Courbe de la satiété</button>`, null, "fr-sheet");
 }
 // Caresse (appui long) et chatouilles (double toucher) : une réaction, des cœurs, aucune règle touchée
@@ -5705,6 +5719,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-25", t:"🍗 Un frigo plus lisible", x:"Une ligne par aliment : tout ton poulet sur une seule ligne (il mange le plus ancien d'abord), les steaks et omelettes avec leur nombre. Ce qui a périmé est résumé dans le bouton « Nettoyer le frigo »."},
   {d:"2026-11-25", t:"🧽 Nettoyer le frigo", x:"Ce qui périme reste maintenant dans le frigo, grisé : ton Gymon n'en veut plus et ça sent mauvais. Ouvre le frigo et touche « Nettoyer le frigo » pour le jeter. Ton Gymon adore quand c'est propre."},
   {d:"2026-11-24", t:"🌌 L'aura de ton Gymon", x:"Une petite jauge est apparue à gauche de ton Gymon : son aura. Elle dit à quel point il se sent entouré, et change son ciel, de la nuit noire à l'aurore. Ce qui la fait monter ou descendre ? À toi de le découvrir… le Pr Noxwell enquête aussi. Elle ne touche jamais à sa force, sa faim ni sa taille."},
   {d:"2026-11-24", t:"🧬 Ton Gymon, fidèle à ta force", x:"Le coach monte toujours la charge quand tu dépasses l'objectif sans difficulté (fini les haltères bloqués à la même charge). Ta force est mieux mesurée, en comptant les reps que tu avais encore en réserve. Lombaires, avant-bras, adducteurs et obliques suivent leur groupe, et le Pr Noxwell prévoit des abdos chaque semaine. Ton Gymon a été recalculé une fois de plus sur ton historique."},
@@ -6824,7 +6839,7 @@ const ACT = {
     curvePts = pts; curveFmt = L[1]; },
     fridge: (b, e) => { if(e) e.stopPropagation(); fridgeSheet(); },
   "fr-clean": () => { const c = creatureState(), n = fridgeClean(c); if(!n) return; toast(`🧽 Frigo tout propre : ${n > 1 ? `${n} aliments périmés jetés` : "l'aliment périmé est jeté"} ✨`); fridgeSheet(); render(); },
-  "fr-eat": b => { const c = creatureState(), r = fridgeEat(c, b.dataset.id); if(!r) return;
+  "fr-eat": b => { const c = creatureState(), r = b.dataset.k ? fridgeEatGroup(c, b.dataset.k) : fridgeEat(c, b.dataset.id); if(!r) return;
     if(r.bad){ toast("Beurk, c'est périmé ! Nettoie le frigo 🧽"); return; }
     if(r.fiole){ touchProfile(); closeSheet(); gyAte = {ts:Date.now(), e:"🧪", k:"fiole"}; tab = "creature"; render(); feedThrow("🧪"); return; }
     if(r.full){ toast("Il n'a plus faim pour l'instant"); return; }

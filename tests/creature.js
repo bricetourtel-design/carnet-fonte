@@ -152,14 +152,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     c.fridge.push({id:"f-rot", k:"poulet", kg:700, t:n - 5*D - 6e4}); fridgeTick(c); const rot = c.fridge.some(x => x.id === "f-rot" && x.bad) && c.spoiled && c.spoiled.kg === 700, ome = c.fridge.some(x => x.id === "f-om");
     // Périmé (25 nov. 2026) : il reste, grisé et immangeable, ne compte plus dans le frigo ; « Nettoyer le frigo » le jette
     c.sat = 40; c.satT = n; const refuse = fridgeEat(c, "f-rot"), kgBad = fridgeKg(c) - c.fridge.filter(x => !x.bad && (x.k === "poulet" || x.k === "or")).reduce((t, x) => t + x.kg, 0), bubble = gymonLines(c).join(" | ");
-    tab = "creature"; render(); fridgeSheet(); const sh = document.getElementById("sheet-in"), btn = !!sh.querySelector('[data-act="fr-clean"]'), grey = !!sh.querySelector(".fr-row.bad");
+    tab = "creature"; render(); fridgeSheet(); const sh = document.getElementById("sheet-in"), btn = !!sh.querySelector('[data-act="fr-clean"]'), grey = /périmé/.test(sh.querySelector('[data-act="fr-clean"]').textContent) && !sh.querySelector(".fr-row.bad");
     sh.querySelector('[data-act="fr-clean"]').click(); const cleaned = !c.fridge.some(x => x.bad) && c.fridge.some(x => x.id === "f-om"); closeSheet();
     S.workouts = W; S.profile.creature = JSON.parse(saved); saveLocal(); return {s1, pl, steak:!c.fridge.some(x => x.id === "f-st"), kg:Math.round(kg), oldGone, s2, full:again && again.full, rot, ome,
       refuse:!!(refuse && refuse.bad), kgBad, bubble:/nettoyer/.test(bubble), btn, grey, cleaned}; });
   ok(fr.steak && fr.s1 === 70 && fr.pl === 12, "steak : +1 ration (50 → 70 %) et 12 h à 100 %… au niveau atteint", fr);
   ok(fr.oldGone && fr.s2 === 100 && fr.full, "« Nourrir avec le plus ancien » : le poulet le plus vieux d'abord, jusqu'à 100 % ; rassasié, il refuse", fr);
   ok(fr.rot && fr.ome, "le poulet périme au bout de 5 jours (message) ; l'omelette ne périme pas", fr);
-  ok(fr.refuse && fr.kgBad === 0 && fr.bubble && fr.btn && fr.grey && fr.cleaned, "périmé : reste au frigo grisé, il le refuse, ne compte plus ; il demande de nettoyer ; « Nettoyer le frigo » le jette (l'omelette reste)", fr);
+  ok(fr.refuse && fr.kgBad === 0 && fr.bubble && fr.btn && fr.grey && fr.cleaned, "périmé : reste au frigo (résumé dans le bouton), il le refuse, ne compte plus ; il demande de nettoyer ; « Nettoyer le frigo » le jette (l'omelette reste)", fr);
   // Boîte de pois chiches : après 30 jours, 1 chance sur 40 par jour, une seule ; ouverte toute seule sous 5 % → 50 %
   const peas = await p.evaluate(() => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c), W = S.workouts, r0 = PEAS.roll;
     PEAS.roll = () => true; c.dead = null; c.peas = null; c.peasDay = null;
@@ -180,6 +180,14 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     c.wk = {k:weekStart(n) - 7*D, min:90, full:false}; const partial = festinCheck(c);
     S.profile.creature = JSON.parse(saved); saveLocal(); return {yes, steak, twice, low, partial}; });
   ok(fest.yes && fest.steak && !fest.twice && !fest.low && !fest.partial, "festin : semaine entière jamais sous 50 % → festin + steak, une seule fois ; rien sous 50 % ou semaine incomplète", fest);
+  // Frigo regroupé (25 nov. 2026) : une ligne par aliment ; le poulet le plus ancien est mangé d'abord
+  const grp = await p.evaluate(() => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c);
+    c.dead = null; c.stage = Math.max(5, c.stage); c.sat = 60; c.satT = n; c.full = 0; c.peas = null;
+    c.fridge = [{id:"g1", k:"poulet", kg:300, t:n - 3*D}, {id:"g2", k:"poulet", kg:300, t:n - 2*D}, {id:"g3", k:"poulet", kg:300, t:n - D}, {id:"g4", k:"steak", kg:0, t:n - D}, {id:"g5", k:"steak", kg:0, t:n}, {id:"g6", k:"poulet", kg:500, t:n - 6*D}];
+    fridgeTick(c); fridgeSheet(); const sh = document.getElementById("sheet-in"), rows = sh.querySelectorAll(".fr-row").length, txt = sh.textContent.replace(/\s+/g, " ");
+    sh.querySelector('[data-act="fr-eat"][data-k="poulet"]').click(); const oldFirst = !c.fridge.some(x => x.id === "g1"), newKept = c.fridge.some(x => x.id === "g3" || x.id === "g2");
+    S.profile.creature = JSON.parse(saved); saveLocal(); closeSheet(); gyAte = null; render(); return {rows, steaks:/Steak du record × 2/.test(txt), poulet:/900 kg/.test(txt), clean:/Nettoyer le frigo/.test(txt), oldFirst, newKept}; });
+  ok(grp.rows === 2 && grp.steaks && grp.poulet && grp.clean && grp.oldFirst, "frigo regroupé : une ligne Poulet (900 kg) et une ligne Steak × 2, le périmé dans le bouton ; il mange le poulet le plus ancien d'abord", grp);
   // Interface : la case Satiété ouvre le frigo (option C), on le nourrit depuis le frigo, il attrape la portion
   const ui = await p.evaluate(async () => { const c = creatureState(), n = Date.now(), D = 864e5, saved = JSON.stringify(c);
     c.dead = null; c.stage = Math.max(5, c.stage); c.sat = 40; c.satT = n; c.full = 0; c.peas = {t:n}; c.spoiled = null; c.peasUsed = null; c.lastMeal = null; c.ateTs = 0;
