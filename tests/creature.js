@@ -765,6 +765,13 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(au.floor >= 19.9 && au.floor <= 30, "un vieux Gymon ne retombe jamais tout à fait au niveau d'un nouveau-né (plancher selon l'ancienneté)", au.floor);
   ok(au.gauge && au.sheet, "jauge verticale à gauche sans pourcentage, décor en fond ; la toucher ouvre « Son aura » avec ses secrets", au);
   ok(au.nox && au.fly === "3px", "le Pr Noxwell présente l'aura en plusieurs temps, fou d'abord ; lucioles fines (3 px)", au);
+  // Bug remonté (25 nov. 2026) : séance en cours, le minuteur de repos recouvrait les boutons de la page Gymon
+  const rb = await p.evaluate(async () => { const act = S.profile.active, rs = restState; closeSheet();
+    startWorkout("T", [{exId:"dc-barre", sets:[blankSet()]}]); tab = "creature"; render(); startRest(90); await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 400)); const rest = document.getElementById("rest").getBoundingClientRect(), acts = [...document.querySelectorAll(".gy-act")].map(x => x.getBoundingClientRect());
+    const covered = acts.filter(x => x.bottom > rest.top + 1).length; stopRest(); await new Promise(r => setTimeout(r, 100));
+    const after = document.querySelector(".gy-act").getBoundingClientRect().top; S.profile.active = act; restState = rs; render(); return {covered, n:acts.length, grew:after > acts[0].top}; });
+  ok(rb.n === 6 && rb.covered === 0 && rb.grew, "séance en cours : le minuteur ne recouvre plus les boutons du Gymon ; la page se rallonge quand il disparaît", rb);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de la créature passent");

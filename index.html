@@ -740,6 +740,7 @@ body[data-tab="creature"] .top h1{font-size:20px;letter-spacing:-.01em}
 .gy-fit .gy-stage{flex:1 1 0;height:auto;min-height:170px;max-height:none}
 body[data-tab="creature"]{overscroll-behavior:none}
 body[data-fit="1"] main{padding-bottom:0}
+body[data-fit="1"].rest-pad main{padding-bottom:var(--rest-h,90px)}
 .gy-aura,.gy-spark{pointer-events:none}
 .fr-row.bad{opacity:.62;filter:grayscale(.7)}.fr-row.bad .fr-t span{color:#ff9f0a}
 .fr-q{display:block;font-size:15px;line-height:1.25;letter-spacing:-3px;margin:1px 0 2px;white-space:normal}.fr-q i{font-style:normal;font-weight:800;letter-spacing:0;margin-left:5px;color:var(--muted)}
@@ -1020,7 +1021,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-25 c";
+const APP_VERSION = "2026-11-25 d";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -3870,9 +3871,9 @@ function satEat(c, kg, at, plateauH, whole, kind){
   return eat;
 }
 /* Frigo : ce qu'il ne peut pas manger y part ; périme en 5 jours (l'omelette jamais) ; il mange d'abord le plus ancien.
-   Aliments : 🍗 poulet (kg soulevés), ⭐ portion dorée (bonus du coup critique), 🥩 steak (record : 1 ration et 12 h à 100 %),
+   Aliments : 🍗 poulet (kg soulevés), 🍤 portion dorée (bonus du coup critique ; une étoile jusqu'au 25 nov. 2026), 🥩 steak (record : 1 ration et 12 h à 100 %),
    🥚 omelette (3e séance de la semaine : 1 ration, ne périme pas). La boîte de pois chiches est à part (c.peas). */
-const FOODS = {poulet:{e:"🍗", n:"Poulet"}, or:{e:"⭐", n:"Portion dorée"}, steak:{e:"🥩", n:"Steak du record"}, omelette:{e:"🥚", n:"Omelette de la régularité"}, fiole:{e:"🧪", n:"Fiole de sérum"}};
+const FOODS = {poulet:{e:"🍗", n:"Poulet"}, or:{e:"🍤", n:"Portion dorée"}, steak:{e:"🥩", n:"Steak du record"}, omelette:{e:"🥚", n:"Omelette de la régularité"}, fiole:{e:"🧪", n:"Fiole de sérum"}};
 const spoilAt = it => it.k === "omelette" || it.k === "fiole" ? Infinity : it.t + SAT.spoilDays * 86400000;
 /* Étoiles du contrat rempli (21 nov. 2026, décision du propriétaire) : pendant 2 jours, des étoiles tournent autour du Gymon.
    Aucun effet sur le jeu. Une fiole 🧪 reçue le 21 nov. (version retirée le jour même) ne fait plus que ça quand on la boit. */
@@ -4607,12 +4608,19 @@ function gyZoom(svg, c){
   const z = f / (0.96 * (GY_FILL[c.stage] || 1)), h = 344 / z, w = 240 / z;
   return svg.replace('viewBox="0 -24 240 344"', `viewBox="${(120 - w/2).toFixed(1)} ${(320 - h).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}"`);
 }
+// Bas utile de la page Gymon : le haut du menu, ou celui du minuteur de repos s'il est affiché (25 nov. 2026 : séance en cours,
+// le minuteur recouvrait les boutons S'entraîner, Nourrir, Laver…)
+const gyRestOn = () => { const r = document.getElementById("rest"); return !!(r && !r.hidden && r.getBoundingClientRect().height); };
+function gyBottom(nav){ const r = document.getElementById("rest"), t = nav.getBoundingClientRect().top;
+  return r && !r.hidden && r.getBoundingClientRect().height ? Math.min(t, r.getBoundingClientRect().top) : t; }
 function fitGymon(){
   const g = document.querySelector(".gy:not(.gy-dead)"), nav = document.getElementById("tabs"); if(!g || !nav) return;
+  if(!gyRestOn()) document.body.classList.remove("rest-pad");
   window.scrollTo(0, 0); g.classList.add("gy-fit"); document.body.dataset.fit = "1";
-  g.style.height = Math.max(360, nav.getBoundingClientRect().top - g.getBoundingClientRect().top - 8) + "px";
+  const floor = gyRestOn() ? 200 : 360;   // minuteur affiché : le Gymon rapetisse plutôt que de cacher ses boutons
+  g.style.height = Math.max(floor, gyBottom(nav) - g.getBoundingClientRect().top - 8) + "px";
   const over = document.documentElement.scrollHeight - innerHeight;   // ce qui dépasse encore (marges) : on le reprend sur la zone du Gymon
-  if(over > 0) g.style.height = Math.max(360, parseFloat(g.style.height) - over) + "px";
+  if(over > 0 && !gyRestOn()) g.style.height = Math.max(floor, parseFloat(g.style.height) - over) + "px";
   gyFitCheck(); requestAnimationFrame(gyFitCheck); setTimeout(gyFitCheck, 350);
 }
 // iPhone (15 nov. 2026) : la barre d'onglets flottante peut finir plus haut que mesuré (zones de sécurité, mode écran d'accueil).
@@ -4620,8 +4628,16 @@ function fitGymon(){
 function gyFitCheck(){
   const g = document.querySelector(".gy.gy-fit"), nav = document.getElementById("tabs"); if(!g || !nav || tab !== "creature") return;
   const last = g.lastElementChild; if(!last) return;
-  const d = last.getBoundingClientRect().bottom - (nav.getBoundingClientRect().top - 10);
-  if(d > 0.5) g.style.height = Math.max(300, parseFloat(g.style.height || g.getBoundingClientRect().height) - d) + "px";
+  const d = last.getBoundingClientRect().bottom - (gyBottom(nav) - 10);
+  if(d > 0.5) g.style.height = Math.max(gyRestOn() ? 200 : 300, parseFloat(g.style.height || g.getBoundingClientRect().height) - d) + "px";
+  // Pas assez de place (petit écran, bandeau d'installation) : marge sous la page de la hauteur du minuteur, et on fait défiler
+  // juste ce qu'il faut pour garder les boutons au-dessus de lui
+  const r = document.getElementById("rest"), on = gyRestOn(); document.body.classList.toggle("rest-pad", on);
+  if(on){ document.body.style.setProperty("--rest-h", Math.ceil(innerHeight - r.getBoundingClientRect().top + 8) + "px");   // tout ce qui est fixé en bas : minuteur et onglets
+    let over = last.getBoundingClientRect().bottom - (r.getBoundingClientRect().top - 8);
+    if(over > 0.5){ const lb = last.getBoundingClientRect().bottom, gb = g.getBoundingClientRect().bottom;
+      if(lb > gb) g.style.height = (parseFloat(g.style.height || g.getBoundingClientRect().height) + lb - gb) + "px";   // la page prend la hauteur de son contenu…
+      over = last.getBoundingClientRect().bottom - (r.getBoundingClientRect().top - 8); if(over > 0.5) window.scrollBy(0, over); } }   // … et défile juste assez
 }
 addEventListener("resize", () => { if(tab === "creature") fitGymon(); });
 if(window.visualViewport) visualViewport.addEventListener("resize", () => { if(tab === "creature") fitGymon(); });
@@ -5723,6 +5739,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-25", t:"⏱️ Gymon et minuteur de repos", x:"Pendant une séance, le minuteur de repos ne cache plus les boutons de la page Gymon. Et la portion dorée du frigo a un nouveau visuel : une crevette dorée 🍤, riche en protéines."},
   {d:"2026-11-25", t:"🍗 Un frigo plus lisible", x:"Une ligne par aliment : tout ton poulet sur une seule ligne (il mange le plus ancien d'abord), avec un pilon par tonne pour voir d'un coup d'œil si le frigo est plein ; les steaks et omelettes avec leur nombre. Ce qui a périmé est résumé dans le bouton « Nettoyer le frigo »."},
   {d:"2026-11-25", t:"🧽 Nettoyer le frigo", x:"Ce qui périme reste maintenant dans le frigo, grisé : ton Gymon n'en veut plus et ça sent mauvais. Ouvre le frigo et touche « Nettoyer le frigo » pour le jeter. Ton Gymon adore quand c'est propre."},
   {d:"2026-11-24", t:"🌌 L'aura de ton Gymon", x:"Une petite jauge est apparue à gauche de ton Gymon : son aura. Elle dit à quel point il se sent entouré, et change son ciel, de la nuit noire à l'aurore. Ce qui la fait monter ou descendre ? À toi de le découvrir… le Pr Noxwell enquête aussi. Elle ne touche jamais à sa force, sa faim ni sa taille."},
@@ -6783,7 +6800,7 @@ function beep(){ try{ if(!audioCtx) return; const o = audioCtx.createOscillator(
   o.frequency.value = 880; g.gain.setValueAtTime(.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime+.6);
   o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+.6); }catch(e){} }
 function startRest(sec){ if(!sec) return; flash(null); restState = {end:Date.now()+sec*1000, total:sec*1000, warned:false}; drawRest(); }
-function stopRest(){ restState = null; document.getElementById("rest").hidden = true; }
+function stopRest(){ restState = null; const el = document.getElementById("rest"), was = !el.hidden; el.hidden = true; if(was && tab === "creature") fitGymon(); }
 function drawRest(){
   const el = document.getElementById("rest");
   if(!restState){ el.hidden = true; return; }
@@ -6791,13 +6808,14 @@ function drawRest(){
   if(left <= 0){ stopRest(); beeps(3); flash("go"); return; }
   if(left <= 10000 && !restState.warned && restState.total > 12000){ restState.warned = true; beeps(1); flash("warn", Math.ceil(left/1000)); }
   if(restState.warned){ const n = document.getElementById("fl-n"); if(n) n.textContent = Math.ceil(left/1000); }
-  el.hidden = false;
+  if(el.hidden){ el.hidden = false; if(tab === "creature") requestAnimationFrame(fitGymon); }   // le minuteur apparaît : la page Gymon se resserre au-dessus
   // Les boutons ne sont créés qu'une fois : les reconstruire 4 fois par seconde faisait perdre des touchers
   if(!el.querySelector(".rest-t")){ el.classList.remove("pop-only"); el.innerHTML = `<div class="rest-in"><div class="rest-row"><span class="small rest-l">Repos</span><span class="rest-t"></span><span class="spacer"></span>
     <button class="btn sm" data-act="rest-minus">−15 s</button><button class="btn sm" data-act="rest-plus">+15 s</button><button class="btn sm" data-act="rest-skip">Passer</button></div>
     <div class="rest-bar"></div></div>`; }
   const t = fmtClock(left), tt = el.querySelector(".rest-t"); if(tt.textContent !== t) tt.textContent = t;
   el.querySelector(".rest-bar").style.width = (100*left/restState.total).toFixed(1) + "%";
+  if(tab === "creature" && document.querySelector(".gy.gy-fit")) gyFitCheck();   // la barre peut changer de hauteur : les boutons du Gymon restent au-dessus
 }
 function tickClock(){ const c = document.getElementById("clock"); if(c && S.profile.active) c.textContent = fmtClock(Date.now()-S.profile.active.start); sessTick(); }
 setInterval(tickClock, 1000);
