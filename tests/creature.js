@@ -772,6 +772,19 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
     const covered = acts.filter(x => x.bottom > rest.top + 1).length; stopRest(); await new Promise(r => setTimeout(r, 100));
     const after = document.querySelector(".gy-act").getBoundingClientRect().top; S.profile.active = act; restState = rs; render(); return {covered, n:acts.length, grew:after > acts[0].top}; });
   ok(rb.n === 6 && rb.covered === 0 && rb.grew, "séance en cours : le minuteur ne recouvre plus les boutons du Gymon ; la page se rallonge quand il disparaît", rb);
+  // Crevettes dorées (25 nov. 2026) : 2 jours au frigo ; comparer son Gymon à celui d'un ami depuis Sociabiliser
+  const cmp = await p.evaluate(() => { const c = creatureState(), saved = JSON.stringify(c), fr0 = S.profile.friends, nm = S.profile.firstName, n = Date.now(), D = 864e5;
+    c.fridge = [{id:"sh1", k:"or", kg:500, t:n - 2.2 * D}, {id:"po1", k:"poulet", kg:500, t:n - 2.2 * D}]; fridgeTick(c);
+    const shrimp = [c.fridge.find(x => x.id === "sh1").bad > 0, !c.fridge.find(x => x.id === "po1").bad, FOODS.or.e === "🍤"];
+    S.profile.firstName = "Alex"; c.dead = null; c.stage = Math.max(5, c.stage); const pay = teamPayload("friend").replace(/\|[^|]*\|/, "|ami42|");
+    const pr = teamParse(pay.replace(/\|Alex\|/, "|Sam|")); S.profile.friends = []; addFriend(pr, true);
+    socialSheet(); const btn = document.querySelector('[data-act="friend-cmp"]'); btn.click();
+    const sh = document.getElementById("sheet-in"), txt = sh.textContent.replace(/\s+/g, " "), r = {shrimp, sheet:/Alex et Sam/.test(txt), svgs:sh.querySelectorAll(".cmp-g svg").length,
+      rows:sh.querySelectorAll(".cmp-r").length, poids:/Poids/.test(txt) && /Taille/.test(txt) && /Pectoraux/.test(txt), seen:/aujourd'hui/.test(txt)};
+    sh.querySelector('[data-act="gy-social-back"]').click(); r.back = /Sociabiliser/.test(document.getElementById("sheet-in").textContent); closeSheet();
+    S.profile.friends = fr0; S.profile.firstName = nm; S.profile.creature = JSON.parse(saved); saveLocal(); render(); return r; });
+  ok(cmp.shrimp.every(Boolean), "crevettes dorées 🍤 : périmées au bout de 2 jours (le poulet du même jour non)", cmp.shrimp);
+  ok(cmp.sheet && cmp.svgs === 2 && cmp.rows === 3 + 7 && cmp.poids && cmp.seen && cmp.back, "Sociabiliser : toucher un ami compare les deux Gymon côte à côte (poids, taille, séances, 7 groupes de muscles), retour à la liste", cmp);
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de la créature passent");
