@@ -55,6 +55,7 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
       gain:g0.days.reduce((t, d) => t + d.est, 0) - g1.days.reduce((t, d) => t + d.est, 0)};
     // décharge puis séance facile : on reprend la charge d'avant, sans nouvelle décharge
     reset(); S.workouts = [W(12, "leg-ext", 3, [[60, 10], [60, 10], [60, 10]]), W(8, "leg-ext", 4, [[62.5, 9], [62.5, 9], [62.5, 8]]), W(4, "leg-ext", 1, [[55, 8], [55, 8]])];
+    S.workouts[2].exercises[0].dl = 1;   // séance allégée marquée, comme l'app le fait depuis le 22 nov. 2026 (avant : reconnue sans marque)
     let c = coach("leg-ext"); r.rebound = [c.w, c.tag];
     // audit 4 : après une décharge en alternance lourd/volume, le rebond reprend la charge du même type (jamais la charge lourde en volume)
     reset(); const dlw = W(2, "dc-barre", 2, [[72.5, 8], [72.5, 8]]); dlw.exercises[0].dl = 1;
@@ -208,6 +209,22 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(am.seq[5] > am.seq[1], "objectif dépassé de 2 reps, ressenti facile : la charge monte (plus jamais bloquée par l'arrondi au palier)", am.seq);
   ok(am.abs >= 1, "full body court : au moins un exercice d'abdos dans la semaine", am.abs);
   ok(am.lomb > 0 && am.dos > 0, "muscles sans créneau (lombaires) : ils suivent leur groupe travaillé", am);
+  // Exercice sauté (26 nov. 2026) : cocher la 1re série d'un exercice avant un autre non commencé → il remonte
+  const sk = await p.evaluate(async () => { const act = S.profile.active, r = {}; closeSheet(); tab = "seance";
+    const go = (ids, ss) => { S.profile.active = null; startWorkout("T", ids.map((id, k) => ({exId:id, ...(ss && ss[k] ? {ss:ss[k]} : {}), sets:[blankSet(), blankSet()]})));
+      A().exercises.forEach(x => x.sets = x.sets.filter(y => !y.warm)); render(); };
+    const tick = (i) => { const tr = document.querySelector(`.ex[data-i="${i}"] tr.set:not(.warm)`); tr.querySelector('[data-f="w"]').value = "20"; tr.querySelector('[data-f="r"]').value = "10";
+      tr.querySelector('[data-f="w"]').dispatchEvent(new Event("input", {bubbles:true})); tr.querySelector('[data-f="r"]').dispatchEvent(new Event("input", {bubbles:true})); tr.querySelector('[data-act="check"]').click(); };
+    const order = () => A().exercises.map(x => x.exId).join(",");
+    go(["dc-barre", "squat", "curl-barre"]); tick(0); r.inOrder = order();
+    go(["dc-barre", "squat", "curl-barre"]); tick(1); r.skip = order(); r.toast = (document.querySelector(".toast") || {}).textContent || "";
+    tick(0); r.second = order();   // 2e série du même exercice : rien ne bouge
+    go(["dc-barre", "elev-lat", "ext-poulie", "curl-barre"], [null, "A", "A", null]); tick(3); r.ss = order();
+    go(["dc-barre", "elev-lat", "ext-poulie", "curl-barre"], [null, "A", "A", null]); tick(2); r.ssBlock = order();
+    S.profile.active = act; render(); return r; });
+  ok(sk.inOrder === "dc-barre,squat,curl-barre" && sk.skip === "squat,dc-barre,curl-barre" && /Squat.*passe avant/.test(sk.toast), "exercice sauté : le squat commencé avant le développé remonte ; dans l'ordre, rien ne bouge", sk);
+  ok(sk.second === "squat,dc-barre,curl-barre", "seule la 1re série d'un exercice déclenche le réordonnement", sk.second);
+  ok(sk.ss === "curl-barre,dc-barre,elev-lat,ext-poulie" && sk.ssBlock === "elev-lat,ext-poulie,dc-barre,curl-barre", "supersets : jamais coupés, un superset commencé remonte d'un bloc", sk);
   ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
