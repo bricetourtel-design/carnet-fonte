@@ -1030,7 +1030,7 @@ body.nox-shake main{animation:nxshake .38s linear}
 <div class="tuto" id="tuto" hidden></div>
 
 <script>
-const APP_VERSION = "2026-11-25 e";
+const APP_VERSION = "2026-11-26 a";
 /* ---------- Données de base ---------- */
 const MUSCLES = ["Pectoraux","Dos","Épaules","Biceps","Triceps","Jambes","Abdos"];
 const NOIMG = new Set(["pullover-machine","lombaires-machine","elev-lat-machine","kickback-machine","hip-thrust-machine","belt-squat","pendulum-squat","rotation-buste-machine","velo-air","ski-erg"]);
@@ -3359,6 +3359,25 @@ function liveAdjust(i, j){
   ex.adj = {w:+x.toFixed(2), r:tr, j, from:s.w, ch, txt:`Série ${ex.sets.filter((y, k) => k <= j && !y.warm).length} : ${reps} reps au lieu de ${tr}. ${x > w ? "Tu es plus fort que prévu" : "C'était lourd"} : ${fmtN(x)} kg pour les séries suivantes.`};
   ch.forEach(k => { ex.sets[k].w = String(+x.toFixed(2)); });
 }
+/* Exercice sauté (26 nov. 2026, demande du propriétaire) : la première série d'un exercice est validée alors qu'un exercice placé
+   avant lui n'a encore rien de coché → il a été sauté volontairement. L'exercice commencé remonte juste avant le premier sauté,
+   qui reste dans la séance pour plus tard. Un superset bouge d'un bloc et n'est jamais coupé. Renvoie la nouvelle place, sinon null. */
+function skipReorder(i){
+  const a = A(), l = a.exercises, started = x => x.sets.some(y => y.done), pairOf = k => l[k] && l[k].ss ? [k - 1, k + 1].filter(x => l[x] && l[x].ss === l[k].ss) : [];
+  // bloc qui bouge : l'exercice, et son partenaire de superset s'il le suit ou le précède
+  let lo = i, hi = i; pairOf(i).forEach(x => { lo = Math.min(lo, x); hi = Math.max(hi, x); });
+  let k = -1;
+  for(let x = 0; x < lo; x++){ const ex = l[x]; if(started(ex)) continue;
+    if(ex.ss && x > 0 && l[x - 1].ss === ex.ss && started(l[x - 1])) continue;   // 2e moitié d'un superset en cours : pas sautée
+    k = x; break; }
+  if(k < 0) return null;
+  if(l[k].ss && k > 0 && l[k - 1].ss === l[k].ss) k--;   // on ne s'insère jamais au milieu d'un superset
+  const nm = x => exById(x.exId).name, moved = nm(l[i]), block = l.splice(lo, hi - lo + 1), skipped = l[k]; l.splice(k, 0, ...block);
+  noxReply = null;
+  toast(`↕️ ${moved} passe avant ${nm(skipped)}, que tu feras après`);
+  return k + (i - lo);
+}
+function scrollToEx(k){ requestAnimationFrame(() => { const el = document.querySelector(`.ex[data-i="${k}"]`); if(el) el.scrollIntoView({block:"nearest", behavior:"smooth"}); }); }
 /* Série corrigée après validation (24 nov. 2026, bug remonté) : l'ajustement qu'elle avait déclenché est annulé (message retiré,
    charges suivantes remises si elles n'ont pas été touchées), puis recalculé sur les bonnes valeurs ; « La prochaine fois » aussi. */
 function liveRecheck(i, j){
@@ -5749,6 +5768,7 @@ function endTuto(){ document.getElementById("tuto").hidden = true; unlockBody();
    Chaque entrée a une date ; on montre celles postérieures à la dernière version vue (ou, pour un testeur d'avant
    cette fonction, à sa dernière séance). Un nouvel utilisateur ne voit rien : tout est nouveau pour lui. */
 const WHATS_NEW = [
+  {d:"2026-11-26", t:"↕️ Exercice sauté ? L'ordre s'adapte", x:"En séance, si tu commences un exercice avant un autre que tu n'as pas encore fait, l'app comprend que tu l'as sauté : l'exercice commencé remonte, et celui sauté t'attend pour après. Les supersets restent ensemble."},
   {d:"2026-11-25", t:"🤝 Compare ton Gymon à celui d'un ami", x:"Dans Sociabiliser, touche un ami Gymon : vos deux Gymon s'affichent côte à côte, avec poids, taille, séances et chaque groupe de muscles. Et le bonus du coup critique devient des crevettes dorées 🍤 : attention, elles ne se gardent que 2 jours au frigo !"},
   {d:"2026-11-25", t:"⏱️ Gymon et minuteur de repos", x:"Pendant une séance, le minuteur de repos ne cache plus les boutons de la page Gymon. Et la portion dorée du frigo a un nouveau visuel : une crevette dorée 🍤, riche en protéines."},
   {d:"2026-11-25", t:"🍗 Un frigo plus lisible", x:"Une ligne par aliment : tout ton poulet sur une seule ligne (il mange le plus ancien d'abord), avec un pilon par tonne pour voir d'un coup d'œil si le frigo est plein ; les steaks et omelettes avec leur nombre. Ce qui a périmé est résumé dans le bouton « Nettoyer le frigo »."},
@@ -7127,6 +7147,7 @@ const ACT = {
       const nx = ex.sets[j+1]; if(nx && !nx.done && !nx.warm && nx.w==="" && s.w!=="" && !s.warm) nx.w = s.w;
       if(!s.warm) setReaction(ex, s);
       if(!s.warm) liveAdjust(i, j);
+      if(!s.warm && ex.sets.filter(y => y.done && !y.warm).length === 1){ const k = skipReorder(i); if(k !== null){ touchProfile(); render(); scrollToEx(k); return; } }
     } else { s.done = false; delete s.critOK; liveRecheck(i, j); }
     touchProfile(); render();
   },
