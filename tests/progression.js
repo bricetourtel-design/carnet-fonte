@@ -227,6 +227,19 @@ let fails = 0; const ok = (cond, label, extra) => { console.log(`${cond ? "OK  "
   ok(sk.ss === "curl-barre,dc-barre,elev-lat,ext-poulie" && sk.ssBlock === "elev-lat,ext-poulie,dc-barre,curl-barre", "supersets : jamais coupés, un superset commencé remonte d'un bloc", sk);
   ok(ld.restAdv === true, "déjà une séance aujourd'hui : repos conseillé, la séance reste en option", ld.restAdv);
 
+  // Note par exercice : saisie en séance, affichée sous le nom, retrouvée dans la fiche, gardée à l'import
+  await p.evaluate(() => { closeSheet(); if(S.profile.active) S.profile.active = null; delete (S.profile.exOpts || {})["dc-barre"]; startWorkout("N", [{exId:"dc-barre", sets:[blankSet()]}]); tab = "seance"; render(); });
+  await p.click('.note-btn[data-id="dc-barre"]'); await p.waitForTimeout(150);
+  await p.fill("#ex-note-in", "Banc cran 3 <b>\nprise 1 doigt après l'anneau"); await p.click('[data-act="note-ok"]'); await p.waitForTimeout(150);
+  const nt = await p.evaluate(async () => { const r = {saved:exNote("dc-barre"), card:(document.querySelector(".ex-note") || {}).textContent || "", html:!!document.querySelector(".ex-note b"), on:!!document.querySelector(".note-btn.on")};
+    document.querySelector('[data-act="ex-info"]').click(); const ta = document.getElementById("ex-note-in"); r.info = ta && ta.value;
+    closeSheet(); const save = JSON.parse(JSON.stringify(S.profile.exOpts)); S.profile.exOpts = {"dc-barre":{uni:1}};
+    await importText(JSON.stringify({app:"carnet-fonte", profile:{exOpts:{"dc-barre":save["dc-barre"], squat:{note:"x".repeat(900)}}}, workouts:[]}));
+    r.imp = exNote("dc-barre"); r.long = exNote("squat").length; r.uni = exOpt("dc-barre").uni;
+    S.profile.active = null; render(); return r; });
+  ok(/cran 3/.test(nt.saved) && /cran 3 <b>/.test(nt.card) && !nt.html && nt.on && nt.info === nt.saved, "note d'exercice : saisie en séance, affichée échappée sous le nom, retrouvée dans la fiche", nt);
+  ok(nt.imp === nt.saved && nt.long === 500 && nt.uni === 1, "note d'exercice : reprise d'une sauvegarde sans écraser les réglages, 500 caractères max", nt);
+
   ok(errs.length === 0, "aucune erreur JavaScript", errs);
   await b.close();
   console.log(fails ? `\n${fails} échec(s)` : "\nTous les tests de progression passent");
